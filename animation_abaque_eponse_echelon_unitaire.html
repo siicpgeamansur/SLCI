@@ -308,12 +308,12 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
     var host = $('plotR');
     var W = Math.max(260, host.clientWidth - 16), H = Math.round(Math.max(290, W * 0.68));
     var m = { l: 50, r: 22, t: 20, b: 48 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
-    var tmax = niceCeil(2 * tr), YMAX = 1.8;
+    var tmax = 50, YMAX = 1.8;
     var X = function (t) { return m.l + t / tmax * pw; };
     var Y = function (v) { return m.t + (1 - v / YMAX) * ph; };
     var s = '', i, pts = [], N = 1000;
     for (i = 0; i <= N; i++) { var t = tmax * i / N; pts.push([t, step(z, t)]); }
-    for (i = 0; i <= 5; i++) s += line('g-major', X(tmax * i / 5), m.t, X(tmax * i / 5), m.t + ph);
+    for (i = 0; i <= 5; i++) s += line('g-major', X(10 * i), m.t, X(10 * i), m.t + ph);
     for (i = 0; i <= 9; i++) s += line(i % 1 === 0 ? 'g-major' : 'g-minor', m.l, Y(0.2 * i), m.l + pw, Y(0.2 * i));
     s += '<rect class="band-fill" x="' + m.l + '" y="' + Y(1 + BAND).toFixed(2) + '" width="' + pw + '" height="' + (Y(1 - BAND) - Y(1 + BAND)).toFixed(2) + '"/>';
     s += line('band-line', m.l, Y(1 + BAND), m.l + pw, Y(1 + BAND)) + line('band-line', m.l, Y(1 - BAND), m.l + pw, Y(1 - BAND));
@@ -325,7 +325,7 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
     s += '<text class="tr-label" x="' + (X(tr) + 8).toFixed(2) + '" y="' + (Y(0) - 8) + '"><tspan font-style="italic">t</tspan><tspan dy="3" font-size="9">r5%</tspan><tspan dy="-3"> = ' + fmt(tr, 1) + ' s</tspan></text>';
     s += axes(m, pw, ph);
     for (i = 0; i <= 5; i++) {
-      var tv = tmax * i / 5;
+      var tv = 10 * i;
       s += line('axis', X(tv), m.t + ph, X(tv), m.t + ph + 5);
       s += '<text class="tick-label" x="' + X(tv).toFixed(2) + '" y="' + (m.t + ph + 20) + '" text-anchor="middle">' + fmt(tv, tv % 1 ? 1 : 0) + '</text>';
     }
