@@ -19,6 +19,7 @@
   --curve: #1565c0;
   --pm: #d32f2f;
   --gm: #2e7d32;
+  --corner: #b45f06;
   --ok-bg: #e6f4ea;
   --ok-fg: #1e6b34;
   --bad-bg: #fdecea;
@@ -50,7 +51,11 @@ header {
   margin-bottom: 14px;
 }
 header h1 { margin: 0; font-size: 1.15rem; font-weight: 600; }
-header p { margin: 0; color: var(--muted); font-style: italic; overflow-wrap: anywhere; }
+header p { margin: 0; color: var(--muted); font-style: italic; max-width: 100%; overflow-x: auto; }
+header p.num { flex-basis: 100%; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 4px; }
+.frac > span { padding: 0 6px; line-height: 1.4; white-space: nowrap; }
+.frac > span:first-child { border-bottom: 1px solid currentColor; }
 
 .app { display: grid; grid-template-columns: 370px minmax(0, 1fr); gap: 14px; align-items: start; }
 .view { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; min-width: 0; }
@@ -178,6 +183,8 @@ svg .dot-pm { fill: var(--pm); stroke: var(--panel); stroke-width: 2; }
 svg .dot-gm { fill: var(--gm); stroke: var(--panel); stroke-width: 2; }
 svg .lab-pm { fill: var(--pm); font-weight: 600; }
 svg .lab-gm { fill: var(--gm); font-weight: 600; }
+svg .corner { stroke: var(--corner); stroke-width: 1.3; stroke-dasharray: 1 4; stroke-linecap: round; }
+svg .corner-lab { fill: var(--corner); font-size: 11px; font-weight: 600; }
 svg .hov-line { stroke: var(--ui); stroke-width: 1.2; stroke-dasharray: 2 3; }
 svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
 
@@ -192,6 +199,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
   <header>
     <h1>Diagramme de Bode</h1>
     <p id="g-formula"></p>
+    <p id="g-formula-num" class="num"></p>
   </header>
 
   <div class="app">
@@ -250,7 +258,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
       <figure class="view">
         <h2>Phase</h2>
         <div class="plot" id="plotP"></div>
-        <figcaption>Rouge : marge de phase M<sub>φ</sub> = 180° + φ(ω<sub>c</sub>). Vert : marge de gain M<sub>G</sub> = −G(ω<sub>180</sub>).</figcaption>
+        <figcaption>Rouge : marge de phase M<sub>φ</sub> = 180° + φ(ω<sub>c</sub>). Orange pointillé : pulsations de cassure de chaque fonction. Vert : marge de gain M<sub>G</sub> = −G(ω<sub>180</sub>).</figcaption>
       </figure>
     </div>
   </div>
@@ -433,6 +441,47 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     return 'H(p) = ' + S.blocks.map(function (b, i) {
       return 'H<sub>' + (i + 1) + '</sub>' + (b.inv ? '<sup>−1</sup>' : '');
     }).join(' · ');
+  }
+
+  /* Titre : produit symbolique puis valeurs actuelles */
+  function coef(v) { return v === 1 ? '' : fw(v) + '·'; }
+  function terms(b, i, num) {
+    var n = i + 1, p = b.p, sb = function (s) { return '<sub>' + s + '</sub>'; };
+    switch (b.type) {
+      case 'first':
+        return num ? { k: p.K, g: [], n: [], d: ['(1 + ' + coef(p.tau) + 'p)'] }
+          : { g: ['K' + sb(n)], n: [], d: ['(1 + τ' + sb(n) + '·p)'] };
+      case 'second':
+        return num ? { k: p.K, g: [], n: [], d: ['(1 + ' + coef(2 * p.z / p.w0) + 'p + ' + coef(1 / (p.w0 * p.w0)) + 'p<sup>2</sup>)'] }
+          : { g: ['K' + sb(n)], n: [], d: ['(1 + 2ξ' + sb(n) + '·p/ω' + sb('0,' + n) + ' + p<sup>2</sup>/ω' + sb('0,' + n) + '<sup>2</sup>)'] };
+      case 'P':
+        return num ? { k: p.Kp, g: [], n: [], d: [] } : { g: ['K' + sb('p' + n)], n: [], d: [] };
+      case 'PI':
+        return num ? { k: p.Kp, g: [], n: ['(1 + ' + coef(p.Ti) + 'p)'], d: [coef(p.Ti) + 'p'] }
+          : { g: ['K' + sb('p' + n)], n: ['(1 + T' + sb('i' + n) + '·p)'], d: ['T' + sb('i' + n) + '·p'] };
+      case 'lead':
+        return num ? { k: p.K, g: [], n: ['(1 + ' + coef(p.a * p.T) + 'p)'], d: ['(1 + ' + coef(p.T) + 'p)'] }
+          : { g: ['K' + sb(n)], n: ['(1 + a' + sb(n) + '·T' + sb(n) + '·p)'], d: ['(1 + T' + sb(n) + '·p)'] };
+      default:
+        return num ? { k: p.K, g: [], n: [], d: ['p'] } : { g: ['K' + sb(n)], n: [], d: ['p'] };
+    }
+  }
+  function buildFrac(num) {
+    var N = [], D = [], k = 1;
+    S.blocks.forEach(function (b, i) {
+      var t = terms(b, i, num);
+      if (num) k *= b.inv ? 1 / t.k : t.k;
+      Array.prototype.push.apply(b.inv ? D : N, t.g);
+      Array.prototype.push.apply(N, b.inv ? t.d : t.n);
+      Array.prototype.push.apply(D, b.inv ? t.n : t.d);
+    });
+    if (num && Math.abs(k - 1) > 1e-12) N.unshift(fw(k));
+    var top = N.length ? N.join(' ') : '1';
+    return D.length ? '<span class="frac"><span>' + top + '</span><span>' + D.join(' ') + '</span></span>' : top;
+  }
+  function updateTitle() {
+    $('g-formula').innerHTML = globalFormula() + (S.blocks.length ? ' = ' + buildFrac(false) : '');
+    $('g-formula-num').innerHTML = S.blocks.length ? 'Valeurs actuelles : H(p) = ' + buildFrac(true) : '';
   }
 
   /* Volet Algèbre : construction des cartes */
@@ -618,6 +667,16 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     }
     var xTitle = '<text class="axis-title" x="' + (M.l + pw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">pulsation ω en rad/s</text>';
 
+    /* pulsations de cassure de chaque fonction */
+    var cornerLines = '', cornerLabels = '';
+    S.blocks.forEach(function (b, bi) {
+      TYPES[b.type].corners(b.p).forEach(function (cw) {
+        if (!inView(cw)) return;
+        cornerLines += ln('corner', X(cw), M.t, X(cw), M.t + ph);
+        cornerLabels += '<text class="corner-lab" transform="translate(' + (X(cw) + 4).toFixed(2) + ' ' + (M.t + 6) + ') rotate(90)">H<tspan dy="3" font-size="8">' + (bi + 1) + '</tspan><tspan dy="-3"> : ω = ' + fw(cw) + '</tspan></text>';
+      });
+    });
+
     var hv = null;
     if (S.hover !== null) { var hvv = evalAt(S.hover); hv = { w: S.hover, g: hvv[0], p: hvv[1] * 180 / PI }; }
     var anchorR = function (x) { return x > M.l + pw * 0.7; };
@@ -629,7 +688,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
       s += ln('g-major', M.l, YG(gv), M.l + pw, YG(gv));
       if (gv + g.step / 2 <= g.max) s += ln('g-minor', M.l, YG(gv + g.step / 2), M.l + pw, YG(gv + g.step / 2));
     }
-    s += ln('zero', M.l, YG(0), M.l + pw, YG(0));
+    s += ln('zero', M.l, YG(0), M.l + pw, YG(0)) + cornerLines;
     if (inView(m.wc)) s += ln('mline-pm', X(m.wc), M.t, X(m.wc), M.t + ph);
     if (inView(m.w180)) s += ln('mline-gm', X(m.w180), M.t, X(m.w180), M.t + ph);
     s += '<path class="curve" clip-path="url(#clipG)" d="' + curvePath(X, YG, cache.W, cache.G) + '"/>';
@@ -648,6 +707,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
       s += ln('hov-line', X(hv.w), M.t, X(hv.w), M.t + ph);
       if (hv.g >= g.min && hv.g <= g.max) s += '<circle class="hov-dot" cx="' + X(hv.w).toFixed(2) + '" cy="' + YG(hv.g).toFixed(2) + '" r="4.5"/>';
     }
+    s += cornerLabels;
     s += axes(pw, ph) + xt;
     for (gv = g.min; gv <= g.max + 1e-9; gv += g.step) {
       s += ln('axis', M.l - 5, YG(gv), M.l, YG(gv));
@@ -663,7 +723,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
       s += ln('g-major', M.l, YP(pv), M.l + pw, YP(pv));
       if (pv + p.step / 2 <= p.max) s += ln('g-minor', M.l, YP(pv + p.step / 2), M.l + pw, YP(pv + p.step / 2));
     }
-    s += ln('ref180', M.l, YP(-180), M.l + pw, YP(-180));
+    s += ln('ref180', M.l, YP(-180), M.l + pw, YP(-180)) + cornerLines;
     if (inView(m.wc)) s += ln('mline-pm', X(m.wc), M.t, X(m.wc), M.t + ph);
     if (inView(m.w180)) s += ln('mline-gm', X(m.w180), M.t, X(m.w180), M.t + ph);
     s += '<path class="curve" clip-path="url(#clipP)" d="' + curvePath(X, YP, cache.W, cache.P) + '"/>';
@@ -698,6 +758,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
   }
 
   function renderAll() {
+    updateTitle();
     cache.m = margins();
     if (S.auto) autoRange();
     sample();
