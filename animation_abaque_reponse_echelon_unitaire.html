@@ -138,6 +138,10 @@ svg .tr-dot { fill: var(--band); stroke: var(--panel); stroke-width: 2; }
 svg .cur-line { stroke: var(--ui); stroke-width: 1.8; stroke-dasharray: 5 4; }
 svg .cur-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
 svg .tr-label { fill: var(--band); }
+svg .d1-guide { stroke: var(--ui); stroke-width: 1.2; stroke-dasharray: 4 4; }
+svg .d1-seg { stroke: var(--ui); stroke-width: 3.2; stroke-linecap: round; }
+svg .d1-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
+svg .d1-label { fill: var(--ui); font-weight: 600; }
 svg .pt-label { fill: var(--ui); font-weight: 600; }
 
 @media (max-width: 1100px) {
@@ -189,7 +193,7 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
       <figure class="view">
         <h2>Graphique 2 : réponse à un échelon</h2>
         <div class="plot" id="plotR"></div>
-        <figcaption>La bande rouge est ±5 % de la valeur finale. La verticale marque la dernière entrée dans cette bande.</figcaption>
+        <figcaption>La bande rouge est ±5 % de la valeur finale. La verticale rouge marque la dernière entrée dans cette bande. En violet, le premier dépassement D<sub>1</sub> (ξ &lt; 1), à l'instant du premier pic.</figcaption>
       </figure>
       <figure class="view wide" id="figD" hidden>
         <h2>Graphique 3 : abaque des dépassements (ξ &lt; 1)</h2>
@@ -335,6 +339,16 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
       s += '<text class="tr-label" x="' + (X(tr) + (left ? -8 : 8)).toFixed(2) + '" y="' + (Y(0) - 8) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + trTxt + '</text>';
     } else {
       s += '<text class="tr-label" x="' + (m.l + pw - 8) + '" y="' + (Y(0) - 8) + '" text-anchor="end">' + trTxt + ' (hors échelle)</text>';
+    }
+    if (z < 1 - 1e-9) {
+      var wd = Math.sqrt(1 - z * z), tp = Math.PI / wd, d1 = Math.exp(-Math.PI * z / wd), pk = 1 + d1;
+      if (tp <= tmax) {
+        var rightD = X(tp) > m.l + pw * 0.72;
+        s += line('d1-guide', m.l, Y(pk), X(tp), Y(pk)) + line('d1-guide', X(tp), Y(0), X(tp), Y(pk));
+        s += line('d1-seg', X(tp), Y(1), X(tp), Y(pk));
+        s += '<circle class="d1-dot" cx="' + X(tp).toFixed(2) + '" cy="' + Y(pk).toFixed(2) + '" r="5"/>';
+        s += '<text class="d1-label" x="' + (X(tp) + (rightD ? -9 : 9)).toFixed(2) + '" y="' + (Y(pk) - 9).toFixed(2) + '" text-anchor="' + (rightD ? 'end' : 'start') + '"><tspan font-style="italic">D</tspan><tspan dy="3" font-size="9">1</tspan><tspan dy="-3"> = ' + fmt(d1 * 100, d1 < 0.1 ? 2 : 1) + ' %</tspan></text>';
+      }
     }
     s += axes(m, pw, ph);
     for (i = 0; i <= 5; i++) {
