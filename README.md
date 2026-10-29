@@ -5,3 +5,5 @@ Interfaces pour voir la relation entre les abaques et la réponse temporelle d'u
 [Diagramme de Bode](https://siicpgeamansur.github.io/SLCI/Bode.html)
 
 [Codeur incrémental](https://siicpgeamansur.github.io/SLCI/codeur_incremental.html)
+
+[Codeur absolu](https://siicpgeamansur.github.io/SLCI/codeur_absolu.html)
