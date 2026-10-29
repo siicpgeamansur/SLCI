@@ -7,3 +7,5 @@ Interfaces pour voir la relation entre les abaques et la réponse temporelle d'u
 [Codeur incrémental](https://siicpgeamansur.github.io/SLCI/codeur_incremental.html)
 
 [Codeur absolu](https://siicpgeamansur.github.io/SLCI/codeur_absolu.html)
+
+[Potentiomètre rotatif](https://siicpgeamansur.github.io/SLCI/potentiometre_rotatif.html)
