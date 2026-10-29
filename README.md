@@ -3,3 +3,5 @@ Interfaces pour voir la relation entre les abaques et la réponse temporelle d'u
 [Réponse temporelle second ordre et abaques](https://siicpgeamansur.github.io/SLCI/abaques_reponse_echelon_unitaire.html)
 
 [Diagramme de Bode](https://siicpgeamansur.github.io/SLCI/Bode.html)
+
+[Codeur incrémental](https://siicpgeamansur.github.io/SLCI/codeur_incremental.html)
