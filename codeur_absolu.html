@@ -1,0 +1,580 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Codeur absolu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : colonne gauche = réglages + disque + mot lu ; colonne droite = mesures + chronogramme + position ; formules en bas.
+   Couleurs : une teinte par piste/bit, vert = position décodée, magenta = erreur de lecture. */
+:root{
+  --bg:#e8ecf0; --panel:#f6f8fa; --ink:#16202a; --muted:#5a6672; --line:#cbd3db; --grid:#dde3e9;
+  --disk:#2c3642; --body:#46515d; --bl:40%;
+  --k:#0b8a66; --rev:#c2255c; --beam:#f5c400; --acc:#1b66e0;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161c; --panel:#192027; --ink:#e6ebf0; --muted:#9aa7b4; --line:#2d3843; --grid:#26303a;
+    --disk:#556372; --body:#7a8998; --bl:66%;
+    --k:#3ed3a3; --rev:#ff6b9a; --beam:#ffd84d; --acc:#6ea8ff;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161c; --panel:#192027; --ink:#e6ebf0; --muted:#9aa7b4; --line:#2d3843; --grid:#26303a;
+  --disk:#556372; --body:#7a8998; --bl:66%;
+  --k:#3ed3a3; --rev:#ff6b9a; --beam:#ffd84d; --acc:#6ea8ff;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink); font:15px/1.5 var(--sans);
+  padding-block:20px 32px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1200px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px 28px;flex-wrap:wrap}
+.top>div:first-child{min-width:0;flex:1 1 360px}
+header h1{font-size:1.7rem;line-height:1.15;margin:0 0 6px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:65ch}
+.themes{width:250px;max-width:100%}
+.layout{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:16px;margin-top:18px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+h2{font-size:.76rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 4px;font-weight:600}
+.sub{margin:0 0 10px;font-size:.88rem;color:var(--muted);max-width:70ch}
+canvas{display:block;width:100%}
+#disk{aspect-ratio:1;max-width:460px;margin:0 auto}
+#chrono{height:200px}
+#pos{height:220px}
+
+.ctl{display:grid;gap:6px}
+.ctl+.ctl{margin-top:16px}
+.ctl-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ctl-head .t{font-weight:500}
+output{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin:0;height:28px;accent-color:var(--ink)}
+.hint{font-size:.8rem;color:var(--muted);font-family:var(--mono)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:8px 10px;text-align:center;cursor:pointer;font-size:.9rem;background:var(--panel);border-left:1px solid var(--line)}
+.seg label:first-of-type{border-left:0}
+.seg input:checked+label{background:var(--ink);color:var(--panel)}
+.seg input:focus-visible+label{outline:2px solid var(--acc);outline-offset:-3px}
+.btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+button{font:inherit;padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;margin:0 0 12px}
+.zoom{display:grid;gap:2px;flex:1 1 260px;min-width:200px}
+.zoom .t{font-size:.88rem;font-weight:500}
+
+.word{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.bit{display:inline-flex;flex-direction:column;align-items:center;font-family:var(--mono);font-weight:600;font-size:1.3rem;line-height:1.2;min-width:34px;padding:4px 6px;border:2px solid currentColor;border-radius:6px}
+.bit small{font-size:.65rem;font-weight:500;opacity:.85}
+.wordinfo{text-align:center;margin-top:8px;font-family:var(--mono);font-size:.88rem;color:var(--muted)}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:12px}
+.tile{border-left:3px solid var(--line);padding:2px 0 2px 10px;min-width:0}
+.tile.tk{border-color:var(--k)} .tile.ta{border-color:var(--acc)} .tile.tr{border-color:var(--rev)}
+.tile .l{font-size:.74rem;color:var(--muted)}
+.tile .v{font-family:var(--mono);font-size:1.12rem;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tile .v.bad{color:var(--rev)}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 0;font-size:.82rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot.k{background:var(--k)} .dot.r{background:var(--rev)} .dot.m{background:var(--muted)}
+.note{margin:10px 0 0;font-size:.86rem;color:var(--muted);max-width:75ch}
+
+.formulas{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px 22px;margin-top:6px}
+.f{border-top:1px solid var(--line);padding-top:10px;min-width:0}
+.f h3{margin:0 0 6px;font-size:.88rem;font-weight:600}
+.math{font-family:Georgia,"Times New Roman",serif;font-size:1.2rem;font-style:italic;overflow-x:auto;padding-bottom:2px}
+.math .u{font-style:normal}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .2em;line-height:1.15}
+.frac>span:first-child{border-bottom:1px solid currentColor;padding:0 .25em}
+.num{margin-top:4px;font-family:var(--mono);font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}
+.f p{margin:4px 0 0;font-size:.82rem;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Codeur absolu</h1>
+      <p>Un disque porte n pistes codées, lues chacune par une photodiode. Le mot de n bits obtenu donne directement la position angulaire θ du disque, sans remise à zéro ni comptage.</p>
+    </div>
+    <div class="seg themes" role="radiogroup" aria-label="Thème d'affichage">
+      <input type="radio" name="theme" id="thAuto" value="auto" checked><label for="thAuto">Auto</label>
+      <input type="radio" name="theme" id="thLight" value="light"><label for="thLight">☀ Clair</label>
+      <input type="radio" name="theme" id="thDark" value="dark"><label for="thDark">☾ Sombre</label>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="col">
+      <section class="panel" aria-label="Réglages">
+        <h2>Réglages</h2>
+        <div class="ctl">
+          <div class="ctl-head"><label class="t" for="n">Nombre de pistes (bits) <i>n</i></label><output id="nOut" for="n">4</output></div>
+          <input type="range" id="n" min="2" max="8" step="1" value="4">
+          <div class="hint" id="nHint"></div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><span class="t">Code du disque</span></div>
+          <div class="seg" role="radiogroup" aria-label="Code du disque">
+            <input type="radio" name="code" id="codeBin" value="bin" checked><label for="codeBin">Binaire naturel</label>
+            <input type="radio" name="code" id="codeGray" value="gray"><label for="codeGray">Gray (binaire réfléchi)</label>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label class="t" for="mis">Désalignement des capteurs</label><output id="misOut" for="mis">0 %</output></div>
+          <input type="range" id="mis" min="0" max="50" step="1" value="0">
+          <div class="hint" id="misHint">Essayez 40 % en binaire, puis passez en Gray.</div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label class="t" for="N">Vitesse de rotation <i>N</i></label><output id="NOut" for="N">15 tr/min</output></div>
+          <input type="range" id="N" min="1" max="120" step="1" value="15">
+          <div class="hint" id="NHint"></div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><span class="t">Sens de rotation du disque</span></div>
+          <div class="seg" role="radiogroup" aria-label="Sens de rotation">
+            <input type="radio" name="dir" id="dirCW" value="1" checked><label for="dirCW">↻ Horaire</label>
+            <input type="radio" name="dir" id="dirCCW" value="-1"><label for="dirCCW">↺ Antihoraire</label>
+          </div>
+        </div>
+        <div class="btns">
+          <button type="button" id="pause">Pause</button>
+          <button type="button" id="power">Couper l'alimentation</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Disque et capteurs">
+        <h2>Disque et capteurs</h2>
+        <p class="sub">Une piste par bit : la plus proche du centre porte le bit de poids fort (MSB), la plus externe le bit de poids faible (LSB). Zone transparente = bit 1 (5 V), zone opaque = bit 0 (0 V). Le trait clair du moyeu marque θ = 0.</p>
+        <canvas id="disk" role="img" aria-label="Disque à pistes codées en rotation avec la rangée de capteurs"></canvas>
+        <div class="word" id="word" aria-label="Mot lu par les capteurs"></div>
+        <div class="wordinfo" id="wordInfo"></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel" aria-label="Mesures">
+        <h2>Mesures en direct</h2>
+        <div class="tiles">
+          <div class="tile tk"><div class="l">Mot lu (code)</div><div class="v" id="rW">—</div></div>
+          <div class="tile tk"><div class="l">Position N décodée</div><div class="v" id="rN">—</div></div>
+          <div class="tile tk"><div class="l">Angle lu θ = N · 360°/2ⁿ</div><div class="v" id="rA">—</div></div>
+          <div class="tile ta"><div class="l">Angle réel du disque</div><div class="v" id="rR">—</div></div>
+          <div class="tile tr"><div class="l">Erreur de lecture</div><div class="v" id="rE">—</div></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Chronogramme">
+        <h2>Chronogramme des capteurs</h2>
+        <p class="sub">Une ligne par piste : tension de la photodiode (0 V ou 5 V), bit de poids fort en haut. La ligne N est la valeur décodée, en rouge quand elle diffère de la position réelle.</p>
+        <div class="toolbar">
+          <div class="zoom">
+            <div class="ctl-head"><label class="t" for="zoom">Échelle de temps</label><output id="zoomOut" for="zoom">6 s</output></div>
+            <input type="range" id="zoom" min="0" max="100" step="1" value="92">
+            <div class="hint" id="zoomHint"></div>
+          </div>
+        </div>
+        <canvas id="chrono" role="img" aria-label="Chronogramme des tensions des capteurs de chaque piste et valeur décodée"></canvas>
+        <div class="legend">
+          <span><i class="dot k"></i>valeur décodée exacte</span>
+          <span><i class="dot r"></i>valeur décodée fausse</span>
+          <span><i class="dot m"></i>hors tension</span>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Position angulaire absolue">
+        <h2>Position angulaire absolue θ</h2>
+        <p class="sub">Contrairement au codeur incrémental, le codeur absolu donne θ elle-même et pas une variation Δθ. Elle revient à 0 à chaque tour. Coupez l'alimentation puis rallumez : la bonne position est lue aussitôt.</p>
+        <canvas id="pos" role="img" aria-label="Position angulaire lue en fonction du temps, en dents de scie"></canvas>
+        <p class="note" id="note"></p>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" style="margin-top:16px" aria-label="Formules">
+    <h2>Formules</h2>
+    <p class="sub">Avec <i>n</i> le nombre de pistes, <i>N</i> la position décodée (entier de 0 à 2ⁿ − 1). Les lignes en dessous reprennent vos réglages.</p>
+    <div class="formulas">
+      <div class="f">
+        <h3>Nombre de positions</h3>
+        <div class="math">M = 2<sup>n</sup></div>
+        <div class="num" id="f1"></div>
+        <p>Chaque piste ajoute un bit, donc double le nombre de secteurs distincts.</p>
+      </div>
+      <div class="f">
+        <h3>Résolution angulaire</h3>
+        <div class="math">Δθ<sub class="u">min</sub> = <span class="frac"><span class="u">360°</span><span>2<sup>n</sup></span></span></div>
+        <div class="num" id="f2"></div>
+        <p>C'est la largeur d'un secteur : toutes les positions à l'intérieur donnent le même mot.</p>
+      </div>
+      <div class="f">
+        <h3>Angle absolu</h3>
+        <div class="math">θ = N × <span class="frac"><span class="u">360°</span><span>2<sup>n</sup></span></span></div>
+        <div class="num" id="f3"></div>
+        <p>θ est mesuré depuis la référence du disque (trait clair du moyeu).</p>
+      </div>
+      <div class="f">
+        <h3>Binaire vers Gray</h3>
+        <div class="math">g = b ⊕ (b ≫ 1)</div>
+        <div class="num" id="f4"></div>
+        <p>⊕ est le OU exclusif, ≫ 1 décale le mot d'un rang vers la droite.</p>
+      </div>
+      <div class="f">
+        <h3>Gray vers binaire</h3>
+        <div class="math">b<sub>n−1</sub> = g<sub>n−1</sub> &nbsp;;&nbsp; b<sub>i</sub> = b<sub>i+1</sub> ⊕ g<sub>i</sub></div>
+        <div class="num" id="f5"></div>
+        <p>Le décodage se fait bit par bit, du poids fort vers le poids faible.</p>
+      </div>
+      <div class="f">
+        <h3>Pourquoi le code Gray</h3>
+        <div class="math">Gray : 1 bit change &nbsp;/&nbsp; binaire : jusqu'à n</div>
+        <div class="num" id="f6"></div>
+        <p>Si les capteurs ne commutent pas exactement ensemble, un mot binaire intermédiaire peut être très faux. En Gray l'erreur reste d'un secteur au plus.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var WMAX=10, DT=0.00025, PI=Math.PI;
+function zoomToW(v){return Number((0.02*Math.pow(500,v/100)).toPrecision(2));}
+var W=zoomToW(92);
+var S={n:4,N:15,dir:1,gray:false,mis:0,power:true,run:true,phi:270,t:0,cread:0,Nread:0,st:0,valid:true};
+var ts=[],Cr=[],Nr=[],Nt=[],head=0,runs=[];
+var aA=-90;
+function mod(x,p){return ((x%p)+p)%p;}
+function M(){return 1<<S.n;}
+function sec(){return 360/M();}
+function code(s){return S.gray?(s^(s>>1)):s;}
+function g2b(g){var b=0;while(g){b^=g;g>>=1;}return b;}
+function pop(x){var c=0;while(x){c+=x&1;x>>=1;}return c;}
+function bin(x,n){var s=x.toString(2);while(s.length<n)s='0'+s;return s;}
+function off(j){return (S.mis/100)*sec()*Math.sin(j*12.9898+1.7);}
+function fmt(x,d){return x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fmtW(x){return x<1?fmt(x*1000,0)+' ms':fmt(x,x<10?1:0)+' s';}
+function bitColor(j,l){return 'hsl('+((210+j*47)%360)+',72%,'+l+')';}
+
+function buildRuns(){
+  runs=[];
+  var n=S.n,m=M(),j,s;
+  for(j=0;j<n;j++){
+    var r=[],bit=n-1-j,start=-1;
+    for(s=0;s<m;s++){
+      var v=(code(s)>>bit)&1;
+      if(v&&start<0)start=s;
+      if(!v&&start>=0){r.push([start,s]);start=-1;}
+    }
+    if(start>=0)r.push([start,m]);
+    runs.push(r);
+  }
+}
+function sample(){
+  var n=S.n,m=M(),sc=sec(),th=mod(S.phi-aA,360),j;
+  S.st=Math.min(m-1,Math.floor(th/sc));
+  if(!S.power){S.cread=0;S.Nread=-1;S.valid=false;return;}
+  var c=0;
+  for(j=0;j<n;j++){
+    var tj=mod(S.phi-aA-off(j),360),sj=Math.min(m-1,Math.floor(tj/sc));
+    c|=((code(sj)>>(n-1-j))&1)<<(n-1-j);
+  }
+  S.cread=c;S.Nread=S.gray?g2b(c):c;S.valid=true;
+}
+function push(){ts.push(S.t);Cr.push(S.cread);Nr.push(S.Nread);Nt.push(S.st);}
+function reset(){
+  ts=[];Cr=[];Nr=[];Nt=[];head=0;S.t=0;
+  sample();push();
+}
+function step(h){
+  S.phi=mod(S.phi+S.dir*6*S.N*h,360);
+  S.t+=h;
+  sample();push();
+}
+function prune(){
+  var lim=S.t-WMAX-0.05;
+  while(head<ts.length-1&&ts[head+1]<lim)head++;
+  if(head>20000){ts=ts.slice(head);Cr=Cr.slice(head);Nr=Nr.slice(head);Nt=Nt.slice(head);head=0;}
+}
+function startIdx(t0){
+  var lo=head,hi=ts.length-1;
+  while(lo<hi){var mid=(lo+hi+1)>>1;if(ts[mid]<=t0)lo=mid;else hi=mid-1;}
+  return lo;
+}
+
+function tok(){
+  var cs=getComputedStyle(document.documentElement);
+  var g=function(n){return cs.getPropertyValue(n).trim();};
+  return {panel:g('--panel'),ink:g('--ink'),muted:g('--muted'),line:g('--line'),grid:g('--grid'),disk:g('--disk'),body:g('--body'),
+    k:g('--k'),rev:g('--rev'),beam:g('--beam'),acc:g('--acc'),bl:g('--bl')||'40%',mono:g('--mono')};
+}
+function fit(c){
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  var w=c.clientWidth,h=c.clientHeight;
+  var pw=Math.round(w*dpr),ph=Math.round(h*dpr);
+  if(c.width!==pw||c.height!==ph){c.width=pw;c.height=ph;}
+  var ctx=c.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  return {ctx:ctx,w:w,h:h};
+}
+var dc=$('disk'),cc=$('chrono'),pc=$('pos');
+
+function tag(ctx,text,x,y,T){
+  ctx.font='600 11px '+T.mono;
+  var tw=ctx.measureText(text).width+10;
+  ctx.fillStyle=T.panel;ctx.strokeStyle=T.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.rect(x-tw/2,y-9,tw,18);ctx.fill();ctx.stroke();
+  ctx.fillStyle=T.ink;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(text,x,y);
+}
+function drawDisk(T){
+  var f=fit(dc),ctx=f.ctx,cx=f.w/2,cy=f.h/2,half=Math.min(f.w,f.h)/2;
+  var Rd=half*0.80,rin=Rd*0.32,rout=Rd*0.97,n=S.n,tw=(rout-rin)/n,sc=sec(),j;
+  ctx.fillStyle=T.disk;ctx.beginPath();ctx.arc(cx,cy,Rd,0,2*PI);ctx.fill();
+  ctx.fillStyle=T.panel;
+  for(j=0;j<n;j++){
+    var r0=rin+j*tw+0.5,r1=rin+(j+1)*tw-0.5;
+    runs[j].forEach(function(r){
+      var a0=(S.phi-r[1]*sc)*PI/180,a1=(S.phi-r[0]*sc)*PI/180;
+      ctx.beginPath();ctx.arc(cx,cy,r1,a0,a1);ctx.arc(cx,cy,r0,a1,a0,true);ctx.closePath();ctx.fill();
+    });
+  }
+  ctx.strokeStyle=T.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,Rd,0,2*PI);ctx.stroke();
+  ctx.fillStyle=T.body;ctx.beginPath();ctx.arc(cx,cy,rin*0.55,0,2*PI);ctx.fill();
+  var ar=S.phi*PI/180;
+  ctx.strokeStyle=T.panel;ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(cx+rin*0.1*Math.cos(ar),cy+rin*0.1*Math.sin(ar));ctx.lineTo(cx+(rin-3)*Math.cos(ar),cy+(rin-3)*Math.sin(ar));ctx.stroke();
+  // rangée de capteurs
+  var sa=aA*PI/180,maxoff=0,y;
+  for(j=0;j<n;j++){y=Math.abs((rin+(j+0.5)*tw)*off(j)*PI/180);if(y>maxoff)maxoff=y;}
+  var hw=Math.max(9,maxoff+6);
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(sa);
+  ctx.fillStyle=T.body;ctx.globalAlpha=0.45;ctx.beginPath();ctx.rect(rin-6,-hw,rout-rin+12,2*hw);ctx.fill();
+  ctx.globalAlpha=1;ctx.strokeStyle=T.muted;ctx.lineWidth=1;ctx.stroke();
+  for(j=0;j<n;j++){
+    var xm=rin+(j+0.5)*tw,yy=xm*off(j)*PI/180,lit=S.power&&((S.cread>>(n-1-j))&1)===1,col=bitColor(j,T.bl);
+    var bw=tw*0.72,bh=Math.min(8,tw*0.72);
+    if(lit){ctx.fillStyle=T.beam;ctx.globalAlpha=0.6;ctx.beginPath();ctx.arc(xm,yy,Math.max(4,tw*0.5),0,2*PI);ctx.fill();ctx.globalAlpha=1;}
+    ctx.fillStyle=lit?col:T.panel;ctx.strokeStyle=col;ctx.lineWidth=1.8;
+    ctx.beginPath();ctx.rect(xm-bw/2,yy-bh/2,bw,bh);ctx.fill();ctx.stroke();
+  }
+  ctx.restore();
+  tag(ctx,'MSB',cx+(rin-22)*Math.cos(sa),cy+(rin-22)*Math.sin(sa),T);
+  tag(ctx,'LSB',cx+(rout+22)*Math.cos(sa),cy+(rout+22)*Math.sin(sa),T);
+}
+
+function vgrid(ctx,T,ml,pw,top,bottom,labelY,t0){
+  var steps=[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20],st=20,i;
+  var maxTicks=Math.max(3,Math.floor(pw/72));
+  for(i=0;i<steps.length;i++){if(W/steps[i]<=maxTicks){st=steps[i];break;}}
+  var d=st>=1?0:(st>=0.1?1:(st>=0.01?2:3));
+  ctx.font='11px '+T.mono;ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  for(var j=Math.max(0,Math.ceil(t0/st-1e-9));j*st<=S.t+1e-9;j++){
+    var tv=j*st,x=ml+(tv-t0)/W*pw;
+    if(x<ml-0.5||x>ml+pw+0.5)continue;
+    ctx.strokeStyle=T.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();
+    ctx.fillStyle=T.muted;ctx.fillText(fmt(tv,d)+' s',x,labelY);
+  }
+}
+function drawChrono(T){
+  var f=fit(cc),ctx=f.ctx,w=f.w,h=f.h,n=S.n;
+  var ml=46,mr=12,mt=6,mb=26,lh=26,gap=6,pw=w-ml-mr,t0=S.t-W;
+  var X=function(t){return ml+(t-t0)/W*pw;};
+  vgrid(ctx,T,ml,pw,mt,h-mb,h-8,t0);
+  var j,q,i0=startIdx(t0);
+  for(j=0;j<n;j++){
+    var top=mt+j*(lh+gap),yHi=top+4,yLo=top+lh-4,col=bitColor(j,T.bl),bit=n-1-j;
+    ctx.strokeStyle=T.line;ctx.lineWidth=1;ctx.setLineDash([2,4]);
+    ctx.beginPath();ctx.moveTo(ml,yHi);ctx.lineTo(ml+pw,yHi);ctx.moveTo(ml,yLo);ctx.lineTo(ml+pw,yLo);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=col;ctx.font='600 13px '+T.mono;ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText('b'+bit,6,(yHi+yLo)/2);
+    ctx.save();ctx.beginPath();ctx.rect(ml,top-1,pw,lh+2);ctx.clip();
+    ctx.strokeStyle=col;ctx.lineWidth=2.2;ctx.lineJoin='miter';ctx.beginPath();
+    var started=false,pv=0;
+    for(q=i0;q<ts.length;q++){
+      var x=X(ts[q]),v=(Cr[q]>>bit)&1,y=v?yHi:yLo;
+      if(!started){ctx.moveTo(x,y);started=true;pv=v;continue;}
+      if(v!==pv){ctx.lineTo(x,pv?yHi:yLo);ctx.lineTo(x,y);pv=v;}
+    }
+    ctx.lineTo(X(S.t),pv?yHi:yLo);ctx.stroke();ctx.restore();
+  }
+  // bus : valeur décodée
+  var btop=mt+n*(lh+gap),bh=lh,bmid=btop+bh/2;
+  ctx.fillStyle=T.ink;ctx.font='600 13px '+T.mono;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('N',6,bmid);
+  ctx.save();ctx.beginPath();ctx.rect(ml,btop-1,pw,bh+2);ctx.clip();
+  function run(xa,xb,val,bad){
+    var col=val<0?T.muted:(bad?T.rev:T.k);
+    ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.6;
+    if(xb-xa<5){ctx.globalAlpha=0.9;ctx.fillRect(xa,btop+3,Math.max(1.5,xb-xa),bh-6);ctx.globalAlpha=1;return;}
+    ctx.beginPath();
+    ctx.moveTo(xa+3,btop+3);ctx.lineTo(xb-3,btop+3);ctx.lineTo(xb,bmid);ctx.lineTo(xb-3,btop+bh-3);ctx.lineTo(xa+3,btop+bh-3);ctx.lineTo(xa,bmid);ctx.closePath();
+    ctx.globalAlpha=0.16;ctx.fill();ctx.globalAlpha=1;ctx.stroke();
+    if(val>=0&&xb-xa>28){ctx.fillStyle=T.ink;ctx.font='11px '+T.mono;ctx.textAlign='center';ctx.fillText(String(val),(xa+xb)/2,bmid);}
+  }
+  var curN=Nr[i0],curB=Nr[i0]>=0&&Nr[i0]!==Nt[i0],xs=X(ts[i0]);
+  for(q=i0+1;q<ts.length;q++){
+    var b2=Nr[q]>=0&&Nr[q]!==Nt[q];
+    if(Nr[q]!==curN||b2!==curB){run(xs,X(ts[q]),curN,curB);xs=X(ts[q]);curN=Nr[q];curB=b2;}
+  }
+  run(xs,X(S.t),curN,curB);
+  ctx.restore();
+}
+
+function drawPos(T){
+  var f=fit(pc),ctx=f.ctx,w=f.w,h=f.h,m=M();
+  var ml=46,mr=58,mt=22,mb=26,pw=w-ml-mr,ph=h-mt-mb,t0=S.t-W,q,i0=startIdx(t0);
+  var X=function(t){return ml+(t-t0)/W*pw;};
+  var Y=function(k){return mt+ph-(k/m)*ph;};
+  vgrid(ctx,T,ml,pw,mt,h-mb,h-8,t0);
+  ctx.font='11px '+T.mono;ctx.textBaseline='middle';
+  var g;
+  for(g=0;g<=4;g++){
+    var kv=g*m/4,y=Y(kv);
+    ctx.strokeStyle=T.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+pw,y);ctx.stroke();
+    ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText(String(Math.round(kv)),ml-6,y);
+    ctx.textAlign='left';ctx.fillText((g*90)+'°',ml+pw+6,y);
+  }
+  ctx.fillStyle=T.k;ctx.font='600 11px '+T.mono;ctx.textBaseline='alphabetic';
+  ctx.textAlign='right';ctx.fillText('N',ml-6,12);
+  ctx.textAlign='left';ctx.fillText('θ',ml+pw+6,12);
+  ctx.save();ctx.beginPath();ctx.rect(ml,mt-4,pw,ph+8);ctx.clip();
+  // position réelle (secteur)
+  var started=false,pv=0;
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.3;ctx.setLineDash([4,3]);ctx.beginPath();
+  for(q=i0;q<ts.length;q++){
+    var x=X(ts[q]),v=Nt[q];
+    if(!started){ctx.moveTo(x,Y(v));started=true;pv=v;continue;}
+    if(v!==pv){ctx.lineTo(x,Y(pv));ctx.lineTo(x,Y(v));pv=v;}
+  }
+  ctx.lineTo(X(S.t),Y(pv));ctx.stroke();ctx.setLineDash([]);
+  // position lue
+  var pen=false;
+  ctx.strokeStyle=T.k;ctx.lineWidth=2.4;ctx.beginPath();
+  for(q=i0;q<ts.length;q++){
+    var xx=X(ts[q]),vv=Nr[q];
+    if(vv<0){if(pen){ctx.lineTo(xx,Y(pv));pen=false;}continue;}
+    if(!pen){ctx.moveTo(xx,Y(vv));pen=true;pv=vv;continue;}
+    if(vv!==pv){ctx.lineTo(xx,Y(pv));ctx.lineTo(xx,Y(vv));pv=vv;}
+  }
+  if(pen)ctx.lineTo(X(S.t),Y(pv));
+  ctx.stroke();ctx.restore();
+  if(S.valid){
+    ctx.fillStyle=(S.Nread!==S.st)?T.rev:T.k;ctx.strokeStyle=T.panel;ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(X(S.t),Y(S.Nread),4.5,0,2*PI);ctx.fill();ctx.stroke();
+  }
+}
+
+var cache={};
+function setT(id,s){if(cache[id]!==s){cache[id]=s;$(id).textContent=s;}}
+function setH(id,s){if(cache['h'+id]!==s){cache['h'+id]=s;$(id).innerHTML=s;}}
+function info(){
+  var n=S.n,m=M(),sc=sec(),th=mod(S.phi-aA,360),st=S.st;
+  var errv=S.valid?((S.Nread-st+m/2+m)%m)-m/2:0;
+  setT('rW',S.valid?bin(S.cread,n):'hors tension');
+  setT('rN',S.valid?String(S.Nread):'—');
+  setT('rA',S.valid?fmt(S.Nread*sc,2)+' °':'—');
+  setT('rR',fmt(th,1)+' °');
+  setT('rE',S.valid?(errv===0?'0 pas':(errv>0?'+':'')+errv+' pas ('+fmt(errv*sc,1)+'°)'):'—');
+  var bad=S.valid&&errv!==0;
+  if(cache.bad!==bad){cache.bad=bad;$('rE').className='v'+(bad?' bad':'');}
+  var html='',j,T0=tok().bl;
+  for(j=0;j<n;j++){
+    var one=S.power&&((S.cread>>(n-1-j))&1)===1,col=bitColor(j,T0);
+    html+='<span class="bit" style="color:'+col+(one?';background:'+col+'':'')+'"><span'+(one?' style="color:var(--panel)"':'')+'>'+(S.power?(one?1:0):'–')+'</span><small'+(one?' style="color:var(--panel)"':'')+'>b'+(n-1-j)+'</small></span>';
+  }
+  setH('word',html);
+  setT('wordInfo',S.valid?('N = '+S.Nread+'  →  θ = '+fmt(S.Nread*sc,2)+' °'):'capteurs hors tension : aucune lecture');
+  setT('zoomHint','≈ '+fmt(W*S.N*m/60,0)+' secteurs défilent devant les capteurs');
+  setT('f1','2^'+n+' = '+m+' positions');
+  setT('f2','360° / '+m+' = '+fmt(sc,3)+'°');
+  setT('f3',S.valid?(S.Nread+' × 360° / '+m+' = '+fmt(S.Nread*sc,2)+'°'):'Pas de lecture hors tension');
+  var gs=st^(st>>1);
+  setT('f4','b = '+bin(st,n)+'  →  g = '+bin(st,n)+' ⊕ '+bin(st>>1,n)+' = '+bin(gs,n));
+  setT('f5',S.gray?(S.valid?('g = '+bin(S.cread,n)+'  →  b = '+bin(S.Nread,n)+' = '+S.Nread):'—'):'Code binaire naturel : le mot lu est déjà b, aucun décodage.');
+  var nx=(st+1)%m,h=pop(code(st)^code(nx));
+  setT('f6','Secteur '+st+' → '+nx+' : '+h+' bit'+(h>1?'s':'')+' change'+(h>1?'nt':'')+' ('+(S.gray?'Gray':'binaire')+'). Pire cas en binaire : '+n+' bits.');
+  setT('note',S.gray
+    ?'Code Gray : un seul bit change d\'un secteur au suivant. Même avec des capteurs désalignés, l\'erreur de lecture ne dépasse pas un pas.'
+    :'Code binaire : plusieurs bits changent à certaines transitions (par exemple 0111 vers 1000). Avec un désalignement, la valeur lue passe brièvement par des valeurs très fausses.');
+}
+function ctrlText(){
+  $('nOut').textContent=S.n;
+  $('nHint').textContent=fmt(M(),0)+' positions · secteur de '+fmt(sec(),2)+'°';
+  $('misOut').textContent=S.mis+' %';
+  $('NOut').textContent=S.N+' tr/min';
+  $('NHint').textContent='ω = '+fmt(2*PI*S.N/60,2)+' rad/s · '+fmt(6*S.N,0)+' °/s';
+  $('zoomOut').textContent=fmtW(W);
+  $('pause').textContent=S.run?'Pause':'Reprendre';
+  $('power').textContent=S.power?'Couper l\'alimentation':'Rallumer';
+  cc.style.height=(60+32*S.n)+'px';
+}
+
+function applyTheme(v){
+  var r=document.documentElement;
+  if(v==='light'||v==='dark')r.setAttribute('data-theme',v);else r.removeAttribute('data-theme');
+  try{localStorage.setItem('codeur-theme',v);}catch(e){}
+}
+(function initTheme(){
+  var saved=null,cur=document.documentElement.getAttribute('data-theme');
+  try{saved=localStorage.getItem('codeur-theme');}catch(e){}
+  var v=saved||cur||'auto';
+  if(v!=='light'&&v!=='dark')v='auto';
+  $(v==='light'?'thLight':v==='dark'?'thDark':'thAuto').checked=true;
+  if(saved)applyTheme(v);
+})();
+['thAuto','thLight','thDark'].forEach(function(id){
+  $(id).addEventListener('change',function(e){applyTheme(e.target.value);});
+});
+
+$('n').addEventListener('input',function(e){S.n=+e.target.value;buildRuns();reset();ctrlText();});
+$('codeBin').addEventListener('change',function(){S.gray=false;buildRuns();reset();});
+$('codeGray').addEventListener('change',function(){S.gray=true;buildRuns();reset();});
+$('mis').addEventListener('input',function(e){S.mis=+e.target.value;ctrlText();});
+$('N').addEventListener('input',function(e){S.N=+e.target.value;ctrlText();});
+$('dirCW').addEventListener('change',function(){S.dir=1;});
+$('dirCCW').addEventListener('change',function(){S.dir=-1;});
+$('pause').addEventListener('click',function(){S.run=!S.run;ctrlText();});
+$('power').addEventListener('click',function(){S.power=!S.power;ctrlText();});
+$('zoom').addEventListener('input',function(e){W=zoomToW(+e.target.value);ctrlText();});
+
+buildRuns();
+reset();
+var i0,warm=Math.round(WMAX/DT);
+for(i0=0;i0<warm;i0++)step(DT);
+prune();
+if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)S.run=false;
+ctrlText();
+
+var last=performance.now();
+function frame(now){
+  var dt=Math.min((now-last)/1000,0.05);last=now;
+  if(S.run){
+    var rem=dt;
+    while(rem>1e-9){var h=Math.min(DT,rem);step(h);rem-=h;}
+    prune();
+  }else if(ts.length&&(S.power!==(Nr[Nr.length-1]>=0))){
+    sample();push();
+  }
+  var T=tok();
+  drawDisk(T);drawChrono(T);drawPos(T);info();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
