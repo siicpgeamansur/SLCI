@@ -1,0 +1,571 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Codeur incrémental</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : colonne gauche = réglages + disque ; colonne droite = mesures + chronogrammes + escalier ; formules en bas.
+   Couleurs : capteur A bleu, capteur B orange, compteur vert, sens inverse magenta. */
+:root{
+  --bg:#e8ecf0; --panel:#f6f8fa; --ink:#16202a; --muted:#5a6672; --line:#cbd3db; --grid:#dde3e9;
+  --disk:#2c3642; --body:#46515d;
+  --a:#1b66e0; --b:#e06a00; --k:#0b8a66; --rev:#c2255c; --beam:#f5c400;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161c; --panel:#192027; --ink:#e6ebf0; --muted:#9aa7b4; --line:#2d3843; --grid:#26303a;
+    --disk:#556372; --body:#7a8998;
+    --a:#6ea8ff; --b:#ffa04d; --k:#3ed3a3; --rev:#ff6b9a; --beam:#ffd84d;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161c; --panel:#192027; --ink:#e6ebf0; --muted:#9aa7b4; --line:#2d3843; --grid:#26303a;
+  --disk:#556372; --body:#7a8998;
+  --a:#6ea8ff; --b:#ffa04d; --k:#3ed3a3; --rev:#ff6b9a; --beam:#ffd84d;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink); font:15px/1.5 var(--sans);
+  padding-block:20px 32px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1200px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px 28px;flex-wrap:wrap}
+.top>div:first-child{min-width:0;flex:1 1 360px}
+header h1{font-size:1.7rem;line-height:1.15;margin:0 0 6px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:65ch}
+.themes{width:250px;max-width:100%}
+.layout{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:16px;margin-top:18px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+h2{font-size:.76rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 4px;font-weight:600}
+.sub{margin:0 0 10px;font-size:.88rem;color:var(--muted);max-width:70ch}
+canvas{display:block;width:100%}
+#disk{aspect-ratio:1;max-width:460px;margin:0 auto}
+#chrono{height:270px}
+#stairs{height:210px}
+
+.ctl{display:grid;gap:6px}
+.ctl+.ctl{margin-top:16px}
+.ctl-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ctl-head .t{font-weight:500}
+output{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin:0;height:28px;accent-color:var(--ink)}
+.hint{font-size:.8rem;color:var(--muted);font-family:var(--mono)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:8px 10px;text-align:center;cursor:pointer;font-size:.9rem;background:var(--panel);border-left:1px solid var(--line)}
+.seg label:first-of-type{border-left:0}
+.seg input:checked+label{background:var(--ink);color:var(--panel)}
+.seg input:focus-visible+label{outline:2px solid var(--a);outline-offset:-3px}
+.btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+button{font:inherit;padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;margin:0 0 12px}
+.grp{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:600}
+.chk input{width:17px;height:17px;margin:0}
+.chk.a{color:var(--a)} .chk.b{color:var(--b)}
+.chk.a input{accent-color:var(--a)} .chk.b input{accent-color:var(--b)}
+.chk.off{opacity:.45;cursor:not-allowed}
+.toolbar .seg{min-width:210px}
+.zoom{display:grid;gap:2px;flex:1 1 230px;min-width:200px}
+.zoom .t{font-size:.88rem;font-weight:500}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:12px}
+.tile{border-left:3px solid var(--line);padding:2px 0 2px 10px;min-width:0}
+.tile.ta{border-color:var(--a)} .tile.tk{border-color:var(--k)} .tile.tb{border-color:var(--b)}
+.tile .l{font-size:.74rem;color:var(--muted)}
+.tile .v{font-family:var(--mono);font-size:1.12rem;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 0;font-size:.82rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot.a{background:var(--a)} .dot.b{background:var(--b)} .dot.k{background:var(--k)} .dot.r{background:var(--rev)}
+.note{margin:10px 0 0;font-size:.86rem;color:var(--muted);max-width:75ch}
+
+.formulas{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px 22px;margin-top:6px}
+.f{border-top:1px solid var(--line);padding-top:10px;min-width:0}
+.f h3{margin:0 0 6px;font-size:.88rem;font-weight:600}
+.math{font-family:Georgia,"Times New Roman",serif;font-size:1.2rem;font-style:italic;overflow-x:auto;padding-bottom:2px}
+.math .u{font-style:normal}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .2em;line-height:1.15}
+.frac>span:first-child{border-bottom:1px solid currentColor;padding:0 .25em}
+.num{margin-top:4px;font-family:var(--mono);font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}
+.f p{margin:4px 0 0;font-size:.82rem;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Codeur incrémental</h1>
+      <p>Un disque à n fentes tourne entre une LED et un ou deux capteurs optiques. Réglez n, la vitesse et le nombre de capteurs, puis observez les créneaux et le comptage des fronts montants.</p>
+    </div>
+    <div class="seg themes" role="radiogroup" aria-label="Thème d'affichage">
+      <input type="radio" name="theme" id="thAuto" value="auto" checked><label for="thAuto">Auto</label>
+      <input type="radio" name="theme" id="thLight" value="light"><label for="thLight">☀ Clair</label>
+      <input type="radio" name="theme" id="thDark" value="dark"><label for="thDark">☾ Sombre</label>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="col">
+      <section class="panel" aria-label="Réglages">
+        <h2>Réglages</h2>
+        <div class="ctl">
+          <div class="ctl-head"><label class="t" for="n">Nombre de fentes <i>n</i></label><output id="nOut" for="n">8</output></div>
+          <input type="range" id="n" min="2" max="64" step="1" value="8">
+          <div class="hint" id="nHint"></div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label class="t" for="N">Vitesse de rotation <i>N</i></label><output id="NOut" for="N">15 tr/min</output></div>
+          <input type="range" id="N" min="1" max="120" step="1" value="15">
+          <div class="hint" id="NHint"></div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><span class="t">Capteurs optiques</span></div>
+          <div class="seg" role="radiogroup" aria-label="Nombre de capteurs">
+            <input type="radio" name="cap" id="capA" value="1"><label for="capA">A seul</label>
+            <input type="radio" name="cap" id="capB" value="2" checked><label for="capB">A et B (quadrature)</label>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><span class="t">Sens de rotation du disque</span></div>
+          <div class="seg" role="radiogroup" aria-label="Sens de rotation">
+            <input type="radio" name="dir" id="dirCW" value="1" checked><label for="dirCW">↻ Horaire</label>
+            <input type="radio" name="dir" id="dirCCW" value="-1"><label for="dirCCW">↺ Antihoraire</label>
+          </div>
+        </div>
+        <div class="btns">
+          <button type="button" id="pause">Pause</button>
+          <button type="button" id="reset">Remise à zéro de k</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Disque et capteurs">
+        <h2>Disque et capteurs</h2>
+        <p class="sub">Chaque capteur associe une LED sous le disque et une photodiode au-dessus. Quand une fente passe devant, la lumière arrive à la photodiode et la tension vaut 5 V. B est placé un quart de pas après A.</p>
+        <canvas id="disk" role="img" aria-label="Disque à fentes en rotation avec les capteurs A et B"></canvas>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel" aria-label="Mesures">
+        <h2>Mesures en direct</h2>
+        <div class="tiles">
+          <div class="tile ta"><div class="l">Période T mesurée (A)</div><div class="v" id="rT">—</div></div>
+          <div class="tile ta"><div class="l">Fréquence f mesurée</div><div class="v" id="rF">—</div></div>
+          <div class="tile tk"><div class="l" id="rKl">k (signé)</div><div class="v" id="rK">0</div></div>
+          <div class="tile tk"><div class="l">Δθ depuis la remise à zéro</div><div class="v" id="rD">0 °</div></div>
+          <div class="tile tb"><div class="l">Sens détecté</div><div class="v" id="rS">—</div></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Chronogramme">
+        <h2>Chronogramme des capteurs</h2>
+        <p class="sub">Tension V de chaque photodiode en fonction du temps. La période des créneaux est l'image de la vitesse : plus le disque tourne vite, plus elle est courte.</p>
+        <div class="toolbar">
+          <div class="grp" role="group" aria-label="Signaux affichés">
+            <label class="chk a" for="chkA"><input type="checkbox" id="chkA" checked><span>Signal A</span></label>
+            <label class="chk b" id="chkBlab" for="chkB"><input type="checkbox" id="chkB" checked><span>Signal B</span></label>
+          </div>
+          <div class="seg" role="radiogroup" aria-label="Disposition des signaux">
+            <input type="radio" name="view" id="viewSep" value="sep" checked><label for="viewSep">Séparés</label>
+            <input type="radio" name="view" id="viewSup" value="sup"><label for="viewSup">Superposés</label>
+          </div>
+          <div class="zoom">
+            <div class="ctl-head"><label class="t" for="zoom">Échelle de temps</label><output id="zoomOut" for="zoom">6 s</output></div>
+            <input type="range" id="zoom" min="0" max="100" step="1" value="80">
+            <div class="hint" id="zoomHint"></div>
+          </div>
+        </div>
+        <canvas id="chrono" role="img" aria-label="Chronogramme des tensions des capteurs A et B"></canvas>
+        <div class="legend">
+          <span><i class="dot a"></i>Capteur A</span>
+          <span id="lgB"><i class="dot b"></i>Capteur B</span>
+          <span id="lgP"><i class="dot k"></i>front montant de A avec B = 0 : k + 1</span>
+          <span id="lgM"><i class="dot r"></i>front montant de A avec B = 1 : k − 1</span>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Position angulaire relative">
+        <h2>Position angulaire relative Δθ</h2>
+        <p class="sub">Un codeur incrémental est un capteur relatif : il donne la variation d'angle Δθ depuis la remise à zéro, jamais la position absolue. La courbe est la somme des fronts montants comptés, avec la même échelle de temps que le chronogramme.</p>
+        <canvas id="stairs" role="img" aria-label="Compteur de fronts montants en escalier et angle Δθ correspondant"></canvas>
+        <p class="note" id="note"></p>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" style="margin-top:16px" aria-label="Formules">
+    <h2>Formules</h2>
+    <p class="sub">Avec <i>n</i> le nombre de fentes, <i>N</i> la vitesse en tr/min et <i>k</i> le nombre de fronts montants comptés. Les lignes en dessous reprennent vos réglages.</p>
+    <div class="formulas">
+      <div class="f">
+        <h3>Pas angulaire (résolution)</h3>
+        <div class="math">Δθ<sub class="u">min</sub> = <span class="frac"><span><span class="u">360°</span></span><span>n</span></span></div>
+        <div class="num" id="f1"></div>
+        <p>Un front montant de A correspond à un pas. Une fente et une zone pleine occupent chacune 180°/n.</p>
+      </div>
+      <div class="f">
+        <h3>Fréquence des créneaux</h3>
+        <div class="math">f = <span class="frac"><span>n · N</span><span class="u">60</span></span></div>
+        <div class="num" id="f2"></div>
+        <p>Chaque tour fait défiler n fentes devant le capteur.</p>
+      </div>
+      <div class="f">
+        <h3>Période des créneaux</h3>
+        <div class="math">T = <span class="frac"><span class="u">1</span><span>f</span></span> = <span class="frac"><span class="u">60</span><span>n · N</span></span></div>
+        <div class="num" id="f3"></div>
+        <p>C'est la durée mesurée entre deux fronts montants de A sur le chronogramme.</p>
+      </div>
+      <div class="f">
+        <h3>Vitesse déduite de la mesure</h3>
+        <div class="math">N = <span class="frac"><span class="u">60</span><span>n · T</span></span></div>
+        <div class="num" id="f4"></div>
+        <p>On retrouve N à partir de la période lue sur le chronogramme.</p>
+      </div>
+      <div class="f">
+        <h3>Variation angulaire relative</h3>
+        <div class="math">Δθ = k × <span class="frac"><span class="u">360°</span><span>n</span></span></div>
+        <div class="num" id="f5"></div>
+        <p>k est signé avec deux capteurs. Avec A seul, k ne fait que croître.</p>
+      </div>
+      <div class="f">
+        <h3>Quadrature et sens de rotation</h3>
+        <div class="math">φ<sub>B</sub> − φ<sub>A</sub> = 90° &nbsp;⇔&nbsp; Δt = <span class="frac"><span>T</span><span class="u">4</span></span></div>
+        <div class="num" id="f6"></div>
+        <p>Au front montant de A : B = 0 donne k + 1, B = 1 donne k − 1. Le sens vient de l'ordre des fronts.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var WMAX=20, DT=0.0005;
+function zoomToW(v){return Number((0.05*Math.pow(400,v/100)).toPrecision(2));}
+var W=zoomToW(80);
+var V={A:true,B:true,sup:false};
+var S={n:8,N:15,dir:1,two:true,run:true,phi:0,t:0,k:0,prevA:0,prevB:0,lastRise:null,prevRise:null,Tm:null,lastDir:null};
+var ts=[],As=[],Bs=[],Ks=[],head=0,evts=[];
+function mod(x,p){return ((x%p)+p)%p;}
+function P(){return 360/S.n;}
+function sep(){return P()/4;}
+var aA=-90;
+function aB(){return aA+sep();}
+function lvl(a){return mod(a-S.phi,P())<P()/2?1:0;}
+function fmt(x,d){return x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fmtDeg(x){return Math.abs(x)>=100?fmt(x,0):Number(x.toFixed(1)).toLocaleString('fr-FR');}
+function fmtW(x){return x<1?fmt(x*1000,0)+' ms':fmt(x,x<10?1:0)+' s';}
+
+function reset(){
+  ts=[];As=[];Bs=[];Ks=[];head=0;evts=[];
+  S.k=0;S.t=0;S.lastRise=null;S.prevRise=null;S.Tm=null;S.lastDir=null;
+  S.prevA=lvl(aA);S.prevB=S.two?lvl(aB()):0;
+  ts.push(0);As.push(S.prevA);Bs.push(S.prevB);Ks.push(0);
+}
+function step(h){
+  S.phi=mod(S.phi+S.dir*6*S.N*h,360);
+  S.t+=h;
+  var a=lvl(aA), b=S.two?lvl(aB()):0;
+  if(a===1&&S.prevA===0){
+    var d=S.two?(b?-1:1):0;
+    S.k+=S.two?d:1;
+    S.lastDir=d;
+    evts.push({t:S.t,d:d,b:b});
+    S.prevRise=S.lastRise;S.lastRise=S.t;
+    if(S.prevRise!==null)S.Tm=S.lastRise-S.prevRise;
+  }
+  S.prevA=a;S.prevB=b;
+  ts.push(S.t);As.push(a);Bs.push(b);Ks.push(S.k);
+}
+function prune(){
+  var lim=S.t-WMAX-0.05;
+  while(head<ts.length-1&&ts[head+1]<lim)head++;
+  if(head>20000){ts=ts.slice(head);As=As.slice(head);Bs=Bs.slice(head);Ks=Ks.slice(head);head=0;}
+  while(evts.length&&evts[0].t<lim)evts.shift();
+}
+function startIdx(t0){
+  var lo=head,hi=ts.length-1;
+  while(lo<hi){var mid=(lo+hi+1)>>1;if(ts[mid]<=t0)lo=mid;else hi=mid-1;}
+  return lo;
+}
+
+function tok(){
+  var cs=getComputedStyle(document.documentElement);
+  var g=function(n){return cs.getPropertyValue(n).trim();};
+  return {panel:g('--panel'),ink:g('--ink'),muted:g('--muted'),line:g('--line'),grid:g('--grid'),disk:g('--disk'),body:g('--body'),
+    a:g('--a'),b:g('--b'),k:g('--k'),rev:g('--rev'),beam:g('--beam'),mono:g('--mono')};
+}
+function fit(c){
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  var w=c.clientWidth,h=c.clientHeight;
+  var pw=Math.round(w*dpr),ph=Math.round(h*dpr);
+  if(c.width!==pw||c.height!==ph){c.width=pw;c.height=ph;}
+  var ctx=c.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  return {ctx:ctx,w:w,h:h};
+}
+
+var dc=$('disk'),cc=$('chrono'),sc=$('stairs');
+
+function sensor(ctx,cx,cy,rin,rout,alpha,col,on,label,T,hw,inside){
+  var ar=alpha*Math.PI/180, rm=(rin+rout)/2, pd=Math.min(3.5,hw*0.65);
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(ar);
+  ctx.fillStyle=T.body;ctx.globalAlpha=0.9;
+  ctx.beginPath();ctx.rect(rin-8,-hw,rout-rin+16,2*hw);ctx.fill();
+  ctx.globalAlpha=1;ctx.strokeStyle=col;ctx.lineWidth=hw<5?1.5:2;ctx.stroke();
+  if(on){ctx.fillStyle=T.beam;ctx.globalAlpha=0.6;ctx.beginPath();ctx.arc(rm,0,Math.min(11,hw+3),0,2*Math.PI);ctx.fill();ctx.globalAlpha=1;}
+  ctx.fillStyle=on?col:T.panel;ctx.strokeStyle=col;ctx.lineWidth=hw<5?1.2:2;
+  ctx.beginPath();ctx.rect(rm-7,-pd,14,2*pd);ctx.fill();ctx.stroke();
+  ctx.restore();
+  var lr=inside?(rin-24):(rout+28);
+  var lx=cx+lr*Math.cos(ar), ly=cy+lr*Math.sin(ar);
+  ctx.fillStyle=col;ctx.font='600 17px '+T.mono;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,lx,ly);
+}
+function drawDisk(T){
+  var f=fit(dc),ctx=f.ctx,cx=f.w/2,cy=f.h/2,half=Math.min(f.w,f.h)/2;
+  var Rd=half*0.78,rin=Rd*0.66,rout=Rd*0.95,p=P(),n=S.n,k;
+  ctx.fillStyle=T.disk;ctx.beginPath();ctx.arc(cx,cy,Rd,0,2*Math.PI);ctx.fill();
+  ctx.fillStyle=T.panel;
+  for(k=0;k<n;k++){
+    var a0=(S.phi+k*p)*Math.PI/180,a1=(S.phi+k*p+p/2)*Math.PI/180;
+    ctx.beginPath();ctx.arc(cx,cy,rout,a0,a1);ctx.arc(cx,cy,rin,a1,a0,true);ctx.closePath();ctx.fill();
+  }
+  ctx.strokeStyle=T.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,Rd,0,2*Math.PI);ctx.stroke();
+  ctx.fillStyle=T.body;ctx.beginPath();ctx.arc(cx,cy,Rd*0.18,0,2*Math.PI);ctx.fill();
+  var ar=S.phi*Math.PI/180;
+  ctx.strokeStyle=T.panel;ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(cx+Rd*0.2*Math.cos(ar),cy+Rd*0.2*Math.sin(ar));ctx.lineTo(cx+Rd*0.5*Math.cos(ar),cy+Rd*0.5*Math.sin(ar));ctx.stroke();
+  ctx.fillStyle=T.panel;ctx.beginPath();ctx.arc(cx+Rd*0.5*Math.cos(ar),cy+Rd*0.5*Math.sin(ar),4,0,2*Math.PI);ctx.fill();
+  ctx.fillStyle=T.muted;ctx.font='500 13px '+T.mono;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(S.dir>0?'↻':'↺',cx,cy);
+  var rm=(rin+rout)/2, sepPx=rm*(p/4)*Math.PI/180;
+  var hw=S.two?Math.max(2.5,Math.min(11,sepPx*0.42)):11;
+  sensor(ctx,cx,cy,rin,rout,aA,T.a,lvl(aA)===1,'A',T,hw,false);
+  if(S.two)sensor(ctx,cx,cy,rin,rout,aB(),T.b,lvl(aB())===1,'B',T,hw,true);
+}
+
+function vgrid(ctx,T,ml,pw,top,bottom,labelY,t0){
+  var steps=[0.001,0.002,0.005,0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20],st=20,i;
+  var maxTicks=Math.max(3,Math.floor(pw/72));
+  for(i=0;i<steps.length;i++){if(W/steps[i]<=maxTicks){st=steps[i];break;}}
+  var d=st>=1?0:(st>=0.1?1:(st>=0.01?2:3));
+  ctx.font='11px '+T.mono;ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  for(var j=Math.max(0,Math.ceil(t0/st-1e-9));j*st<=S.t+1e-9;j++){
+    var tv=j*st,x=ml+(tv-t0)/W*pw;
+    if(x<ml-0.5||x>ml+pw+0.5)continue;
+    ctx.strokeStyle=T.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();
+    ctx.fillStyle=T.muted;ctx.fillText(fmt(tv,d)+' s',x,labelY);
+  }
+}
+function drawChrono(T){
+  var f=fit(cc),ctx=f.ctx,w=f.w,h=f.h;
+  var ml=46,mr=12,mt=6,mb=26,gap=12,pw=w-ml-mr,t0=S.t-W;
+  var X=function(t){return ml+(t-t0)/W*pw;};
+  vgrid(ctx,T,ml,pw,mt,h-mb,h-8,t0);
+  var sigs=[];
+  if(V.A)sigs.push({sig:As,col:T.a,name:'A'});
+  if(V.B&&S.two)sigs.push({sig:Bs,col:T.b,name:'B'});
+  if(!sigs.length){
+    ctx.fillStyle=T.muted;ctx.font='13px '+T.mono;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('Cochez A ou B pour afficher un signal',ml+pw/2,(mt+h-mb)/2);
+    return;
+  }
+  var lanes=V.sup?[sigs]:sigs.map(function(s){return [s];});
+  var L=lanes.length,lh=(h-mt-mb-gap*(L-1))/L,pos={};
+  lanes.forEach(function(ln,i){
+    var top=mt+i*(lh+gap),yHi=top+30,yLo=top+lh-8;
+    ctx.strokeStyle=T.line;ctx.lineWidth=1;ctx.setLineDash([2,4]);
+    ctx.beginPath();ctx.moveTo(ml,yHi);ctx.lineTo(ml+pw,yHi);ctx.moveTo(ml,yLo);ctx.lineTo(ml+pw,yLo);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=T.muted;ctx.font='11px '+T.mono;ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText('5 V',ml-6,yHi);ctx.fillText('0 V',ml-6,yLo);
+    ln.forEach(function(s,j){
+      pos[s.name]={hi:yHi,lo:yLo};
+      ctx.fillStyle=s.col;ctx.font='600 14px '+T.mono;ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText('V'+s.name,4,(yHi+yLo)/2-14+j*17);
+    });
+    ctx.save();ctx.beginPath();ctx.rect(ml,top,pw,lh);ctx.clip();
+    ctx.lineJoin='miter';
+    ln.forEach(function(s){
+      ctx.strokeStyle=s.col;
+      ctx.lineWidth=V.sup&&ln.length>1?(s.name==='A'?4.6:2.2):2.3;
+      var Y=function(v){return v?yHi:yLo;},started=false,pv=null,q;
+      ctx.beginPath();
+      for(q=startIdx(t0);q<ts.length;q++){
+        var x=X(ts[q]),v=s.sig[q];
+        if(!started){ctx.moveTo(x,Y(v));started=true;pv=v;continue;}
+        if(v!==pv){ctx.lineTo(x,Y(pv));ctx.lineTo(x,Y(v));pv=v;}
+      }
+      ctx.lineTo(X(S.t),Y(pv));ctx.stroke();
+    });
+    ctx.restore();
+  });
+  if(S.lastRise!==null&&S.prevRise!==null&&S.prevRise>=t0){
+    var x1=X(S.prevRise),x2=X(S.lastRise),ya=mt+18;
+    ctx.strokeStyle=T.ink;ctx.fillStyle=T.ink;ctx.lineWidth=1.3;
+    ctx.beginPath();ctx.moveTo(x1,ya);ctx.lineTo(x2,ya);
+    ctx.moveTo(x1,ya-4);ctx.lineTo(x1,ya+4);ctx.moveTo(x2,ya-4);ctx.lineTo(x2,ya+4);ctx.stroke();
+    ctx.font='600 11px '+T.mono;ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.fillText('T = '+(S.Tm<1?fmt(S.Tm*1000,1)+' ms':fmt(S.Tm,3)+' s'),(x1+x2)/2,ya-7);
+  }
+  ctx.save();ctx.beginPath();ctx.rect(ml-6,0,pw+12,h);ctx.clip();
+  evts.forEach(function(e){
+    if(e.t<t0)return;
+    var x=X(e.t),pa=pos.A,pb=pos.B,ymid=pa?(pa.hi+pa.lo)/2:0;
+    if(pa&&pb){
+      var yb0=e.b?pb.hi:pb.lo;
+      ctx.strokeStyle=T.muted;ctx.globalAlpha=0.6;ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.moveTo(x,ymid);ctx.lineTo(x,yb0);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+    }
+    if(pb){
+      var yb=e.b?pb.hi:pb.lo;
+      ctx.fillStyle=e.d>0?T.k:T.rev;ctx.strokeStyle=T.panel;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(x,yb,4.5,0,2*Math.PI);ctx.fill();ctx.stroke();
+    }
+    if(pa){
+      ctx.fillStyle=T.a;ctx.strokeStyle=T.panel;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(x,ymid,3.8,0,2*Math.PI);ctx.fill();ctx.stroke();
+    }
+  });
+  ctx.restore();
+}
+
+function drawStairs(T){
+  var f=fit(sc),ctx=f.ctx,w=f.w,h=f.h;
+  var ml=46,mr=62,mt=22,mb=26,pw=w-ml-mr,ph=h-mt-mb,t0=S.t-W,i,i0=startIdx(t0);
+  var lo=Infinity,hi=-Infinity;
+  for(i=i0;i<ts.length;i++){if(Ks[i]<lo)lo=Ks[i];if(Ks[i]>hi)hi=Ks[i];}
+  if(!isFinite(lo)){lo=0;hi=0;}
+  lo=Math.floor(lo)-1;hi=Math.ceil(hi)+1;
+  if(hi-lo<4){var c=Math.round((hi+lo)/2);lo=c-2;hi=c+2;}
+  var range=hi-lo,steps=[1,2,5,10,20,50,100,200,500,1000,2000,5000,10000],st=10000,s;
+  for(i=0;i<steps.length;i++){s=steps[i];if(range/s<=6){st=s;break;}}
+  var X=function(t){return ml+(t-t0)/W*pw;};
+  var Y=function(k){return mt+ph-(k-lo)/range*ph;};
+  vgrid(ctx,T,ml,pw,mt,h-mb,h-8,t0);
+  ctx.font='11px '+T.mono;ctx.textBaseline='middle';
+  for(var g=Math.ceil(lo/st)*st;g<=hi;g+=st){
+    var y=Y(g);
+    ctx.strokeStyle=g===0?T.muted:T.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+pw,y);ctx.stroke();
+    ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText(String(g),ml-6,y);
+    ctx.textAlign='left';ctx.fillText(fmtDeg(g*360/S.n),ml+pw+6,y);
+  }
+  ctx.fillStyle=T.k;ctx.font='600 11px '+T.mono;ctx.textBaseline='alphabetic';
+  ctx.textAlign='right';ctx.fillText('k',ml-6,12);
+  ctx.textAlign='left';ctx.fillText('Δθ (°)',ml+pw+6,12);
+  ctx.save();ctx.beginPath();ctx.rect(ml,mt-4,pw,ph+8);ctx.clip();
+  ctx.strokeStyle=T.k;ctx.lineWidth=2.5;ctx.lineJoin='miter';ctx.beginPath();
+  var started=false,pv=0;
+  for(i=i0;i<ts.length;i++){
+    var x=X(ts[i]),v=Ks[i];
+    if(!started){ctx.moveTo(x,Y(v));started=true;pv=v;continue;}
+    if(v!==pv){ctx.lineTo(x,Y(pv));ctx.lineTo(x,Y(v));pv=v;}
+  }
+  ctx.lineTo(X(S.t),Y(pv));ctx.stroke();ctx.restore();
+  ctx.fillStyle=T.k;ctx.strokeStyle=T.panel;ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(X(S.t),Y(S.k),4.5,0,2*Math.PI);ctx.fill();ctx.stroke();
+}
+
+var cache={};
+function setT(id,s){if(cache[id]!==s){cache[id]=s;$(id).textContent=s;}}
+function info(){
+  var n=S.n,N=S.N,p=P(),f=n*N/60,T=60/(n*N),dd=S.k*p;
+  setT('rT',S.Tm===null?'—':(S.Tm<1?fmt(S.Tm*1000,1)+' ms':fmt(S.Tm,3)+' s'));
+  setT('rF',S.Tm===null?'—':fmt(1/S.Tm,2)+' Hz');
+  setT('rKl',S.two?'k (signé)':'k (impulsions)');
+  setT('rK',(S.k>0?'+':'')+S.k);
+  setT('rD',(S.k>0?'+':'')+fmt(dd,1)+' °');
+  setT('rS',S.two?(S.lastDir===null?'—':(S.lastDir>0?'↻ horaire':'↺ antihoraire')):'indéterminé');
+  setT('zoomHint','≈ '+fmt(W*f,1)+' périodes affichées');
+  setT('f1','360° / '+n+' = '+fmt(p,2)+'°');
+  setT('f2',n+' × '+N+' / 60 = '+fmt(f,2)+' Hz');
+  setT('f3','60 / ('+n+' × '+N+') = '+fmt(T,3)+' s');
+  setT('f4',S.Tm===null?'En attente de deux fronts montants de A':'60 / ('+n+' × '+fmt(S.Tm,3)+') = '+fmt(60/(n*S.Tm),1)+' tr/min');
+  setT('f5',S.k+' × '+fmt(p,2)+'° = '+fmt(dd,1)+'°');
+  setT('f6',S.two?('T/4 = '+fmt(T/4,3)+' s · B décalé de 360°/(4n) = '+fmt(sep(),2)+'° (un quart de pas)'):'Capteur B absent : pas de quadrature');
+  setT('note',S.two
+    ?'Avec A et B, k augmente dans un sens et diminue dans l\'autre : le sens se lit sur B au moment du front montant de A.'
+    :'Avec A seul, le sens est inconnu et k ne peut que croître. Passez en antihoraire pour voir l\'erreur : Δθ continue d\'augmenter.');
+}
+function ctrlText(){
+  $('nOut').textContent=S.n;
+  $('nHint').textContent='Fente : '+fmt(180/S.n,1)+'° · pas : '+fmt(360/S.n,1)+'° · rapport cyclique 1/2';
+  $('NOut').textContent=S.N+' tr/min';
+  $('NHint').textContent='ω = '+fmt(2*Math.PI*S.N/60,2)+' rad/s · '+fmt(6*S.N,0)+' °/s';
+  $('zoomOut').textContent=fmtW(W);
+  $('lgB').hidden=!S.two;$('lgP').hidden=!S.two;$('lgM').hidden=!S.two;
+  $('chkB').disabled=!S.two;
+  $('chkBlab').className='chk b'+(S.two?'':' off');
+  $('pause').textContent=S.run?'Pause':'Reprendre';
+}
+
+function applyTheme(v){
+  var r=document.documentElement;
+  if(v==='light'||v==='dark')r.setAttribute('data-theme',v);else r.removeAttribute('data-theme');
+  try{localStorage.setItem('codeur-theme',v);}catch(e){}
+}
+(function initTheme(){
+  var saved=null,cur=document.documentElement.getAttribute('data-theme');
+  try{saved=localStorage.getItem('codeur-theme');}catch(e){}
+  var v=saved||cur||'auto';
+  if(v!=='light'&&v!=='dark')v='auto';
+  $(v==='light'?'thLight':v==='dark'?'thDark':'thAuto').checked=true;
+  if(saved)applyTheme(v);
+})();
+['thAuto','thLight','thDark'].forEach(function(id){
+  $(id).addEventListener('change',function(e){applyTheme(e.target.value);});
+});
+
+$('n').addEventListener('input',function(e){S.n=+e.target.value;reset();ctrlText();});
+$('N').addEventListener('input',function(e){S.N=+e.target.value;ctrlText();});
+$('capA').addEventListener('change',function(){S.two=false;reset();ctrlText();});
+$('capB').addEventListener('change',function(){S.two=true;reset();ctrlText();});
+$('dirCW').addEventListener('change',function(){S.dir=1;});
+$('dirCCW').addEventListener('change',function(){S.dir=-1;});
+$('pause').addEventListener('click',function(){S.run=!S.run;ctrlText();});
+$('reset').addEventListener('click',function(){reset();});
+$('chkA').addEventListener('change',function(e){V.A=e.target.checked;});
+$('chkB').addEventListener('change',function(e){V.B=e.target.checked;});
+$('viewSep').addEventListener('change',function(){V.sup=false;});
+$('viewSup').addEventListener('change',function(){V.sup=true;});
+$('zoom').addEventListener('input',function(e){W=zoomToW(+e.target.value);ctrlText();});
+
+reset();
+var i0,warm=Math.round(WMAX/DT);
+for(i0=0;i0<warm;i0++)step(DT);
+prune();
+if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)S.run=false;
+ctrlText();
+
+var last=performance.now();
+function frame(now){
+  var dt=Math.min((now-last)/1000,0.05);last=now;
+  if(S.run){
+    var rem=dt;
+    while(rem>1e-9){var h=Math.min(DT,rem);step(h);rem-=h;}
+    prune();
+  }
+  var T=tok();
+  drawDisk(T);drawChrono(T);drawStairs(T);info();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
