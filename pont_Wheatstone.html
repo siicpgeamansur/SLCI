@@ -1,0 +1,741 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Pont de Wheatstone</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : colonne gauche = réglages + mesures (fixes à l'écran) ; colonne droite = les quatre étapes (pièce, jauge, pont, courbe) ; formules en bas.
+   Couleurs : résistances fixes bleues, jauge orange, mesure Um verte, force magenta. */
+:root{
+  --bg:#e8ecf0; --panel:#f6f8fa; --ink:#16202a; --muted:#5a6672; --line:#cbd3db; --grid:#dde3e9;
+  --metal:#b9c3cd; --a:#1b66e0; --b:#e06a00; --k:#0b8a66; --f:#c2255c;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161c; --panel:#192027; --ink:#e6ebf0; --muted:#9aa7b4; --line:#2d3843; --grid:#26303a;
+    --metal:#5b6978; --a:#6ea8ff; --b:#ffa04d; --k:#3ed3a3; --f:#ff6b9a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161c; --panel:#192027; --ink:#e6ebf0; --muted:#9aa7b4; --line:#2d3843; --grid:#26303a;
+  --metal:#5b6978; --a:#6ea8ff; --b:#ffa04d; --k:#3ed3a3; --f:#ff6b9a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--ink); font:15px/1.5 var(--sans);
+  padding-block:20px 32px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1200px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px 28px;flex-wrap:wrap}
+.top>div:first-child{min-width:0;flex:1 1 360px}
+header h1{font-size:1.7rem;line-height:1.15;margin:0 0 6px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:68ch}
+.themes{width:250px;max-width:100%}
+.layout{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:16px;margin-top:18px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (min-width:901px) and (min-height:800px){.sticky{position:sticky;top:12px}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+h2{font-size:.76rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 4px;font-weight:600}
+.sub{margin:0 0 10px;font-size:.88rem;color:var(--muted);max-width:72ch}
+canvas{display:block;width:100%}
+#piece,#zoom{height:410px}
+.bridge{height:330px}
+#graph{height:260px}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px 16px}
+.cell{min-width:0}
+.cap{font-size:.86rem;margin:0 0 4px}
+.cap b{font-weight:600}
+
+.ctl{display:grid;gap:6px}
+.ctl+.ctl{margin-top:14px}
+.ctl-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ctl-head .t{font-weight:500}
+output{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin:0;height:28px;accent-color:var(--ink)}
+.hint{font-size:.8rem;color:var(--muted);font-family:var(--mono)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:8px 10px;text-align:center;cursor:pointer;font-size:.9rem;background:var(--panel);border-left:1px solid var(--line)}
+.seg label:first-of-type{border-left:0}
+.seg input:checked+label{background:var(--ink);color:var(--panel)}
+.seg input:focus-visible+label{outline:2px solid var(--a);outline-offset:-3px}
+.btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+button{font:inherit;padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:12px}
+.tile{border-left:3px solid var(--line);padding:2px 0 2px 10px;min-width:0}
+.tile.tf{border-color:var(--f)} .tile.tm{border-color:var(--muted)} .tile.tb{border-color:var(--b)} .tile.tk{border-color:var(--k)}
+.tile .l{font-size:.74rem;color:var(--muted)}
+.tile .v{font-family:var(--mono);font-size:1.05rem;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 0;font-size:.82rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot.a{background:var(--a)} .dot.b{background:var(--b)} .dot.k{background:var(--k)} .dot.f{background:var(--f)}
+.note{margin:8px 0 0;font-size:.86rem;color:var(--muted);max-width:75ch}
+.note.big{color:var(--ink)}
+
+.formulas{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px 22px;margin-top:6px}
+.f{border-top:1px solid var(--line);padding-top:10px;min-width:0}
+.f h3{margin:0 0 6px;font-size:.88rem;font-weight:600}
+.math{font-family:Georgia,"Times New Roman",serif;font-size:1.2rem;font-style:italic;overflow-x:auto;padding-bottom:2px}
+.math .u{font-style:normal}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .2em;line-height:1.15}
+.frac>span:first-child{border-bottom:1px solid currentColor;padding:0 .25em}
+.num{margin-top:4px;font-family:var(--mono);font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}
+.f p{margin:4px 0 0;font-size:.82rem;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Pont de Wheatstone</h1>
+      <p>Comment mesurer une force avec une jauge de contrainte ? La force déforme une pièce, la jauge collée dessus change de résistance, et un pont de Wheatstone transforme cette toute petite variation en une tension mesurable, proportionnelle à la force F.</p>
+    </div>
+    <div class="seg themes" role="radiogroup" aria-label="Thème d'affichage">
+      <input type="radio" name="theme" id="thAuto" value="auto" checked><label for="thAuto">Auto</label>
+      <input type="radio" name="theme" id="thLight" value="light"><label for="thLight">☀ Clair</label>
+      <input type="radio" name="theme" id="thDark" value="dark"><label for="thDark">☾ Sombre</label>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="col sticky">
+      <section class="panel" aria-label="Réglages">
+        <h2>Réglages</h2>
+        <div class="ctl">
+          <div class="ctl-head"><span class="t">Mode de sollicitation</span></div>
+          <div class="seg" role="radiogroup" aria-label="Mode de sollicitation">
+            <input type="radio" name="mode" id="mTrac" value="trac" checked><label for="mTrac">Traction / compression</label>
+            <input type="radio" name="mode" id="mFlex" value="flex"><label for="mFlex">Flexion</label>
+          </div>
+          <div class="hint" id="modeHint"></div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label class="t" for="F">Force appliquée <i>F</i></label><output id="FOut" for="F">1 000 N</output></div>
+          <input type="range" id="F" min="-2000" max="2000" step="10" value="1000">
+          <div class="hint" id="FHint"></div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label class="t" for="U">Tension d'alimentation du pont <i>U</i></label><output id="UOut" for="U">5,0 V</output></div>
+          <input type="range" id="U" min="1" max="12" step="0.5" value="5">
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><span class="t">Résistance <i>R</i> de la jauge au repos</span></div>
+          <div class="seg" role="radiogroup" aria-label="Résistance de la jauge">
+            <input type="radio" name="res" id="r120" value="0"><label for="r120">120 Ω</label>
+            <input type="radio" name="res" id="r350" value="1" checked><label for="r350">350 Ω</label>
+            <input type="radio" name="res" id="r1000" value="2"><label for="r1000">1 000 Ω</label>
+          </div>
+          <div class="hint">Changez R : Um ne bouge pas.</div>
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label class="t" for="K">Facteur de jauge <i>K</i></label><output id="KOut" for="K">2,0</output></div>
+          <input type="range" id="K" min="1.5" max="4" step="0.1" value="2">
+          <div class="hint">Jauge métallique (constantan) : K ≈ 2.</div>
+        </div>
+        <div class="btns">
+          <button type="button" id="zero">F = 0 (pont équilibré)</button>
+          <button type="button" id="sweep" aria-pressed="false">Balayage automatique</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Mesures">
+        <h2>Chaîne de mesure en direct</h2>
+        <div class="tiles">
+          <div class="tile tf"><div class="l">Force F</div><div class="v" id="tF">—</div></div>
+          <div class="tile tm"><div class="l" id="tSl">Contrainte σ = F / Sp</div><div class="v" id="tS">—</div></div>
+          <div class="tile tm"><div class="l">Déformation ε (µε = µm/m)</div><div class="v" id="tE">—</div></div>
+          <div class="tile tb"><div class="l">ΔR / R</div><div class="v" id="tRR">—</div></div>
+          <div class="tile tb"><div class="l">ΔR</div><div class="v" id="tdR">—</div></div>
+          <div class="tile tk"><div class="l">Tension Um du pont</div><div class="v" id="tU">—</div></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel" aria-label="La pièce et la jauge">
+        <h2>1 · La force déforme la pièce</h2>
+        <p class="sub mt">Une pièce d'acier en forme de S, une tige percée d'un trou en lunettes, est fixée en haut. La force F la tire vers le bas (traction) ou la pousse vers le haut (compression). Les parois minces autour des trous se déforment le plus : on y colle la jauge de contrainte. Les déformations sont fortement exagérées pour qu'on les voie.</p>
+        <p class="sub mf" hidden>La même pièce est encastrée en haut. Une force horizontale F, appliquée en bas, la fait fléchir comme une poutre. Quand F est dirigée vers la droite, la face gauche, où est collée la jauge, s'allonge et la face droite se raccourcit. Si F est dirigée vers la gauche, c'est l'inverse. Les déformations sont fortement exagérées pour qu'on les voie.</p>
+        <div class="pair">
+          <div class="cell">
+            <div class="cap"><b>La pièce</b> (pointillés : sans force)</div>
+            <canvas id="piece" role="img" aria-label="Pièce métallique en S avec un trou en lunettes, une jauge collée et la force F appliquée"></canvas>
+          </div>
+          <div class="cell">
+            <div class="cap"><b>La jauge</b> vue de dessus, au repos puis déformée</div>
+            <canvas id="zoom" role="img" aria-label="Jauge de contrainte au repos et déformée : le fil résistif s'allonge et sa section diminue"></canvas>
+          </div>
+        </div>
+        <p class="note">La jauge est un patch isolant qui porte un fil résistif replié en serpentin. Il suit la déformation de la pièce : sa longueur L augmente, sa section S diminue.</p>
+      </section>
+
+      <section class="panel" aria-label="Résistance de la jauge">
+        <h2>2 · La résistance de la jauge augmente</h2>
+        <p class="sub">La résistance d'un fil de résistivité ρ, de longueur L et de section S vaut R = ρL/S. Quand la jauge est étirée, L augmente et S diminue : R augmente et devient R + ΔR.</p>
+        <div class="formulas">
+          <div class="f">
+            <h3>Au repos</h3>
+            <div class="math">R = ρ × <span class="frac"><span>L</span><span>S</span></span></div>
+            <div class="num" id="c1"></div>
+          </div>
+          <div class="f">
+            <h3>Sous charge</h3>
+            <div class="math">R + ΔR = ρ × <span class="frac"><span>L + ΔL</span><span>S − ΔS</span></span></div>
+            <div class="num" id="c2"></div>
+          </div>
+          <div class="f">
+            <h3>Variation relative</h3>
+            <div class="math">ΔR / R = K · ε</div>
+            <div class="num" id="c3"></div>
+          </div>
+        </div>
+        <p class="note">ΔR est minuscule : quelques centaines de milliohms sur 350 Ω. Un ohmmètre ne la mesure pas avec précision. On la transforme en tension grâce à un pont de Wheatstone.</p>
+      </section>
+
+      <section class="panel" aria-label="Pont de Wheatstone">
+        <h2>3 · Le pont de Wheatstone mesure ΔR</h2>
+        <p class="sub">Quatre résistances forment un carré. On applique la tension U entre les coins A et C, et on mesure la tension Um entre les deux autres coins B et D. La jauge est placée dans un bras du pont (R2). Les trois autres résistances valent R.</p>
+        <div class="pair">
+          <div class="cell">
+            <div class="cap"><b>Sans force</b> · F = 0</div>
+            <canvas id="b0" class="bridge" role="img" aria-label="Pont de Wheatstone équilibré : quatre résistances égales, tension de sortie nulle"></canvas>
+            <p class="note big" id="st0"></p>
+          </div>
+          <div class="cell">
+            <div class="cap"><b>Avec la force</b> · <span id="capF">F = 1 000 N</span></div>
+            <canvas id="b1" class="bridge" role="img" aria-label="Pont de Wheatstone déséquilibré : la jauge vaut R plus delta R, la tension de sortie n'est plus nulle"></canvas>
+            <p class="note big" id="st1"></p>
+          </div>
+        </div>
+        <div class="legend">
+          <span><i class="dot a"></i>résistances fixes R</span>
+          <span><i class="dot b"></i>jauge de contrainte</span>
+          <span><i class="dot k"></i>voltmètre (Um)</span>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Tension en fonction de la force">
+        <h2>4 · La tension Um est proportionnelle à F</h2>
+        <p class="sub">Faites varier F dans le panneau de gauche : le point se déplace sur une droite qui passe par l'origine. En compression (F &lt; 0), la résistance diminue et Um change de signe.</p>
+        <canvas id="graph" role="img" aria-label="Tension Um du pont en fonction de la force F, droite passant par l'origine"></canvas>
+        <div class="legend">
+          <span><i class="dot k"></i>Um exacte</span>
+          <span><i class="dot f"></i>point de fonctionnement</span>
+          <span>- - - approximation Um ≈ U·ΔR / 4R</span>
+        </div>
+        <p class="note" id="slope"></p>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" style="margin-top:16px" aria-label="Formules">
+    <h2>Formules à retenir</h2>
+    <p class="sub mt">Avec <i>R</i> la résistance de la jauge au repos, <i>K</i> son facteur de jauge, <i>E</i> = 200 GPa le module d'Young de l'acier et <i>S</i><sub>p</sub> = 10 mm² la section utile de la pièce (modèle simplifié). Les lignes en dessous reprennent vos réglages.</p>
+    <p class="sub mf" hidden>Avec <i>R</i> la résistance de la jauge au repos, <i>K</i> son facteur de jauge, <i>E</i> = 200 GPa le module d'Young de l'acier, <i>a</i> = 90 mm la distance entre la jauge et la force, <i>b</i> = 20 mm la largeur et <i>h</i> = 10 mm l'épaisseur de la pièce (modèle de poutre simplifié). Les lignes en dessous reprennent vos réglages.</p>
+    <div class="formulas">
+      <div class="f">
+        <h3>Pont équilibré (F = 0)</h3>
+        <div class="math">V<sub>B</sub> = U × <span class="frac"><span>R</span><span>R + R</span></span> = <span class="frac"><span>U</span><span class="u">2</span></span> = V<sub>D</sub> &nbsp;⇒&nbsp; U<sub>m</sub> = 0</div>
+        <div class="num" id="g1"></div>
+        <p>Chaque branche est un pont diviseur de tension : B et D sont au même potentiel.</p>
+      </div>
+      <div class="f">
+        <h3>Résistance d'un fil</h3>
+        <div class="math">R = ρ × <span class="frac"><span>L</span><span>S</span></span></div>
+        <div class="num" id="g2"></div>
+        <p>L augmente et S diminue sous traction : la résistance augmente.</p>
+      </div>
+      <div class="f">
+        <h3>Déformation de la pièce</h3>
+        <div class="math mt">σ = <span class="frac"><span>F</span><span>S<sub>p</sub></span></span> &nbsp;;&nbsp; ε = <span class="frac"><span>σ</span><span>E</span></span> = <span class="frac"><span>F</span><span>E · S<sub>p</sub></span></span></div>
+        <div class="math mf" hidden>σ = <span class="frac"><span>6 · F · a</span><span>b · h²</span></span> &nbsp;;&nbsp; ε = <span class="frac"><span>σ</span><span>E</span></span></div>
+        <div class="num" id="g3"></div>
+        <p>Loi de Hooke : la déformation relative ε est proportionnelle à la force.</p>
+      </div>
+      <div class="f">
+        <h3>Variation de résistance de la jauge</h3>
+        <div class="math"><span class="frac"><span>ΔR</span><span>R</span></span> = K · ε</div>
+        <div class="num" id="g4"></div>
+        <p>K est le facteur de jauge, voisin de 2 pour une jauge métallique.</p>
+      </div>
+      <div class="f">
+        <h3>Tension de sortie du pont</h3>
+        <div class="math">U<sub>m</sub> = V<sub>B</sub> − V<sub>D</sub> = U × <span class="frac"><span>ΔR</span><span>4R + 2ΔR</span></span></div>
+        <div class="num" id="g5"></div>
+        <p>La jauge R + ΔR est dans le bras B–C : V<sub>B</sub> = U (R + ΔR) / (2R + ΔR) et V<sub>D</sub> = U/2.</p>
+      </div>
+      <div class="f">
+        <h3>Um proportionnelle à F</h3>
+        <div class="math mt">U<sub>m</sub> ≈ U × <span class="frac"><span>ΔR</span><span>4R</span></span> = <span class="frac"><span>U · K · ε</span><span class="u">4</span></span> = <span class="frac"><span>U · K</span><span>4 · E · S<sub>p</sub></span></span> × F</div>
+        <div class="math mf" hidden>U<sub>m</sub> ≈ <span class="frac"><span>U · K · ε</span><span class="u">4</span></span> = <span class="frac"><span>6 · U · K · a</span><span>4 · E · b · h²</span></span> × F</div>
+        <div class="num" id="g6"></div>
+        <p>Comme ΔR est très petit devant R, on néglige 2ΔR au dénominateur.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var PI=Math.PI,FMAX=2000,E=200e9,SEC=10e-6,AA=0.09,BB=0.02,HH=0.01,RL=[120,350,1000],NU=0.3,EXG=200;
+var S={F:1000,U:5,ri:1,K:2,sweep:false,ph:0,mode:'trac'};
+
+function fmt(x,d){
+  if(Math.abs(x)<0.5*Math.pow(10,-d))x=0;
+  return x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+}
+function fmtV(x){
+  var a=Math.abs(x);
+  if(a<1e-12)return '0 V';
+  if(a>=1)return fmt(x,3)+' V';
+  if(a>=1e-3)return fmt(x*1e3,3)+' mV';
+  return fmt(x*1e6,2)+' µV';
+}
+function fmtOhm(x){
+  var a=Math.abs(x);
+  if(a<1e-12)return '0 Ω';
+  if(a>=1)return fmt(x,2)+' Ω';
+  return fmt(x*1e3,0)+' mΩ';
+}
+function fmtPct(x,d){return fmt(x*100,d===undefined?3:d)+' %';}
+function sg(x){return x>0?'+':'';}
+
+function vals(F){
+  var R=RL[S.ri],sig=S.mode==='flex'?6*F*AA/(BB*HH*HH):F/SEC,eps=sig/E,dRR=S.K*eps,dR=R*dRR;
+  return {R:R,sig:sig,eps:eps,dRR:dRR,dR:dR,Um:S.U*dRR/(4+2*dRR),apx:S.U*dRR/4,
+          VB:S.U*(R+dR)/(2*R+dR),VD:S.U/2};
+}
+
+function tok(){
+  var cs=getComputedStyle(document.documentElement);
+  var g=function(n){return cs.getPropertyValue(n).trim();};
+  return {panel:g('--panel'),ink:g('--ink'),muted:g('--muted'),line:g('--line'),grid:g('--grid'),metal:g('--metal'),
+    a:g('--a'),b:g('--b'),k:g('--k'),f:g('--f'),mono:g('--mono'),sans:g('--sans')};
+}
+function fit(c){
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  var w=c.clientWidth,h=c.clientHeight;
+  var pw=Math.round(w*dpr),ph=Math.round(h*dpr);
+  if(c.width!==pw||c.height!==ph){c.width=pw;c.height=ph;}
+  var ctx=c.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  return {ctx:ctx,w:w,h:h};
+}
+function vfit(c,vw,vh){
+  var f=fit(c),sc=Math.min(f.w/vw,f.h/vh);
+  f.ctx.save();
+  f.ctx.translate((f.w-vw*sc)/2,(f.h-vh*sc)/2);
+  f.ctx.scale(sc,sc);
+  return f.ctx;
+}
+var pc=$('piece'),zc=$('zoom'),b0=$('b0'),b1=$('b1'),gc=$('graph');
+
+function arrow(ctx,x1,y1,x2,y2,col,lw){
+  var a=Math.atan2(y2-y1,x2-x1),hl=11;
+  ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=lw;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2-hl*0.6*Math.cos(a),y2-hl*0.6*Math.sin(a));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-hl*Math.cos(a-0.45),y2-hl*Math.sin(a-0.45));
+  ctx.lineTo(x2-hl*Math.cos(a+0.45),y2-hl*Math.sin(a+0.45));
+  ctx.closePath();ctx.fill();
+}
+
+function drawPiece(T,v){
+  if(S.mode==='flex')drawPieceFlex(T,v);else drawPieceTrac(T,v);
+}
+function drawPieceFlex(T,v){
+  var ctx=vfit(pc,300,410);
+  var cx=150,bw=120,bh=200,y0=64,r=bw*0.26,i,L=bh;
+  var dl=36*S.F/FMAX;
+  var uu=function(yl){var x=yl/L;return dl*(3*x*x-x*x*x)/2;};
+  var ph=function(yl){var x=yl/L;return Math.atan(dl/L*(3*x-1.5*x*x));};
+  var P=function(xl,yl){var a=ph(yl);return [cx+uu(yl)+xl*Math.cos(a),y0+yl-xl*Math.sin(a)];};
+  var path=function(pts){ctx.beginPath();for(var j=0;j<pts.length;j++){if(j===0)ctx.moveTo(pts[j][0],pts[j][1]);else ctx.lineTo(pts[j][0],pts[j][1]);}ctx.closePath();};
+  ctx.font='11px '+T.mono;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle=T.line;ctx.fillRect(cx-bw/2-16,y0-16,bw+32,16);
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.2;
+  for(i=0;i<=8;i++){var xx=cx-bw/2-16+i*(bw+32)/8;ctx.beginPath();ctx.moveTo(xx,y0-16);ctx.lineTo(xx+8,y0-26);ctx.stroke();}
+  ctx.fillStyle=T.muted;ctx.fillText('encastrement',cx,y0-40);
+  ctx.setLineDash([4,3]);ctx.strokeStyle=T.muted;ctx.lineWidth=1;ctx.strokeRect(cx-bw/2,y0,bw,bh);ctx.setLineDash([]);
+  var pts=[];
+  for(i=0;i<=50;i++)pts.push(P(-bw/2,bh*i/50));
+  for(i=50;i>=0;i--)pts.push(P(bw/2,bh*i/50));
+  ctx.fillStyle=T.metal;path(pts);ctx.fill();
+  ctx.strokeStyle=T.ink;ctx.lineWidth=1.6;ctx.stroke();
+  var yc1=bh*0.5-0.9*r,yc2=bh*0.5+0.9*r;
+  var hole=function(yc){var q=[],t,a;for(t=0;t<40;t++){a=2*PI*t/40;q.push(P(r*Math.cos(a),yc+r*Math.sin(a)));}return q;};
+  var h1=hole(yc1),h2=hole(yc2);
+  ctx.strokeStyle=T.ink;ctx.lineWidth=4;path(h1);ctx.stroke();path(h2);ctx.stroke();
+  ctx.fillStyle=T.panel;path(h1);ctx.fill();path(h2);ctx.fill();
+  var xa=-bw*0.38-8,xb=-bw*0.38+8,ya=yc1-28,yb2=yc1+28,gp=[];
+  for(i=0;i<=12;i++)gp.push(P(xa,ya+(yb2-ya)*i/12));
+  for(i=12;i>=0;i--)gp.push(P(xb,ya+(yb2-ya)*i/12));
+  ctx.globalAlpha=0.35;ctx.fillStyle=T.b;path(gp);ctx.fill();ctx.globalAlpha=1;
+  ctx.strokeStyle=T.b;ctx.lineWidth=1.6;path(gp);ctx.stroke();
+  ctx.lineWidth=1.2;
+  [0.25,0.5,0.75].forEach(function(p){
+    var xl=xa+(xb-xa)*p,j,q;ctx.beginPath();
+    for(j=0;j<=12;j++){q=P(xl,ya+3+(yb2-ya-6)*j/12);if(j===0)ctx.moveTo(q[0],q[1]);else ctx.lineTo(q[0],q[1]);}
+    ctx.stroke();
+  });
+  var gm=P(xa,yc1);
+  ctx.fillStyle=T.b;ctx.font='600 12px '+T.sans;ctx.textAlign='left';
+  ctx.fillText('jauge de',6,gm[1]-8);ctx.fillText('contrainte',6,gm[1]+7);
+  ctx.strokeStyle=T.b;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(72,gm[1]);ctx.lineTo(gm[0]-1,gm[1]);ctx.stroke();
+  var yf=bh-16,len=14+56*Math.abs(S.F)/FMAX;
+  if(Math.abs(S.F)>=1){
+    if(S.F>0){var pl=P(-bw/2,yf);arrow(ctx,pl[0]-4-len,pl[1],pl[0]-3,pl[1],T.f,3.2);}
+    else{var pr=P(bw/2,yf);arrow(ctx,pr[0]+4+len,pr[1],pr[0]+3,pr[1],T.f,3.2);}
+  }
+  var tip=P(0,bh);
+  ctx.fillStyle=T.f;ctx.font='600 13px '+T.mono;ctx.textAlign='center';
+  ctx.fillText('F = '+fmt(S.F,0)+' N',tip[0],y0+bh+28);
+  ctx.fillStyle=T.muted;ctx.font='11px '+T.mono;
+  ctx.fillText(S.F>0?'vers la droite':(S.F<0?'vers la gauche':'aucune force'),tip[0],y0+bh+43);
+  ctx.restore();
+}
+function drawPieceTrac(T,v){
+  var ctx=vfit(pc,300,410);
+  var ey=v.eps*50,ex=-0.5*ey;
+  var cx=150,bw=120,bh=200,y0=64,r=bw*0.26,i;
+  var X=function(xl){return cx+xl*(1+ex);};
+  var Y=function(yl){return y0+yl*(1+ey);};
+  ctx.font='11px '+T.mono;ctx.textAlign='center';ctx.textBaseline='middle';
+  // support fixe
+  ctx.fillStyle=T.line;ctx.fillRect(cx-bw/2-16,y0-16,bw+32,16);
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.2;
+  for(i=0;i<=8;i++){
+    var xx=cx-bw/2-16+i*(bw+32)/8;
+    ctx.beginPath();ctx.moveTo(xx,y0-16);ctx.lineTo(xx+8,y0-26);ctx.stroke();
+  }
+  ctx.fillStyle=T.muted;ctx.fillText('support fixe',cx,y0-40);
+  // contour sans force
+  ctx.setLineDash([4,3]);ctx.strokeStyle=T.muted;ctx.lineWidth=1;
+  ctx.strokeRect(cx-bw/2,y0,bw,bh);ctx.setLineDash([]);
+  // barre
+  ctx.fillStyle=T.metal;ctx.fillRect(X(-bw/2),y0,bw*(1+ex),bh*(1+ey));
+  ctx.strokeStyle=T.ink;ctx.lineWidth=1.6;ctx.strokeRect(X(-bw/2),y0,bw*(1+ex),bh*(1+ey));
+  // trou en lunettes (deux cercles qui se chevauchent)
+  var yc1=bh*0.5-0.9*r,yc2=bh*0.5+0.9*r;
+  var ell=function(yl){ctx.beginPath();ctx.ellipse(cx,Y(yl),r*(1+ex),r*(1+ey),0,0,2*PI);};
+  ctx.strokeStyle=T.ink;ctx.lineWidth=4;
+  ell(yc1);ctx.stroke();ell(yc2);ctx.stroke();
+  ctx.fillStyle=T.panel;
+  ell(yc1);ctx.fill();ell(yc2);ctx.fill();
+  // jauge collée sur la paroi mince
+  var gx0=X(-bw*0.38-8),gx1=X(-bw*0.38+8),gy0=Y(yc1-28),gy1=Y(yc1+28);
+  ctx.globalAlpha=0.35;ctx.fillStyle=T.b;ctx.fillRect(gx0,gy0,gx1-gx0,gy1-gy0);ctx.globalAlpha=1;
+  ctx.strokeStyle=T.b;ctx.lineWidth=1.6;ctx.strokeRect(gx0,gy0,gx1-gx0,gy1-gy0);
+  ctx.lineWidth=1.2;
+  [0.25,0.5,0.75].forEach(function(p){
+    var xg=gx0+(gx1-gx0)*p;ctx.beginPath();ctx.moveTo(xg,gy0+3);ctx.lineTo(xg,gy1-3);ctx.stroke();
+  });
+  var gym=(gy0+gy1)/2;
+  ctx.fillStyle=T.b;ctx.font='600 12px '+T.sans;ctx.textAlign='left';
+  ctx.fillText('jauge de',6,gym-8);ctx.fillText('contrainte',6,gym+7);
+  ctx.strokeStyle=T.b;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(72,gym);ctx.lineTo(gx0-1,gym);ctx.stroke();
+  // allongement
+  var yb=y0+bh*(1+ey);
+  if(Math.abs(ey*bh)>=5){
+    var xd=cx+bw/2+26;
+    ctx.strokeStyle=T.ink;ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(xd,y0+bh);ctx.lineTo(xd,yb);
+    ctx.moveTo(xd-5,y0+bh);ctx.lineTo(xd+5,y0+bh);ctx.moveTo(xd-5,yb);ctx.lineTo(xd+5,yb);ctx.stroke();
+    ctx.fillStyle=T.ink;ctx.font='600 12px '+T.mono;ctx.textAlign='left';ctx.fillText('ΔL',xd+9,(y0+bh+yb)/2);
+  }
+  // force
+  var len=14+56*Math.abs(S.F)/FMAX;
+  if(Math.abs(S.F)>=1){
+    if(S.F>0)arrow(ctx,cx,yb,cx,yb+len,T.f,3.2);
+    else arrow(ctx,cx,yb+len,cx,yb,T.f,3.2);
+  }
+  ctx.fillStyle=T.f;ctx.font='600 13px '+T.mono;ctx.textAlign='center';
+  var ly=yb+(Math.abs(S.F)>=1?len:0)+18;
+  ctx.fillText('F = '+fmt(S.F,0)+' N',cx,ly);
+  ctx.fillStyle=T.muted;ctx.font='11px '+T.mono;
+  ctx.fillText(S.F>0?'traction':(S.F<0?'compression':'aucune force'),cx,ly+15);
+  ctx.restore();
+}
+
+function gauge(ctx,cx,e,T,title,loaded){
+  var q=Math.max(0.35,1-0.9*e);
+  var ty=52,Lg0=170,Lg=Lg0*(1+e),pad=14,wb=80*Math.sqrt(q),i;
+  ctx.font='600 13px '+T.sans;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle=T.ink;ctx.fillText(title,cx,22);
+  if(loaded){
+    ctx.setLineDash([4,3]);ctx.strokeStyle=T.muted;ctx.lineWidth=1;
+    ctx.strokeRect(cx-40,ty,80,Lg0+2*pad);ctx.setLineDash([]);
+  }
+  ctx.globalAlpha=0.28;ctx.fillStyle=T.b;ctx.fillRect(cx-wb/2,ty,wb,Lg+2*pad);ctx.globalAlpha=1;
+  ctx.strokeStyle=T.b;ctx.lineWidth=1.5;ctx.strokeRect(cx-wb/2,ty,wb,Lg+2*pad);
+  var lw=Math.max(1.5,5*q),n=5,yT=ty+pad,yB=ty+pad+Lg;
+  var gap=(wb-24)/(n-1),xi=function(k){return cx-(wb-24)/2+k*gap;};
+  ctx.strokeStyle=T.b;ctx.lineWidth=lw;ctx.lineJoin='miter';ctx.lineCap='butt';
+  ctx.beginPath();ctx.moveTo(xi(0),yT-11);ctx.lineTo(xi(0),yB);
+  for(i=1;i<n;i++){
+    var a=(i%2===1)?yB:yT,b=(i%2===1)?yT:yB;
+    ctx.lineTo(xi(i),a);ctx.lineTo(xi(i),b);
+  }
+  ctx.lineTo(xi(n-1),yB+11);ctx.stroke();
+  ctx.fillStyle=T.b;
+  ctx.beginPath();ctx.arc(xi(0),yT-11,3.5,0,2*PI);ctx.fill();
+  ctx.beginPath();ctx.arc(xi(n-1),yB+11,3.5,0,2*PI);ctx.fill();
+  // longueur
+  var xd=cx+50;
+  ctx.strokeStyle=T.ink;ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(xd,yT);ctx.lineTo(xd,yB);
+  ctx.moveTo(xd-5,yT);ctx.lineTo(xd+5,yT);ctx.moveTo(xd-5,yB);ctx.lineTo(xd+5,yB);ctx.stroke();
+  ctx.fillStyle=T.ink;ctx.font='600 12px '+T.mono;ctx.textAlign='left';
+  ctx.fillText(loaded?'L + ΔL':'L',xd+7,(yT+yB)/2);
+  // section du fil
+  var r0=16,cy=372;
+  ctx.fillStyle=T.muted;ctx.font='11px '+T.mono;ctx.textAlign='center';
+  ctx.fillText('section du fil',cx,344);
+  ctx.setLineDash([3,3]);ctx.strokeStyle=T.muted;ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(cx,cy,r0,0,2*PI);ctx.stroke();ctx.setLineDash([]);
+  ctx.globalAlpha=0.75;ctx.fillStyle=T.b;ctx.beginPath();ctx.arc(cx,cy,r0*q,0,2*PI);ctx.fill();ctx.globalAlpha=1;
+  ctx.strokeStyle=T.b;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,r0*q,0,2*PI);ctx.stroke();
+  ctx.fillStyle=T.ink;ctx.font='600 12px '+T.mono;
+  ctx.fillText(loaded?'S − ΔS':'S',cx,402);
+}
+function drawZoom(T,v){
+  var ctx=vfit(zc,340,410);
+  gauge(ctx,85,0,T,'Au repos',false);
+  gauge(ctx,255,Math.max(-0.45,Math.min(0.45,v.eps*EXG)),T,'Sous charge',true);
+  ctx.restore();
+}
+
+function drawBridge(c,dR,T){
+  var ctx=vfit(c,340,330),U=S.U,R=RL[S.ri];
+  var VB=U*(R+dR)/(2*R+dR),VD=U/2,Um=VB-VD;
+  var A=[170,40],C=[170,250],B=[70,145],D=[270,145],ctr=[170,145];
+  ctx.lineCap='round';ctx.lineJoin='round';
+  // fils de la source
+  ctx.strokeStyle=T.ink;ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.lineTo(22,40);ctx.lineTo(22,137);
+  ctx.moveTo(22,151);ctx.lineTo(22,250);ctx.lineTo(C[0],C[1]);ctx.stroke();
+  ctx.strokeStyle=T.k;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(11,137);ctx.lineTo(33,137);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(16,151);ctx.lineTo(28,151);ctx.stroke();
+  ctx.fillStyle=T.k;ctx.font='600 12px '+T.mono;ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('U',38,145);ctx.fillText('+',3,128);
+  // résistances
+  function res(P,Q,col,l1,l2){
+    var mx=(P[0]+Q[0])/2,my=(P[1]+Q[1])/2,ang=Math.atan2(Q[1]-P[1],Q[0]-P[0]);
+    ctx.strokeStyle=T.ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(P[0],P[1]);ctx.lineTo(Q[0],Q[1]);ctx.stroke();
+    ctx.save();ctx.translate(mx,my);ctx.rotate(ang);
+    ctx.fillStyle=T.panel;ctx.fillRect(-32,-10,64,20);
+    ctx.globalAlpha=0.25;ctx.fillStyle=col;ctx.fillRect(-32,-10,64,20);ctx.globalAlpha=1;
+    ctx.strokeStyle=col;ctx.lineWidth=2.4;ctx.strokeRect(-32,-10,64,20);
+    ctx.restore();
+    var nx=mx-ctr[0],ny=my-ctr[1],nl=Math.hypot(nx,ny);nx/=nl;ny/=nl;
+    var lx=mx+nx*46,ly=my+ny*46;
+    ctx.textAlign=nx<0?'right':'left';ctx.fillStyle=col;
+    ctx.font='600 12px '+T.mono;ctx.fillText(l1,lx,ly-7);
+    ctx.font='12px '+T.mono;ctx.fillText(l2,lx,ly+8);
+  }
+  res(A,B,T.a,'R1','R');
+  res(B,C,T.b,'R2 (jauge)',dR===0?'R':'R + ΔR');
+  res(A,D,T.a,'R3','R');
+  res(D,C,T.a,'R4','R');
+  // voltmètre
+  ctx.strokeStyle=T.ink;ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(B[0],B[1]);ctx.lineTo(155,145);ctx.moveTo(185,145);ctx.lineTo(D[0],D[1]);ctx.stroke();
+  ctx.fillStyle=T.panel;ctx.strokeStyle=T.k;ctx.lineWidth=2.4;
+  ctx.beginPath();ctx.arc(170,145,15,0,2*PI);ctx.fill();ctx.stroke();
+  ctx.fillStyle=T.k;ctx.font='600 14px '+T.mono;ctx.textAlign='center';ctx.fillText('V',170,146);
+  ctx.font='600 12px '+T.mono;ctx.fillText('Um',170,119);
+  // nœuds
+  ctx.fillStyle=T.ink;
+  [A,B,C,D].forEach(function(P){ctx.beginPath();ctx.arc(P[0],P[1],4.5,0,2*PI);ctx.fill();});
+  ctx.font='600 13px '+T.mono;ctx.textAlign='center';
+  ctx.fillText('A',170,24);ctx.fillText('C',170,267);
+  ctx.textAlign='right';ctx.fillText('B',58,145);
+  ctx.textAlign='left';ctx.fillText('D',282,145);
+  // potentiels
+  ctx.textAlign='center';ctx.fillStyle=T.muted;ctx.font='12px '+T.mono;
+  ctx.fillText('VB = '+fmt(VB,5)+' V   VD = '+fmt(VD,5)+' V',170,298);
+  ctx.fillStyle=Math.abs(Um)<1e-12?T.k:T.f;ctx.font='600 14px '+T.mono;
+  ctx.fillText('Um = VB − VD = '+fmtV(Um),170,320);
+  ctx.restore();
+  return Um;
+}
+
+function niceStep(max){
+  var raw=max/2.5,p=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10)),m=raw/p;
+  var f=m<1.5?1:(m<3.5?2:(m<7.5?5:10));
+  return f*p;
+}
+function drawGraph(T,v){
+  var f=fit(gc),ctx=f.ctx,w=f.w,h=f.h;
+  var ml=62,mr=16,mt=18,mb=36,pw=w-ml-mr,ph=h-mt-mb,i;
+  var kU=S.U*S.K*vals(FMAX).eps/4*1000;
+  var step=niceStep(kU),n=Math.max(1,Math.ceil(kU/step-1e-9)),ym=n*step;
+  var X=function(F){return ml+(F+FMAX)/(2*FMAX)*pw;};
+  var Y=function(u){return mt+ph/2-u/ym*(ph/2);};
+  var dec=step>=1?0:(step>=0.1?1:(step>=0.01?2:3));
+  ctx.font='11px '+T.mono;
+  for(i=-n;i<=n;i++){
+    var yy=Y(i*step);
+    ctx.strokeStyle=i===0?T.muted:T.grid;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(ml,yy);ctx.lineTo(ml+pw,yy);ctx.stroke();
+    ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(fmt(i*step,dec),ml-6,yy);
+  }
+  var tS=FMAX>=1000?500:100,nT=Math.round(FMAX/tS);
+  for(i=-nT;i<=nT;i++){
+    var F0=i*tS,xx=X(F0);
+    ctx.strokeStyle=i===0?T.muted:T.grid;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(xx,mt);ctx.lineTo(xx,mt+ph);ctx.stroke();
+    ctx.fillStyle=T.muted;ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.fillText(fmt(F0,0),xx,h-18);
+  }
+  ctx.fillStyle=T.muted;ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('Um (mV)',6,12);
+  ctx.textAlign='right';ctx.fillText('F (N)',w-4,h-4);
+  // approximation
+  var e1=vals(FMAX).eps;
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.4;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(X(-FMAX),Y(-S.U*S.K*e1/4*1000));ctx.lineTo(X(FMAX),Y(S.U*S.K*e1/4*1000));ctx.stroke();ctx.setLineDash([]);
+  // exacte
+  ctx.strokeStyle=T.k;ctx.lineWidth=2.6;ctx.lineJoin='round';ctx.beginPath();
+  var F1,first=true;
+  for(F1=-FMAX;F1<=FMAX;F1+=50){
+    var u=vals(F1).Um*1000,px=X(F1),py=Y(u);
+    if(first){ctx.moveTo(px,py);first=false;}else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  // point courant
+  var xc=X(S.F),yc=Y(v.Um*1000);
+  ctx.strokeStyle=T.ink;ctx.lineWidth=1.2;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(xc,mt+ph/2);ctx.lineTo(xc,yc);ctx.moveTo(ml,yc);ctx.lineTo(xc,yc);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=T.f;ctx.strokeStyle=T.panel;ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(xc,yc,5.5,0,2*PI);ctx.fill();ctx.stroke();
+  ctx.fillStyle=T.f;ctx.font='600 12px '+T.mono;ctx.textBaseline='middle';
+  var lab='Um = '+fmtV(v.Um);
+  if(xc>ml+pw*0.62){ctx.textAlign='right';ctx.fillText(lab,xc-10,yc+(v.Um>=0?16:-16));}
+  else{ctx.textAlign='left';ctx.fillText(lab,xc+10,yc+(v.Um>=0?-14:14));}
+}
+
+var cache={};
+function setT(id,s){if(cache[id]!==s){cache[id]=s;$(id).textContent=s;}}
+function info(v){
+  var U=S.U,R=v.R,K=S.K;
+  setT('tF',fmt(S.F,0)+' N');
+  setT('tSl',S.mode==='flex'?'Contrainte σ = 6·F·a / (b·h²)':'Contrainte σ = F / Sp');
+  setT('tS',fmt(v.sig/1e6,1)+' MPa');
+  setT('tE',fmt(v.eps*1e6,0)+' µε');
+  setT('tRR',fmtPct(v.dRR));
+  setT('tdR',sg(v.dR)+fmtOhm(v.dR));
+  setT('tU',fmtV(v.Um));
+  setT('FOut',fmt(S.F,0)+' N');
+  setT('UOut',fmt(U,1)+' V');
+  setT('KOut',fmt(K,1));
+  setT('FHint',S.mode==='flex'
+    ?(S.F>0?'force vers la droite : la jauge s\'allonge':(S.F<0?'force vers la gauche : la jauge se raccourcit':'aucune force : jauge au repos'))
+    :(S.F>0?'traction : la jauge s\'allonge':(S.F<0?'compression : la jauge se raccourcit':'aucune force : jauge au repos')));
+  setT('capF','F = '+fmt(S.F,0)+' N');
+  setT('c1','R = '+fmt(R,0)+' Ω  (L et S de départ)');
+  setT('c2','ΔL/L = '+sg(v.eps)+fmtPct(v.eps)+'  ·  ΔS/S = '+sg(-2*NU*v.eps)+fmtPct(-2*NU*v.eps)+'  ⇒  R + ΔR = '+fmt(R+v.dR,2)+' Ω');
+  setT('c3','ΔR/R = '+fmt(K,1)+' × '+fmt(v.eps*1e6,0)+' µε = '+fmtPct(v.dRR)+'  ⇒  ΔR = '+sg(v.dR)+fmtOhm(v.dR));
+  setT('st0','R1 = R2 = R3 = R4 = '+fmt(R,0)+' Ω : VB = VD = U/2 = '+fmt(U/2,2)+' V, donc Um = 0. Le pont est équilibré.');
+  setT('st1',Math.abs(S.F)<0.5
+    ?'F = 0 : la jauge vaut R, VB = VD et Um = 0. Le pont est équilibré.'
+    :'La jauge passe de R à R + ΔR = '+fmt(R+v.dR,2)+' Ω : VB ≠ VD, le pont est déséquilibré et Um = '+fmtV(v.Um)+'.');
+  var slope=U*K*vals(1).eps/4;
+  setT('slope','Pente de la droite : Um / F = '+(S.mode==='flex'?'6·U·K·a / (4·E·b·h²)':'U·K / (4·E·Sp)')+' = '+fmt(slope*1e6,3)+' µV par newton. Elle augmente avec U et avec K, mais ne dépend pas de R.');
+  setT('g1','VB = '+fmt(U,1)+' × '+fmt(R,0)+' / ('+fmt(R,0)+' + '+fmt(R,0)+') = '+fmt(U/2,2)+' V = VD');
+  setT('g2','R = '+fmt(R,0)+' Ω au repos · sous charge : R + ΔR = '+fmt(R+v.dR,2)+' Ω');
+  setT('g3',(S.mode==='flex'
+    ?'σ = 6 × '+fmt(S.F,0)+' N × 90 mm / (20 mm × (10 mm)²) = '+fmt(v.sig/1e6,1)+' MPa'
+    :'σ = '+fmt(S.F,0)+' N / 10 mm² = '+fmt(v.sig/1e6,1)+' MPa')+' · ε = '+fmt(v.sig/1e6,1)+' MPa / 200 GPa = '+fmt(v.eps*1e6,0)+' µε');
+  setT('g4','ΔR/R = '+fmt(K,1)+' × '+fmt(v.eps*1e6,0)+' µε = '+fmtPct(v.dRR)+' · ΔR = '+sg(v.dR)+fmtOhm(v.dR));
+  setT('g5','Um = '+fmt(U,1)+' × '+fmt(v.dR,3)+' / (4 × '+fmt(R,0)+' + 2 × '+fmt(v.dR,3)+') = '+fmtV(v.Um));
+  setT('g6','Um ≈ '+fmtV(v.apx)+' · pente = '+fmt(slope*1e6,3)+' µV/N · écart avec la valeur exacte : '+(Math.abs(v.apx)<1e-15?'0':fmt((v.Um-v.apx)/v.apx*100,3))+' %');
+}
+function syncCtl(){
+  var fe=$('F');
+  if(Number(fe.value)!==S.F)fe.value=S.F;
+}
+
+function applyTheme(v){
+  var r=document.documentElement;
+  if(v==='light'||v==='dark')r.setAttribute('data-theme',v);else r.removeAttribute('data-theme');
+  try{localStorage.setItem('codeur-theme',v);}catch(e){}
+}
+(function initTheme(){
+  var saved=null,cur=document.documentElement.getAttribute('data-theme');
+  try{saved=localStorage.getItem('codeur-theme');}catch(e){}
+  var v=saved||cur||'auto';
+  if(v!=='light'&&v!=='dark')v='auto';
+  $(v==='light'?'thLight':v==='dark'?'thDark':'thAuto').checked=true;
+  if(saved)applyTheme(v);
+})();
+['thAuto','thLight','thDark'].forEach(function(id){
+  $(id).addEventListener('change',function(e){applyTheme(e.target.value);});
+});
+
+function stopSweep(){S.sweep=false;$('sweep').setAttribute('aria-pressed','false');}
+$('F').addEventListener('input',function(e){S.F=+e.target.value;stopSweep();});
+$('U').addEventListener('input',function(e){S.U=+e.target.value;});
+$('K').addEventListener('input',function(e){S.K=+e.target.value;});
+['r120','r350','r1000'].forEach(function(id){
+  $(id).addEventListener('change',function(e){S.ri=+e.target.value;});
+});
+$('zero').addEventListener('click',function(){S.F=0;stopSweep();});
+$('sweep').addEventListener('click',function(){
+  S.sweep=!S.sweep;
+  $('sweep').setAttribute('aria-pressed',S.sweep?'true':'false');
+  if(S.sweep)S.ph=Math.asin(Math.max(-1,Math.min(1,S.F/FMAX)))/(2*PI);
+});
+
+function setMode(m){
+  var old=FMAX,step=m==='flex'?5:10,fe=$('F'),els,i;
+  S.mode=m;FMAX=m==='flex'?500:2000;
+  fe.min=-FMAX;fe.max=FMAX;fe.step=step;
+  S.F=Math.round(S.F/old*FMAX/step)*step;
+  fe.value=S.F;
+  els=document.querySelectorAll('.mt');
+  for(i=0;i<els.length;i++)els[i].hidden=(m!=='trac');
+  els=document.querySelectorAll('.mf');
+  for(i=0;i<els.length;i++)els[i].hidden=(m!=='flex');
+  $('modeHint').textContent=m==='flex'?'Force horizontale : la pièce fléchit comme une poutre encastrée.':'Force verticale, dans l\'axe de la pièce.';
+}
+$('mTrac').addEventListener('change',function(){setMode('trac');});
+$('mFlex').addEventListener('change',function(){setMode('flex');});
+setMode('trac');
+
+var last=performance.now();
+function frame(now){
+  var dt=Math.min((now-last)/1000,0.05);last=now;
+  if(S.sweep){
+    S.ph=(S.ph+dt/8)%1;
+    S.F=Math.round(FMAX*Math.sin(2*PI*S.ph)/10)*10;
+  }
+  var T=tok(),v=vals(S.F);
+  syncCtl();
+  drawPiece(T,v);drawZoom(T,v);
+  drawBridge(b0,0,T);drawBridge(b1,v.dR,T);
+  drawGraph(T,v);info(v);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
