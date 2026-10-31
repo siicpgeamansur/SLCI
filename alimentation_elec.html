@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PWM / MLI & Onduleur – Illustrations interactives</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --accent: #0071e3;
+    --grid: #e5e5ea;
+    --wave: #0071e3;
+    --avg: #ff3b30;
+    --carrier: #34c759;
+    --ref: #af52de;
+    --border: #d2d2d7;
+  }
+  [data-theme="dark"] {
+    --bg: #1c1c1e;
+    --card: #2c2c2e;
+    --text: #f5f5f7;
+    --muted: #98989d;
+    --accent: #0a84ff;
+    --grid: #3a3a3c;
+    --wave: #0a84ff;
+    --avg: #ff453a;
+    --carrier: #30d158;
+    --ref: #bf5af2;
+    --border: #48484a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 20px;
+    transition: background 0.3s, color 0.3s;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  h1 { font-size: 1.6rem; font-weight: 600; }
+  .theme-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .theme-btn:hover { opacity: 0.85; }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .panel {
+    display: none;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+  .panel.active { display: block; }
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .control label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 6px;
+  }
+  input[type="number"] {
+    width: 70px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.95rem;
+    text-align: center;
+  }
+  .canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background: var(--bg);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .info {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+  .info strong { color: var(--text); }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .formula {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  @media (max-width: 600px) {
+    .canvas-wrap { height: 260px; }
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>PWM / MLI & Onduleur interactifs</h1>
+    <button class="theme-btn" id="themeToggle">
+      <span id="themeIcon">🌙</span>
+      <span id="themeText">Mode sombre</span>
+    </button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="pwm">Hacheur DC-DC (PWM)</button>
+    <button class="tab" data-tab="inverter">Onduleur (fréquence variable)</button>
+  </div>
+
+  <!-- ========== PANEL PWM ========== -->
+  <div class="panel active" id="panel-pwm">
+    <div class="controls">
+      <div class="control">
+        <label>Rapport cyclique α (duty cycle)</label>
+        <div class="slider-row">
+          <input type="range" id="duty" min="0" max="100" value="40" step="1">
+          <input type="number" id="dutyVal" min="0" max="100" value="40" step="1">
+          <span>%</span>
+        </div>
+      </div>
+      <div class="control">
+        <label>Tension d’entrée Vin</label>
+        <div class="slider-row">
+          <input type="range" id="vin" min="5" max="48" value="24" step="1">
+          <input type="number" id="vinVal" min="5" max="48" value="24" step="1">
+          <span>V</span>
+        </div>
+      </div>
+      <div class="control">
+        <label>Fréquence de découpage</label>
+        <div class="slider-row">
+          <input type="range" id="fpwm" min="1" max="20" value="5" step="0.5">
+          <input type="number" id="fpwmVal" min="1" max="20" value="5" step="0.5">
+          <span>kHz</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="canvasPwm"></canvas>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:var(--wave)"></div> Signal PWM (sortie brute)</div>
+      <div class="legend-item"><div class="dot" style="background:var(--avg)"></div> Tension moyenne Vout</div>
+    </div>
+
+    <div class="info">
+      <strong>Principe :</strong> Le hacheur découpe la tension continue Vin avec un rapport cyclique α.<br>
+      Tension moyenne : <span class="formula">V<sub>out</sub> = α × V<sub>in</sub></span>
+      → actuellement <strong id="voutText">9.6 V</strong>
+    </div>
+  </div>
+
+  <!-- ========== PANEL ONDULEUR ========== -->
+  <div class="panel" id="panel-inverter">
+    <div class="controls">
+      <div class="control">
+        <label>Fréquence de sortie f</label>
+        <div class="slider-row">
+          <input type="range" id="fout" min="10" max="100" value="50" step="1">
+          <input type="number" id="foutVal" min="10" max="100" value="50" step="1">
+          <span>Hz</span>
+        </div>
+      </div>
+      <div class="control">
+        <label>Indice de modulation m<sub>a</sub></label>
+        <div class="slider-row">
+          <input type="range" id="ma" min="0.1" max="1.0" value="0.8" step="0.05">
+          <input type="number" id="maVal" min="0.1" max="1.0" value="0.8" step="0.05">
+        </div>
+      </div>
+      <div class="control">
+        <label>Fréquence porteuse (carrier)</label>
+        <div class="slider-row">
+          <input type="range" id="fcar" min="5" max="40" value="15" step="1">
+          <input type="number" id="fcarVal" min="5" max="40" value="15" step="1">
+          <span>×f</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="canvasInv"></canvas>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:var(--ref)"></div> Référence sinusoïdale</div>
+      <div class="legend-item"><div class="dot" style="background:var(--carrier)"></div> Porteuse triangulaire</div>
+      <div class="legend-item"><div class="dot" style="background:var(--wave)"></div> PWM (sortie onduleur)</div>
+      <div class="legend-item"><div class="dot" style="background:var(--avg)"></div> Fondamentale (approximée)</div>
+    </div>
+
+    <div class="info">
+      <strong>Principe :</strong> Comparaison d’une sinusoïde de référence (fréquence f, amplitude m<sub>a</sub>) avec une porteuse triangulaire haute fréquence.<br>
+      Le rapport cyclique instantané suit la sinusoïde → on obtient une tension alternative de fréquence <strong id="foutText">50 Hz</strong> et d’amplitude contrôlée par m<sub>a</sub>.
+    </div>
+  </div>
+
+<script>
+  // ========== Theme ==========
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeText = document.getElementById('themeText');
+  let dark = false;
+
+  function setTheme(isDark) {
+    dark = isDark;
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    themeIcon.textContent = isDark ? '☀️' : '🌙';
+    themeText.textContent = isDark ? 'Mode clair' : 'Mode sombre';
+    drawAll();
+  }
+  themeToggle.addEventListener('click', () => setTheme(!dark));
+
+  // ========== Tabs ==========
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+      drawAll();
+    });
+  });
+
+  // ========== Helpers: link slider + number ==========
+  function link(sliderId, numberId, onChange) {
+    const s = document.getElementById(sliderId);
+    const n = document.getElementById(numberId);
+    s.addEventListener('input', () => {
+      n.value = s.value;
+      onChange();
+    });
+    n.addEventListener('input', () => {
+      let v = parseFloat(n.value);
+      if (isNaN(v)) return;
+      v = Math.max(+s.min, Math.min(+s.max, v));
+      n.value = v;
+      s.value = v;
+      onChange();
+    });
+  }
+
+  // ========== PWM (Hacheur) ==========
+  const duty = document.getElementById('duty');
+  const vin = document.getElementById('vin');
+  const fpwm = document.getElementById('fpwm');
+  const canvasPwm = document.getElementById('canvasPwm');
+  const ctxPwm = canvasPwm.getContext('2d');
+
+  function drawPwm() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvasPwm.parentElement.getBoundingClientRect();
+    canvasPwm.width = rect.width * dpr;
+    canvasPwm.height = rect.height * dpr;
+    ctxPwm.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = rect.width, H = rect.height;
+
+    const α = +duty.value / 100;
+    const Vin = +vin.value;
+    const Vout = α * Vin;
+    document.getElementById('voutText').textContent = Vout.toFixed(1) + ' V';
+
+    // background
+    ctxPwm.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    ctxPwm.fillRect(0, 0, W, H);
+
+    // grid
+    ctxPwm.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim();
+    ctxPwm.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) {
+      ctxPwm.beginPath(); ctxPwm.moveTo(x, 0); ctxPwm.lineTo(x, H); ctxPwm.stroke();
+    }
+    for (let y = 0; y < H; y += 40) {
+      ctxPwm.beginPath(); ctxPwm.moveTo(0, y); ctxPwm.lineTo(W, y); ctxPwm.stroke();
+    }
+
+    // axes
+    const midY = H * 0.55;
+    const topY = H * 0.15;
+    const botY = H * 0.85;
+    const scaleY = (midY - topY) / Vin;
+
+    // zero line
+    ctxPwm.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
+    ctxPwm.setLineDash([4, 4]);
+    ctxPwm.beginPath(); ctxPwm.moveTo(0, midY); ctxPwm.lineTo(W, midY); ctxPwm.stroke();
+    ctxPwm.setLineDash([]);
+
+    // PWM waveform (2 periods)
+    const periods = 3;
+    const periodW = W / periods;
+    const ton = α * periodW;
+
+    ctxPwm.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--wave').trim();
+    ctxPwm.lineWidth = 2.5;
+    ctxPwm.beginPath();
+    let first = true;
+    for (let p = 0; p < periods; p++) {
+      const x0 = p * periodW;
+      const yHigh = midY - Vin * scaleY;
+      const yLow = midY;
+      if (first) { ctxPwm.moveTo(x0, yLow); first = false; }
+      else ctxPwm.lineTo(x0, yLow);
+      ctxPwm.lineTo(x0, yHigh);
+      ctxPwm.lineTo(x0 + ton, yHigh);
+      ctxPwm.lineTo(x0 + ton, yLow);
+      ctxPwm.lineTo(x0 + periodW, yLow);
+    }
+    ctxPwm.stroke();
+
+    // Average line
+    const yAvg = midY - Vout * scaleY;
+    ctxPwm.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--avg').trim();
+    ctxPwm.lineWidth = 2;
+    ctxPwm.setLineDash([8, 4]);
+    ctxPwm.beginPath();
+    ctxPwm.moveTo(0, yAvg);
+    ctxPwm.lineTo(W, yAvg);
+    ctxPwm.stroke();
+    ctxPwm.setLineDash([]);
+
+    // labels
+    ctxPwm.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+    ctxPwm.font = '13px -apple-system, sans-serif';
+    ctxPwm.fillText('Vin = ' + Vin + ' V', 12, topY - 8);
+    ctxPwm.fillText('0', 12, midY + 16);
+    ctxPwm.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--avg').trim();
+    ctxPwm.fillText('Vout moy = ' + Vout.toFixed(1) + ' V', 12, yAvg - 8);
+  }
+
+  // ========== Onduleur ==========
+  const fout = document.getElementById('fout');
+  const ma = document.getElementById('ma');
+  const fcar = document.getElementById('fcar');
+  const canvasInv = document.getElementById('canvasInv');
+  const ctxInv = canvasInv.getContext('2d');
+
+  function drawInv() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvasInv.parentElement.getBoundingClientRect();
+    canvasInv.width = rect.width * dpr;
+    canvasInv.height = rect.height * dpr;
+    ctxInv.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = rect.width, H = rect.height;
+
+    const f = +fout.value;
+    const m = +ma.value;
+    const ratio = +fcar.value;
+    document.getElementById('foutText').textContent = f + ' Hz';
+
+    ctxInv.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    ctxInv.fillRect(0, 0, W, H);
+
+    // grid
+    ctxInv.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim();
+    ctxInv.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) {
+      ctxInv.beginPath(); ctxInv.moveTo(x, 0); ctxInv.lineTo(x, H); ctxInv.stroke();
+    }
+    for (let y = 0; y < H; y += 40) {
+      ctxInv.beginPath(); ctxInv.moveTo(0, y); ctxInv.lineTo(W, y); ctxInv.stroke();
+    }
+
+    const midY = H / 2;
+    const amp = H * 0.35;
+
+    // time: show ~2 periods of fundamental
+    const periodsShown = 2;
+    const samples = 800;
+
+    // Reference sine
+    ctxInv.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--ref').trim();
+    ctxInv.lineWidth = 2;
+    ctxInv.beginPath();
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples;
+      const x = t * W;
+      const y = midY - m * amp * Math.sin(2 * Math.PI * periodsShown * t);
+      if (i === 0) ctxInv.moveTo(x, y); else ctxInv.lineTo(x, y);
+    }
+    ctxInv.stroke();
+
+    // Carrier triangle
+    ctxInv.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--carrier').trim();
+    ctxInv.lineWidth = 1.5;
+    ctxInv.beginPath();
+    const carPeriods = periodsShown * ratio;
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples;
+      const x = t * W;
+      // triangle: sawtooth folded
+      const phase = (t * carPeriods) % 1;
+      let tri = phase < 0.5 ? 4 * phase - 1 : 3 - 4 * phase;
+      const y = midY - amp * tri;
+      if (i === 0) ctxInv.moveTo(x, y); else ctxInv.lineTo(x, y);
+    }
+    ctxInv.stroke();
+
+    // PWM (comparison)
+    ctxInv.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--wave').trim();
+    ctxInv.lineWidth = 2;
+    ctxInv.beginPath();
+    let prevHigh = false;
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples;
+      const x = t * W;
+      const sine = m * Math.sin(2 * Math.PI * periodsShown * t);
+      const phase = (t * carPeriods) % 1;
+      const tri = phase < 0.5 ? 4 * phase - 1 : 3 - 4 * phase;
+      const high = sine > tri;
+      const y = midY - (high ? amp : -amp) * 0.9;
+      if (i === 0) {
+        ctxInv.moveTo(x, y);
+      } else {
+        // vertical transition
+        if (high !== prevHigh) {
+          ctxInv.lineTo(x, midY - (prevHigh ? amp : -amp) * 0.9);
+        }
+        ctxInv.lineTo(x, y);
+      }
+      prevHigh = high;
+    }
+    ctxInv.stroke();
+
+    // Approximate fundamental (filtered)
+    ctxInv.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--avg').trim();
+    ctxInv.lineWidth = 2.5;
+    ctxInv.setLineDash([6, 4]);
+    ctxInv.beginPath();
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples;
+      const x = t * W;
+      const y = midY - m * amp * 0.85 * Math.sin(2 * Math.PI * periodsShown * t);
+      if (i === 0) ctxInv.moveTo(x, y); else ctxInv.lineTo(x, y);
+    }
+    ctxInv.stroke();
+    ctxInv.setLineDash([]);
+
+    // labels
+    ctxInv.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+    ctxInv.font = '12px -apple-system, sans-serif';
+    ctxInv.fillText('+Vdc', 8, midY - amp * 0.9 - 6);
+    ctxInv.fillText('-Vdc', 8, midY + amp * 0.9 + 14);
+  }
+
+  function drawAll() {
+    if (document.getElementById('panel-pwm').classList.contains('active')) drawPwm();
+    if (document.getElementById('panel-inverter').classList.contains('active')) drawInv();
+  }
+
+  // Link controls
+  link('duty', 'dutyVal', drawPwm);
+  link('vin', 'vinVal', drawPwm);
+  link('fpwm', 'fpwmVal', drawPwm);
+  link('fout', 'foutVal', drawInv);
+  link('ma', 'maVal', drawInv);
+  link('fcar', 'fcarVal', drawInv);
+
+  // Resize
+  window.addEventListener('resize', drawAll);
+  // Initial
+  setTheme(false);
+  drawAll();
+</script>
+</body>
+</html>
