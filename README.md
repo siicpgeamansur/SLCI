@@ -13,3 +13,5 @@ Interfaces pour voir la relation entre les abaques et la réponse temporelle d'u
 [Pont de Wheatstone](https://siicpgeamansur.github.io/SLCI/pont_Wheatstone.html)
 
 [Alimentation réglable AC ou DC](https://siicpgeamansur.github.io/SLCI/alimentation_elec.html)
+
+[Moteurs électriques](https://siicpgeamansur.github.io/SLCI/moteurs_electriques.html)
