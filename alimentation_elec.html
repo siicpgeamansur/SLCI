@@ -7,9 +7,9 @@
 <style>
 :root {
   --bg:#f4f4f6; --card:#fff; --text:#1d1d1f; --muted:#6e6e73;
-  --accent:#0071e3; --grid:#d8d8dc; --border:#d2d2d7;
-  --u0:#4a6fa5; --u1:#2a9d5c; --u2:#c17a4a; --u3:#1a1a1a;
-  --wave:#0071e3; --avg:#ff3b30; --ref:#af52de; --carrier:#34c759;
+  --accent:#0071e3; --grid:#d0d0d5; --border:#d2d2d7;
+  --u0:#3b5b8a; --u1:#2a8f55; --u2:#b86b3a; --u3:#222;
+  --wave:#0071e3; --avg:#e6392e; --ref:#9b4dca; --carrier:#2a9d5c;
 }
 [data-theme="dark"] {
   --bg:#1c1c1e; --card:#2c2c2e; --text:#f5f5f7; --muted:#98989d;
@@ -27,26 +27,26 @@ h1{font-size:1.35rem;font-weight:600}
 .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .panel{display:none;background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border)}
 .panel.active{display:block}
-.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:11px;margin-bottom:12px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:11px;margin-bottom:12px}
 .control{display:flex;flex-direction:column;gap:3px}
-.control label{font-size:.76rem;color:var(--muted);font-weight:500}
+.control label{font-size:.75rem;color:var(--muted);font-weight:500}
 .slider-row{display:flex;align-items:center;gap:7px}
 input[type=range]{flex:1;accent-color:var(--accent);height:5px}
-input[type=number]{width:56px;padding:4px 5px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:.86rem;text-align:center}
-.canvas-wrap{position:relative;width:100%;height:260px;background:var(--bg);border-radius:9px;overflow:hidden;border:1px solid var(--border);margin-bottom:8px}
+input[type=number]{width:54px;padding:4px 4px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:.85rem;text-align:center}
+.canvas-wrap{position:relative;width:100%;height:240px;background:var(--bg);border-radius:9px;overflow:hidden;border:1px solid var(--border);margin-bottom:6px}
 canvas{width:100%;height:100%;display:block}
-.scope-label{position:absolute;top:5px;right:8px;font-size:.7rem;color:var(--muted);background:color-mix(in srgb,var(--bg) 85%,transparent);padding:2px 6px;border-radius:4px;pointer-events:none}
-.legend{display:flex;flex-wrap:wrap;gap:12px;margin:4px 0 8px;font-size:.8rem}
+.scope-label{position:absolute;top:5px;right:8px;font-size:.68rem;color:var(--muted);background:color-mix(in srgb,var(--bg) 88%,transparent);padding:2px 6px;border-radius:4px;pointer-events:none;font-family:ui-monospace,Menlo,monospace}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin:3px 0 8px;font-size:.79rem}
 .legend-item{display:flex;align-items:center;gap:5px}
 .dot{width:10px;height:10px;border-radius:50%}
-.info{padding:9px 11px;background:var(--bg);border-radius:7px;font-size:.85rem;color:var(--muted);margin-top:6px}
+.info{padding:9px 11px;background:var(--bg);border-radius:7px;font-size:.84rem;color:var(--muted);margin-top:6px}
 .info strong{color:var(--text)}
-.formula{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:1px 4px;border-radius:3px;font-size:.84em}
-.section-title{font-size:1rem;font-weight:600;margin:0 0 10px}
-.schematic-wrap{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px;margin-bottom:14px;text-align:center}
-.schematic-wrap canvas{max-width:100%;height:auto}
-.wave-title{font-size:.88rem;font-weight:600;margin:12px 0 5px}
-@media(max-width:600px){.canvas-wrap{height:210px}}
+.formula{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:1px 4px;border-radius:3px;font-size:.83em}
+.section-title{font-size:1.02rem;font-weight:600;margin:0 0 10px}
+.schematic-wrap{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:14px;text-align:center;overflow-x:auto}
+.schematic-wrap canvas{max-width:100%;height:auto;display:block;margin:0 auto}
+.wave-title{font-size:.87rem;font-weight:600;margin:13px 0 5px}
+@media(max-width:600px){.canvas-wrap{height:200px}}
 </style>
 </head>
 <body>
@@ -65,7 +65,7 @@ canvas{width:100%;height:100%;display:block}
 <div class="panel active" id="panel-rectifier">
   <div class="section-title">Convertisseur statique AC/DC</div>
   <div class="schematic-wrap">
-    <canvas id="schemaRect" width="700" height="170"></canvas>
+    <canvas id="schemaRect" width="760" height="190"></canvas>
   </div>
 
   <div class="controls">
@@ -103,8 +103,8 @@ canvas{width:100%;height:100%;display:block}
     </div>
   </div>
 
-  <div class="wave-title">Figure 2 – Transformateur (u₀ primaire & u₁ secondaire)</div>
-  <div class="canvas-wrap" style="height:200px"><canvas id="cU01"></canvas><div class="scope-label" id="labU01"></div></div>
+  <div class="wave-title">Figure 2 – Transformateur (u₀ primaire & u₁ secondaire) – <em>même échelle</em></div>
+  <div class="canvas-wrap" style="height:220px"><canvas id="cU01"></canvas><div class="scope-label" id="labU01"></div></div>
   <div class="legend">
     <div class="legend-item"><div class="dot" style="background:var(--u0)"></div>u₀(t) – 230 V<sub>eff</sub></div>
     <div class="legend-item"><div class="dot" style="background:var(--u1)"></div>u₁(t) – secondaire</div>
@@ -137,7 +137,7 @@ canvas{width:100%;height:100%;display:block}
 <div class="panel" id="panel-pwm">
   <div class="section-title">Hacheur abaisseur (Buck) – PWM / MLI</div>
   <div class="schematic-wrap">
-    <canvas id="schemaPwm" width="520" height="140"></canvas>
+    <canvas id="schemaPwm" width="560" height="160"></canvas>
   </div>
 
   <div class="controls">
@@ -168,8 +168,8 @@ canvas{width:100%;height:100%;display:block}
     <div class="control">
       <label>Temps affiché</label>
       <div class="slider-row">
-        <input type="range" id="pwmTime" min="0.5" max="10" value="2" step="0.1">
-        <input type="number" id="pwmTimeVal" min="0.5" max="10" value="2" step="0.1">
+        <input type="range" id="pwmTime" min="0.5" max="8" value="2" step="0.1">
+        <input type="number" id="pwmTimeVal" min="0.5" max="8" value="2" step="0.1">
         <span>ms</span>
       </div>
     </div>
@@ -198,7 +198,7 @@ canvas{width:100%;height:100%;display:block}
 <div class="panel" id="panel-inverter">
   <div class="section-title">Onduleur monophasé – MLI sinusoïdale</div>
   <div class="schematic-wrap">
-    <canvas id="schemaInv" width="480" height="150"></canvas>
+    <canvas id="schemaInv" width="520" height="170"></canvas>
   </div>
 
   <div class="controls">
@@ -250,15 +250,13 @@ canvas{width:100%;height:100%;display:block}
 <script>
 (function(){
   let dark=false;
-  const themeBtn=document.getElementById('themeToggle');
-  function setTheme(d){
-    dark=d;
-    document.documentElement.setAttribute('data-theme',d?'dark':'light');
-    document.getElementById('themeIcon').textContent=d?'☀️':'🌙';
-    document.getElementById('themeText').textContent=d?'Mode clair':'Mode sombre';
+  document.getElementById('themeToggle').onclick=()=>{
+    dark=!dark;
+    document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+    document.getElementById('themeIcon').textContent=dark?'☀️':'🌙';
+    document.getElementById('themeText').textContent=dark?'Mode clair':'Mode sombre';
     requestAnimationFrame(()=>requestAnimationFrame(drawAll));
-  }
-  themeBtn.onclick=()=>setTheme(!dark);
+  };
 
   document.querySelectorAll('.tab').forEach(t=>{
     t.onclick=()=>{
@@ -291,154 +289,225 @@ canvas{width:100%;height:100%;display:block}
     ctx.setTransform(dpr,0,0,dpr,0,0);
     return {ctx,W,H};
   }
-  function grid(ctx,W,H){
+
+  function drawGrid(ctx,W,H,opts={}){
+    const step=40;
     ctx.strokeStyle=css('--grid');ctx.lineWidth=1;
-    for(let x=0;x<=W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-    for(let y=0;y<=H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    for(let x=0;x<=W;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<=H;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    if(opts.timeDiv || opts.voltDiv){
+      ctx.fillStyle=css('--muted');
+      ctx.font='10px ui-monospace,Menlo,monospace';
+      ctx.textAlign='left';
+      let txt=[];
+      if(opts.timeDiv) txt.push(opts.timeDiv);
+      if(opts.voltDiv) txt.push(opts.voltDiv);
+      ctx.fillText(txt.join('  •  '), 6, H-6);
+    }
   }
 
   function arr(ctx,x1,y1,x2,y2){
     ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
     const a=Math.atan2(y2-y1,x2-x1);
     ctx.beginPath();ctx.moveTo(x2,y2);
-    ctx.lineTo(x2-6*Math.cos(a-0.4),y2-6*Math.sin(a-0.4));
-    ctx.lineTo(x2-6*Math.cos(a+0.4),y2-6*Math.sin(a+0.4));
+    ctx.lineTo(x2-7*Math.cos(a-0.35),y2-7*Math.sin(a-0.35));
+    ctx.lineTo(x2-7*Math.cos(a+0.35),y2-7*Math.sin(a+0.35));
     ctx.closePath();ctx.fill();
   }
 
-  // ========== SCHÉMAS ==========
+  // ========== SCHÉMA REDRESSEMENT ==========
   function drawSchemaRect(){
     const c=document.getElementById('schemaRect');if(!c)return;
     const ctx=c.getContext('2d');
     const dpr=window.devicePixelRatio||1;
-    const W=700,H=170;
+    const W=760,H=190;
     c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
     ctx.setTransform(dpr,0,0,dpr,0,0);
     ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
 
-    const tc=css('--text'),mu=css('--muted');
-    const u0=css('--u0'),u1=css('--u1'),u2=css('--u2'),u3=css('--u3');
+    const tc=css('--text'), mu=css('--muted');
+    const u0=css('--u0'), u1=css('--u1'), u2=css('--u2'), u3=css('--u3');
 
-    ctx.strokeStyle=css('--border');ctx.lineWidth=1.2;
-    ctx.strokeRect(8,6,210,130);
-    ctx.strokeRect(230,6,230,130);
-    ctx.strokeRect(472,6,220,130);
-    ctx.fillStyle=mu;ctx.font='11px system-ui';ctx.textAlign='center';
-    ctx.fillText('Transformateur',113,148);
-    ctx.fillText('Pont de diodes',345,148);
-    ctx.fillText('Filtre RC',582,148);
+    ctx.strokeStyle=css('--border');ctx.lineWidth=1.3;
+    ctx.strokeRect(10,10,220,140);
+    ctx.strokeRect(245,10,250,140);
+    ctx.strokeRect(510,10,240,140);
 
-    const tx=110,ty=70;
-    ctx.strokeStyle=tc;ctx.lineWidth=1.7;
-    for(let i=0;i<4;i++){const y=ty-24+i*16;ctx.beginPath();ctx.moveTo(tx-32,y);ctx.bezierCurveTo(tx-20,y-6,tx-20,y+6,tx-32,y+12);ctx.stroke();}
-    for(let i=0;i<4;i++){const y=ty-24+i*16;ctx.beginPath();ctx.moveTo(tx+8,y);ctx.bezierCurveTo(tx+20,y-6,tx+20,y+6,tx+8,y+12);ctx.stroke();}
-    ctx.strokeStyle=mu;ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(tx-4,ty-32);ctx.lineTo(tx-4,ty+32);ctx.moveTo(tx+2,ty-32);ctx.lineTo(tx+2,ty+32);ctx.stroke();
+    ctx.fillStyle=mu;ctx.font='12px system-ui';ctx.textAlign='center';
+    ctx.fillText('Transformateur',120,168);
+    ctx.fillText('Pont redresseur de diodes',370,168);
+    ctx.fillText('Filtre RC',630,168);
 
-    ctx.strokeStyle=u0;ctx.fillStyle=u0;ctx.lineWidth=1.5;
-    arr(ctx,tx-50,ty+18,tx-50,ty-18);ctx.font='bold 13px system-ui';ctx.textAlign='right';ctx.fillText('u₀',tx-54,ty+4);
+    const tx=115, ty=80;
+    ctx.strokeStyle=tc;ctx.lineWidth=1.8;
+    for(let i=0;i<5;i++){
+      const y=ty-30+i*15;
+      ctx.beginPath();ctx.moveTo(tx-36,y);
+      ctx.bezierCurveTo(tx-22,y-7,tx-22,y+7,tx-36,y+14);ctx.stroke();
+    }
+    for(let i=0;i<5;i++){
+      const y=ty-30+i*15;
+      ctx.beginPath();ctx.moveTo(tx+10,y);
+      ctx.bezierCurveTo(tx+24,y-7,tx+24,y+7,tx+10,y+14);ctx.stroke();
+    }
+    ctx.strokeStyle=mu;ctx.lineWidth=2.2;
+    ctx.beginPath();ctx.moveTo(tx-5,ty-38);ctx.lineTo(tx-5,ty+38);
+    ctx.moveTo(tx+3,ty-38);ctx.lineTo(tx+3,ty+38);ctx.stroke();
+
+    ctx.strokeStyle=u0;ctx.fillStyle=u0;ctx.lineWidth=1.6;
+    arr(ctx,tx-52,ty+22,tx-52,ty-22);
+    ctx.font='bold 14px system-ui';ctx.textAlign='right';ctx.fillText('u₀',tx-56,ty+5);
+
     ctx.strokeStyle=u1;ctx.fillStyle=u1;
-    arr(ctx,tx+36,ty+18,tx+36,ty-18);ctx.textAlign='left';ctx.fillText('u₁',tx+40,ty+4);
+    arr(ctx,tx+42,ty+22,tx+42,ty-22);
+    ctx.textAlign='left';ctx.fillText('u₁',tx+46,ty+5);
 
-    ctx.strokeStyle=tc;ctx.lineWidth=1.4;
-    ctx.beginPath();ctx.moveTo(tx+28,ty-24);ctx.lineTo(260,ty-24);ctx.moveTo(tx+28,ty+24);ctx.lineTo(260,ty+24);ctx.stroke();
+    ctx.strokeStyle=tc;ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(tx+32,ty-28);ctx.lineTo(275,ty-28);
+    ctx.moveTo(tx+32,ty+28);ctx.lineTo(275,ty+28);
+    ctx.stroke();
 
-    const bx=345,by=70,br=26;
-    ctx.strokeStyle=tc;ctx.lineWidth=1.6;
-    ctx.beginPath();ctx.moveTo(bx,by-br);ctx.lineTo(bx+br,by);ctx.lineTo(bx,by+br);ctx.lineTo(bx-br,by);ctx.closePath();ctx.stroke();
-    [[-12,-12,1],[12,-12,1],[-12,12,-1],[12,12,-1]].forEach(([dx,dy,dir])=>{
-      ctx.beginPath();ctx.moveTo(bx+dx-4,by+dy-5*dir);ctx.lineTo(bx+dx+4,by+dy-5*dir);ctx.lineTo(bx+dx,by+dy+5*dir);ctx.closePath();ctx.stroke();
-      ctx.beginPath();ctx.moveTo(bx+dx-4,by+dy+5*dir);ctx.lineTo(bx+dx+4,by+dy+5*dir);ctx.stroke();
+    const bx=370, by=80, s=32;
+    ctx.strokeStyle=tc;ctx.lineWidth=1.7;
+    ctx.beginPath();
+    ctx.moveTo(bx,by-s);ctx.lineTo(bx+s,by);ctx.lineTo(bx,by+s);ctx.lineTo(bx-s,by);
+    ctx.closePath();ctx.stroke();
+
+    function diode(x,y,rot){
+      ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+      ctx.beginPath();ctx.moveTo(-6,-7);ctx.lineTo(6,-7);ctx.lineTo(0,7);ctx.closePath();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(-6,7);ctx.lineTo(6,7);ctx.stroke();
+      ctx.restore();
+    }
+    diode(bx-14,by-14,Math.PI/4);
+    diode(bx+14,by-14,-Math.PI/4);
+    diode(bx-14,by+14,3*Math.PI/4);
+    diode(bx+14,by+14,-3*Math.PI/4);
+
+    ctx.fillStyle=tc;
+    [[bx,by-s],[bx+s,by],[bx,by+s],[bx-s,by]].forEach(([x,y])=>{
+      ctx.beginPath();ctx.arc(x,y,3,0,6.28);ctx.fill();
     });
 
-    ctx.strokeStyle=u2;ctx.fillStyle=u2;
-    arr(ctx,bx+br+14,by+20,bx+br+14,by-20);ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText('u₂',bx+br+18,by+4);
+    ctx.strokeStyle=u2;ctx.fillStyle=u2;ctx.lineWidth=1.6;
+    arr(ctx,bx+s+16,by+24,bx+s+16,by-24);
+    ctx.font='bold 14px system-ui';ctx.textAlign='left';ctx.fillText('u₂',bx+s+20,by+5);
 
-    ctx.strokeStyle=tc;ctx.lineWidth=1.4;
-    ctx.beginPath();ctx.moveTo(bx+br,by);ctx.lineTo(500,by);ctx.stroke();
-    ctx.strokeRect(510,by-9,32,18);ctx.fillStyle=tc;ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('R',526,by+5);
-    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(560,by-20);ctx.lineTo(560,by+20);ctx.moveTo(568,by-20);ctx.lineTo(568,by+20);ctx.stroke();
-    ctx.font='12px system-ui';ctx.fillText('C',564,by+36);
-    ctx.lineWidth=1.4;ctx.beginPath();
-    ctx.moveTo(500,by);ctx.lineTo(500,by+40);ctx.lineTo(590,by+40);ctx.lineTo(590,by);ctx.stroke();
+    ctx.strokeStyle=tc;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(bx+s,by);ctx.lineTo(540,by);ctx.stroke();
+
+    ctx.strokeRect(550,by-11,40,22);
+    ctx.fillStyle=tc;ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText('R',570,by+5);
+
+    ctx.lineWidth=2.2;
+    ctx.beginPath();ctx.moveTo(615,by-24);ctx.lineTo(615,by+24);
+    ctx.moveTo(625,by-24);ctx.lineTo(625,by+24);ctx.stroke();
+    ctx.font='13px system-ui';ctx.fillText('C',620,by+42);
+
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(540,by);ctx.lineTo(550,by);
+    ctx.moveTo(590,by);ctx.lineTo(615,by);
+    ctx.moveTo(625,by);ctx.lineTo(660,by);
+    ctx.moveTo(540,by);ctx.lineTo(540,by+48);
+    ctx.lineTo(660,by+48);ctx.lineTo(660,by);
+    ctx.stroke();
 
     ctx.strokeStyle=u3;ctx.fillStyle=u3;
-    arr(ctx,600,by+22,600,by-22);ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText('u₃',605,by+4);
+    arr(ctx,675,by+28,675,by-28);
+    ctx.font='bold 14px system-ui';ctx.textAlign='left';ctx.fillText('u₃',680,by+5);
   }
 
+  // ========== SCHÉMA PWM ==========
   function drawSchemaPwm(){
     const c=document.getElementById('schemaPwm');if(!c)return;
     const ctx=c.getContext('2d');
     const dpr=window.devicePixelRatio||1;
-    const W=520,H=140;
+    const W=560,H=160;
     c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
     ctx.setTransform(dpr,0,0,dpr,0,0);
     ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-    const tc=css('--text'),mu=css('--muted'),av=css('--avg');
+    const tc=css('--text'), mu=css('--muted'), av=css('--avg');
 
-    ctx.strokeStyle=tc;ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.moveTo(40,40);ctx.lineTo(40,100);ctx.stroke();
-    ctx.fillStyle=tc;ctx.font='12px system-ui';ctx.textAlign='center';
-    ctx.fillText('+',40,32);ctx.fillText('−',40,114);ctx.fillText('Vin',40,70);
+    ctx.strokeStyle=tc;ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.moveTo(50,35);ctx.lineTo(50,115);ctx.stroke();
+    ctx.fillStyle=tc;ctx.font='13px system-ui';ctx.textAlign='center';
+    ctx.fillText('+',50,27);ctx.fillText('−',50,130);ctx.fillText('Vin',50,78);
 
-    ctx.beginPath();ctx.moveTo(40,40);ctx.lineTo(120,40);ctx.stroke();
-    ctx.strokeRect(120,28,40,24);ctx.fillText('S',140,44);
-    ctx.beginPath();ctx.moveTo(160,40);ctx.lineTo(160,80);ctx.lineTo(140,80);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(150,72);ctx.lineTo(160,80);ctx.lineTo(150,88);ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(50,35);ctx.lineTo(140,35);ctx.stroke();
+    ctx.strokeRect(140,24,48,22);
+    ctx.fillText('S',164,39);
+    ctx.beginPath();ctx.moveTo(188,35);ctx.lineTo(188,80);ctx.lineTo(165,80);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(175,72);ctx.lineTo(188,80);ctx.lineTo(175,88);ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(165,88);ctx.lineTo(188,88);ctx.stroke();
 
-    ctx.beginPath();ctx.moveTo(160,40);ctx.lineTo(220,40);
-    for(let i=0;i<4;i++){ctx.arc(230+i*12,40,6,Math.PI,0,false);}
-    ctx.lineTo(300,40);ctx.stroke();
-    ctx.fillText('L',250,28);
+    ctx.beginPath();ctx.moveTo(188,35);ctx.lineTo(240,35);
+    for(let i=0;i<5;i++) ctx.arc(252+i*14,35,7,Math.PI,0,false);
+    ctx.lineTo(340,35);ctx.stroke();
+    ctx.fillText('L',280,24);
 
-    ctx.beginPath();ctx.moveTo(300,40);ctx.lineTo(300,55);ctx.stroke();
-    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(290,55);ctx.lineTo(310,55);ctx.moveTo(290,65);ctx.lineTo(310,65);ctx.stroke();
-    ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(300,65);ctx.lineTo(300,100);ctx.lineTo(40,100);ctx.stroke();
-    ctx.fillText('C',300,80);
+    ctx.beginPath();ctx.moveTo(340,35);ctx.lineTo(340,55);ctx.stroke();
+    ctx.lineWidth=2.3;
+    ctx.beginPath();ctx.moveTo(328,55);ctx.lineTo(352,55);
+    ctx.moveTo(328,68);ctx.lineTo(352,68);ctx.stroke();
+    ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.moveTo(340,68);ctx.lineTo(340,115);ctx.lineTo(50,115);ctx.stroke();
+    ctx.fillText('C',340,90);
 
     ctx.strokeStyle=av;ctx.fillStyle=av;
-    arr(ctx,340,90,340,50);ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText('Vout',348,72);
-    ctx.fillStyle=mu;ctx.font='11px system-ui';ctx.textAlign='center';
-    ctx.fillText('Hacheur Buck (PWM)',260,130);
+    arr(ctx,380,105,380,50);
+    ctx.font='bold 14px system-ui';ctx.textAlign='left';ctx.fillText('Vout',388,80);
+
+    ctx.fillStyle=mu;ctx.font='12px system-ui';ctx.textAlign='center';
+    ctx.fillText('Hacheur Buck (découpage PWM)',280,150);
   }
 
+  // ========== SCHÉMA ONDULEUR ==========
   function drawSchemaInv(){
     const c=document.getElementById('schemaInv');if(!c)return;
     const ctx=c.getContext('2d');
     const dpr=window.devicePixelRatio||1;
-    const W=480,H=150;
+    const W=520,H=170;
     c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
     ctx.setTransform(dpr,0,0,dpr,0,0);
     ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-    const tc=css('--text'),mu=css('--muted'),wv=css('--wave');
+    const tc=css('--text'), mu=css('--muted'), wv=css('--wave');
 
-    ctx.strokeStyle=tc;ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.moveTo(50,30);ctx.lineTo(50,120);ctx.stroke();
-    ctx.fillStyle=tc;ctx.font='12px system-ui';ctx.textAlign='center';
-    ctx.fillText('+',50,22);ctx.fillText('−',50,134);ctx.fillText('Vdc',50,78);
+    ctx.strokeStyle=tc;ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.moveTo(45,30);ctx.lineTo(45,130);ctx.stroke();
+    ctx.fillStyle=tc;ctx.font='13px system-ui';ctx.textAlign='center';
+    ctx.fillText('+',45,22);ctx.fillText('−',45,144);ctx.fillText('Vdc',45,82);
 
-    const sw=[[120,40],[200,40],[120,90],[200,90]];
-    sw.forEach(([x,y],i)=>{
-      ctx.strokeRect(x,y,36,22);
-      ctx.fillText('S'+(i+1),x+18,y+15);
+    const positions=[[130,40],[230,40],[130,100],[230,100]];
+    positions.forEach(([x,y],i)=>{
+      ctx.strokeRect(x,y,42,24);
+      ctx.fillText('S'+(i+1),x+21,y+16);
     });
+
     ctx.beginPath();
-    ctx.moveTo(50,30);ctx.lineTo(120,30);ctx.lineTo(120,40);
-    ctx.moveTo(156,40);ctx.lineTo(156,30);ctx.lineTo(200,30);ctx.lineTo(200,40);
-    ctx.moveTo(50,120);ctx.lineTo(120,120);ctx.lineTo(120,112);
-    ctx.moveTo(156,112);ctx.lineTo(156,120);ctx.lineTo(200,120);ctx.lineTo(200,112);
-    ctx.moveTo(138,62);ctx.lineTo(138,90);
-    ctx.moveTo(218,62);ctx.lineTo(218,90);
+    ctx.moveTo(45,30);ctx.lineTo(130,30);ctx.lineTo(130,40);
+    ctx.moveTo(172,40);ctx.lineTo(172,30);ctx.lineTo(230,30);ctx.lineTo(230,40);
+    ctx.moveTo(45,130);ctx.lineTo(130,130);ctx.lineTo(130,124);
+    ctx.moveTo(172,124);ctx.lineTo(172,130);ctx.lineTo(230,130);ctx.lineTo(230,124);
+    ctx.moveTo(151,64);ctx.lineTo(151,100);
+    ctx.moveTo(251,64);ctx.lineTo(251,100);
     ctx.stroke();
 
-    ctx.beginPath();ctx.moveTo(156,51);ctx.lineTo(280,51);
-    ctx.moveTo(218,101);ctx.lineTo(280,101);ctx.stroke();
-    ctx.strokeRect(280,60,50,32);ctx.fillText('Charge',305,80);
+    ctx.beginPath();
+    ctx.moveTo(172,52);ctx.lineTo(310,52);
+    ctx.moveTo(251,112);ctx.lineTo(310,112);
+    ctx.stroke();
+
+    ctx.strokeRect(310,68,55,30);
+    ctx.fillText('Charge',337,87);
 
     ctx.strokeStyle=wv;ctx.fillStyle=wv;
-    arr(ctx,350,110,350,50);ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText('u_s',358,82);
-    ctx.fillStyle=mu;ctx.font='11px system-ui';ctx.textAlign='center';
-    ctx.fillText('Pont en H (onduleur monophasé)',240,142);
+    arr(ctx,390,120,390,50);
+    ctx.font='bold 14px system-ui';ctx.textAlign='left';ctx.fillText('uₛ',398,88);
+
+    ctx.fillStyle=mu;ctx.font='12px system-ui';ctx.textAlign='center';
+    ctx.fillText('Pont en H – Onduleur monophasé',260,158);
   }
 
   // ========== REDRESSEMENT ==========
@@ -455,55 +524,93 @@ canvas{width:100%;height:100%;display:block}
     document.getElementById('vdcText').textContent=Vdc.toFixed(1)+' V';
     document.getElementById('rippleText').textContent=Vripple.toFixed(2)+' V';
 
-    let r=prep('cU01');if(r){
+    // Figure 2 – MÊME échelle
+    let r=prep('cU01');
+    if(r){
       const {ctx,W,H}=r;
-      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
-      const mid=H/2, sc0=(H*0.36)/(230*Math.SQRT2), sc1=(H*0.36)/(Vpeak*1.1), N=900;
-      ctx.strokeStyle=css('--u0');ctx.lineWidth=2;ctx.beginPath();
-      for(let i=0;i<=N;i++){const t=i/N,y=mid-230*Math.SQRT2*Math.sin(2*Math.PI*f*T*t)*sc0;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
+      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
+      const timeDiv=(Tms/(W/40)).toFixed(1)+' ms/div';
+      const voltDiv=((230*Math.SQRT2)/(H*0.38/40)).toFixed(0)+' V/div';
+      drawGrid(ctx,W,H,{timeDiv,voltDiv});
+
+      const mid=H/2;
+      const sc=(H*0.38)/(230*Math.SQRT2);
+      const N=1000;
+
+      ctx.strokeStyle=css('--u0');ctx.lineWidth=2.2;ctx.beginPath();
+      for(let i=0;i<=N;i++){
+        const t=i/N, y=mid - 230*Math.SQRT2 * Math.sin(2*Math.PI*f*T*t) * sc;
+        i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);
+      }
       ctx.stroke();
+
       ctx.strokeStyle=css('--u1');ctx.lineWidth=2.2;ctx.beginPath();
-      for(let i=0;i<=N;i++){const t=i/N,y=mid-Vpeak*Math.sin(2*Math.PI*f*T*t)*sc1;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
+      for(let i=0;i<=N;i++){
+        const t=i/N, y=mid - Vpeak * Math.sin(2*Math.PI*f*T*t) * sc;
+        i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);
+      }
       ctx.stroke();
-      ctx.fillStyle=css('--u0');ctx.font='11px system-ui';ctx.fillText('√2×230 V',6,14);
-      ctx.fillStyle=css('--u1');ctx.fillText('√2×'+Veff+' V',6,28);
+
+      ctx.fillStyle=css('--u0');ctx.font='11px system-ui';
+      ctx.fillText('√2 × 230 V', 8, 16);
+      ctx.fillStyle=css('--u1');
+      ctx.fillText('√2 × '+Veff+' V', 8, 30);
       document.getElementById('labU01').textContent=Tms+' ms';
     }
 
-    r=prep('cU12');if(r){
+    // Figure 3
+    r=prep('cU12');
+    if(r){
       const {ctx,W,H}=r;
-      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
-      const mid=H*0.55, sc=(mid-18)/(Vpeak*1.05), N=900;
+      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
+      const timeDiv=(Tms/(W/40)).toFixed(1)+' ms/div';
+      const voltDiv=(Vpeak/(H*0.4/40)).toFixed(1)+' V/div';
+      drawGrid(ctx,W,H,{timeDiv,voltDiv});
+
+      const mid=H*0.55, sc=(mid-20)/(Vpeak*1.05), N=1000;
+
       ctx.strokeStyle=css('--u1');ctx.lineWidth=1.7;ctx.setLineDash([5,4]);ctx.beginPath();
       for(let i=0;i<=N;i++){const t=i/N,y=mid-Vpeak*Math.sin(2*Math.PI*f*T*t)*sc;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
       ctx.stroke();ctx.setLineDash([]);
+
       ctx.strokeStyle=css('--u2');ctx.lineWidth=2.2;ctx.beginPath();
       for(let i=0;i<=N;i++){const t=i/N,y=mid-Math.abs(Vpeak*Math.sin(2*Math.PI*f*T*t))*sc;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
       ctx.stroke();
-      ctx.fillStyle=css('--u1');ctx.font='11px system-ui';ctx.fillText('√2×'+Veff+' V',6,14);
+
+      ctx.fillStyle=css('--u1');ctx.font='11px system-ui';ctx.fillText('√2 × '+Veff+' V',8,16);
       document.getElementById('labU12').textContent=Tms+' ms';
     }
 
-    r=prep('cU23');if(r){
+    // Figure 4
+    r=prep('cU23');
+    if(r){
       const {ctx,W,H}=r;
-      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
-      const zero=H*0.82, sc=(zero-20)/(Vpeak*1.1), N=1000, dt=T/N;
+      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
+      const timeDiv=(Tms/(W/40)).toFixed(1)+' ms/div';
+      const voltDiv=(Vpeak/(H*0.45/40)).toFixed(1)+' V/div';
+      drawGrid(ctx,W,H,{timeDiv,voltDiv});
+
+      const zero=H*0.82, sc=(zero-22)/(Vpeak*1.08), N=1100, dt=T/N;
+
       ctx.strokeStyle=css('--u2');ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();
       for(let i=0;i<=N;i++){const t=i/N,y=zero-Math.abs(Vpeak*Math.sin(2*Math.PI*f*T*t))*sc;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
       ctx.stroke();ctx.setLineDash([]);
-      ctx.strokeStyle=css('--u3');ctx.lineWidth=2.3;ctx.beginPath();
+
+      ctx.strokeStyle=css('--u3');ctx.lineWidth=2.4;ctx.beginPath();
       let v=Vpeak;
       for(let i=0;i<=N;i++){
         const t=i/N, vr=Math.abs(Vpeak*Math.sin(2*Math.PI*f*T*t));
-        if(vr>=v)v=vr; else {v-= (I/C)*dt; if(v<0)v=0;}
+        if(vr>=v) v=vr; else {v-=(I/C)*dt; if(v<0)v=0;}
         const y=zero-v*sc; i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);
       }
       ctx.stroke();
+
       const y24=zero-Veff*sc;
       ctx.strokeStyle=css('--muted');ctx.lineWidth=1;ctx.setLineDash([4,3]);
       ctx.beginPath();ctx.moveTo(0,y24);ctx.lineTo(W,y24);ctx.stroke();ctx.setLineDash([]);
-      ctx.fillStyle=css('--u3');ctx.font='11px system-ui';ctx.fillText('√2×'+Veff+' V',6,14);
-      ctx.fillStyle=css('--muted');ctx.fillText(Veff+' V',6,y24-3);
+
+      ctx.fillStyle=css('--u3');ctx.font='11px system-ui';ctx.fillText('√2 × '+Veff+' V',8,16);
+      ctx.fillStyle=css('--muted');ctx.fillText(Veff+' V',8,y24-4);
       document.getElementById('labU23').textContent=Tms+' ms';
     }
   }
@@ -517,13 +624,17 @@ canvas{width:100%;height:100%;display:block}
     const Vmax=+document.getElementById('pwmVscale').value;
     const Vout=α*Vin;
     document.getElementById('voutText').textContent=Vout.toFixed(1)+' V';
-    document.getElementById('labPwm').textContent=Tms+' ms • '+Vmax+' V';
 
     const r=prep('cPwm');if(!r)return;
     const {ctx,W,H}=r;
-    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
+    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
 
-    const zero=H*0.78, sc=(zero-H*0.08)/Vmax;
+    const timeDiv=(Tms/(W/40)).toFixed(2)+' ms/div';
+    const voltDiv=(Vmax/(H*0.7/40)).toFixed(1)+' V/div';
+    drawGrid(ctx,W,H,{timeDiv,voltDiv});
+    document.getElementById('labPwm').textContent=Tms+' ms  •  '+Vmax+' V';
+
+    const zero=H*0.78, sc=(zero-H*0.1)/Vmax;
     const T=Tms/1000, period=1/fp, nPer=T/period;
 
     ctx.strokeStyle=css('--muted');ctx.setLineDash([4,3]);
@@ -532,18 +643,20 @@ canvas{width:100%;height:100%;display:block}
     ctx.strokeStyle=css('--wave');ctx.lineWidth=2.3;ctx.beginPath();
     const ton=α*period;
     for(let p=0;p<nPer+1;p++){
-      const t0=p*period, x0=(t0/T)*W, x1=((t0+ton)/T)*W, x2=((t0+period)/T)*W;
+      const t0=p*period;
+      const x0=(t0/T)*W, x1=((t0+ton)/T)*W, x2=((t0+period)/T)*W;
       const yH=zero-Math.min(Vin,Vmax)*sc;
       if(p===0)ctx.moveTo(x0,zero); else ctx.lineTo(x0,zero);
-      ctx.lineTo(x0,yH);ctx.lineTo(Math.min(x1,W),yH);ctx.lineTo(Math.min(x1,W),zero);ctx.lineTo(Math.min(x2,W),zero);
+      ctx.lineTo(x0,yH);ctx.lineTo(Math.min(x1,W),yH);
+      ctx.lineTo(Math.min(x1,W),zero);ctx.lineTo(Math.min(x2,W),zero);
     }
     ctx.stroke();
 
     const yA=zero-Math.min(Vout,Vmax)*sc;
     ctx.strokeStyle=css('--avg');ctx.lineWidth=2;ctx.setLineDash([7,4]);
     ctx.beginPath();ctx.moveTo(0,yA);ctx.lineTo(W,yA);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle=css('--avg');ctx.font='12px system-ui';ctx.fillText('Vout='+Vout.toFixed(1)+' V',8,yA-5);
-    ctx.fillStyle=css('--text');ctx.fillText('0',8,zero+12);
+    ctx.fillStyle=css('--avg');ctx.font='12px system-ui';ctx.fillText('Vout = '+Vout.toFixed(1)+' V',8,yA-5);
+    ctx.fillStyle=css('--text');ctx.fillText('0',8,zero+13);
   }
 
   // ========== ONDULEUR ==========
@@ -553,13 +666,16 @@ canvas{width:100%;height:100%;display:block}
     const ratio=+document.getElementById('fcar').value;
     const Tms=+document.getElementById('invTime').value;
     document.getElementById('foutText').textContent=f+' Hz';
-    document.getElementById('labInv').textContent=Tms+' ms';
 
     const r=prep('cInv');if(!r)return;
     const {ctx,W,H}=r;
-    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
+    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
 
-    const mid=H/2, amp=H*0.38, N=1100, T=Tms/1000;
+    const timeDiv=(Tms/(W/40)).toFixed(1)+' ms/div';
+    drawGrid(ctx,W,H,{timeDiv,voltDiv:'±1.0 (normalisé)'});
+    document.getElementById('labInv').textContent=Tms+' ms';
+
+    const mid=H/2, amp=H*0.38, N=1200, T=Tms/1000;
     const carF=f*ratio;
 
     ctx.strokeStyle=css('--ref');ctx.lineWidth=2;ctx.beginPath();
@@ -604,7 +720,7 @@ canvas{width:100%;height:100%;display:block}
   ['fout','ma','fcar','invTime'].forEach(id=>link(id,id+'Val',drawInv));
 
   window.addEventListener('resize',drawAll);
-  setTheme(false);
+  document.documentElement.setAttribute('data-theme','light');
   drawAll();
 })();
 </script>
