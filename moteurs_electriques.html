@@ -1,0 +1,529 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Atelier moteurs électriques</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Disposition façon GeoGebra : barre violette, panneau « algèbre » (paramètres) à gauche, deux vues graphiques à droite */
+:root{
+  --bg:#eceef5; --panel:#ffffff; --view:#ffffff; --ink:#1f2030; --muted:#5d6074; --line:#d5d8e6;
+  --accent:#6557d2; --accent-soft:#e9e6fb; --bar:#6557d2; --bar-ink:#ffffff;
+  --grid:#e7e9f2; --axis:#8b8fa6; --iron:#e4e6f0; --iron2:#c6c9db;
+  --blue:#2f6fd6; --red:#d6452f; --green:#23995a; --amber:#cf8400; --violet:#7a4fd6;
+  --f-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16161d; --panel:#22222c; --view:#1c1c25; --ink:#ececf5; --muted:#a2a5ba; --line:#383847;
+    --accent:#9a8ff5; --accent-soft:#2f2c52; --bar:#352f7a; --bar-ink:#f2f0ff;
+    --grid:#2c2c39; --axis:#6e7189; --iron:#33333f; --iron2:#464657;
+    --blue:#6aa3ff; --red:#ff7d66; --green:#54d88a; --amber:#ffc04d; --violet:#b393ff; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16161d; --panel:#22222c; --view:#1c1c25; --ink:#ececf5; --muted:#a2a5ba; --line:#383847;
+  --accent:#9a8ff5; --accent-soft:#2f2c52; --bar:#352f7a; --bar-ink:#f2f0ff;
+  --grid:#2c2c39; --axis:#6e7189; --iron:#33333f; --iron2:#464657;
+  --blue:#6aa3ff; --red:#ff7d66; --green:#54d88a; --amber:#ffc04d; --violet:#b393ff; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--f-ui);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 24px}
+button,select,input{font:inherit;color:inherit}
+.app{max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.top{background:var(--bar);color:var(--bar-ink);border-radius:10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:8px 12px}
+.brand{font-weight:600;font-size:16px;letter-spacing:.01em;white-space:nowrap}
+.brand small{font-weight:400;opacity:.8;margin-left:8px;font-size:12px}
+.tabs{display:flex;gap:2px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none}
+.tabs button{background:none;border:0;color:inherit;padding:8px 13px;border-radius:7px;cursor:pointer;white-space:nowrap;opacity:.85;font-weight:500}
+.tabs button:hover{background:rgba(255,255,255,.14);opacity:1}
+.tabs button[aria-selected="true"]{background:rgba(255,255,255,.24);opacity:1;box-shadow:inset 0 -3px 0 currentColor}
+.seg{display:flex;background:rgba(0,0,0,.2);border-radius:8px;padding:2px}
+.seg button{background:none;border:0;color:inherit;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:13px;opacity:.85}
+.seg button[aria-pressed="true"]{background:rgba(255,255,255,.9);color:#2b2470;opacity:1;font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(290px,350px) minmax(0,1fr);gap:12px;align-items:start}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.side h2{margin:0;font-size:17px;font-weight:600;line-height:1.25}
+.side h2 small{display:block;font-size:12.5px;font-weight:400;color:var(--muted);margin-top:2px}
+.side h3{margin:0 0 6px;font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.prm{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.prm-h{display:flex;align-items:baseline;gap:7px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none;align-self:center}
+.prm-h b{font-family:var(--f-mono);font-weight:500;color:var(--c)}
+.prm-h .lb{color:var(--muted);font-size:12.5px;flex:1;min-width:0}
+.prm-h output{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--c,var(--accent));margin:2px 0}
+.chk{display:flex;gap:8px;align-items:center;cursor:pointer;font-size:13px}
+.chk input{accent-color:var(--accent);width:16px;height:16px}
+select{background:var(--view);border:1px solid var(--line);border-radius:6px;padding:5px 8px;width:100%}
+.chip{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:500;background:var(--accent-soft);color:var(--ink)}
+.chip.ok{background:color-mix(in srgb,var(--green) 22%,var(--panel))}
+.chip.warn{background:color-mix(in srgb,var(--amber) 26%,var(--panel))}
+.chip.bad{background:color-mix(in srgb,var(--red) 24%,var(--panel))}
+.reads{display:grid;grid-template-columns:1fr auto;gap:3px 10px;font-size:13px;margin:8px 0 0}
+.reads dt{color:var(--muted)}
+.reads dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.notes{margin:0;padding-left:18px;font-size:13px;display:flex;flex-direction:column;gap:5px;color:var(--ink)}
+.notes li::marker{color:var(--accent)}
+.notes code{font-family:var(--f-mono);font-size:12.5px;background:var(--accent-soft);padding:0 4px;border-radius:4px}
+.views{display:grid;grid-template-rows:minmax(360px,1.25fr) minmax(250px,1fr);gap:12px;height:calc(100vh - 92px);min-height:660px;min-width:0}
+.pane{background:var(--view);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:7px 10px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.bar .t{font-weight:600;color:var(--ink);margin-right:auto}
+.bar button{background:var(--accent-soft);border:1px solid transparent;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12.5px}
+.bar button:hover{border-color:var(--accent)}
+.bar label{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.bar input[type=range]{width:110px;--c:var(--accent)}
+.bar output{font-family:var(--f-mono);min-width:5ch;color:var(--ink)}
+canvas{display:block;width:100%;flex:1;min-height:0}
+@media (max-width:860px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .views{height:auto;min-height:0;grid-template-rows:auto auto;order:-1}
+  #pane1 canvas{height:min(96vw,420px);flex:none}
+  #pane2 canvas{height:270px;flex:none}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+<div class="app">
+  <header class="top">
+    <div class="brand">Moteurs électriques</div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Type de moteur"></nav>
+    <div class="seg" role="group" aria-label="Thème"><button id="th-light" aria-pressed="false">Clair</button><button id="th-dark" aria-pressed="false">Sombre</button></div>
+  </header>
+  <div class="main">
+    <aside class="side">
+      <h2 id="mtitle"></h2>
+      <section><h3>Paramètres</h3><div id="params"></div></section>
+      <section><h3>Grandeurs</h3><span class="chip" id="status"></span><dl class="reads" id="reads"></dl></section>
+      <section><h3>À retenir</h3><ul class="notes" id="notes"></ul></section>
+    </aside>
+    <section class="views">
+      <div class="pane" id="pane1">
+        <div class="bar"><span class="t" id="t1">Vue 1</span>
+          <button id="bplay">Pause</button><button id="breset">Relancer</button>
+          <label for="ts">Ralenti<input type="range" id="ts" min="0" max="100" value="50"><output id="tsv"></output></label></div>
+        <canvas id="c1" aria-label="Coupe du moteur animée"></canvas>
+      </div>
+      <div class="pane" id="pane2">
+        <div class="bar"><span class="t" id="t2">Courbes</span></div>
+        <canvas id="c2" aria-label="Courbes caractéristiques"></canvas>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+(()=>{
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const TAU=Math.PI*2, R2D=180/Math.PI, D2R=Math.PI/180;
+const KEYS=['bg','panel','view','ink','muted','line','accent','grid','axis','iron','iron2','blue','red','green','amber','violet'];
+const C={};
+function readColors(){const cs=getComputedStyle(document.documentElement);KEYS.forEach(k=>C[k]=cs.getPropertyValue('--'+k).trim());}
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const rpm=w=>w*60/TAU;
+const fmt=(x,d=1)=>{if(Math.abs(x)<0.5*Math.pow(10,-d))x=0;return x.toFixed(d).replace('.',',').replace('-','−');};
+const f0=v=>String(Math.round(v*1000)/1000).replace('.',',').replace('-','−');
+const wrapPi=a=>{a%=TAU;if(a>Math.PI)a-=TAU;if(a<=-Math.PI)a+=TAU;return a;};
+
+/* ---------- primitives de dessin ---------- */
+function line(g,x0,y0,x1,y1,col,lw,dash){g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.strokeStyle=col;g.lineWidth=lw||1;g.setLineDash(dash||[]);g.stroke();g.setLineDash([]);}
+function disc(g,x,y,r,fill,stroke,lw){g.beginPath();g.arc(x,y,r,0,TAU);if(fill){g.fillStyle=fill;g.fill();}if(stroke){g.strokeStyle=stroke;g.lineWidth=lw||1;g.stroke();}}
+function arrow(g,x0,y0,x1,y1,col,lw){const L=Math.hypot(x1-x0,y1-y0);if(L<3)return;const a=Math.atan2(y1-y0,x1-x0),h=Math.min(11,L*0.55);
+  line(g,x0,y0,x1-Math.cos(a)*h*0.6,y1-Math.sin(a)*h*0.6,col,lw||2.2);
+  g.beginPath();g.moveTo(x1,y1);g.lineTo(x1-h*Math.cos(a-0.42),y1-h*Math.sin(a-0.42));g.lineTo(x1-h*Math.cos(a+0.42),y1-h*Math.sin(a+0.42));g.closePath();g.fillStyle=col;g.fill();}
+function text(g,s,x,y,col,size,al,wt,mono){g.font=`${wt||400} ${size||12}px ${mono?"'IBM Plex Mono',ui-monospace,monospace":"'IBM Plex Sans',system-ui,sans-serif"}`;g.fillStyle=col;g.textAlign=al||'left';g.textBaseline='middle';g.fillText(s,x,y);}
+const P=(cx,cy,r,a)=>[cx+r*Math.cos(a),cy-r*Math.sin(a)];           // angle trigonométrique, y vers le haut
+function ring(g,cx,cy,r1,r2,fill){g.beginPath();g.arc(cx,cy,r2,0,TAU);g.arc(cx,cy,r1,0,TAU,true);g.fillStyle=fill;g.fill();}
+function wedge(g,cx,cy,r1,r2,a,hw,fill,alpha){g.save();g.globalAlpha=alpha==null?1:alpha;g.beginPath();
+  g.arc(cx,cy,r2,-(a-hw),-(a+hw),true);g.arc(cx,cy,r1,-(a+hw),-(a-hw),false);g.closePath();g.fillStyle=fill;g.fill();g.restore();}
+function stator(g,cx,cy,R,pol,labels){
+  ring(g,cx,cy,R*0.88,R,C.iron2);
+  const n=pol.length,hw=Math.PI/n*0.6;
+  for(let k=0;k<n;k++){const a=k*TAU/n;wedge(g,cx,cy,R*0.6,R*0.9,a,hw,C.iron,1);
+    if(pol[k])wedge(g,cx,cy,R*0.6,R*0.9,a,hw,pol[k]>0?C.red:C.blue,Math.min(1,Math.abs(pol[k]))*0.8);
+    if(labels&&labels[k]){const p=P(cx,cy,R*0.945,a);text(g,labels[k],p[0],p[1],C.muted,Math.max(9,R*0.05),'center',500);}}
+  g.beginPath();g.arc(cx,cy,R,0,TAU);g.strokeStyle=C.axis;g.lineWidth=1;g.stroke();
+}
+function magnet(g,cx,cy,r,th,np){
+  for(let k=0;k<2*np;k++){const a=th+k*Math.PI/np;wedge(g,cx,cy,r*0.18,r,a,Math.PI/(2*np)*0.97,k%2?C.blue:C.red,0.9);
+    if(np<=2){const p=P(cx,cy,r*0.68,a);text(g,k%2?'S':'N',p[0],p[1],'#fff',Math.max(11,r*0.2),'center',600);}}
+  disc(g,cx,cy,r*0.16,C.iron2,C.axis,1);
+}
+function ticks(a,b,n){const r=b-a;let st=Math.pow(10,Math.floor(Math.log10(r/n)));const e=r/n/st;st*=e<1.5?1:e<3.5?2:e<7.5?5:10;
+  const o=[];for(let v=Math.ceil(a/st-1e-9)*st;v<=b+1e-9;v+=st)o.push(Math.round(v/st)*st);return o;}
+
+/* ---------- repère des courbes ---------- */
+function axes(g,x,y,w,h,o){
+  const m={l:o.ml||46,r:o.mr||14,t:30,b:30},pw=Math.max(10,w-m.l-m.r),ph=Math.max(10,h-m.t-m.b);
+  const X=v=>x+m.l+(v-o.x0)/(o.x1-o.x0)*pw,Y=v=>y+m.t+ph-(v-o.y0)/(o.y1-o.y0)*ph;
+  const xs=ticks(o.x0,o.x1,o.nx||6),ys=o.noy?[]:ticks(o.y0,o.y1,o.ny||5);
+  xs.forEach(v=>{line(g,X(v),y+m.t,X(v),y+m.t+ph,C.grid,1);text(g,(o.fx||f0)(v),X(v),y+m.t+ph+12,C.muted,11,'center');});
+  ys.forEach(v=>{line(g,x+m.l,Y(v),x+m.l+pw,Y(v),C.grid,1);text(g,(o.fy||f0)(v),x+m.l-6,Y(v),C.muted,11,'right');});
+  if(o.x0<0&&o.x1>0)line(g,X(0),y+m.t,X(0),y+m.t+ph,C.axis,1.3);
+  if(!o.noy&&o.y0<0&&o.y1>0)line(g,x+m.l,Y(0),x+m.l+pw,Y(0),C.axis,1.3);
+  text(g,o.title||'',x+m.l,y+13,C.ink,12.5,'left',600);
+  if(o.xl)text(g,o.xl,x+m.l+pw,y+h-8,C.muted,11,'right');
+  g.save();g.beginPath();g.rect(x+m.l,y+m.t,pw,ph);g.clip();
+  return {X,Y,pw,ph,m,x,y,w,h,end:()=>{g.restore();g.beginPath();g.rect(x+m.l,y+m.t,pw,ph);g.strokeStyle=C.axis;g.lineWidth=1;g.stroke();}};
+}
+function legend(g,x,y,items){let cx=x;items.slice().reverse().forEach(it=>{g.font="400 11.5px 'IBM Plex Sans',sans-serif";const wd=g.measureText(it[0]).width;
+  text(g,it[0],cx,y,C.muted,11.5,'right');line(g,cx-wd-20,y,cx-wd-5,y,it[1],2.5);cx-=wd+32;});}
+function timePlot(g,x,y,w,h,S,o){
+  const tr=o.traces,a=tr[0],b=tr[1]&&!tr[1].same?tr[1]:null;let lo=a.lo,hi=a.hi;
+  if(o.auto){lo=1e9;hi=-1e9;for(const r of S.hist)tr.forEach(t=>{const v=r[t.i]+(t.off||0);lo=Math.min(lo,v);hi=Math.max(hi,v);});
+    if(!(hi>lo)){lo=0;hi=1;}const pad=Math.max(0.1*(hi-lo),o.minpad||1);lo-=pad;hi+=pad;}
+  const ax=axes(g,x,y,w,h,{x0:-o.win,x1:0,y0:lo,y1:hi,title:o.title,xl:'temps simulé (s)',ml:48,mr:b?46:14,nx:5,noy:o.noy,fx:v=>f0(v)});
+  const t1=S.t;
+  tr.forEach(t=>{const sc=(t.same||t===a)?(v=>ax.Y(v)):(v=>ax.Y(lo+(v-t.lo)/(t.hi-t.lo)*(hi-lo)));
+    g.beginPath();let st=false;for(const r of S.hist){const xx=ax.X(r[0]-t1),yy=sc(r[t.i]+(t.off||0));if(!st){g.moveTo(xx,yy);st=true;}else g.lineTo(xx,yy);}
+    g.strokeStyle=t.col;g.lineWidth=2;g.lineJoin='round';g.setLineDash(t.dash||[]);g.stroke();g.setLineDash([]);});
+  ax.end();
+  if(b)ticks(b.lo,b.hi,5).forEach(v=>text(g,f0(v),x+w-ax.m.r+5,ax.Y(lo+(v-b.lo)/(b.hi-b.lo)*(hi-lo)),b.col,11,'left'));
+  legend(g,x+w-ax.m.r,y+13,tr.map(t=>[t.name,t.col]));
+  return ax;
+}
+
+const SIMS={};
+const phaseLabels=p=>{const a=['A','−C','B','−A','C','−B'],o=[];for(let i=0;i<6*p;i++)o.push(a[i%6]);return p<=2?o:null;};
+const phasePol=(ia,ib,ic,p)=>{const a=[ia,-ic,ib,-ia,ic,-ib],o=[];for(let i=0;i<6*p;i++)o.push(a[i%6]);return o;};
+
+/* ===================== Machine à courant continu ===================== */
+SIMS.mcc={
+  id:'mcc',tab:'Courant continu',name:'Machine à courant continu',sub:'Excitation séparée, une spire et deux lames de collecteur',
+  ts:0.08,win:1.5,t1:'Coupe : force de Laplace et collecteur',t2:'Caractéristique Ω(Cem) et régime transitoire',
+  params:[
+    {id:'U',sym:'U',label:'Tension d’induit',unit:'V',min:0,max:240,step:1,val:150,color:'blue'},
+    {id:'phi',sym:'Φ',label:'Flux d’excitation Φ/Φn',unit:'',min:0.3,max:1,step:0.01,val:1,color:'green'},
+    {id:'Tr',sym:'Cr',label:'Couple résistant',unit:'N·m',min:0,max:100,step:1,val:30,color:'amber'}],
+  init:()=>({t:0,th:0,om:0,I:0,C:0,hist:[]}),
+  step(s,h,p){const K=1.5*p.phi,R=1.2,J=0.5,f=0.02;
+    s.I=(p.U-K*s.om)/R;s.C=K*s.I;
+    s.om+=h*(s.C-p.Tr-f*s.om)/J;if(s.om<0)s.om=0;
+    s.th=(s.th+h*s.om)%TAU;},
+  sample:s=>[rpm(s.om),s.I],
+  draw1(g,w,h,s,p){
+    const cx=w/2,cy=h/2+4,R=Math.min(w,h)*0.43,th=s.th;
+    ring(g,cx,cy,R*0.9,R,C.iron2);
+    wedge(g,cx,cy,R*0.58,R*0.93,Math.PI,0.7,C.iron,1);wedge(g,cx,cy,R*0.58,R*0.93,0,0.7,C.iron,1);
+    wedge(g,cx,cy,R*0.58,R*0.93,Math.PI,0.7,C.red,0.45*p.phi+0.1);wedge(g,cx,cy,R*0.58,R*0.93,0,0.7,C.blue,0.45*p.phi+0.1);
+    let q=P(cx,cy,R*0.8,Math.PI);text(g,'N',q[0],q[1],C.ink,16,'center',600);q=P(cx,cy,R*0.8,0);text(g,'S',q[0],q[1],C.ink,16,'center',600);
+    disc(g,cx,cy,R*0.56,C.iron,C.axis,1.5);
+    const sI=Math.abs(s.I)<0.5?0:Math.sign(s.I),r=R*0.44;
+    [[th,C.violet],[th+Math.PI,C.amber]].forEach(([al,col])=>{const q=P(cx,cy,r,al);line(g,cx,cy,q[0],q[1],col,3);});
+    // lignes de champ N -> S
+    [-0.3,0,0.3].forEach(k=>arrow(g,cx-R*0.57,cy+k*R,cx+R*0.57,cy+k*R,C.green,1.6*p.phi+0.4));
+    [[th,C.violet],[th+Math.PI,C.amber]].forEach(([al,col])=>{
+      const q=P(cx,cy,r,al),ca=Math.cos(al);disc(g,q[0],q[1],R*0.075,col);
+      const dot=(ca*sI)>0,u=R*0.035;
+      if(sI){if(dot)disc(g,q[0],q[1],u*0.7,'#fff');else{line(g,q[0]-u,q[1]-u,q[0]+u,q[1]+u,'#fff',2);line(g,q[0]-u,q[1]+u,q[0]+u,q[1]-u,'#fff',2);}}
+      const len=R*0.5*clamp(Math.abs(s.I)*p.phi/90,0,1)*Math.abs(ca)*sI;
+      arrow(g,q[0],q[1],q[0]+(-Math.sin(al))*len,q[1]+(-Math.cos(al))*len,C.red,2.6);});
+    // collecteur : deux lames, balais au point neutre (haut et bas)
+    const rc=R*0.17;
+    g.beginPath();g.arc(cx,cy,rc,-th,-(th+Math.PI),true);g.closePath();g.fillStyle=C.violet;g.fill();
+    g.beginPath();g.arc(cx,cy,rc,-(th+Math.PI),-(th+TAU),true);g.closePath();g.fillStyle=C.amber;g.fill();
+    g.beginPath();g.arc(cx,cy,rc,0,TAU);g.strokeStyle=C.ink;g.lineWidth=1.2;g.stroke();
+    const bw=R*0.07;
+    g.fillStyle=C.ink;g.fillRect(cx-bw/2,cy-rc-R*0.15,bw,R*0.15+2);g.fillRect(cx-bw/2,cy+rc-2,bw,R*0.15+2);
+    text(g,'+',cx,cy-rc-R*0.2,C.ink,14,'center',600);text(g,'−',cx,cy+rc+R*0.2,C.ink,14,'center',600);
+    text(g,'U = E + R·I',14,h-34,C.ink,13,'left',500,true);text(g,'E = KΦ·Ω   Cem = KΦ·I',14,h-16,C.muted,12.5,'left',400,true);
+    text(g,'N → S : champ inducteur',14,18,C.green,12.5,'left',500);text(g,'flèche rouge : force de Laplace',14,36,C.red,12.5,'left',500);
+  },
+  plots:[
+    (g,x,y,w,h,s,p)=>{const K=1.5*p.phi,R=1.2,om0=rpm(p.U/K),y1=Math.max(300,om0*1.15),Cd=K*p.U/R,xm=120;
+      const ax=axes(g,x,y,w,h,{x0:0,x1:xm,y0:0,y1,title:'Ω = f(Cem)  (tr/min)',xl:'Cem (N·m)'});
+      const c1=Math.min(xm,Cd);g.beginPath();g.moveTo(ax.X(0),ax.Y(om0));g.lineTo(ax.X(c1),ax.Y(om0*(1-c1/Cd)));g.strokeStyle=C.blue;g.lineWidth=2.5;g.stroke();
+      line(g,ax.X(p.Tr),ax.Y(0),ax.X(p.Tr),ax.Y(y1),C.amber,1.6,[5,4]);
+      disc(g,ax.X(clamp(s.C,0,xm)),ax.Y(rpm(s.om)),5.5,C.red,C.view,1.5);ax.end();
+      text(g,'Cr',ax.X(p.Tr)+4,y+ax.m.t+10,C.amber,11.5,'left',500);},
+    (g,x,y,w,h,s,p)=>timePlot(g,x,y,w,h,s,{title:'Démarrage : Ω(t) et I(t)',win:1.5,traces:[
+      {i:1,col:C.blue,lo:0,hi:Math.max(300,rpm(p.U/(1.5*p.phi))*1.15),name:'Ω (tr/min)'},{i:2,col:C.red,lo:0,hi:Math.max(10,p.U/1.2*1.05),name:'I (A)'}]})],
+  reads:(s,p)=>{const K=1.5*p.phi,E=K*s.om;return [['Vitesse Ω',fmt(rpm(s.om),0)+' tr/min'],['f.é.m. E = KΦΩ',fmt(E)+' V'],['Courant I',fmt(s.I)+' A'],
+    ['Couple Cem',fmt(s.C)+' N·m'],['Puissance absorbée U·I',fmt(p.U*s.I,0)+' W'],['Puissance utile Cem·Ω',fmt(s.C*s.om,0)+' W'],
+    ['Courant de démarrage U/R',fmt(p.U/1.2,0)+' A']];},
+  status:(s,p)=>{if(p.U>5&&s.om<1&&s.C<p.Tr)return['Rotor bloqué : Cr > Cem','bad'];if(s.I>80)return['Surintensité','warn'];if(s.om<1)return['À l’arrêt',''];return['En rotation','ok'];},
+  notes:['<code>U = E + R·I</code> avec <code>E = KΦ·Ω</code> (force électromotrice).','<code>Cem = KΦ·I</code> : le couple est proportionnel au courant.',
+    '<code>Ω = (U − R·I)/KΦ</code> : on règle la vitesse avec <code>U</code>, ou en affaiblissant le flux.',
+    'À l’arrêt, <code>E = 0</code> : le courant de démarrage <code>U/R</code> est très élevé.',
+    'Le collecteur inverse le courant dans la spire tous les demi-tours, le couple garde le même sens.']
+};
+
+/* ===================== Machine synchrone ===================== */
+SIMS.synchrone={
+  id:'synchrone',tab:'Synchrone',name:'Machine synchrone',sub:'Rotor à aimants, stator triphasé',
+  ts:0.04,win:1.5,t1:'Coupe : champ tournant et rotor à aimants',t2:'Cem(δ) et régime transitoire',
+  params:[
+    {id:'f',sym:'f',label:'Fréquence des courants',unit:'Hz',min:0,max:50,step:1,val:20,color:'blue'},
+    {id:'p',sym:'p',label:'Paires de pôles',unit:'',min:1,max:3,step:1,val:2,color:'violet'},
+    {id:'Cm',sym:'Cmax',label:'Couple maximal',unit:'N·m',min:10,max:60,step:1,val:40,color:'green'},
+    {id:'Tr',sym:'Cr',label:'Couple résistant',unit:'N·m',min:0,max:60,step:1,val:15,color:'amber'},
+    {id:'ramp',kind:'check',label:'Rampe de fréquence (démarrage progressif)',val:1}],
+  init:()=>({t:0,ph:0,th:0,om:0,fs:0,de:0,C:0,hist:[]}),
+  step(s,h,p){const J=0.02,Kd=0.15,fv=0.01;
+    s.fs=p.ramp?s.fs+clamp(p.f-s.fs,-30*h,30*h):p.f;
+    const ws=TAU*s.fs;s.ph=(s.ph+ws*h)%TAU;
+    s.de=s.ph-p.p*s.th;s.C=p.Cm*Math.sin(s.de);
+    s.om+=h*(s.C+Kd*(ws/p.p-s.om)-p.Tr-fv*s.om)/J;if(s.om<0)s.om=0;
+    s.th=(s.th+h*s.om)%TAU;},
+  sample:s=>[rpm(s.om),s.C],
+  draw1(g,w,h,s,p){
+    const cx=w/2,cy=h/2+4,R=Math.min(w,h)*0.43,n=p.p;
+    const ia=Math.cos(s.ph),ib=Math.cos(s.ph-TAU/3),ic=Math.cos(s.ph+TAU/3);
+    stator(g,cx,cy,R,phasePol(ia,ib,ic,n),phaseLabels(n));
+    disc(g,cx,cy,R*0.58,C.iron);
+    magnet(g,cx,cy,R*0.56,s.th,n);
+    const a=s.ph/n,q=P(cx,cy,R*0.52,a);arrow(g,cx,cy,q[0],q[1],C.violet,3.2);
+    const q2=P(cx,cy,R*0.4,s.th);arrow(g,cx,cy,q2[0],q2[1],'#fff',2);
+    text(g,'flèche violette : champ tournant du stator',14,18,C.violet,12.5,'left',500);
+    text(g,'N / S : aimants du rotor (flèche blanche : axe rotor)',14,36,C.muted,12.5,'left',500);
+    text(g,'Ωs = 2πf/p',14,h-34,C.ink,13,'left',500,true);text(g,'Cem = Cmax·sin δ',14,h-16,C.muted,12.5,'left',400,true);
+  },
+  plots:[
+    (g,x,y,w,h,s,p)=>{const ax=axes(g,x,y,w,h,{x0:-180,x1:180,y0:-65,y1:65,title:'Cem = f(δ)  (N·m)',xl:'δ (°)',nx:6});
+      g.fillStyle=C.green;g.globalAlpha=0.12;g.fillRect(ax.X(0),ax.m.t+y,ax.X(90)-ax.X(0),ax.ph);g.globalAlpha=1;
+      g.beginPath();for(let d=-180;d<=180;d+=2){const px=ax.X(d),py=ax.Y(p.Cm*Math.sin(d*D2R));d===-180?g.moveTo(px,py):g.lineTo(px,py);}
+      g.strokeStyle=C.blue;g.lineWidth=2.5;g.stroke();line(g,ax.X(-180),ax.Y(p.Tr),ax.X(180),ax.Y(p.Tr),C.amber,1.6,[5,4]);
+      disc(g,ax.X(wrapPi(s.de)*R2D),ax.Y(s.C),5.5,C.red,C.view,1.5);ax.end();
+      text(g,'zone stable',ax.X(45),y+ax.m.t+11,C.green,11.5,'center',500);text(g,'Cr',ax.X(-175),ax.Y(p.Tr)-8,C.amber,11.5,'left',500);},
+    (g,x,y,w,h,s,p)=>timePlot(g,x,y,w,h,s,{title:'Ω(t) et Cem(t)',win:1.5,traces:[
+      {i:1,col:C.blue,lo:0,hi:Math.max(100,rpm(TAU*50/p.p)*1.1),name:'Ω (tr/min)'},{i:2,col:C.red,lo:-90,hi:90,name:'Cem (N·m)'}]})],
+  reads:(s,p)=>[['Fréquence f',fmt(s.fs)+' Hz'],['Vitesse du champ Ωs',fmt(60*s.fs/p.p,0)+' tr/min'],['Vitesse du rotor Ω',fmt(rpm(s.om),0)+' tr/min'],
+    ['Angle interne δ',fmt(wrapPi(s.de)*R2D,0)+' °'],['Couple Cem',fmt(s.C)+' N·m'],['Puissance Cem·Ω',fmt(s.C*s.om,0)+' W']],
+  status:(s,p)=>{const d=Math.abs(rpm(s.om)-60*s.fs/p.p);if(s.fs<0.5&&s.om<0.5)return['À l’arrêt',''];
+    if(d<6)return['Synchronisé : Ω = Ωs','ok'];if(p.Tr>p.Cm)return['Décrochage : Cr > Cmax','bad'];return['Hors synchronisme','warn'];},
+  notes:['Champ tournant : <code>Ωs = ω/p = 2πf/p</code>, soit <code>n = 60·f/p</code> tr/min.','En régime établi <code>Ω = Ωs</code>, quelle que soit la charge.',
+    '<code>Cem = Cmax·sin δ</code> : <code>δ</code> est l’angle entre les champs stator et rotor.','Si <code>Cr &gt; Cmax</code> (δ &gt; 90°), le moteur décroche et s’arrête.',
+    'Décochez la rampe pour imposer f d’un coup : le rotor ne suit pas, il n’y a pas de couple moyen à l’arrêt.']
+};
+
+/* ===================== Machine asynchrone ===================== */
+const asyP=p=>({Cm:60*p.u*p.u,wm:0.25*TAU*50/p.p,ws:TAU*p.f/p.p});
+const kloss=(wr,Cm,wm)=>2*Cm*wr*wm/(wr*wr+wm*wm);
+SIMS.asynchrone={
+  id:'asynchrone',tab:'Asynchrone',name:'Machine asynchrone',sub:'Rotor à cage d’écureuil, stator triphasé',
+  ts:0.05,win:2,t1:'Coupe : champ tournant et courants induits dans la cage',t2:'Cem(Ω) et régime transitoire',
+  params:[
+    {id:'f',sym:'f',label:'Fréquence d’alimentation',unit:'Hz',min:10,max:50,step:1,val:50,color:'blue'},
+    {id:'p',sym:'p',label:'Paires de pôles',unit:'',min:1,max:3,step:1,val:2,color:'violet'},
+    {id:'u',sym:'U/f',label:'Rapport U/f relatif au nominal',unit:'',min:0.5,max:1.2,step:0.01,val:1,color:'green'},
+    {id:'Tr',sym:'Cr',label:'Couple résistant',unit:'N·m',min:0,max:80,step:1,val:20,color:'amber'}],
+  init:()=>({t:0,ph:0,th:0,om:0,C:0,hist:[]}),
+  step(s,h,p){const k=asyP(p),wr=k.ws-s.om;s.C=kloss(wr,k.Cm,k.wm);
+    s.om+=h*(s.C-p.Tr-0.02*s.om)/0.15;if(s.om<0)s.om=0;
+    s.ph=(s.ph+TAU*p.f*h)%TAU;s.th=(s.th+h*s.om)%TAU;},
+  sample:s=>[rpm(s.om),s.C],
+  draw1(g,w,h,s,p){
+    const cx=w/2,cy=h/2+4,R=Math.min(w,h)*0.43,n=p.p,k=asyP(p),wr=k.ws-s.om;
+    const ia=Math.cos(s.ph),ib=Math.cos(s.ph-TAU/3),ic=Math.cos(s.ph+TAU/3);
+    stator(g,cx,cy,R,phasePol(ia,ib,ic,n),phaseLabels(n));
+    disc(g,cx,cy,R*0.58,C.iron,C.axis,1.2);
+    const amp=clamp(Math.sqrt(Math.abs(wr)/k.wm),0,1),sg=Math.sign(wr)||1,N=14;
+    for(let j=0;j<N;j++){const al=s.th+j*TAU/N,q=P(cx,cy,R*0.47,al),v=Math.sin(s.ph/n-al)*sg*amp;
+      disc(g,q[0],q[1],R*0.05,C.iron2,C.axis,1);if(Math.abs(v)>0.02){g.save();g.globalAlpha=clamp(Math.abs(v),0,1);disc(g,q[0],q[1],R*0.05,v>0?C.red:C.blue);g.restore();}}
+    const m=P(cx,cy,R*0.57,s.th);line(g,cx,cy,m[0],m[1],C.ink,2.5);disc(g,m[0],m[1],4,C.ink);
+    const q=P(cx,cy,R*0.5,s.ph/n);arrow(g,cx,cy,q[0],q[1],C.violet,3.2);
+    text(g,'flèche violette : champ tournant (Ωs)',14,18,C.violet,12.5,'left',500);
+    text(g,'trait noir : repère sur le rotor (Ω)',14,36,C.ink,12.5,'left',500);
+    text(g,'barres rouges / bleues : courants induits',14,54,C.red,12.5,'left',500);
+    text(g,'g = (Ωs − Ω)/Ωs',14,h-34,C.ink,13,'left',500,true);text(g,'Ω = Ωs·(1 − g)',14,h-16,C.muted,12.5,'left',400,true);
+  },
+  plots:[
+    (g,x,y,w,h,s,p)=>{const k=asyP(p),nmax=3000/p.p*1.12;
+      const ax=axes(g,x,y,w,h,{x0:0,x1:nmax,y0:-90,y1:90,title:'Cem = f(Ω)  (N·m)',xl:'Ω (tr/min)',nx:6});
+      g.beginPath();for(let v=0;v<=nmax;v+=nmax/200){const c=kloss(k.ws-v*TAU/60,k.Cm,k.wm);v===0?g.moveTo(ax.X(v),ax.Y(c)):g.lineTo(ax.X(v),ax.Y(c));}
+      g.strokeStyle=C.blue;g.lineWidth=2.5;g.stroke();
+      line(g,ax.X(0),ax.Y(p.Tr),ax.X(nmax),ax.Y(p.Tr),C.amber,1.6,[5,4]);line(g,ax.X(rpm(k.ws)),ax.Y(-90),ax.X(rpm(k.ws)),ax.Y(90),C.violet,1.6,[5,4]);
+      disc(g,ax.X(rpm(s.om)),ax.Y(s.C),5.5,C.red,C.view,1.5);ax.end();
+      text(g,'Ωs',ax.X(rpm(k.ws))-5,y+ax.m.t+11,C.violet,11.5,'right',500);text(g,'Cr',ax.X(nmax)-4,ax.Y(p.Tr)-8,C.amber,11.5,'right',500);},
+    (g,x,y,w,h,s,p)=>timePlot(g,x,y,w,h,s,{title:'Démarrage : Ω(t) et Cem(t)',win:2,traces:[
+      {i:1,col:C.blue,lo:0,hi:Math.max(100,3000/p.p*1.1),name:'Ω (tr/min)'},{i:2,col:C.red,lo:-90,hi:90,name:'Cem (N·m)'}]})],
+  reads:(s,p)=>{const k=asyP(p),gl=k.ws>0?(k.ws-s.om)/k.ws:0;return [['Vitesse de synchronisme Ωs',fmt(rpm(k.ws),0)+' tr/min'],['Vitesse du rotor Ω',fmt(rpm(s.om),0)+' tr/min'],
+    ['Glissement g',fmt(gl*100)+' %'],['Fréquence rotorique g·f',fmt(gl*p.f)+' Hz'],['Couple Cem',fmt(s.C)+' N·m'],['Couple maximal',fmt(k.Cm,0)+' N·m'],['Couple de démarrage',fmt(kloss(k.ws,k.Cm,k.wm),0)+' N·m']];},
+  status:(s,p)=>{const k=asyP(p);if(s.om<1&&s.C<p.Tr)return['Rotor bloqué : Cr > Cd','bad'];if(s.om>k.ws+1)return['Fonctionnement générateur','warn'];
+    if(s.om<1)return['À l’arrêt',''];return['En rotation','ok'];},
+  notes:['Le champ tournant tourne à <code>Ωs = 2πf/p</code> et induit des courants dans la cage.','Le rotor n’a pas d’excitation : il tourne plus lentement que le champ, <code>Ω &lt; Ωs</code>.',
+    'Glissement <code>g = (Ωs − Ω)/Ωs</code>, de quelques % en régime nominal.','<code>Cem(g)</code> : couple de démarrage en <code>g = 1</code>, maximum en <code>g = gm</code>, nul en <code>g = 0</code>.',
+    'Si <code>Cr</code> dépasse le couple de démarrage, le rotor ne décolle pas. Pour la vitesse, un variateur garde <code>U/f</code> constant.']
+};
+
+/* ===================== Moteur pas à pas ===================== */
+const stepTab=[[[1,0],[0,1],[-1,0],[0,-1]],[[1,1],[-1,1],[-1,-1],[1,-1]],[[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]]];
+const stepBase=[0,45,0],stepDelta=[90,90,45];
+function cmd(n,mode){const T=stepTab[mode],L=T.length,i=((n%L)+L)%L;return{a:T[i][0],b:T[i][1],ang:(stepBase[mode]+n*stepDelta[mode])*D2R};}
+SIMS['pas-a-pas']={
+  id:'pas-a-pas',tab:'Pas à pas',name:'Moteur pas à pas',sub:'Rotor à aimants permanents, phases A et B',
+  ts:0.25,win:1,t1:'Coupe : chaque impulsion avance le rotor d’un pas',t2:'Position du rotor et courants de phase',
+  params:[
+    {id:'mode',kind:'select',label:'Mode de commande',options:['Pas entier, 1 phase alimentée','Pas entier, 2 phases alimentées','Demi-pas'],val:1},
+    {id:'f',sym:'fpas',label:'Fréquence des impulsions',unit:'pas/s',min:1,max:60,step:1,val:6,color:'blue'},
+    {id:'Z',sym:'Zr',label:'Paires de pôles du rotor',unit:'',min:1,max:4,step:1,val:2,color:'violet'},
+    {id:'L',sym:'Cr',label:'Charge (fraction du couple de maintien)',unit:'',min:0,max:1.2,step:0.01,val:0.2,color:'amber'},
+    {id:'dir',kind:'check',label:'Sens inverse',val:0},
+    {id:'run',kind:'check',label:'Impulsions de commande actives',val:1}],
+  init:()=>({t:0,n:0,acc:0,pr:0,w:0,mode:-1,ang:0,a:1,b:1,hist:[]}),
+  step(s,h,p){
+    if(s.mode!==p.mode){s.mode=p.mode;s.n=0;s.acc=0;s.pr=cmd(0,p.mode).ang;s.w=0;s.hist.length=0;}
+    const sg=p.dir?-1:1;
+    if(p.run){s.acc+=h;const T=1/p.f;while(s.acc>=T){s.acc-=T;s.n+=sg;}}
+    const c=cmd(s.n,p.mode);s.ang=c.ang;s.a=c.a;s.b=c.b;
+    const K=5685,zd=27;s.w+=h*(-K*Math.sin(s.pr-c.ang)-zd*s.w-sg*p.L*K);s.pr+=h*s.w;},
+  sample:(s,p)=>[s.pr*R2D/p.Z,s.ang*R2D/p.Z,s.a,s.b],
+  draw1(g,w,h,s,p){
+    const cx=w/2,cy=h/2+4,R=Math.min(w,h)*0.42,Z=p.Z,c=cmd(s.n,p.mode),A=c.a,B=c.b,n=4*Z;
+    const pol=[];for(let j=0;j<n;j++)pol.push([A,B,-A,-B][j%4]);
+    stator(g,cx,cy,R,pol,Z<=2?pol.map((_,j)=>['A+','B+','A−','B−'][j%4]):null);
+    disc(g,cx,cy,R*0.58,C.iron);magnet(g,cx,cy,R*0.56,s.pr/Z,Z);
+    const sp=stepDelta[p.mode]/Z;                       // angle de pas mécanique (°)
+    for(let k=0;k<Math.round(360/sp);k++){const a=k*sp*D2R,q1=P(cx,cy,R*1.03,a),q2=P(cx,cy,R*1.08,a);line(g,q1[0],q1[1],q2[0],q2[1],C.axis,1.5);}
+    const q=P(cx,cy,R*0.52,s.ang/Z);arrow(g,cx,cy,q[0],q[1],C.violet,3.2);
+    const q3=P(cx,cy,R*1.03,s.ang/Z),q4=P(cx,cy,R*1.14,s.ang/Z);line(g,q3[0],q3[1],q4[0],q4[1],C.violet,3.5);
+    const q2=P(cx,cy,R*0.4,s.pr/Z);arrow(g,cx,cy,q2[0],q2[1],'#fff',2);
+    text(g,'flèche violette : champ créé par les bobines',14,18,C.violet,12.5,'left',500);
+    text(g,'N / S : aimants du rotor (flèche blanche : axe rotor)',14,36,C.muted,12.5,'left',500);
+    text(g,'α = '+fmt(sp,1)+' ° par pas',14,h-34,C.ink,13,'left',500,true);text(g,'n = α·fpas / 6  (tr/min)',14,h-16,C.muted,12.5,'left',400,true);
+  },
+  plots:[
+    (g,x,y,w,h,s,p)=>timePlot(g,x,y,w,h,s,{title:'Position angulaire (°)',win:1,auto:true,minpad:3,traces:[
+      {i:1,col:C.blue,name:'rotor'},{i:2,col:C.amber,name:'consigne',same:true,dash:[5,4]}]}),
+    (g,x,y,w,h,s,p)=>timePlot(g,x,y,w,h,s,{title:'Courants iA (haut) et iB (bas)',win:1,noy:true,traces:[
+      {i:3,off:1.4,col:C.blue,lo:-2.7,hi:2.7,name:'iA'},{i:4,off:-1.4,col:C.red,same:true,name:'iB'}]})],
+  reads:(s,p)=>{const N=(p.mode===2?8:4)*p.Z,al=360/N,d=stepDelta[p.mode]*D2R,err=(s.ang-s.pr)/d;
+    return [['Pas par tour N',fmt(N,0)],['Angle de pas α',fmt(al,2)+' °'],['Vitesse moyenne',fmt(p.run?al*p.f/6:0,1)+' tr/min'],
+      ['Position commandée',fmt(s.ang*R2D/p.Z,0)+' °'],['Position du rotor',fmt(s.pr*R2D/p.Z,0)+' °'],['Retard sur la consigne',fmt(Math.abs(err),2)+' pas']];},
+  status:(s,p)=>{const e=Math.abs((s.ang-s.pr)/(stepDelta[p.mode]*D2R));if(e>2)return['Pas perdus','bad'];if(!p.run)return['Maintien en position',''];if(e>1.2)return['Retard important','warn'];return['Suit les impulsions','ok'];},
+  notes:['Chaque impulsion change le courant des phases : le rotor s’aligne sur le nouveau champ.','Pas entier : <code>α = 90°/Zr</code>. Demi-pas : <code>α = 45°/Zr</code>.',
+    'Vitesse : <code>n = α·fpas/6</code> en tr/min, avec α en degrés et fpas en pas/s.','Commande en boucle ouverte, sans capteur : si la fréquence ou la charge est trop grande, des pas sont perdus.',
+    'Après chaque pas, le rotor oscille avant de se stabiliser (régime amorti).']
+};
+
+/* ===================== Moteur brushless ===================== */
+const bTab=[[1,0,-1],[0,1,-1],[-1,1,0],[-1,0,1],[0,-1,1],[1,-1,0]];
+const hallOf=f=>{f=((f%TAU)+TAU)%TAU;return[f<Math.PI?1:0,(f>=TAU/3&&f<5*Math.PI/3)?1:0,(f>=4*Math.PI/3||f<Math.PI/3)?1:0];};
+const secOf=f=>Math.floor((((f%TAU)+TAU)%TAU)/(Math.PI/3))%6;
+const phTxt=t=>['A','B','C'].map((nm,i)=>t[i]?nm+(t[i]>0?'+':'−'):'').filter(Boolean).join('  ');
+SIMS.brushless={
+  id:'brushless',tab:'Brushless',name:'Moteur brushless (BLDC)',sub:'Aimants au rotor, capteurs à effet Hall, onduleur',
+  ts:0.04,win:2,t1:'Coupe : commutation électronique selon la position du rotor',t2:'Capteurs, courants de phase et régime transitoire',
+  params:[
+    {id:'U',sym:'U',label:'Tension du bus continu',unit:'V',min:0,max:48,step:1,val:24,color:'blue'},
+    {id:'Tr',sym:'Cr',label:'Couple résistant',unit:'N·m',min:0,max:10,step:0.1,val:2,color:'amber'}],
+  init:()=>({t:0,th:0,om:0,I:0,C:0,m:1,hist:[]}),
+  step(s,h,p){const Kt=0.15,R=0.5,J=0.007;
+    s.m=(secOf(s.th)+1)%6;s.I=(p.U-Kt*s.om)/R;
+    const rel=(s.th%(Math.PI/3))-Math.PI/6;s.C=Kt*s.I*Math.cos(rel)/0.955;
+    s.om+=h*(s.C-p.Tr-0.004*s.om)/J;if(s.om<0)s.om=0;s.th=(s.th+h*s.om)%TAU;},
+  sample:s=>[rpm(s.om),s.I],
+  draw1(g,w,h,s,p){
+    const cx=w/2,cy=h/2+4,R=Math.min(w,h)*0.4,t=bTab[s.m],H=hallOf(s.th);
+    stator(g,cx,cy,R,phasePol(t[0],t[1],t[2],1),phaseLabels(1));
+    disc(g,cx,cy,R*0.58,C.iron);magnet(g,cx,cy,R*0.56,s.th,1);
+    const q=P(cx,cy,R*0.52,(30+60*s.m)*D2R);arrow(g,cx,cy,q[0],q[1],C.violet,3.2);
+    const q2=P(cx,cy,R*0.4,s.th);arrow(g,cx,cy,q2[0],q2[1],'#fff',2);
+    [90,210,330].forEach((a,i)=>{const o=P(cx,cy,R*1.12,a*D2R),z=R*0.11;g.fillStyle=H[i]?C.green:C.grid;g.fillRect(o[0]-z,o[1]-z*0.8,2*z,1.6*z);
+      g.strokeStyle=C.axis;g.lineWidth=1;g.strokeRect(o[0]-z,o[1]-z*0.8,2*z,1.6*z);text(g,'H'+(i+1),o[0],o[1],H[i]?'#0b2615':C.muted,Math.max(10,R*0.085),'center',600);});
+    text(g,'Secteur '+(secOf(s.th)+1)+' · Hall '+H.join(' ')+' · phases : '+phTxt(t),14,18,C.ink,12.5,'left',500);
+    text(g,'flèche violette : champ du stator (avance de 90° ± 30°)',14,36,C.violet,12.5,'left',500);
+    text(g,'Cem = Kt·I',14,h-34,C.ink,13,'left',500,true);text(g,'Ω = (U − R·I)/Ke',14,h-16,C.muted,12.5,'left',400,true);
+  },
+  plots:[
+    (g,x,y,w,h,s,p)=>{const ax=axes(g,x,y,w,h,{x0:0,x1:360,y0:0,y1:9,title:'Un tour électrique : Hall et courants',xl:'θ électrique (°)',nx:6,noy:true,ml:50});
+      const cur=secOf(s.th);g.fillStyle=C.accent;g.globalAlpha=0.14;g.fillRect(ax.X(cur*60),y+ax.m.t,ax.X(60)-ax.X(0),ax.ph);g.globalAlpha=1;
+      const rows=[['H1',C.green,0],['H2',C.green,1],['H3',C.green,2],['iA',C.blue,0],['iB',C.red,1],['iC',C.amber,2]];
+      rows.forEach(([nm,col,k],j)=>{const c=8.2-1.45*j;g.beginPath();
+        for(let d=0;d<=360;d+=1){const f=Math.min(d,359.99)*D2R;let v;if(j<3)v=hallOf(f)[k]*0.8-0.4;else v=bTab[(secOf(f)+1)%6][k]*0.45;
+          d?g.lineTo(ax.X(d),ax.Y(c+v)):g.moveTo(ax.X(d),ax.Y(c+v));}
+        g.strokeStyle=col;g.lineWidth=2;g.stroke();});
+      const th=s.th*R2D;line(g,ax.X(th),y+ax.m.t,ax.X(th),y+ax.m.t+ax.ph,C.ink,1.5);ax.end();
+      rows.forEach(([nm,col],j)=>text(g,nm,x+ax.m.l-8,ax.Y(8.2-1.45*j),col,11.5,'right',600));},
+    (g,x,y,w,h,s,p)=>timePlot(g,x,y,w,h,s,{title:'Démarrage : Ω(t) et I(t)',win:2,traces:[
+      {i:1,col:C.blue,lo:0,hi:Math.max(200,rpm(p.U/0.15)*1.15),name:'Ω (tr/min)'},{i:2,col:C.red,lo:0,hi:Math.max(10,p.U/0.5*1.05),name:'I (A)'}]})],
+  reads:(s,p)=>[['Vitesse Ω',fmt(rpm(s.om),0)+' tr/min'],['f.é.m. E = Ke·Ω',fmt(0.15*s.om)+' V'],['Courant I',fmt(s.I)+' A'],['Couple Cem',fmt(s.C)+' N·m'],
+    ['Secteur / Hall',(secOf(s.th)+1)+' / '+hallOf(s.th).join('')],['Fréquence électrique',fmt(s.om/TAU,1)+' Hz']],
+  status:(s,p)=>{if(p.U>1&&s.om<1&&s.C<p.Tr)return['Rotor bloqué : Cr > Cem','bad'];if(s.I>60)return['Surintensité','warn'];if(s.om<1)return['À l’arrêt',''];return['En rotation','ok'];},
+  notes:['Rotor à aimants, stator triphasé : c’est une machine synchrone autopilotée.','Trois capteurs à effet Hall donnent la position du rotor, soit 6 secteurs de 60°.',
+    'Selon le secteur, l’onduleur alimente deux phases à la fois (commutation à 120°).','Le champ stator reste environ en quadrature avec celui du rotor : <code>Cem = Kt·I</code>, sans décrochage.',
+    'Comme une MCC, on règle la vitesse par la tension : <code>Ω = (U − R·I)/Ke</code>. Pas de balais ni de collecteur.']
+};
+
+/* ===================== Interface ===================== */
+const ORDER=['mcc','synchrone','asynchrone','pas-a-pas','brushless'];
+const WARM={mcc:0.5,synchrone:1.2,asynchrone:0.5,'pas-a-pas':1.5,brushless:0.6};
+const c1=$('#c1'),c2=$('#c2');
+let sim=null,S=null,vals=null,playing=!matchMedia('(prefers-reduced-motion: reduce)').matches,scale=0.05;
+
+function fit(cv){const r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1),w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));
+  if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d);}
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return[g,w,h];}
+function advance(sd){const n=Math.max(1,Math.ceil(sd/0.0004)),hh=sd/n;for(let i=0;i<n;i++)sim.step(S,hh,vals);S.t+=sd;
+  S.hist.push([S.t,...sim.sample(S,vals)]);while(S.hist.length&&S.hist[0][0]<S.t-sim.win-0.05)S.hist.shift();}
+function reset(warm){S=sim.init();S.hist=S.hist||[];if(warm)for(let k=0;k<warm/0.004;k++)advance(0.004);}
+function setScale(v){scale=Math.pow(10,-2.3+2.3*v/100);$('#tsv').textContent='×'+(scale>=0.1?fmt(scale,2):fmt(scale,3));}
+function setTS(val){const v=Math.round(100*(Math.log10(val)+2.3)/2.3);$('#ts').value=v;setScale(v);}
+
+function buildParams(){
+  const box=$('#params');box.innerHTML='';
+  sim.params.forEach(d=>{const v=vals[d.id],row=document.createElement('div');row.className='prm';
+    if(d.kind==='check')row.innerHTML=`<label class="chk"><input type="checkbox" id="p-${d.id}" ${v?'checked':''}><span>${d.label}</span></label>`;
+    else if(d.kind==='select')row.innerHTML=`<div class="prm-h"><span class="lb">${d.label}</span></div><select id="p-${d.id}">${d.options.map((o,i)=>`<option value="${i}" ${i===v?'selected':''}>${o}</option>`).join('')}</select>`;
+    else{row.style.setProperty('--c','var(--'+d.color+')');
+      row.innerHTML=`<div class="prm-h"><i class="dot"></i><b>${d.sym}</b><span class="lb">${d.label}</span><output id="o-${d.id}"></output></div><input type="range" id="p-${d.id}" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}">`;}
+    box.appendChild(row);showVal(d);});
+}
+function showVal(d){if(d.kind)return;const dec=d.step<1?(String(d.step).split('.')[1]||'').length:0;$('#o-'+d.id).textContent=fmt(vals[d.id],dec)+(d.unit?' '+d.unit:'');}
+$('#params').addEventListener('input',e=>{const id=e.target.id.slice(2),d=sim.params.find(q=>q.id===id);if(!d)return;
+  vals[id]=d.kind==='check'?(e.target.checked?1:0):+e.target.value;showVal(d);});
+
+function select(id){
+  if(!SIMS[id])id='mcc';sim=SIMS[id];
+  if(!sim.vals)sim.vals=Object.fromEntries(sim.params.map(d=>[d.id,d.val]));vals=sim.vals;
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.id===id)));
+  $('#mtitle').innerHTML=sim.name+'<small>'+sim.sub+'</small>';$('#t1').textContent=sim.t1;$('#t2').textContent=sim.t2;
+  $('#notes').innerHTML=sim.notes.map(n=>'<li>'+n+'</li>').join('');$('#reads').innerHTML='';
+  buildParams();setTS(sim.ts);reset(WARM[id]||0.5);
+}
+ORDER.forEach(id=>{const b=document.createElement('button');b.textContent=SIMS[id].tab;b.dataset.id=id;b.setAttribute('role','tab');
+  b.addEventListener('click',()=>{try{location.hash=id;}catch(e){}select(id);});$('#tabs').appendChild(b);});
+addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(SIMS[id]&&SIMS[id]!==sim)select(id);});
+$('#bplay').addEventListener('click',()=>{playing=!playing;$('#bplay').textContent=playing?'Pause':'Lecture';});
+$('#bplay').textContent=playing?'Pause':'Lecture';
+$('#breset').addEventListener('click',()=>reset(0));
+$('#ts').addEventListener('input',e=>setScale(+e.target.value));
+
+/* thème clair / sombre */
+const root=document.documentElement,mq=matchMedia('(prefers-color-scheme: dark)');
+function setTheme(t,save){root.setAttribute('data-theme',t);$('#th-light').setAttribute('aria-pressed',String(t==='light'));$('#th-dark').setAttribute('aria-pressed',String(t==='dark'));
+  if(save){try{localStorage.setItem('moteurs-theme',t);}catch(e){}}}
+let st=null;try{st=localStorage.getItem('moteurs-theme');}catch(e){}
+setTheme(st==='light'||st==='dark'?st:(mq.matches?'dark':'light'),false);
+$('#th-light').addEventListener('click',()=>setTheme('light',true));$('#th-dark').addEventListener('click',()=>setTheme('dark',true));
+
+/* rendu */
+function updatePanel(){
+  const r=sim.reads(S,vals),dl=$('#reads');
+  if(dl.children.length!==r.length*2)dl.innerHTML=r.map(()=>'<dt></dt><dd></dd>').join('');
+  r.forEach((x,i)=>{const dt=dl.children[2*i],dd=dl.children[2*i+1];if(dt.textContent!==x[0])dt.textContent=x[0];if(dd.textContent!==x[1])dd.textContent=x[1];});
+  const st=sim.status(S,vals),chip=$('#status');if(chip.textContent!==st[0])chip.textContent=st[0];const cl='chip '+st[1];if(chip.className!==cl)chip.className=cl;
+}
+function render(){
+  readColors();
+  const[g1,w1,h1]=fit(c1);g1.fillStyle=C.view;g1.fillRect(0,0,w1,h1);sim.draw1(g1,w1,h1,S,vals);
+  const[g2,w2,h2]=fit(c2);g2.fillStyle=C.view;g2.fillRect(0,0,w2,h2);
+  const stacked=w2<560,want=stacked?'520px':'';if(c2.style.height!==want)c2.style.height=want;
+  const rects=stacked?[[0,0,w2,h2/2],[0,h2/2,w2,h2/2]]:[[0,0,w2/2,h2],[w2/2,0,w2/2,h2]];
+  sim.plots.forEach((pl,i)=>{g2.save();pl(g2,rects[i][0],rects[i][1],rects[i][2],rects[i][3],S,vals);g2.restore();});
+  updatePanel();
+}
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000);last=now;
+  if(playing){advance(dt*scale);if((S.om!==undefined&&!isFinite(S.om))||(S.pr!==undefined&&!isFinite(S.pr)))reset(0);}
+  render();requestAnimationFrame(frame);
+}
+const h0=(location.hash||'').slice(1);
+select(SIMS[h0]?h0:'mcc');
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
