@@ -11,3 +11,5 @@ Interfaces pour voir la relation entre les abaques et la réponse temporelle d'u
 [Potentiomètre rotatif](https://siicpgeamansur.github.io/SLCI/potentiometre_rotatif.html)
 
 [Pont de Wheatstone](https://siicpgeamansur.github.io/SLCI/pont_Wheatstone.html)
+
+[Alimentation réglable AC ou DC](https://siicpgeamansur.github.io/SLCI/alimentation_elec.html)
