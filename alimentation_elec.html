@@ -3,725 +3,786 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PWM • Onduleur • Redressement</title>
+<title>Électronique de puissance • Redressement, hacheur, onduleur</title>
 <style>
-:root {
-  --bg:#f4f4f6; --card:#fff; --text:#1d1d1f; --muted:#6e6e73;
-  --accent:#0071e3; --grid:#d0d0d5; --border:#d2d2d7;
-  --u0:#3b5b8a; --u1:#2a8f55; --u2:#b86b3a; --u3:#222;
-  --wave:#0071e3; --avg:#e6392e; --ref:#9b4dca; --carrier:#2a9d5c;
+:root{
+  --bg:#f4f4f6;--card:#fff;--text:#1d1d1f;--muted:#6e6e73;--accent:#0071e3;
+  --grid:#e3e3e8;--grid2:#b9b9c1;--border:#d2d2d7;--plot:#fbfbfc;
+  --u0:#3b5b8a;--u1:#2a8f55;--u2:#b8433a;--u3:#1d1d1f;
+  --wave:#0071e3;--avg:#e6392e;--ref:#9b4dca;--carrier:#2a9d5c;--act:#f08400;
+  --note:#eef4ff;--warn:#fff3e0;--warnb:#e59a2f;
 }
-[data-theme="dark"] {
-  --bg:#1c1c1e; --card:#2c2c2e; --text:#f5f5f7; --muted:#98989d;
-  --accent:#0a84ff; --grid:#3a3a3c; --border:#48484a;
-  --u0:#7aa2d4; --u1:#5dd68a; --u2:#e0a070; --u3:#e8e8ed;
-  --wave:#0a84ff; --avg:#ff453a; --ref:#bf5af2; --carrier:#30d158;
+[data-theme="dark"]{
+  --bg:#1c1c1e;--card:#2c2c2e;--text:#f5f5f7;--muted:#a1a1a6;--accent:#0a84ff;
+  --grid:#3a3a3c;--grid2:#5a5a5e;--border:#48484a;--plot:#1f1f21;
+  --u0:#7aa2d4;--u1:#5dd68a;--u2:#ff7b72;--u3:#f5f5f7;
+  --wave:#0a84ff;--avg:#ff453a;--ref:#bf5af2;--carrier:#30d158;--act:#ff9f0a;
+  --note:#1f2a3d;--warn:#3a2d14;--warnb:#a8741a;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:14px;line-height:1.45}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:14px;line-height:1.5;max-width:1000px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
 h1{font-size:1.35rem;font-weight:600}
-.theme-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 13px;border-radius:16px;cursor:pointer;font-size:.86rem;display:flex;align-items:center;gap:6px}
-.tabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+h2{font-size:1.15rem;font-weight:600;margin:0 0 8px}
+h3{font-size:1rem;font-weight:600;margin:18px 0 6px}
+.theme-btn,.reset{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:16px;cursor:pointer;font-size:.84rem}
+.tabs{display:flex;gap:5px;margin:10px 0;flex-wrap:wrap}
 .tab{padding:8px 14px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-weight:500;font-size:.86rem}
 .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .panel{display:none;background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border)}
 .panel.active{display:block}
-.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:11px;margin-bottom:12px}
+.box{border-radius:9px;padding:10px 14px;margin:10px 0;font-size:.9rem;background:var(--note);border-left:4px solid var(--accent)}
+.box.key{border-left-color:var(--carrier)}
+.box.try{border-left-color:var(--ref)}
+.box ul,.box ol{margin:6px 0 2px 20px}
+.box li{margin:3px 0}
+.formula{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.88em;white-space:nowrap}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:600;font-size:.9rem}
+details.q{background:var(--bg);border-radius:8px;padding:8px 12px;margin:6px 0;font-size:.9rem}
+details.q p{margin-top:6px;color:var(--muted)}
+.schema{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px;margin:10px 0 4px}
+.schema svg{width:100%;max-width:860px;height:auto;display:block;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.schema .w{fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.schema .pl{stroke-width:3.5}
+.schema .tri{fill:var(--text);stroke:var(--text);stroke-width:1.5;stroke-linejoin:round}
+.schema .nd{fill:var(--text);stroke:none}
+.schema .box-s{fill:none;stroke:var(--grid2);stroke-width:1.5;stroke-dasharray:6 4}
+.schema .t{fill:var(--text);font-size:15px}
+.schema .tm{fill:var(--muted);font-size:13px}
+.schema .on .w,.schema .w.on{stroke:var(--act);stroke-width:3.4}
+.schema .on .tri{fill:var(--act);stroke:var(--act)}
+.schema .on .nd{fill:var(--act)}
+.badge{margin:6px 0 8px;padding:8px 12px;border-left:4px solid var(--act);background:var(--bg);border-radius:6px;font-size:.88rem;min-height:2.6em}
+.cursor-row{display:flex;align-items:center;gap:10px;margin:6px 0 10px;font-size:.84rem;flex-wrap:wrap}
+.cursor-row input{flex:1;min-width:140px;accent-color:var(--act)}
+.cursor-row span{font-family:ui-monospace,Menlo,monospace;color:var(--muted);min-width:90px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:11px;margin:12px 0 6px}
 .control{display:flex;flex-direction:column;gap:3px}
-.control label{font-size:.75rem;color:var(--muted);font-weight:500}
+.control label{font-size:.78rem;color:var(--muted);font-weight:500}
+.chk{display:flex;align-items:center;gap:7px;font-size:.84rem;align-self:end}
 .slider-row{display:flex;align-items:center;gap:7px}
-input[type=range]{flex:1;accent-color:var(--accent);height:5px}
-input[type=number]{width:54px;padding:4px 4px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:.85rem;text-align:center}
-.canvas-wrap{position:relative;width:100%;height:240px;background:var(--bg);border-radius:9px;overflow:hidden;border:1px solid var(--border);margin-bottom:6px}
+.unit{font-size:.8rem;color:var(--muted);min-width:22px}
+input[type=range]{flex:1;accent-color:var(--accent);height:5px;min-width:0}
+input[type=number]{width:62px;padding:4px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:.85rem;text-align:center}
+.fig{margin:16px 0 6px}
+.wave-title{font-size:.9rem;font-weight:600;margin:0 0 5px}
+.canvas-wrap{position:relative;width:100%;background:var(--plot);border-radius:9px;overflow:hidden;border:1px solid var(--border)}
 canvas{width:100%;height:100%;display:block}
-.scope-label{position:absolute;top:5px;right:8px;font-size:.68rem;color:var(--muted);background:color-mix(in srgb,var(--bg) 88%,transparent);padding:2px 6px;border-radius:4px;pointer-events:none;font-family:ui-monospace,Menlo,monospace}
-.legend{display:flex;flex-wrap:wrap;gap:12px;margin:3px 0 8px;font-size:.79rem}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:5px 0 2px;font-size:.8rem}
 .legend-item{display:flex;align-items:center;gap:5px}
-.dot{width:10px;height:10px;border-radius:50%}
-.info{padding:9px 11px;background:var(--bg);border-radius:7px;font-size:.84rem;color:var(--muted);margin-top:6px}
-.info strong{color:var(--text)}
-.formula{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:1px 4px;border-radius:3px;font-size:.83em}
-.section-title{font-size:1.02rem;font-weight:600;margin:0 0 10px}
-.schematic-wrap{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:14px;text-align:center;overflow-x:auto}
-.schematic-wrap canvas{max-width:100%;height:auto;display:block;margin:0 auto}
-.wave-title{font-size:.87rem;font-weight:600;margin:13px 0 5px}
-@media(max-width:600px){.canvas-wrap{height:200px}}
+.dot{width:18px;height:3px;border-radius:2px}
+.dot.dash{background:none!important;border-top:3px dashed}
+.read{font-size:.82rem;color:var(--muted);margin:2px 0 0}
+.vals{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:8px;margin:12px 0}
+.val{background:var(--bg);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:1px}
+.vl{font-size:.74rem;color:var(--muted)}
+.vv{font-size:1.05rem;font-weight:600}
+.vh{font-size:.72rem;color:var(--muted)}
+.warn{background:var(--warn);border-left:4px solid var(--warnb);border-radius:8px;padding:8px 12px;font-size:.88rem;margin:8px 0;display:none}
+@media(max-width:600px){body{padding:8px}.panel{padding:11px}}
 </style>
 </head>
 <body>
+
 <div class="header">
-  <h1>PWM • Onduleur • Redressement</h1>
-  <button class="theme-btn" id="themeToggle" type="button"><span id="themeIcon">🌙</span><span id="themeText">Mode sombre</span></button>
+  <h1>Électronique de puissance : redresser, découper, onduler</h1>
+  <button class="theme-btn" id="themeToggle" type="button"><span id="themeIcon">🌙</span> <span id="themeText">Mode sombre</span></button>
+</div>
+
+<div class="box">
+  <strong>Comment utiliser cette page.</strong> Dans chaque onglet : (1) lis l'objectif et le principe, (2) repère sur le schéma les grandeurs étudiées, (3) modifie <em>un seul paramètre à la fois</em> et observe les courbes, (4) compare les formules aux valeurs calculées, (5) entraîne-toi avec les questions. Le <strong>curseur temporel</strong> te permet de lire, à un instant choisi, quels composants conduisent : le chemin du courant est tracé <span style="color:var(--act);font-weight:700">en orange</span> sur le schéma.
+  <details>
+    <summary>Notations et conventions</summary>
+    <ul>
+      <li>⟨x⟩ : valeur moyenne de x(t) ; X<sub>eff</sub> : valeur efficace ; X<sub>max</sub> : valeur crête.</li>
+      <li>La flèche d'une tension pointe vers le potentiel le plus haut : u = V<sub>pointe</sub> − V<sub>origine</sub>.</li>
+      <li>Interrupteurs et diodes sont idéaux (sauf option « diodes réelles »), le transformateur est parfait, le régime est périodique établi.</li>
+      <li>Les axes des courbes sont gradués en unités réelles (V, A, ms, µs).</li>
+    </ul>
+  </details>
 </div>
 
 <div class="tabs">
-  <button class="tab active" data-tab="rectifier" type="button">1. Redressement AC → DC</button>
-  <button class="tab" data-tab="pwm" type="button">2. Hacheur DC-DC (PWM)</button>
-  <button class="tab" data-tab="inverter" type="button">3. Onduleur (f variable)</button>
+  <button class="tab active" data-tab="rect" type="button">1. Redressement AC → DC</button>
+  <button class="tab" data-tab="pwm" type="button">2. Hacheur DC-DC (MLI)</button>
+  <button class="tab" data-tab="inv" type="button">3. Onduleur DC → AC</button>
 </div>
 
-<!-- ==================== 1. REDRESSEMENT ==================== -->
-<div class="panel active" id="panel-rectifier">
-  <div class="section-title">Convertisseur statique AC/DC</div>
-  <div class="schematic-wrap">
-    <canvas id="schemaRect" width="760" height="190"></canvas>
+<!-- ================= 1. REDRESSEMENT ================= -->
+<div class="panel active" id="panel-rect">
+  <h2>Convertisseur statique AC/DC : de la prise 230 V à une tension continue</h2>
+  <div class="box">
+    <strong>Objectif.</strong> Alimenter un appareil électronique (chargeur, adaptateur, carte) en continu à partir du réseau 230 V – 50 Hz. Trois étages se suivent, chacun avec un rôle précis :
+    <ol>
+      <li><strong>Transformateur</strong> : abaisse l'amplitude (u₀ → u₁), sans changer la fréquence.</li>
+      <li><strong>Pont de diodes</strong> : rend la tension <em>unidirectionnelle</em> (u₁ → u₂ = |u₁|), mais toujours ondulée.</li>
+      <li><strong>Filtre (condensateur)</strong> : lisse u₂ pour obtenir u₃ presque constante. C stocke de l'énergie près des crêtes et la restitue entre deux crêtes.</li>
+    </ol>
   </div>
 
-  <div class="controls">
-    <div class="control">
-      <label>Tension secondaire (efficace)</label>
-      <div class="slider-row">
-        <input type="range" id="vsec" min="6" max="48" value="24" step="1">
-        <input type="number" id="vsecVal" min="6" max="48" value="24" step="1">
-        <span>V<sub>eff</sub></span>
-      </div>
-    </div>
-    <div class="control">
-      <label>Capacité filtre C</label>
-      <div class="slider-row">
-        <input type="range" id="cap" min="100" max="4700" value="2200" step="100">
-        <input type="number" id="capVal" min="100" max="4700" value="2200" step="100">
-        <span>µF</span>
-      </div>
-    </div>
-    <div class="control">
-      <label>Courant de charge</label>
-      <div class="slider-row">
-        <input type="range" id="iload" min="0.05" max="2" value="0.35" step="0.05">
-        <input type="number" id="iloadVal" min="0.05" max="2" value="0.35" step="0.05">
-        <span>A</span>
-      </div>
-    </div>
-    <div class="control">
-      <label>Temps affiché</label>
-      <div class="slider-row">
-        <input type="range" id="rectTime" min="20" max="100" value="60" step="5">
-        <input type="number" id="rectTimeVal" min="20" max="100" value="60" step="5">
-        <span>ms</span>
-      </div>
-    </div>
+  <div class="schema" id="schemaRect"></div>
+  <div class="badge" id="badgeRect"></div>
+  <div class="cursor-row"><label for="rectCur">Curseur temporel</label><input type="range" id="rectCur" min="0" max="1000" value="125"><span id="rectCurT"></span></div>
+
+  <div class="box try">
+    <strong>À toi de jouer</strong>
+    <ul>
+      <li>Augmente C : l'ondulation ΔU diminue, mais regarde la Figure 5 : les impulsions de courant dans les diodes deviennent plus étroites et plus hautes.</li>
+      <li>Double le courant de charge : que devient ΔU ? Compare avec la formule.</li>
+      <li>Coche « diodes réelles » : de combien baisse U₃,max ? Combien de diodes sont traversées par le courant ?</li>
+      <li>Coche « régime transitoire » : observe la charge initiale de C, puis le régime périodique établi.</li>
+    </ul>
   </div>
 
-  <div class="wave-title">Figure 2 – Transformateur (u₀ primaire & u₁ secondaire) – <em>même échelle</em></div>
-  <div class="canvas-wrap" style="height:220px"><canvas id="cU01"></canvas><div class="scope-label" id="labU01"></div></div>
-  <div class="legend">
-    <div class="legend-item"><div class="dot" style="background:var(--u0)"></div>u₀(t) – 230 V<sub>eff</sub></div>
-    <div class="legend-item"><div class="dot" style="background:var(--u1)"></div>u₁(t) – secondaire</div>
+  <div class="controls" id="ctlRect"></div>
+  <button class="reset" id="resetRect" type="button">Valeurs par défaut</button>
+
+  <div class="fig">
+    <div class="wave-title">Figure 2 – Transformateur : u₀ (primaire) et u₁ (secondaire), même échelle</div>
+    <div class="canvas-wrap" style="height:230px"><canvas id="cR2"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot" style="background:var(--u0)"></div>u₀(t) = 230√2·sin(2π·50·t)</div><div class="legend-item"><div class="dot" style="background:var(--u1)"></div>u₁(t) = m·u₀(t)</div></div>
+    <p class="read">Lecture : u₁ est en phase avec u₀ et de même fréquence ; seule l'amplitude change, dans le rapport m = U₁/230.</p>
   </div>
 
-  <div class="wave-title">Figure 3 – Pont de diodes (u₁ & u₂)</div>
-  <div class="canvas-wrap" style="height:200px"><canvas id="cU12"></canvas><div class="scope-label" id="labU12"></div></div>
-  <div class="legend">
-    <div class="legend-item"><div class="dot" style="background:var(--u1)"></div>u₁(t)</div>
-    <div class="legend-item"><div class="dot" style="background:var(--u2)"></div>u₂(t) – redressé</div>
+  <div class="fig">
+    <div class="wave-title">Figure 3 – Pont de diodes : u₁ (entrée) et u₂ (sortie)</div>
+    <div class="canvas-wrap" style="height:210px"><canvas id="cR3"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot" style="background:var(--u1)"></div>u₁(t)</div><div class="legend-item"><div class="dot dash" style="border-color:var(--u2)"></div>u₂(t) = |u₁(t)| − 2V<sub>d</sub></div></div>
+    <p class="read">Lecture : les alternances négatives sont « retournées ». u₂ a la fréquence 100 Hz = 2 × 50 Hz et une valeur moyenne non nulle ⟨u₂⟩ = 2·U₁,max/π.</p>
   </div>
 
-  <div class="wave-title">Figure 4 – Filtre RC (u₂ & u₃)</div>
-  <div class="canvas-wrap" style="height:200px"><canvas id="cU23"></canvas><div class="scope-label" id="labU23"></div></div>
-  <div class="legend">
-    <div class="legend-item"><div class="dot" style="background:var(--u2)"></div>u₂(t)</div>
-    <div class="legend-item"><div class="dot" style="background:var(--u3)"></div>u₃(t) – filtré</div>
+  <div class="fig">
+    <div class="wave-title">Figure 4 – Filtre RC : u₂ (avant) et u₃ (après)</div>
+    <div class="canvas-wrap" style="height:230px"><canvas id="cR4"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot dash" style="border-color:var(--u2)"></div>u₂(t)</div><div class="legend-item"><div class="dot" style="background:var(--u3)"></div>u₃(t) tension aux bornes de C</div></div>
+    <p class="read">Lecture : u₃ suit u₂ près des crêtes (C se charge), puis décroît presque linéairement (C se décharge dans la charge à courant I). Les lignes horizontales donnent U₃,max et U₃,min en régime établi.</p>
   </div>
 
-  <div class="info">
-    <strong>Valeurs :</strong>
-    u₁ crête ≈ <strong id="vpeakText">—</strong> |
-    V<sub>DC</sub> (u₃ moy) ≈ <strong id="vdcText">—</strong> |
-    Ripple ≈ <strong id="rippleText">—</strong><br>
-    <span class="formula">Δu ≈ I / (2·f·C)</span> avec f = 100 Hz
+  <div class="fig">
+    <div class="wave-title">Figure 5 – Courant fourni par le pont (traversant R et C)</div>
+    <div class="canvas-wrap" style="height:200px"><canvas id="cR5"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot" style="background:var(--act)"></div>i<sub>pont</sub>(t)</div><div class="legend-item"><div class="dot dash" style="border-color:var(--muted)"></div>I (courant de charge)</div></div>
+    <p class="read">Lecture : le courant n'existe que par impulsions, quand u₂ &gt; u₃. Sa valeur moyenne vaut I, mais sa valeur crête est bien plus grande : il faut en tenir compte pour dimensionner diodes et transformateur.</p>
   </div>
+
+  <div class="vals" id="valsRect"></div>
+
+  <div class="box key">
+    <strong>À retenir</strong>
+    <ul>
+      <li>Transformateur parfait : <span class="formula">u₁ = m·u₀</span>, <span class="formula">U₁,max = √2·U₁,eff</span>.</li>
+      <li>Pont (diodes idéales) : <span class="formula">u₂ = |u₁|</span> ; deux diodes conduisent en même temps ; <span class="formula">⟨u₂⟩ = 2·U₁,max/π ≈ 0,64·U₁,max</span> ; fréquence 2 × f<sub>réseau</sub>.</li>
+      <li>Filtre : <span class="formula">U₃,max ≈ U₁,max − 2V<sub>d</sub></span>, <span class="formula">ΔU ≈ I/(2·f·C)</span> (décharge à courant constant pendant une demi-période T/2 = 1/(2f)), <span class="formula">⟨u₃⟩ ≈ U₃,max − ΔU/2</span>.</li>
+      <li>Les diodes ne conduisent que si u₂ &gt; u₃ : le courant est impulsionnel, d'autant plus que C est grande.</li>
+      <li>Hypothèse de la formule de ΔU : ΔU ≪ U₃,max et charge assimilée à un générateur de courant I.</li>
+    </ul>
+  </div>
+
+  <h3>S'entraîner</h3>
+  <details class="q"><summary>Q1. Pour U₁,eff = 24 V, calculer U₁,max et ⟨u₂⟩ sans filtre.</summary><p>U₁,max = 24√2 ≈ 33,9 V ; ⟨u₂⟩ = 2·33,9/π ≈ 21,6 V.</p></details>
+  <details class="q"><summary>Q2. Avec C = 2200 µF et I = 0,35 A, calculer ΔU puis ⟨u₃⟩ (diodes idéales).</summary><p>ΔU = I/(2fC) = 0,35/(2·50·2,2·10⁻³) ≈ 1,6 V ; ⟨u₃⟩ ≈ 33,9 − 1,6/2 ≈ 33,1 V. Compare avec la valeur « simulation » affichée.</p></details>
+  <details class="q"><summary>Q3. Quelle capacité garantit ΔU ≤ 0,5 V pour I = 1 A ?</summary><p>C ≥ I/(2fΔU) = 1/(2·50·0,5) = 20 mF = 20 000 µF : une forte valeur, d'où l'intérêt de limiter ΔU par d'autres moyens (régulateur en aval).</p></details>
+  <details class="q"><summary>Q4. Pourquoi la fréquence d'ondulation est-elle 100 Hz et non 50 Hz ?</summary><p>Le pont redresse les deux alternances : u₂ présente deux « bosses » par période du réseau (20 ms), donc une période de 10 ms, soit 100 Hz. La décharge de C dure au plus T/2 = 10 ms.</p></details>
+  <details class="q"><summary>Q5. Quelle tension inverse maximale doit supporter une diode du pont ?</summary><p>Quand une paire conduit, l'autre paire est soumise à environ u₃ ≈ U₁,max : il faut choisir des diodes de tension inverse supérieure à U₁,max avec une marge de sécurité.</p></details>
 </div>
 
-<!-- ==================== 2. PWM ==================== -->
+<!-- ================= 2. HACHEUR ================= -->
 <div class="panel" id="panel-pwm">
-  <div class="section-title">Hacheur abaisseur (Buck) – PWM / MLI</div>
-  <div class="schematic-wrap">
-    <canvas id="schemaPwm" width="560" height="160"></canvas>
+  <h2>Hacheur série (Buck) : abaisser une tension continue avec un bon rendement</h2>
+  <div class="box">
+    <strong>Objectif.</strong> Obtenir une tension continue V<sub>out</sub> &lt; V<sub>in</sub> réglable. Un diviseur résistif ou un régulateur linéaire dissipent la différence en chaleur ; ici l'interrupteur K est soit fermé (tension nulle à ses bornes), soit ouvert (courant nul) : la puissance dissipée est faible en théorie. On « découpe » V<sub>in</sub> à la fréquence f avec le rapport cyclique α = t<sub>on</sub>/T, puis L et C <em>lissent</em>.
+    <ol>
+      <li><strong>0 &lt; t &lt; αT</strong> : K fermé, D bloquée. u<sub>A</sub> = V<sub>in</sub>, v<sub>L</sub> = V<sub>in</sub> − V<sub>out</sub> &gt; 0, donc i<sub>L</sub> croît.</li>
+      <li><strong>αT &lt; t &lt; T</strong> : K ouvert. Le courant de L ne peut pas s'interrompre : D devient passante (roue libre). u<sub>A</sub> = 0, v<sub>L</sub> = −V<sub>out</sub> &lt; 0, donc i<sub>L</sub> décroît.</li>
+      <li><strong>Régime périodique</strong> : ⟨v<sub>L</sub>⟩ = 0 (L = v<sub>L</sub>·dt) donc ⟨u<sub>A</sub>⟩ = V<sub>out</sub>, soit <span class="formula">V<sub>out</sub> = α·V<sub>in</sub></span>.</li>
+    </ol>
   </div>
 
-  <div class="controls">
-    <div class="control">
-      <label>Rapport cyclique α</label>
-      <div class="slider-row">
-        <input type="range" id="duty" min="0" max="100" value="40" step="1">
-        <input type="number" id="dutyVal" min="0" max="100" value="40" step="1">
-        <span>%</span>
-      </div>
-    </div>
-    <div class="control">
-      <label>Tension d’entrée Vin</label>
-      <div class="slider-row">
-        <input type="range" id="vin" min="5" max="48" value="24" step="1">
-        <input type="number" id="vinVal" min="5" max="48" value="24" step="1">
-        <span>V</span>
-      </div>
-    </div>
-    <div class="control">
-      <label>Fréquence de découpage</label>
-      <div class="slider-row">
-        <input type="range" id="fpwm" min="1" max="20" value="5" step="0.5">
-        <input type="number" id="fpwmVal" min="1" max="20" value="5" step="0.5">
-        <span>kHz</span>
-      </div>
-    </div>
-    <div class="control">
-      <label>Temps affiché</label>
-      <div class="slider-row">
-        <input type="range" id="pwmTime" min="0.5" max="8" value="2" step="0.1">
-        <input type="number" id="pwmTimeVal" min="0.5" max="8" value="2" step="0.1">
-        <span>ms</span>
-      </div>
-    </div>
-    <div class="control">
-      <label>Échelle tension (V max)</label>
-      <div class="slider-row">
-        <input type="range" id="pwmVscale" min="5" max="60" value="30" step="1">
-        <input type="number" id="pwmVscaleVal" min="5" max="60" value="30" step="1">
-        <span>V</span>
-      </div>
-    </div>
+  <div class="schema" id="schemaBuck"></div>
+  <div class="badge" id="badgeBuck"></div>
+  <div class="cursor-row"><label for="pwmCur">Curseur temporel</label><input type="range" id="pwmCur" min="0" max="1000" value="80"><span id="pwmCurT"></span></div>
+
+  <div class="box try">
+    <strong>À toi de jouer</strong>
+    <ul>
+      <li>Fais varier α de 0 à 100 % : V<sub>out</sub> suit α·V<sub>in</sub> (loi linéaire). Où l'ondulation de i<sub>L</sub> est-elle maximale ?</li>
+      <li>Double L, puis double f : que devient ΔI<sub>L</sub> ? Qu'est-ce qui coûte le plus cher en pratique ?</li>
+      <li>Diminue I<sub>out</sub> jusqu'à voir i<sub>L</sub> devenir négatif : l'hypothèse « conduction continue » n'est plus valable (avertissement orange).</li>
+    </ul>
   </div>
 
-  <div class="canvas-wrap"><canvas id="cPwm"></canvas><div class="scope-label" id="labPwm"></div></div>
-  <div class="legend">
-    <div class="legend-item"><div class="dot" style="background:var(--wave)"></div>Signal PWM</div>
-    <div class="legend-item"><div class="dot" style="background:var(--avg)"></div>Tension moyenne</div>
+  <div class="controls" id="ctlPwm"></div>
+  <button class="reset" id="resetPwm" type="button">Valeurs par défaut</button>
+  <div class="warn" id="pwmWarn"><strong>Conduction discontinue.</strong> Ici I<sub>min</sub> &lt; 0 : le courant s'annulerait dans L avant la fin de la période. Le modèle V<sub>out</sub> = α·V<sub>in</sub> n'est plus valable (augmente L, f ou I<sub>out</sub>).</div>
+
+  <div class="fig">
+    <div class="wave-title">Figure 2 – Tension u<sub>A</sub> au point milieu (avant le filtre L-C)</div>
+    <div class="canvas-wrap" style="height:190px"><canvas id="cB2"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot" style="background:var(--wave)"></div>u<sub>A</sub>(t)</div><div class="legend-item"><div class="dot dash" style="border-color:var(--avg)"></div>⟨u<sub>A</sub>⟩ = V<sub>out</sub></div></div>
+    <p class="read">Lecture : u<sub>A</sub> vaut V<sub>in</sub> pendant αT et 0 pendant (1−α)T. Sa valeur moyenne, aire du créneau divisée par T, vaut α·V<sub>in</sub>.</p>
   </div>
-  <div class="info">
-    <strong>Principe :</strong> Découpage de Vin avec un rapport cyclique α.<br>
-    <span class="formula">V<sub>out</sub> = α × V<sub>in</sub></span> → <strong id="voutText">—</strong>
+
+  <div class="fig">
+    <div class="wave-title">Figure 3 – Tension aux bornes de l'inductance v<sub>L</sub> = u<sub>A</sub> − V<sub>out</sub></div>
+    <div class="canvas-wrap" style="height:190px"><canvas id="cB3"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot" style="background:var(--ref)"></div>v<sub>L</sub>(t) = L·di<sub>L</sub>/dt</div></div>
+    <p class="read">Lecture : en régime périodique, l'aire positive (V<sub>in</sub>−V<sub>out</sub>)·αT est égale à l'aire négative V<sub>out</sub>·(1−α)T, d'où ⟨v<sub>L</sub>⟩ = 0.</p>
   </div>
+
+  <div class="fig">
+    <div class="wave-title">Figure 4 – Courant dans l'inductance i<sub>L</sub></div>
+    <div class="canvas-wrap" style="height:210px"><canvas id="cB4"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot" style="background:var(--carrier)"></div>i<sub>L</sub>(t)</div><div class="legend-item"><div class="dot dash" style="border-color:var(--muted)"></div>⟨i<sub>L</sub>⟩ = I<sub>out</sub></div></div>
+    <p class="read">Lecture : pentes (V<sub>in</sub>−V<sub>out</sub>)/L pendant αT et −V<sub>out</sub>/L ensuite. L'ondulation crête-à-crête ΔI<sub>L</sub> se lit sur l'écart entre I<sub>max</sub> et I<sub>min</sub>.</p>
+  </div>
+
+  <div class="vals" id="valsPwm"></div>
+
+  <div class="box key">
+    <strong>À retenir</strong>
+    <ul>
+      <li><span class="formula">V<sub>out</sub> = α·V<sub>in</sub></span> en conduction continue, indépendant de la charge.</li>
+      <li><span class="formula">ΔI<sub>L</sub> = α(1−α)·V<sub>in</sub>/(L·f)</span>, maximum pour α = 1/2 : <span class="formula">V<sub>in</sub>/(4Lf)</span>.</li>
+      <li>Conduction continue si <span class="formula">I<sub>out</sub> &gt; ΔI<sub>L</sub>/2</span>.</li>
+      <li>La diode assure la continuité du courant dans L (sans elle, ouvrir K provoquerait une surtension destructrice).</li>
+      <li>Compromis : f élevée ⇒ L et C petites, mais pertes de commutation plus grandes.</li>
+    </ul>
+  </div>
+
+  <h3>S'entraîner</h3>
+  <details class="q"><summary>Q1. V<sub>in</sub> = 24 V et α = 0,4. Calculer V<sub>out</sub>.</summary><p>V<sub>out</sub> = 0,4 × 24 = 9,6 V.</p></details>
+  <details class="q"><summary>Q2. Calculer ΔI<sub>L</sub> pour L = 1 mH, f = 10 kHz, V<sub>in</sub> = 24 V, α = 0,4.</summary><p>ΔI<sub>L</sub> = 0,4·0,6·24/(10⁻³·10⁴) = 5,76/10 ≈ 0,58 A.</p></details>
+  <details class="q"><summary>Q3. Quelle valeur de L limite ΔI<sub>L</sub> à 0,1 A dans les mêmes conditions ?</summary><p>L = α(1−α)V<sub>in</sub>/(f·ΔI) = 5,76/(10⁴·0,1) ≈ 5,8 mH.</p></details>
+  <details class="q"><summary>Q4. Pour I<sub>out</sub> = 1 A, la conduction est-elle continue avec les valeurs de Q2 ?</summary><p>ΔI<sub>L</sub>/2 ≈ 0,29 A &lt; 1 A : oui, I<sub>min</sub> ≈ 0,71 A &gt; 0.</p></details>
+  <details class="q"><summary>Q5. Pour obtenir une tension moyenne <em>sinusoïdale</em>, que faudrait-il faire de α ?</summary><p>Le faire varier lentement : α(t) = (1 + m·sin ωt)/2. C'est exactement le principe de la MLI sinusoïdale de l'onglet suivant.</p></details>
 </div>
 
-<!-- ==================== 3. ONDULEUR ==================== -->
-<div class="panel" id="panel-inverter">
-  <div class="section-title">Onduleur monophasé – MLI sinusoïdale</div>
-  <div class="schematic-wrap">
-    <canvas id="schemaInv" width="520" height="170"></canvas>
+<!-- ================= 3. ONDULEUR ================= -->
+<div class="panel" id="panel-inv">
+  <h2>Onduleur monophasé : créer une tension alternative à partir d'une source continue</h2>
+  <div class="box">
+    <strong>Objectif.</strong> Fabriquer une tension alternative dont on règle la fréquence et l'amplitude (variateur de vitesse d'un moteur, alimentation de secours...). On utilise un <strong>pont en H</strong> : deux bras, chacun formé de deux interrupteurs complémentaires (K₁/K₂ et K₃/K₄). Chaque interrupteur est un transistor avec une diode en antiparallèle.
+    <ol>
+      <li><strong>K₁ et K₄ fermés</strong> : u<sub>s</sub> = +E. <strong>K₂ et K₃ fermés</strong> : u<sub>s</sub> = −E. On ne ferme jamais K₁ et K₂ ensemble (court-circuit de la source).</li>
+      <li><strong>MLI intersective</strong> : on compare une référence sinusoïdale v<sub>r</sub> = m<sub>a</sub>·sin(2πf·t) à une porteuse triangulaire de fréquence f<sub>p</sub> = p·f. Si v<sub>r</sub> &gt; porteuse : u<sub>s</sub> = +E, sinon −E.</li>
+      <li><strong>Pourquoi ça marche</strong> : sur une période de découpage, ⟨u<sub>s</sub>⟩ = (2α−1)E avec α(t) = (1 + m<sub>a</sub> sin ωt)/2, donc ⟨u<sub>s</sub>⟩ = m<sub>a</sub>·E·sin ωt : la valeur moyenne locale <em>reproduit la référence</em>. Les harmoniques de découpage, rejetés autour de p·f, sont filtrés par la charge inductive.</li>
+    </ol>
   </div>
 
-  <div class="controls">
-    <div class="control">
-      <label>Fréquence de sortie f</label>
-      <div class="slider-row">
-        <input type="range" id="fout" min="10" max="100" value="50" step="1">
-        <input type="number" id="foutVal" min="10" max="100" value="50" step="1">
-        <span>Hz</span>
-      </div>
-    </div>
-    <div class="control">
-      <label>Indice de modulation m<sub>a</sub></label>
-      <div class="slider-row">
-        <input type="range" id="ma" min="0.2" max="1" value="0.8" step="0.05">
-        <input type="number" id="maVal" min="0.2" max="1" value="0.8" step="0.05">
-      </div>
-    </div>
-    <div class="control">
-      <label>Fréquence porteuse (×f)</label>
-      <div class="slider-row">
-        <input type="range" id="fcar" min="8" max="30" value="15" step="1">
-        <input type="number" id="fcarVal" min="8" max="30" value="15" step="1">
-      </div>
-    </div>
-    <div class="control">
-      <label>Temps affiché</label>
-      <div class="slider-row">
-        <input type="range" id="invTime" min="20" max="100" value="40" step="5">
-        <input type="number" id="invTimeVal" min="20" max="100" value="40" step="5">
-        <span>ms</span>
-      </div>
-    </div>
+  <div class="schema" id="schemaInv"></div>
+  <div class="badge" id="badgeInv"></div>
+  <div class="cursor-row"><label for="invCur">Curseur temporel</label><input type="range" id="invCur" min="0" max="1000" value="60"><span id="invCurT"></span></div>
+
+  <div class="box try">
+    <strong>À toi de jouer</strong>
+    <ul>
+      <li>Fais varier m<sub>a</sub> : l'amplitude de la fondamentale vaut m<sub>a</sub>·E (proportionnelle tant que m<sub>a</sub> ≤ 1). Que se passe-t-il pour m<sub>a</sub> &gt; 1 (surmodulation) ?</li>
+      <li>Augmente p : les harmoniques s'éloignent de la fondamentale sur le spectre (Figure 5) et le courant devient plus lisse. Quel est l'inconvénient en pratique ?</li>
+      <li>Change f : la fréquence change, l'amplitude reste m<sub>a</sub>·E. (Pour un moteur, on augmente aussi m<sub>a</sub> avec f : loi U/f.)</li>
+      <li>Augmente L : le courant se rapproche d'une sinusoïde. Déplace le curseur quand i change de signe pour voir les diodes conduire.</li>
+    </ul>
   </div>
 
-  <div class="canvas-wrap"><canvas id="cInv"></canvas><div class="scope-label" id="labInv"></div></div>
-  <div class="legend">
-    <div class="legend-item"><div class="dot" style="background:var(--ref)"></div>Référence</div>
-    <div class="legend-item"><div class="dot" style="background:var(--carrier)"></div>Porteuse</div>
-    <div class="legend-item"><div class="dot" style="background:var(--wave)"></div>PWM</div>
-    <div class="legend-item"><div class="dot" style="background:var(--avg)"></div>Fondamentale</div>
+  <div class="controls" id="ctlInv"></div>
+  <button class="reset" id="resetInv" type="button">Valeurs par défaut</button>
+
+  <div class="fig">
+    <div class="wave-title">Figure 2 – Comparaison référence / porteuse (grandeurs normalisées)</div>
+    <div class="canvas-wrap" style="height:210px"><canvas id="cI2"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot" style="background:var(--ref)"></div>référence m<sub>a</sub>·sin(2πft)</div><div class="legend-item"><div class="dot" style="background:var(--carrier)"></div>porteuse triangulaire (±1)</div></div>
+    <p class="read">Lecture : chaque intersection est un instant de commutation. Quand la référence est au-dessus de la porteuse, u<sub>s</sub> = +E.</p>
   </div>
-  <div class="info">
-    <strong>Principe :</strong> Comparaison d’une sinusoïde de référence avec une porteuse triangulaire.<br>
-    Fréquence de sortie : <strong id="foutText">50 Hz</strong>
+
+  <div class="fig">
+    <div class="wave-title">Figure 3 – Tension de sortie u<sub>s</sub> et sa fondamentale</div>
+    <div class="canvas-wrap" style="height:220px"><canvas id="cI3"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot" style="background:var(--wave)"></div>u<sub>s</sub>(t) ∈ {−E, +E}</div><div class="legend-item"><div class="dot dash" style="border-color:var(--avg)"></div>fondamentale (fréquence f)</div></div>
+    <p class="read">Lecture : la tension est toujours à ±E, mais la largeur relative des impulsions varie sinusoïdalement : c'est la modulation de largeur d'impulsion.</p>
   </div>
+
+  <div class="fig">
+    <div class="wave-title">Figure 4 – Courant dans la charge R-L : i<sub>s</sub>(t)</div>
+    <div class="canvas-wrap" style="height:210px"><canvas id="cI4"></canvas></div>
+    <div class="legend"><div class="legend-item"><div class="dot" style="background:var(--carrier)"></div>i<sub>s</sub>(t) (régime établi)</div><div class="legend-item"><div class="dot dash" style="border-color:var(--avg)"></div>fondamentale du courant</div></div>
+    <p class="read">Lecture : la charge se comporte en filtre passe-bas : à la fréquence h·f, son impédance vaut √(R² + (h·Lω)²), très grande pour h ≈ p. Le courant est presque sinusoïdal.</p>
+  </div>
+
+  <div class="fig">
+    <div class="wave-title">Figure 5 – Spectre de u<sub>s</sub> (amplitude des harmoniques / E)</div>
+    <div class="canvas-wrap" style="height:210px"><canvas id="cI5"></canvas></div>
+    <p class="read">Lecture : la fondamentale (h = 1) vaut m<sub>a</sub>. Les premiers harmoniques importants apparaissent autour de h = p, 2p... ; l'impédance de la charge y est élevée, donc ils créent peu de courant.</p>
+  </div>
+
+  <div class="vals" id="valsInv"></div>
+
+  <div class="box key">
+    <strong>À retenir</strong>
+    <ul>
+      <li>Pont en H : <span class="formula">u<sub>s</sub> ∈ {+E, −E}</span> ; K₁/K₂ et K₃/K₄ jamais fermés ensemble.</li>
+      <li>Fondamentale : <span class="formula">u<sub>s,1</sub>(t) = m<sub>a</sub>·E·sin(2πf·t)</span> pour m<sub>a</sub> ≤ 1 ; sa fréquence est celle de la référence, pas celle de la porteuse.</li>
+      <li>Les harmoniques sont regroupés autour de <span class="formula">p·f</span>, <span class="formula">2p·f</span>... : plus p est grand, plus ils sont faciles à filtrer, mais plus les pertes par commutation augmentent.</li>
+      <li>Les diodes en antiparallèle assurent le passage du courant quand il est de signe opposé à la tension : la charge inductive renvoie alors de l'énergie à la source.</li>
+      <li>La valeur efficace de u<sub>s</sub> (tension en créneaux ±E) vaut E, quelle que soit m<sub>a</sub> ; celle de la fondamentale vaut m<sub>a</sub>·E/√2.</li>
+    </ul>
+  </div>
+
+  <h3>S'entraîner</h3>
+  <details class="q"><summary>Q1. E = 100 V, m<sub>a</sub> = 0,8. Amplitude et valeur efficace de la fondamentale ?</summary><p>Amplitude 0,8 × 100 = 80 V ; valeur efficace 80/√2 ≈ 56,6 V.</p></details>
+  <details class="q"><summary>Q2. Avec f = 50 Hz et p = 15, quelle est la fréquence de la porteuse ?</summary><p>f<sub>p</sub> = 15 × 50 = 750 Hz, soit une période de découpage de 1,33 ms (15 par période de sortie).</p></details>
+  <details class="q"><summary>Q3. u<sub>s</sub> = −E et i &gt; 0 : quels composants conduisent ?</summary><p>Les diodes D₂ et D₃ (K₂ et K₃ sont commandés mais ne peuvent pas être traversés dans ce sens). La puissance u<sub>s</sub>·i est négative : la charge renvoie de l'énergie à la source.</p></details>
+  <details class="q"><summary>Q4. Pourquoi ne faut-il jamais fermer K₁ et K₂ simultanément ?</summary><p>Ils court-circuitent la source E (courant limité seulement par les résistances parasites). En pratique on impose un temps mort entre l'ouverture de l'un et la fermeture de l'autre.</p></details>
+  <details class="q"><summary>Q5. R = 10 Ω, L = 30 mH, f = 50 Hz : calculer l'amplitude de i à 50 Hz pour E = 100 V, m<sub>a</sub> = 0,8.</summary><p>Z = √(10² + (2π·50·0,03)²) = √(100 + 88,8) ≈ 13,7 Ω ; I₁ = 80/13,7 ≈ 5,8 A, avec un retard φ = arctan(Lω/R) ≈ 43° sur la tension.</p></details>
 </div>
 
 <script>
 (function(){
-  let dark=false;
-  document.getElementById('themeToggle').onclick=()=>{
-    dark=!dark;
-    document.documentElement.setAttribute('data-theme',dark?'dark':'light');
-    document.getElementById('themeIcon').textContent=dark?'☀️':'🌙';
-    document.getElementById('themeText').textContent=dark?'Mode clair':'Mode sombre';
-    requestAnimationFrame(()=>requestAnimationFrame(drawAll));
+'use strict';
+const $=id=>document.getElementById(id);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const val=id=>parseFloat($(id).value);
+const fx=(v,d=1)=>(+v).toFixed(d).replace('.',',');
+const memo={};
+const cached=(n,k,fn)=>{if(!memo[n]||memo[n].k!==k)memo[n]={k:k,v:fn()};return memo[n].v;};
+const kv=(l,v,h)=>'<div class="val"><span class="vl">'+l+'</span><span class="vv">'+v+'</span>'+(h?'<span class="vh">'+h+'</span>':'')+'</div>';
+
+/* ---------- thème ---------- */
+let dark=!!(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  $('themeIcon').textContent=dark?'☀️':'🌙';
+  $('themeText').textContent=dark?'Mode clair':'Mode sombre';
+}
+$('themeToggle').onclick=()=>{dark=!dark;applyTheme();drawAll();};
+
+/* ---------- onglets ---------- */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    $('panel-'+t.dataset.tab).classList.add('active');
+    drawAll();
   };
+});
 
-  document.querySelectorAll('.tab').forEach(t=>{
-    t.onclick=()=>{
-      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-      t.classList.add('active');
-      document.getElementById('panel-'+t.dataset.tab).classList.add('active');
-      drawAll();
-    };
+/* ---------- construction des commandes ---------- */
+function build(boxId,defs,cb,resetId){
+  let h='';
+  defs.forEach(d=>{
+    if(d.t==='check'){h+='<label class="chk"><input type="checkbox" id="'+d.id+'"'+(d.on?' checked':'')+'> '+d.l+'</label>';}
+    else{h+='<div class="control"><label for="'+d.id+'">'+d.l+'</label><div class="slider-row"><input type="range" id="'+d.id+'" min="'+d.min+'" max="'+d.max+'" step="'+d.step+'" value="'+d.v+'"><input type="number" id="'+d.id+'N" min="'+d.min+'" max="'+d.max+'" step="'+d.step+'" value="'+d.v+'"><span class="unit">'+(d.u||'')+'</span></div></div>';}
   });
-
-  function link(sid,nid,cb){
-    const s=document.getElementById(sid),n=document.getElementById(nid);
-    if(!s||!n)return;
+  $(boxId).innerHTML=h;
+  defs.forEach(d=>{
+    if(d.t==='check'){$(d.id).onchange=cb;return;}
+    const s=$(d.id),n=$(d.id+'N');
     s.oninput=()=>{n.value=s.value;cb();};
-    n.onchange=()=>{
-      let v=parseFloat(n.value);if(isNaN(v))return;
-      v=Math.max(+s.min,Math.min(+s.max,v));n.value=v;s.value=v;cb();
-    };
-  }
-  function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
-
-  function prep(id){
-    const c=document.getElementById(id);if(!c)return null;
-    const ctx=c.getContext('2d');
-    const dpr=window.devicePixelRatio||1;
-    const p=c.parentElement;
-    const W=p.clientWidth,H=p.clientHeight;
-    c.width=Math.floor(W*dpr);c.height=Math.floor(H*dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    return {ctx,W,H};
-  }
-
-  function drawGrid(ctx,W,H,opts={}){
-    const step=40;
-    ctx.strokeStyle=css('--grid');ctx.lineWidth=1;
-    for(let x=0;x<=W;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-    for(let y=0;y<=H;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-    if(opts.timeDiv || opts.voltDiv){
-      ctx.fillStyle=css('--muted');
-      ctx.font='10px ui-monospace,Menlo,monospace';
-      ctx.textAlign='left';
-      let txt=[];
-      if(opts.timeDiv) txt.push(opts.timeDiv);
-      if(opts.voltDiv) txt.push(opts.voltDiv);
-      ctx.fillText(txt.join('  •  '), 6, H-6);
-    }
-  }
-
-  function arr(ctx,x1,y1,x2,y2){
-    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
-    const a=Math.atan2(y2-y1,x2-x1);
-    ctx.beginPath();ctx.moveTo(x2,y2);
-    ctx.lineTo(x2-7*Math.cos(a-0.35),y2-7*Math.sin(a-0.35));
-    ctx.lineTo(x2-7*Math.cos(a+0.35),y2-7*Math.sin(a+0.35));
-    ctx.closePath();ctx.fill();
-  }
-
-  // ========== SCHÉMA REDRESSEMENT ==========
-  function drawSchemaRect(){
-    const c=document.getElementById('schemaRect');if(!c)return;
-    const ctx=c.getContext('2d');
-    const dpr=window.devicePixelRatio||1;
-    const W=760,H=190;
-    c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-
-    const tc=css('--text'), mu=css('--muted');
-    const u0=css('--u0'), u1=css('--u1'), u2=css('--u2'), u3=css('--u3');
-
-    ctx.strokeStyle=css('--border');ctx.lineWidth=1.3;
-    ctx.strokeRect(10,10,220,140);
-    ctx.strokeRect(245,10,250,140);
-    ctx.strokeRect(510,10,240,140);
-
-    ctx.fillStyle=mu;ctx.font='12px system-ui';ctx.textAlign='center';
-    ctx.fillText('Transformateur',120,168);
-    ctx.fillText('Pont redresseur de diodes',370,168);
-    ctx.fillText('Filtre RC',630,168);
-
-    const tx=115, ty=80;
-    ctx.strokeStyle=tc;ctx.lineWidth=1.8;
-    for(let i=0;i<5;i++){
-      const y=ty-30+i*15;
-      ctx.beginPath();ctx.moveTo(tx-36,y);
-      ctx.bezierCurveTo(tx-22,y-7,tx-22,y+7,tx-36,y+14);ctx.stroke();
-    }
-    for(let i=0;i<5;i++){
-      const y=ty-30+i*15;
-      ctx.beginPath();ctx.moveTo(tx+10,y);
-      ctx.bezierCurveTo(tx+24,y-7,tx+24,y+7,tx+10,y+14);ctx.stroke();
-    }
-    ctx.strokeStyle=mu;ctx.lineWidth=2.2;
-    ctx.beginPath();ctx.moveTo(tx-5,ty-38);ctx.lineTo(tx-5,ty+38);
-    ctx.moveTo(tx+3,ty-38);ctx.lineTo(tx+3,ty+38);ctx.stroke();
-
-    ctx.strokeStyle=u0;ctx.fillStyle=u0;ctx.lineWidth=1.6;
-    arr(ctx,tx-52,ty+22,tx-52,ty-22);
-    ctx.font='bold 14px system-ui';ctx.textAlign='right';ctx.fillText('u₀',tx-56,ty+5);
-
-    ctx.strokeStyle=u1;ctx.fillStyle=u1;
-    arr(ctx,tx+42,ty+22,tx+42,ty-22);
-    ctx.textAlign='left';ctx.fillText('u₁',tx+46,ty+5);
-
-    ctx.strokeStyle=tc;ctx.lineWidth=1.5;
-    ctx.beginPath();
-    ctx.moveTo(tx+32,ty-28);ctx.lineTo(275,ty-28);
-    ctx.moveTo(tx+32,ty+28);ctx.lineTo(275,ty+28);
-    ctx.stroke();
-
-    const bx=370, by=80, s=32;
-    ctx.strokeStyle=tc;ctx.lineWidth=1.7;
-    ctx.beginPath();
-    ctx.moveTo(bx,by-s);ctx.lineTo(bx+s,by);ctx.lineTo(bx,by+s);ctx.lineTo(bx-s,by);
-    ctx.closePath();ctx.stroke();
-
-    function diode(x,y,rot){
-      ctx.save();ctx.translate(x,y);ctx.rotate(rot);
-      ctx.beginPath();ctx.moveTo(-6,-7);ctx.lineTo(6,-7);ctx.lineTo(0,7);ctx.closePath();ctx.stroke();
-      ctx.beginPath();ctx.moveTo(-6,7);ctx.lineTo(6,7);ctx.stroke();
-      ctx.restore();
-    }
-    diode(bx-14,by-14,Math.PI/4);
-    diode(bx+14,by-14,-Math.PI/4);
-    diode(bx-14,by+14,3*Math.PI/4);
-    diode(bx+14,by+14,-3*Math.PI/4);
-
-    ctx.fillStyle=tc;
-    [[bx,by-s],[bx+s,by],[bx,by+s],[bx-s,by]].forEach(([x,y])=>{
-      ctx.beginPath();ctx.arc(x,y,3,0,6.28);ctx.fill();
+    n.onchange=()=>{let v=parseFloat(n.value);if(isNaN(v))v=d.v;v=Math.max(d.min,Math.min(d.max,v));n.value=v;s.value=v;cb();};
+  });
+  $(resetId).onclick=()=>{
+    defs.forEach(d=>{
+      if(d.t==='check'){$(d.id).checked=!!d.on;}
+      else{$(d.id).value=d.v;$(d.id+'N').value=d.v;}
     });
+    cb();
+  };
+}
 
-    ctx.strokeStyle=u2;ctx.fillStyle=u2;ctx.lineWidth=1.6;
-    arr(ctx,bx+s+16,by+24,bx+s+16,by-24);
-    ctx.font='bold 14px system-ui';ctx.textAlign='left';ctx.fillText('u₂',bx+s+20,by+5);
-
-    ctx.strokeStyle=tc;ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.moveTo(bx+s,by);ctx.lineTo(540,by);ctx.stroke();
-
-    ctx.strokeRect(550,by-11,40,22);
-    ctx.fillStyle=tc;ctx.font='13px system-ui';ctx.textAlign='center';ctx.fillText('R',570,by+5);
-
-    ctx.lineWidth=2.2;
-    ctx.beginPath();ctx.moveTo(615,by-24);ctx.lineTo(615,by+24);
-    ctx.moveTo(625,by-24);ctx.lineTo(625,by+24);ctx.stroke();
-    ctx.font='13px system-ui';ctx.fillText('C',620,by+42);
-
-    ctx.lineWidth=1.5;
+/* ---------- tracé de courbes (canvas) ---------- */
+function niceTicks(a,b,n){
+  const span=b-a,raw=span/Math.max(n,2),mag=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/mag;
+  const step=(f<1.5?1:f<3?2:f<7?5:10)*mag,t=[];
+  for(let v=Math.ceil(a/step-1e-9)*step;v<=b+step*1e-9;v+=step)t.push(+v.toFixed(10));
+  return {ticks:t,step:step};
+}
+function fmtT(v,step){const d=Math.max(0,-Math.floor(Math.log10(step)+1e-9));return v.toFixed(Math.min(d,4));}
+function plot(id,o){
+  const c=$(id);if(!c)return;
+  const par=c.parentElement,W=par.clientWidth,H=par.clientHeight;if(!W||!H)return;
+  const dpr=window.devicePixelRatio||1;
+  c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);
+  const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  const mL=o.mL||52,mR=14,mT=14,mB=36,pw=W-mL-mR,ph=H-mT-mB;
+  const X=x=>mL+(x-o.x0)/(o.x1-o.x0)*pw,Y=y=>mT+(1-(y-o.y0)/(o.y1-o.y0))*ph;
+  const xs=o.xs||1;
+  ctx.fillStyle=css('--plot');ctx.fillRect(0,0,W,H);
+  const tx=niceTicks(o.x0*xs,o.x1*xs,pw/85),ty=niceTicks(o.y0,o.y1,ph/42);
+  ctx.font='11px ui-monospace,Menlo,Consolas,monospace';
+  ctx.lineWidth=1;ctx.strokeStyle=css('--grid');ctx.beginPath();
+  tx.ticks.forEach(t=>{const x=X(t/xs);ctx.moveTo(x,mT);ctx.lineTo(x,mT+ph);});
+  ty.ticks.forEach(t=>{const y=Y(t);ctx.moveTo(mL,y);ctx.lineTo(mL+pw,y);});
+  ctx.stroke();
+  if(o.y0<0&&o.y1>0){ctx.strokeStyle=css('--grid2');ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(mL,Y(0));ctx.lineTo(mL+pw,Y(0));ctx.stroke();}
+  ctx.fillStyle=css('--muted');
+  ctx.textAlign='center';ctx.textBaseline='top';
+  tx.ticks.forEach(t=>ctx.fillText(fmtT(t,tx.step),X(t/xs),mT+ph+5));
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  ty.ticks.forEach(t=>ctx.fillText(fmtT(t,ty.step),mL-6,Y(t)));
+  ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(o.xl||'',mL+pw,H-2);
+  ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(o.yl||'',mL+6,mT+3);
+  ctx.save();ctx.beginPath();ctx.rect(mL,mT,pw,ph);ctx.clip();
+  (o.series||[]).forEach(s=>{
+    ctx.strokeStyle=css(s.c);ctx.lineWidth=s.w||2;ctx.setLineDash(s.d||[]);ctx.lineJoin='round';
     ctx.beginPath();
-    ctx.moveTo(540,by);ctx.lineTo(550,by);
-    ctx.moveTo(590,by);ctx.lineTo(615,by);
-    ctx.moveTo(625,by);ctx.lineTo(660,by);
-    ctx.moveTo(540,by);ctx.lineTo(540,by+48);
-    ctx.lineTo(660,by+48);ctx.lineTo(660,by);
+    const xa=s.x,ya=s.y,n=ya.length;
+    for(let i=0;i<n;i++){const px=X(xa[i]),py=Y(ya[i]);if(i)ctx.lineTo(px,py);else ctx.moveTo(px,py);}
     ctx.stroke();
-
-    ctx.strokeStyle=u3;ctx.fillStyle=u3;
-    arr(ctx,675,by+28,675,by-28);
-    ctx.font='bold 14px system-ui';ctx.textAlign='left';ctx.fillText('u₃',680,by+5);
+  });
+  ctx.setLineDash([]);
+  if(o.after)o.after(ctx,X,Y,{mL:mL,mT:mT,pw:pw,ph:ph});
+  ctx.restore();
+  (o.hl||[]).forEach(h=>{
+    const y=Y(h.y);ctx.strokeStyle=css(h.c);ctx.lineWidth=1.4;ctx.setLineDash(h.d||[6,4]);
+    ctx.beginPath();ctx.moveTo(mL,y);ctx.lineTo(mL+pw,y);ctx.stroke();ctx.setLineDash([]);
+    if(h.l){ctx.fillStyle=css(h.c);ctx.textAlign='right';ctx.textBaseline=h.b?'top':'bottom';ctx.fillText(h.l,mL+pw-4,h.b?y+3:y-3);}
+  });
+  if(o.cx!=null){
+    const x=X(o.cx);ctx.strokeStyle=css('--act');ctx.lineWidth=1.8;
+    ctx.beginPath();ctx.moveTo(x,mT);ctx.lineTo(x,mT+ph);ctx.stroke();
+    ctx.fillStyle=css('--act');ctx.textBaseline='top';ctx.textAlign=x>mL+pw-90?'right':'left';
+    ctx.fillText('t = '+(o.cx*xs).toFixed(o.cd==null?2:o.cd)+' '+(o.xu||''),x+(x>mL+pw-90?-4:4),mT+3);
   }
+  ctx.strokeStyle=css('--border');ctx.lineWidth=1;ctx.strokeRect(mL,mT,pw,ph);
+}
 
-  // ========== SCHÉMA PWM ==========
-  function drawSchemaPwm(){
-    const c=document.getElementById('schemaPwm');if(!c)return;
-    const ctx=c.getContext('2d');
-    const dpr=window.devicePixelRatio||1;
-    const W=560,H=160;
-    c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-    const tc=css('--text'), mu=css('--muted'), av=css('--avg');
+/* ---------- briques des schémas SVG ---------- */
+const ln=(x1,y1,x2,y2,c)=>'<line class="'+(c||'w')+'" x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'"/>';
+const pa=(d,c)=>'<path class="'+(c||'w')+'" d="'+d+'"/>';
+const nd=(x,y)=>'<circle class="nd" cx="'+x+'" cy="'+y+'" r="3.5"/>';
+const tx=(x,y,s,o)=>{o=o||{};return '<text x="'+x+'" y="'+y+'" class="'+(o.c||'t')+'" text-anchor="'+(o.a||'middle')+'"'+(o.s?' font-size="'+o.s+'"':'')+(o.b?' font-weight="700"':'')+(o.f?' style="fill:'+o.f+'"':'')+'>'+s+'</text>';};
+const gr=(x,y,rot,inner,cls)=>'<g class="'+(cls||'')+'" transform="translate('+x+','+y+') rotate('+rot+')">'+inner+'</g>';
+const sub=(a,b)=>a+'<tspan dy="4" font-size="11">'+b+'</tspan>';
+const sym={
+  res:()=>pa('M-22 0H-15M15 0H22')+'<rect class="w" x="-15" y="-7" width="30" height="14"/>',
+  cap:()=>pa('M-22 0H-4M4 0H22')+pa('M-4 -13V13M4 -13V13','w pl'),
+  ind:()=>pa('M-22 0H-20a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0a5 5 0 0 1 10 0H22'),
+  dio:()=>pa('M-22 0H-7M7 0H22M7 -8V8')+'<polygon class="tri" points="-7,-8 -7,8 7,0"/>',
+  bat:()=>pa('M-22 0H-4M4 0H22')+pa('M-4 -14V14')+pa('M4 -8V8','w pl'),
+  sw:closed=>pa('M-22 0H-12M12 0H22')+'<circle class="nd" cx="-12" cy="0" r="2.5"/><circle class="nd" cx="12" cy="0" r="2.5"/>'+(closed?pa('M-12 0L12 0'):pa('M-12 0L10 -14'))
+};
+function arr(x1,y1,x2,y2,col,lab,lx,ly,la){
+  const an=Math.atan2(y2-y1,x2-x1),h=10;
+  const a1=[x2-h*Math.cos(an-0.4),y2-h*Math.sin(an-0.4)],a2=[x2-h*Math.cos(an+0.4),y2-h*Math.sin(an+0.4)];
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+(x2-Math.cos(an)*6).toFixed(1)+'" y2="'+(y2-Math.sin(an)*6).toFixed(1)+'" style="stroke:'+col+';stroke-width:2"/>'+
+    '<polygon points="'+x2+','+y2+' '+a1[0].toFixed(1)+','+a1[1].toFixed(1)+' '+a2[0].toFixed(1)+','+a2[1].toFixed(1)+'" style="fill:'+col+'"/>'+
+    (lab?tx(lx,ly,lab,{f:col,a:la,b:1,s:17}):'');
+}
 
-    ctx.strokeStyle=tc;ctx.lineWidth=1.6;
-    ctx.beginPath();ctx.moveTo(50,35);ctx.lineTo(50,115);ctx.stroke();
-    ctx.fillStyle=tc;ctx.font='13px system-ui';ctx.textAlign='center';
-    ctx.fillText('+',50,27);ctx.fillText('−',50,130);ctx.fillText('Vin',50,78);
+/* ---------- schéma : redressement ---------- */
+function schemaRect(st){
+  const cx=450,cy=165,s=70,on=st.cond,o=on?' on':'';
+  const on1=st.cond&&st.pos,on2=st.cond&&!st.pos;
+  const T_=[cx,cy-s],B_=[cx,cy+s],L_=[cx-s,cy],R_=[cx+s,cy];
+  let h='<svg viewBox="0 0 800 330" role="img" aria-label="Schéma de l\'adaptateur AC/DC">';
+  h+='<rect class="box-s" x="128" y="62" width="170" height="206" rx="8"/><rect class="box-s" x="360" y="62" width="180" height="206" rx="8"/><rect class="box-s" x="562" y="128" width="188" height="142" rx="8"/>';
+  h+=tx(213,80,'Transformateur',{c:'tm'})+tx(450,80,'Pont de diodes',{c:'tm'})+tx(656,146,'Filtre R–C + charge',{c:'tm'});
+  // source secteur
+  h+=ln(60,95,60,147)+ln(60,183,60,235)+ln(60,95,172,95)+ln(60,235,172,235);
+  h+='<circle class="w" cx="60" cy="165" r="18"/>'+pa('M52 165q4 -8 8 0t8 0');
+  h+=tx(60,262,'secteur',{c:'tm'})+tx(60,278,'230 V – 50 Hz',{c:'tm',s:12});
+  // transformateur
+  h+=ln(172,95,172,110)+pa('M172 110'+'a11 11 0 0 1 0 22'.repeat(5))+ln(172,220,172,235);
+  h+=ln(230,95,230,110)+pa('M230 110'+'a11 11 0 0 0 0 22'.repeat(5))+ln(230,220,230,235);
+  h+=pa('M196 106V224M206 106V224');
+  h+=arr(112,205,112,125,'var(--u0)','u₀',104,170,'end')+arr(262,205,262,125,'var(--u1)','u₁',270,170,'start');
+  // fils secondaire → pont
+  h+=ln(230,95,450,95,'w'+o)+pa('M230 235H374a6 6 0 0 1 12 0H450','w'+o);
+  // pont
+  const edge=(A,B,rot,act,lab,lx,ly,la)=>{
+    const mx=(A[0]+B[0])/2,my=(A[1]+B[1])/2;
+    return '<g class="'+(act?'on':'')+'">'+ln(A[0],A[1],B[0],B[1])+gr(mx,my,rot,sym.dio())+'</g>'+tx(lx,ly,lab,{c:'tm',a:la,s:13});
+  };
+  h+=edge(T_,R_,45,on1,'D₁',503,122,'start')+edge(B_,R_,-45,on2,'D₂',503,214,'start')+edge(L_,T_,-45,on2,'D₃',397,122,'end')+edge(L_,B_,45,on1,'D₄',397,214,'end');
+  [T_,B_,L_,R_].forEach(p=>{h+=nd(p[0],p[1]);});
+  // sortie du pont : R série, C, charge
+  h+=ln(520,165,573,165,'w'+o)+gr(595,165,0,sym.res(),on?'on':'')+ln(617,165,650,165,'w'+o);
+  h+=tx(595,148,'R');
+  h+=ln(650,165,715,165)+ln(715,165,770,165);
+  h+=ln(650,165,650,210)+gr(650,232,90,sym.cap())+ln(650,254,650,300)+tx(666,236,'C',{a:'start'});
+  h+=ln(715,165,715,205)+'<rect class="w" x="690" y="205" width="50" height="50" rx="4"/>'+tx(715,234,'charge',{s:12})+ln(715,255,715,300);
+  h+=ln(380,165,380,300,'w'+o)+ln(380,300,650,300,'w'+o)+ln(650,300,770,300);
+  [[650,165],[650,300],[715,165],[715,300],[380,165]].forEach(p=>{h+=nd(p[0],p[1]);});
+  h+=arr(548,300,548,165,'var(--u2)','u₂',556,240,'start')+arr(770,300,770,165,'var(--u3)','u₃',778,240,'start');
+  h+=arr(730,172,730,198,'var(--text)','I',740,190,'start');
+  return h+'</svg>';
+}
 
-    ctx.beginPath();ctx.moveTo(50,35);ctx.lineTo(140,35);ctx.stroke();
-    ctx.strokeRect(140,24,48,22);
-    ctx.fillText('S',164,39);
-    ctx.beginPath();ctx.moveTo(188,35);ctx.lineTo(188,80);ctx.lineTo(165,80);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(175,72);ctx.lineTo(188,80);ctx.lineTo(175,88);ctx.closePath();ctx.stroke();
-    ctx.beginPath();ctx.moveTo(165,88);ctx.lineTo(188,88);ctx.stroke();
+/* ---------- schéma : hacheur ---------- */
+function schemaBuck(onK){
+  const o=onK?' on':'',od=onK?'':' on';
+  let h='<svg viewBox="0 0 620 260" role="img" aria-label="Schéma du hacheur série">';
+  h+=ln(44,60,163,60,'w'+o)+gr(185,60,0,sym.sw(onK),onK?'on':'')+ln(207,60,260,60,'w'+o);
+  h+=ln(260,60,318,60,'w on')+gr(340,60,0,sym.ind(),'on')+ln(362,60,420,60,'w on');
+  h+=ln(420,60,548,60);
+  h+=ln(80,60,80,118)+gr(80,140,90,sym.bat())+ln(80,162,80,220);
+  h+=ln(260,60,260,118,'w'+od)+gr(260,140,-90,sym.dio(),onK?'':'on')+ln(260,162,260,220,'w'+od);
+  h+=ln(420,60,420,118)+gr(420,140,90,sym.cap())+ln(420,162,420,220);
+  h+=ln(500,60,500,118)+gr(500,140,90,sym.res())+ln(500,162,500,220);
+  h+=ln(44,220,548,220);
+  [[80,60],[260,60],[420,60],[500,60],[80,220],[260,220],[420,220],[500,220]].forEach(p=>{h+=nd(p[0],p[1]);});
+  h+=arr(44,220,44,60,'var(--text)','V<tspan dy="4" font-size="11">in</tspan>',36,145,'end');
+  h+=arr(232,220,232,60,'var(--u2)',sub('u','A'),224,145,'end');
+  h+=arr(548,220,548,60,'var(--avg)',sub('V','out'),556,145,'start');
+  h+=arr(310,36,372,36,'var(--carrier)',sub('i','L'),341,26,'middle');
+  h+=tx(185,40,'K')+tx(340,86,'L')+tx(274,145,'D',{a:'start'})+tx(406,145,'C',{a:'end'})+tx(460,145,'charge',{s:13});
+  return h+'</svg>';
+}
 
-    ctx.beginPath();ctx.moveTo(188,35);ctx.lineTo(240,35);
-    for(let i=0;i<5;i++) ctx.arc(252+i*14,35,7,Math.PI,0,false);
-    ctx.lineTo(340,35);ctx.stroke();
-    ctx.fillText('L',280,24);
+/* ---------- schéma : pont en H ---------- */
+function schemaInv(s,q){
+  const act=[s>0,s<0,s<0,s>0];
+  const viaSw=[q>0,q<0,q<0,q>0];
+  const closed=[s>0,s<0,s<0,s>0];
+  const br=(x,yc,dx,ya,yb,k)=>{
+    const y1=yc-22,y2=yc+22,a=act[k],vs=viaSw[k],cs=a&&vs?'on':'',cd=a&&!vs?'on':'';
+    return ln(x,ya,x,y1,'w'+(a?' on':''))+ln(x,y2,x,yb,'w'+(a?' on':''))+gr(x,yc,90,sym.sw(closed[k]),cs)+
+      ln(x,y1,x+dx,y1,'w'+(cd?' on':''))+ln(x,y2,x+dx,y2,'w'+(cd?' on':''))+gr(x+dx,yc,-90,sym.dio(),cd)+nd(x,y1)+nd(x,y2);
+  };
+  let h='<svg viewBox="0 0 640 320" role="img" aria-label="Schéma du pont en H">';
+  h+=ln(24,40,400,40)+ln(24,280,400,280)+ln(60,40,60,138)+gr(60,160,90,sym.bat())+ln(60,182,60,280);
+  h+=br(200,100,38,40,160,0)+br(200,220,38,160,280,1)+br(400,100,-38,40,160,2)+br(400,220,-38,160,280,3);
+  h+=ln(200,160,244,160,'w on')+gr(266,160,0,sym.res(),'on')+ln(288,160,308,160,'w on')+gr(330,160,0,sym.ind(),'on')+ln(352,160,400,160,'w on');
+  [[60,40],[60,280],[200,40],[200,280],[400,40],[400,280],[200,160],[400,160]].forEach(p=>{h+=nd(p[0],p[1]);});
+  h+=arr(24,280,24,40,'var(--text)','E',16,165,'end');
+  h+=arr(352,184,244,184,'var(--wave)',sub('u','s'),298,206,'middle');
+  h+=arr(210,160,236,160,'var(--text)','i',223,150,'middle');
+  h+=tx(266,144,'R')+tx(330,144,'L');
+  h+=tx(176,104,'K₁',{a:'end'})+tx(176,224,'K₂',{a:'end'})+tx(424,104,'K₃',{a:'start'})+tx(424,224,'K₄',{a:'start'});
+  h+=tx(250,104,'D₁',{c:'tm',a:'start'})+tx(250,224,'D₂',{c:'tm',a:'start'})+tx(350,104,'D₃',{c:'tm',a:'end'})+tx(350,224,'D₄',{c:'tm',a:'end'});
+  h+=tx(500,160,'A et B : milieux des bras',{c:'tm',a:'start',s:12})+tx(500,180,'u = V(A) − V(B)',{c:'tm',a:'start',s:12});
+  return h+'</svg>';
+}
 
-    ctx.beginPath();ctx.moveTo(340,35);ctx.lineTo(340,55);ctx.stroke();
-    ctx.lineWidth=2.3;
-    ctx.beginPath();ctx.moveTo(328,55);ctx.lineTo(352,55);
-    ctx.moveTo(328,68);ctx.lineTo(352,68);ctx.stroke();
-    ctx.lineWidth=1.6;
-    ctx.beginPath();ctx.moveTo(340,68);ctx.lineTo(340,115);ctx.lineTo(50,115);ctx.stroke();
-    ctx.fillText('C',340,90);
-
-    ctx.strokeStyle=av;ctx.fillStyle=av;
-    arr(ctx,380,105,380,50);
-    ctx.font='bold 14px system-ui';ctx.textAlign='left';ctx.fillText('Vout',388,80);
-
-    ctx.fillStyle=mu;ctx.font='12px system-ui';ctx.textAlign='center';
-    ctx.fillText('Hacheur Buck (découpage PWM)',280,150);
+/* =============================================================
+   1. REDRESSEMENT
+   ============================================================= */
+function simRect(Vpk,C,I,Rs,Vd,tEnd){
+  const dt=5e-6,n=Math.round(tEnd/dt);
+  const u1=new Float32Array(n+1),u2=new Float32Array(n+1),u3=new Float32Array(n+1),ii=new Float32Array(n+1);
+  const ex=1-Math.exp(-dt/(Rs*C)),w=2*Math.PI*50;let v=0;
+  for(let k=0;k<=n;k++){
+    const s=Vpk*Math.sin(w*k*dt),a=Math.max(0,Math.abs(s)-2*Vd);let q=0;
+    if(a>v){const dv=(a-v)*ex;q=dv*C/dt;v+=dv;}
+    v-=I*dt/C;if(v<0)v=0;
+    u1[k]=s;u2[k]=a;u3[k]=v;ii[k]=q;
   }
+  return {n:n,dt:dt,u1:u1,u2:u2,u3:u3,ii:ii};
+}
+function drawRect(){
+  const Veff=val('vsec'),C=val('cap')*1e-6,I=val('iload'),Rs=val('rser'),Tms=val('rectTime');
+  const Vd=$('rDio').checked?0.7:0,trans=$('rTrans').checked;
+  const T=Tms/1000,Vpk=Veff*Math.SQRT2,dt=5e-6,tStart=trans?0:0.06;
+  const sim=cached('rsim',[Vpk,C,I,Rs,Vd,T,trans].join(),()=>simRect(Vpk,C,I,Rs,Vd,tStart+T));
+  const st=cached('rst',[Vpk,C,I,Rs,Vd].join(),()=>{
+    const r=simRect(Vpk,C,I,Rs,Vd,0.2),from=r.n-4000;let mn=1e9,mx=-1e9,sum=0,ip=0,cnt=0;
+    for(let k=from;k<=r.n;k++){const v=r.u3[k];if(v<mn)mn=v;if(v>mx)mx=v;sum+=v;if(r.ii[k]>ip)ip=r.ii[k];if(r.ii[k]>1e-6)cnt++;}
+    return {mn:mn,mx:mx,mean:sum/(r.n-from+1),ip:ip,tc:cnt*dt/2};
+  });
+  const i0=Math.round(tStart/dt),len=Math.round(T/dt)+1;
+  const xs=new Float32Array(len);for(let k=0;k<len;k++)xs[k]=k*dt;
+  const u0a=new Float32Array(len),u1a=sim.u1.subarray(i0,i0+len),u2a=sim.u2.subarray(i0,i0+len),u3a=sim.u3.subarray(i0,i0+len),iia=sim.ii.subarray(i0,i0+len);
+  const w=2*Math.PI*50;for(let k=0;k<len;k++)u0a[k]=230*Math.SQRT2*Math.sin(w*xs[k]);
+  const frac=val('rectCur')/1000,tc=frac*T,kk=Math.min(len-1,Math.round(tc/dt));
+  $('rectCurT').textContent='t = '+fx(tc*1000,1)+' ms';
+  const cond=iia[kk]>1e-6,pos=u1a[kk]>=0;
+  $('schemaRect').innerHTML=schemaRect({cond:cond,pos:pos});
+  $('badgeRect').innerHTML=
+    '<b>À t = '+fx(tc*1000,1)+' ms</b> : u₁ = '+fx(u1a[kk])+' V, u₂ = '+fx(u2a[kk])+' V, u₃ = '+fx(u3a[kk])+' V. '+
+    (cond?'Conduisent <b>'+(pos?'D₁ et D₄':'D₂ et D₃')+'</b> (u₁ '+(pos?'&gt;':'&lt;')+' 0) : le secondaire fournit du courant et recharge C.'
+         :'<b>Les quatre diodes sont bloquées</b> (u₂ &lt; u₃) : C alimente seul la charge, u₃ décroît.');
+  const A1=230*Math.SQRT2*1.15;
+  plot('cR2',{x0:0,x1:T,y0:-A1,y1:A1,xs:1e3,xl:'t (ms)',xu:'ms',yl:'tension (V)',cx:tc,cd:1,
+    series:[{x:xs,y:u0a,c:'--u0',w:2.2},{x:xs,y:u1a,c:'--u1',w:2.2}],
+    hl:[{y:230*Math.SQRT2,l:'√2 × 230 V = 325 V',c:'--u0',d:[2,4]},{y:Vpk,l:'√2 × '+Veff+' V = '+fx(Vpk)+' V',c:'--u1',d:[2,4],b:true}]});
+  plot('cR3',{x0:0,x1:T,y0:-Vpk*1.15,y1:Vpk*1.15,xs:1e3,xl:'t (ms)',xu:'ms',yl:'tension (V)',cx:tc,cd:1,
+    series:[{x:xs,y:u1a,c:'--u1',w:2},{x:xs,y:u2a,c:'--u2',w:2.4,d:[6,4]}],
+    hl:[{y:Vpk,l:'U₁,max = '+fx(Vpk)+' V',c:'--u1',d:[2,4]}]});
+  plot('cR4',{x0:0,x1:T,y0:0,y1:Vpk*1.12,xs:1e3,xl:'t (ms)',xu:'ms',yl:'tension (V)',cx:tc,cd:1,
+    series:[{x:xs,y:u2a,c:'--u2',w:1.6,d:[6,4]},{x:xs,y:u3a,c:'--u3',w:2.6}],
+    hl:[{y:st.mx,l:'U₃,max = '+fx(st.mx)+' V (régime établi)',c:'--muted',d:[3,3]},{y:st.mn,l:'U₃,min = '+fx(st.mn)+' V',c:'--muted',d:[3,3],b:true}]});
+  let imax=0;for(let k=0;k<len;k++)if(iia[k]>imax)imax=iia[k];
+  plot('cR5',{x0:0,x1:T,y0:-0.04*Math.max(imax,I*1.5),y1:Math.max(imax,I*1.5)*1.12,xs:1e3,xl:'t (ms)',xu:'ms',yl:'courant (A)',cx:tc,cd:1,
+    series:[{x:xs,y:iia,c:'--act',w:2.2}],hl:[{y:I,l:'I = '+fx(I,2)+' A',c:'--muted',d:[5,4]}]});
+  const rip=st.mx-st.mn,th=I/(2*50*C);
+  $('valsRect').innerHTML=
+    kv('U₁,max (crête secondaire)',fx(Vpk)+' V','√2 × '+Veff+' V')+
+    kv('Rapport de transformation m',fx(Veff/230,3),'m = U₁,eff / 230')+
+    kv('⟨u₂⟩ sans filtre',fx(2*Vpk/Math.PI)+' V','2·U₁,max/π (V<sub>d</sub> = 0)')+
+    kv('U₃,max (simulation)',fx(st.mx)+' V','≈ U₁,max − 2V<sub>d</sub> = '+fx(Vpk-2*Vd)+' V')+
+    kv('ΔU mesuré (simulation)',fx(rip,2)+' V','U₃,max − U₃,min')+
+    kv('ΔU ≈ I/(2·f·C)',fx(th,2)+' V','avec f = 50 Hz')+
+    kv('⟨u₃⟩ (simulation)',fx(st.mean)+' V','≈ U₃,max − ΔU/2 = '+fx(st.mx-rip/2)+' V')+
+    kv('Ondulation relative',fx(100*rip/st.mean,1)+' %','ΔU / ⟨u₃⟩')+
+    kv('Courant crête dans les diodes',fx(st.ip,1)+' A','pour un courant moyen I = '+fx(I,2)+' A')+
+    kv('Durée de conduction',fx(st.tc*1000,1)+' ms','par demi-période de 10 ms');
+}
 
-  // ========== SCHÉMA ONDULEUR ==========
-  function drawSchemaInv(){
-    const c=document.getElementById('schemaInv');if(!c)return;
-    const ctx=c.getContext('2d');
-    const dpr=window.devicePixelRatio||1;
-    const W=520,H=170;
-    c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-    const tc=css('--text'), mu=css('--muted'), wv=css('--wave');
-
-    ctx.strokeStyle=tc;ctx.lineWidth=1.6;
-    ctx.beginPath();ctx.moveTo(45,30);ctx.lineTo(45,130);ctx.stroke();
-    ctx.fillStyle=tc;ctx.font='13px system-ui';ctx.textAlign='center';
-    ctx.fillText('+',45,22);ctx.fillText('−',45,144);ctx.fillText('Vdc',45,82);
-
-    const positions=[[130,40],[230,40],[130,100],[230,100]];
-    positions.forEach(([x,y],i)=>{
-      ctx.strokeRect(x,y,42,24);
-      ctx.fillText('S'+(i+1),x+21,y+16);
-    });
-
-    ctx.beginPath();
-    ctx.moveTo(45,30);ctx.lineTo(130,30);ctx.lineTo(130,40);
-    ctx.moveTo(172,40);ctx.lineTo(172,30);ctx.lineTo(230,30);ctx.lineTo(230,40);
-    ctx.moveTo(45,130);ctx.lineTo(130,130);ctx.lineTo(130,124);
-    ctx.moveTo(172,124);ctx.lineTo(172,130);ctx.lineTo(230,130);ctx.lineTo(230,124);
-    ctx.moveTo(151,64);ctx.lineTo(151,100);
-    ctx.moveTo(251,64);ctx.lineTo(251,100);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(172,52);ctx.lineTo(310,52);
-    ctx.moveTo(251,112);ctx.lineTo(310,112);
-    ctx.stroke();
-
-    ctx.strokeRect(310,68,55,30);
-    ctx.fillText('Charge',337,87);
-
-    ctx.strokeStyle=wv;ctx.fillStyle=wv;
-    arr(ctx,390,120,390,50);
-    ctx.font='bold 14px system-ui';ctx.textAlign='left';ctx.fillText('uₛ',398,88);
-
-    ctx.fillStyle=mu;ctx.font='12px system-ui';ctx.textAlign='center';
-    ctx.fillText('Pont en H – Onduleur monophasé',260,158);
+/* =============================================================
+   2. HACHEUR
+   ============================================================= */
+function drawPwm(){
+  const a=val('duty')/100,Vin=val('vin'),f=val('fpwm')*1e3,L=val('lind')*1e-3,I=val('iout'),n=Math.round(val('pwmN'));
+  const T=1/f,tot=n*T,Vout=a*Vin,dI=a*(1-a)*Vin/(L*f),Imin=I-dI/2,Imax=I+dI/2,ccm=Imin>=0;
+  const xs=tot<2e-3?1e6:1e3,xu=tot<2e-3?'µs':'ms',cd=tot<2e-3?0:2;
+  $('pwmWarn').style.display=ccm?'none':'block';
+  const frac=val('pwmCur')/1000,tc=frac*tot,ph=(tc/T)%1,onK=ph<a;
+  $('pwmCurT').textContent='t = '+(tc*xs).toFixed(cd)+' '+xu;
+  $('schemaBuck').innerHTML=schemaBuck(onK);
+  $('badgeBuck').innerHTML=onK
+    ?'<b>Phase 1 (0 &lt; t &lt; αT)</b> : K fermé, D bloquée. u<sub>A</sub> = V<sub>in</sub> = '+fx(Vin)+' V ; v<sub>L</sub> = V<sub>in</sub> − V<sub>out</sub> = '+fx(Vin-Vout)+' V &gt; 0 : i<sub>L</sub> croît.'
+    :'<b>Phase 2 (αT &lt; t &lt; T)</b> : K ouvert, D passante (roue libre). u<sub>A</sub> = 0 ; v<sub>L</sub> = −V<sub>out</sub> = '+fx(-Vout)+' V &lt; 0 : i<sub>L</sub> décroît.';
+  const uAx=[],uAy=[],vLy=[],iLx=[],iLy=[];
+  for(let k=0;k<n;k++){
+    const t0=k*T,t1=t0+a*T,t2=t0+T;
+    uAx.push(t0,t1,t1,t2);uAy.push(Vin,Vin,0,0);vLy.push(Vin-Vout,Vin-Vout,-Vout,-Vout);
+    iLx.push(t0,t1);iLy.push(Imin,Imax);
   }
+  iLx.push(tot);iLy.push(Imin);
+  const common={x0:0,x1:tot,xs:xs,xl:'t ('+xu+')',xu:xu,cx:tc,cd:cd};
+  plot('cB2',Object.assign({},common,{y0:-0.12*Vin,y1:1.18*Vin,yl:'u_A (V)',
+    series:[{x:uAx,y:uAy,c:'--wave',w:2.4}],
+    hl:[{y:Vout,l:'⟨u_A⟩ = α·V_in = '+fx(Vout)+' V',c:'--avg',d:[7,4]}]}));
+  const lo=-Vout,hi=Vin-Vout,pad=0.15*(hi-lo);
+  plot('cB3',Object.assign({},common,{y0:lo-pad,y1:hi+pad,yl:'v_L (V)',
+    series:[{x:uAx,y:vLy,c:'--ref',w:2.4}],
+    hl:[{y:0,l:'⟨v_L⟩ = 0',c:'--muted',d:[5,4]}]}));
+  const ylo=Math.min(0,Imin)-0.12*Imax-0.05,yhi=Imax*1.2+0.05;
+  plot('cB4',Object.assign({},common,{y0:ylo,y1:yhi,yl:'i_L (A)',
+    series:[{x:iLx,y:iLy,c:'--carrier',w:2.4}],
+    hl:[{y:I,l:'⟨i_L⟩ = '+fx(I,2)+' A',c:'--muted',d:[5,4]},{y:Imax,l:'I_max = '+fx(Imax,2)+' A',c:'--muted',d:[2,4]},{y:Imin,l:'I_min = '+fx(Imin,2)+' A',c:'--muted',d:[2,4],b:true}]}));
+  $('valsPwm').innerHTML=
+    kv('V<sub>out</sub> = α·V<sub>in</sub>',fx(Vout)+' V','valable en conduction continue')+
+    kv('Période T = 1/f',fx(T*1e6,0)+' µs','f = '+fx(f/1e3,1)+' kHz')+
+    kv('t<sub>on</sub> = αT',fx(a*T*1e6,0)+' µs','K fermé')+
+    kv('ΔI<sub>L</sub> = α(1−α)V<sub>in</sub>/(Lf)',fx(dI,2)+' A','ondulation crête-à-crête')+
+    kv('I<sub>max</sub> = I<sub>out</sub> + ΔI<sub>L</sub>/2',fx(Imax,2)+' A','courant crête dans K et L')+
+    kv('I<sub>min</sub> = I<sub>out</sub> − ΔI<sub>L</sub>/2',fx(Imin,2)+' A',ccm?'conduction continue':'conduction discontinue !')+
+    kv('ΔI<sub>L</sub> maximal (α = 1/2)',fx(Vin/(4*L*f),2)+' A','V<sub>in</sub>/(4Lf)');
+}
 
-  // ========== REDRESSEMENT ==========
-  function drawRect(){
-    const Veff=+document.getElementById('vsec').value;
-    const C=+document.getElementById('cap').value*1e-6;
-    const I=+document.getElementById('iload').value;
-    const Tms=+document.getElementById('rectTime').value;
-    const T=Tms/1000;
-    const Vpeak=Veff*Math.SQRT2;
-    const f=50, Vripple=I/(2*f*C), Vdc=Math.max(0,Vpeak-Vripple/2);
-
-    document.getElementById('vpeakText').textContent=Vpeak.toFixed(1)+' V';
-    document.getElementById('vdcText').textContent=Vdc.toFixed(1)+' V';
-    document.getElementById('rippleText').textContent=Vripple.toFixed(2)+' V';
-
-    // Figure 2 – MÊME échelle
-    let r=prep('cU01');
-    if(r){
-      const {ctx,W,H}=r;
-      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-      const timeDiv=(Tms/(W/40)).toFixed(1)+' ms/div';
-      const voltDiv=((230*Math.SQRT2)/(H*0.38/40)).toFixed(0)+' V/div';
-      drawGrid(ctx,W,H,{timeDiv,voltDiv});
-
-      const mid=H/2;
-      const sc=(H*0.38)/(230*Math.SQRT2);
-      const N=1000;
-
-      ctx.strokeStyle=css('--u0');ctx.lineWidth=2.2;ctx.beginPath();
-      for(let i=0;i<=N;i++){
-        const t=i/N, y=mid - 230*Math.SQRT2 * Math.sin(2*Math.PI*f*T*t) * sc;
-        i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);
+/* =============================================================
+   3. ONDULEUR
+   ============================================================= */
+function simInv(E,m,p,Rr,Ll,f){
+  const N=4000,T=1/f,dt=T/N;
+  const u=new Float32Array(N),rf=new Float32Array(N),cr=new Float32Array(N),ii=new Float32Array(N);
+  for(let k=0;k<N;k++){
+    const th=(k+0.5)/N,s=m*Math.sin(2*Math.PI*th),ph=(p*th)%1,tr=ph<0.5?4*ph-1:3-4*ph;
+    rf[k]=s;cr[k]=tr;u[k]=s>tr?E:-E;
+  }
+  const a=Math.exp(-dt*Rr/Ll),b=1-a;let i=0;
+  for(let k=0;k<N;k++)i=a*i+b*u[k]/Rr;
+  i=i/(1-Math.pow(a,N));
+  for(let k=0;k<N;k++){i=a*i+b*u[k]/Rr;ii[k]=i;}
+  const Hm=Math.min(150,Math.max(3*p+10,40)),A=new Float64Array(Hm+1);let a1=0,b1=0;
+  for(let h=1;h<=Hm;h++){
+    let ac=0,bs=0;
+    for(let k=0;k<N;k++){const ang=2*Math.PI*h*(k+0.5)/N;ac+=u[k]*Math.cos(ang);bs+=u[k]*Math.sin(ang);}
+    ac*=2/N;bs*=2/N;A[h]=Math.hypot(ac,bs);
+    if(h===1){a1=ac;b1=bs;}
+  }
+  return {N:N,u:u,rf:rf,cr:cr,ii:ii,A:A,Hm:Hm,a1:a1,b1:b1};
+}
+function drawInv(){
+  const E=val('einv'),f=val('fout'),m=val('ma'),p=Math.round(val('pcar')),Rr=val('rch'),Ll=val('lch')*1e-3,n=Math.round(val('invN'));
+  const S=cached('isim',[E,m,p,Rr,Ll,f].join(),()=>simInv(E,m,p,Rr,Ll,f));
+  const N=S.N,T=1/f,tot=n*T,len=n*N;
+  const xa=new Float32Array(len),ua=new Float32Array(len),ra=new Float32Array(len),ca=new Float32Array(len),ia=new Float32Array(len),fu=new Float32Array(len),fi=new Float32Array(len);
+  const w=2*Math.PI*f,Z1=Math.sqrt(Rr*Rr+Math.pow(w*Ll,2)),phi=Math.atan2(w*Ll,Rr),A1=S.A[1],psi=Math.atan2(S.a1,S.b1);
+  for(let k=0;k<len;k++){
+    const kk=k%N,t=k/N*T;
+    xa[k]=t;ua[k]=S.u[kk];ra[k]=S.rf[kk];ca[k]=S.cr[kk];ia[k]=S.ii[kk];
+    fu[k]=A1*Math.sin(w*t+psi);fi[k]=A1/Z1*Math.sin(w*t+psi-phi);
+  }
+  const frac=val('invCur')/1000,idx=Math.min(len-1,Math.floor(frac*len)),tc=xa[idx];
+  $('invCurT').textContent='t = '+fx(tc*1000,2)+' ms';
+  const sS=ua[idx]>0?1:-1,qS=ia[idx]>=0?1:-1;
+  $('schemaInv').innerHTML=schemaInv(sS,qS);
+  let msg;
+  if(sS>0&&qS>0)msg='<b>K₁ et K₄ conduisent</b> : u<sub>s</sub> = +E et i &gt; 0. La source fournit de la puissance à la charge.';
+  else if(sS>0)msg='K₁ et K₄ sont commandés mais i &lt; 0 : le courant passe par <b>D₁ et D₄</b>. La charge inductive renvoie de l\'énergie à la source.';
+  else if(qS>0)msg='K₂ et K₃ sont commandés mais i &gt; 0 : le courant passe par <b>D₂ et D₃</b>. La charge inductive renvoie de l\'énergie à la source.';
+  else msg='<b>K₂ et K₃ conduisent</b> : u<sub>s</sub> = −E et i &lt; 0. La source fournit de la puissance à la charge.';
+  $('badgeInv').innerHTML='<b>À t = '+fx(tc*1000,2)+' ms</b> : u<sub>s</sub> = '+(sS>0?'+':'−')+fx(E,0)+' V, i = '+fx(ia[idx],2)+' A. '+msg;
+  const common={x0:0,x1:tot,xs:1e3,xl:'t (ms)',xu:'ms',cx:tc,cd:2};
+  plot('cI2',Object.assign({},common,{y0:-1.35,y1:1.35,yl:'grandeurs normalisées',
+    series:[{x:xa,y:ca,c:'--carrier',w:1.4},{x:xa,y:ra,c:'--ref',w:2.4}]}));
+  plot('cI3',Object.assign({},common,{y0:-1.3*E,y1:1.3*E,yl:'u_s (V)',
+    series:[{x:xa,y:ua,c:'--wave',w:2},{x:xa,y:fu,c:'--avg',w:2.2,d:[7,4]}],
+    hl:[{y:E,l:'+E = '+fx(E,0)+' V',c:'--muted',d:[2,4]},{y:-E,l:'−E',c:'--muted',d:[2,4],b:true}]}));
+  let imax=0;for(let k=0;k<N;k++)imax=Math.max(imax,Math.abs(S.ii[k]));
+  imax=Math.max(imax,1e-3);
+  plot('cI4',Object.assign({},common,{y0:-1.2*imax,y1:1.2*imax,yl:'i_s (A)',
+    series:[{x:xa,y:ia,c:'--carrier',w:2.2},{x:xa,y:fi,c:'--avg',w:1.8,d:[7,4]}]}));
+  let amax=0;for(let h=1;h<=S.Hm;h++)amax=Math.max(amax,S.A[h]/E);
+  plot('cI5',{x0:0,x1:S.Hm+1,y0:0,y1:Math.max(1.1,amax*1.1),xs:1,xl:'rang h de l\'harmonique (fréquence h·f)',yl:'A_h / E',mL:46,
+    series:[],after:function(ctx,X,Y,g){
+      const bw=Math.max(2,g.pw/(S.Hm+1)*0.7);
+      for(let h=1;h<=S.Hm;h++){
+        ctx.fillStyle=css(h===1?'--act':'--wave');
+        const y=Y(S.A[h]/E);ctx.fillRect(X(h)-bw/2,y,bw,Y(0)-y);
       }
-      ctx.stroke();
+      ctx.strokeStyle=css('--muted');ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.fillStyle=css('--muted');ctx.font='11px ui-monospace,Menlo,monospace';ctx.textAlign='center';ctx.textBaseline='top';
+      [[p,'p'],[2*p,'2p'],[3*p,'3p']].forEach(function(q){
+        if(q[0]<=S.Hm){const x=X(q[0]);ctx.beginPath();ctx.moveTo(x,g.mT);ctx.lineTo(x,g.mT+g.ph);ctx.stroke();ctx.fillText(q[1],x,g.mT+3);}
+      });
+      ctx.setLineDash([]);
+    }});
+  let s2=0,si=0;
+  for(let h=2;h<=S.Hm;h++){const Zh=Math.sqrt(Rr*Rr+Math.pow(h*w*Ll,2));s2+=S.A[h]*S.A[h];si+=Math.pow(S.A[h]/Zh,2);}
+  const thdU=Math.sqrt(s2)/A1,thdI=Math.sqrt(si)/(A1/Z1);
+  let imn=1e9,imx=-1e9;for(let k=0;k<N;k++){imn=Math.min(imn,S.ii[k]);imx=Math.max(imx,S.ii[k]);}
+  $('valsInv').innerHTML=
+    kv('Fondamentale A₁ (mesurée)',fx(A1,1)+' V','théorie m<sub>a</sub>·E = '+fx(m*E,1)+' V')+
+    kv('U₁,eff de la fondamentale',fx(A1/Math.SQRT2,1)+' V','A₁/√2')+
+    kv('U<sub>s,eff</sub> de u<sub>s</sub> (créneaux ±E)',fx(E,0)+' V','indépendante de m<sub>a</sub>')+
+    kv('Fréquence de la porteuse',fx(p*f,0)+' Hz','p·f avec p = '+p)+
+    kv('Impédance de la charge à f',fx(Z1,1)+' Ω','√(R² + (Lω)²)')+
+    kv('Amplitude du courant I₁',fx(A1/Z1,2)+' A','A₁/Z')+
+    kv('Retard du courant φ',fx(phi*180/Math.PI,0)+' °','arctan(Lω/R)')+
+    kv('Impédance à h = p',fx(Math.sqrt(Rr*Rr+Math.pow(p*w*Ll,2)),0)+' Ω','charge très inductive pour les harmoniques de découpage')+
+    kv('Distorsion de u<sub>s</sub> (THD)',fx(100*thdU,0)+' %','harmoniques h ≤ '+S.Hm)+
+    kv('Distorsion de i<sub>s</sub> (THD)',fx(100*thdI,1)+' %','la charge filtre : bien plus faible')+
+    kv('i<sub>s</sub> min / max',fx(imn,2)+' / '+fx(imx,2)+' A','régime périodique établi');
+}
 
-      ctx.strokeStyle=css('--u1');ctx.lineWidth=2.2;ctx.beginPath();
-      for(let i=0;i<=N;i++){
-        const t=i/N, y=mid - Vpeak * Math.sin(2*Math.PI*f*T*t) * sc;
-        i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);
-      }
-      ctx.stroke();
+/* ---------- initialisation ---------- */
+build('ctlRect',[
+  {id:'vsec',l:'Tension secondaire efficace U₁',min:6,max:48,v:24,step:1,u:'V'},
+  {id:'cap',l:'Capacité du filtre C',min:100,max:10000,v:2200,step:100,u:'µF'},
+  {id:'iload',l:'Courant de charge I',min:0.05,max:2,v:0.35,step:0.05,u:'A'},
+  {id:'rser',l:'Résistance série R (enroulements...)',min:0.1,max:5,v:1,step:0.1,u:'Ω'},
+  {id:'rectTime',l:'Durée affichée',min:20,max:100,v:60,step:5,u:'ms'},
+  {id:'rDio',t:'check',l:'Diodes réelles (chute 0,7 V)',on:false},
+  {id:'rTrans',t:'check',l:'Régime transitoire (démarrage)',on:false}
+],drawRect,'resetRect');
+build('ctlPwm',[
+  {id:'duty',l:'Rapport cyclique α',min:0,max:100,v:40,step:1,u:'%'},
+  {id:'vin',l:'Tension d\'entrée V_in',min:5,max:48,v:24,step:1,u:'V'},
+  {id:'fpwm',l:'Fréquence de découpage f',min:1,max:50,v:10,step:1,u:'kHz'},
+  {id:'lind',l:'Inductance L',min:0.1,max:10,v:1,step:0.1,u:'mH'},
+  {id:'iout',l:'Courant moyen de sortie I_out',min:0.1,max:5,v:1,step:0.1,u:'A'},
+  {id:'pwmN',l:'Périodes affichées',min:1,max:6,v:3,step:1,u:''}
+],drawPwm,'resetPwm');
+build('ctlInv',[
+  {id:'einv',l:'Tension continue E',min:10,max:400,v:100,step:10,u:'V'},
+  {id:'fout',l:'Fréquence de sortie f',min:10,max:100,v:50,step:1,u:'Hz'},
+  {id:'ma',l:'Indice de modulation m_a',min:0.1,max:1.2,v:0.8,step:0.05,u:''},
+  {id:'pcar',l:'Rapport p = f_porteuse / f',min:5,max:45,v:15,step:1,u:''},
+  {id:'rch',l:'Résistance de charge R',min:1,max:50,v:10,step:1,u:'Ω'},
+  {id:'lch',l:'Inductance de charge L',min:1,max:100,v:30,step:1,u:'mH'},
+  {id:'invN',l:'Périodes de sortie affichées',min:1,max:3,v:2,step:1,u:''}
+],drawInv,'resetInv');
+$('rectCur').oninput=drawRect;$('pwmCur').oninput=drawPwm;$('invCur').oninput=drawInv;
 
-      ctx.fillStyle=css('--u0');ctx.font='11px system-ui';
-      ctx.fillText('√2 × 230 V', 8, 16);
-      ctx.fillStyle=css('--u1');
-      ctx.fillText('√2 × '+Veff+' V', 8, 30);
-      document.getElementById('labU01').textContent=Tms+' ms';
-    }
-
-    // Figure 3
-    r=prep('cU12');
-    if(r){
-      const {ctx,W,H}=r;
-      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-      const timeDiv=(Tms/(W/40)).toFixed(1)+' ms/div';
-      const voltDiv=(Vpeak/(H*0.4/40)).toFixed(1)+' V/div';
-      drawGrid(ctx,W,H,{timeDiv,voltDiv});
-
-      const mid=H*0.55, sc=(mid-20)/(Vpeak*1.05), N=1000;
-
-      ctx.strokeStyle=css('--u1');ctx.lineWidth=1.7;ctx.setLineDash([5,4]);ctx.beginPath();
-      for(let i=0;i<=N;i++){const t=i/N,y=mid-Vpeak*Math.sin(2*Math.PI*f*T*t)*sc;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
-      ctx.stroke();ctx.setLineDash([]);
-
-      ctx.strokeStyle=css('--u2');ctx.lineWidth=2.2;ctx.beginPath();
-      for(let i=0;i<=N;i++){const t=i/N,y=mid-Math.abs(Vpeak*Math.sin(2*Math.PI*f*T*t))*sc;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
-      ctx.stroke();
-
-      ctx.fillStyle=css('--u1');ctx.font='11px system-ui';ctx.fillText('√2 × '+Veff+' V',8,16);
-      document.getElementById('labU12').textContent=Tms+' ms';
-    }
-
-    // Figure 4
-    r=prep('cU23');
-    if(r){
-      const {ctx,W,H}=r;
-      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-      const timeDiv=(Tms/(W/40)).toFixed(1)+' ms/div';
-      const voltDiv=(Vpeak/(H*0.45/40)).toFixed(1)+' V/div';
-      drawGrid(ctx,W,H,{timeDiv,voltDiv});
-
-      const zero=H*0.82, sc=(zero-22)/(Vpeak*1.08), N=1100, dt=T/N;
-
-      ctx.strokeStyle=css('--u2');ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();
-      for(let i=0;i<=N;i++){const t=i/N,y=zero-Math.abs(Vpeak*Math.sin(2*Math.PI*f*T*t))*sc;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
-      ctx.stroke();ctx.setLineDash([]);
-
-      ctx.strokeStyle=css('--u3');ctx.lineWidth=2.4;ctx.beginPath();
-      let v=Vpeak;
-      for(let i=0;i<=N;i++){
-        const t=i/N, vr=Math.abs(Vpeak*Math.sin(2*Math.PI*f*T*t));
-        if(vr>=v) v=vr; else {v-=(I/C)*dt; if(v<0)v=0;}
-        const y=zero-v*sc; i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);
-      }
-      ctx.stroke();
-
-      const y24=zero-Veff*sc;
-      ctx.strokeStyle=css('--muted');ctx.lineWidth=1;ctx.setLineDash([4,3]);
-      ctx.beginPath();ctx.moveTo(0,y24);ctx.lineTo(W,y24);ctx.stroke();ctx.setLineDash([]);
-
-      ctx.fillStyle=css('--u3');ctx.font='11px system-ui';ctx.fillText('√2 × '+Veff+' V',8,16);
-      ctx.fillStyle=css('--muted');ctx.fillText(Veff+' V',8,y24-4);
-      document.getElementById('labU23').textContent=Tms+' ms';
-    }
-  }
-
-  // ========== PWM ==========
-  function drawPwm(){
-    const α=+document.getElementById('duty').value/100;
-    const Vin=+document.getElementById('vin').value;
-    const fp=+document.getElementById('fpwm').value*1000;
-    const Tms=+document.getElementById('pwmTime').value;
-    const Vmax=+document.getElementById('pwmVscale').value;
-    const Vout=α*Vin;
-    document.getElementById('voutText').textContent=Vout.toFixed(1)+' V';
-
-    const r=prep('cPwm');if(!r)return;
-    const {ctx,W,H}=r;
-    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-
-    const timeDiv=(Tms/(W/40)).toFixed(2)+' ms/div';
-    const voltDiv=(Vmax/(H*0.7/40)).toFixed(1)+' V/div';
-    drawGrid(ctx,W,H,{timeDiv,voltDiv});
-    document.getElementById('labPwm').textContent=Tms+' ms  •  '+Vmax+' V';
-
-    const zero=H*0.78, sc=(zero-H*0.1)/Vmax;
-    const T=Tms/1000, period=1/fp, nPer=T/period;
-
-    ctx.strokeStyle=css('--muted');ctx.setLineDash([4,3]);
-    ctx.beginPath();ctx.moveTo(0,zero);ctx.lineTo(W,zero);ctx.stroke();ctx.setLineDash([]);
-
-    ctx.strokeStyle=css('--wave');ctx.lineWidth=2.3;ctx.beginPath();
-    const ton=α*period;
-    for(let p=0;p<nPer+1;p++){
-      const t0=p*period;
-      const x0=(t0/T)*W, x1=((t0+ton)/T)*W, x2=((t0+period)/T)*W;
-      const yH=zero-Math.min(Vin,Vmax)*sc;
-      if(p===0)ctx.moveTo(x0,zero); else ctx.lineTo(x0,zero);
-      ctx.lineTo(x0,yH);ctx.lineTo(Math.min(x1,W),yH);
-      ctx.lineTo(Math.min(x1,W),zero);ctx.lineTo(Math.min(x2,W),zero);
-    }
-    ctx.stroke();
-
-    const yA=zero-Math.min(Vout,Vmax)*sc;
-    ctx.strokeStyle=css('--avg');ctx.lineWidth=2;ctx.setLineDash([7,4]);
-    ctx.beginPath();ctx.moveTo(0,yA);ctx.lineTo(W,yA);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle=css('--avg');ctx.font='12px system-ui';ctx.fillText('Vout = '+Vout.toFixed(1)+' V',8,yA-5);
-    ctx.fillStyle=css('--text');ctx.fillText('0',8,zero+13);
-  }
-
-  // ========== ONDULEUR ==========
-  function drawInv(){
-    const f=+document.getElementById('fout').value;
-    const m=+document.getElementById('ma').value;
-    const ratio=+document.getElementById('fcar').value;
-    const Tms=+document.getElementById('invTime').value;
-    document.getElementById('foutText').textContent=f+' Hz';
-
-    const r=prep('cInv');if(!r)return;
-    const {ctx,W,H}=r;
-    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
-
-    const timeDiv=(Tms/(W/40)).toFixed(1)+' ms/div';
-    drawGrid(ctx,W,H,{timeDiv,voltDiv:'±1.0 (normalisé)'});
-    document.getElementById('labInv').textContent=Tms+' ms';
-
-    const mid=H/2, amp=H*0.38, N=1200, T=Tms/1000;
-    const carF=f*ratio;
-
-    ctx.strokeStyle=css('--ref');ctx.lineWidth=2;ctx.beginPath();
-    for(let i=0;i<=N;i++){const t=i/N,y=mid-m*amp*Math.sin(2*Math.PI*f*T*t);i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
-    ctx.stroke();
-
-    ctx.strokeStyle=css('--carrier');ctx.lineWidth=1.4;ctx.beginPath();
-    for(let i=0;i<=N;i++){
-      const t=i/N, ph=(t*carF*T)%1;
-      const tri=ph<0.5?(4*ph-1):(3-4*ph);
-      const y=mid-amp*tri; i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle=css('--wave');ctx.lineWidth=2;ctx.beginPath();
-    let prev=null;
-    for(let i=0;i<=N;i++){
-      const t=i/N, sine=m*Math.sin(2*Math.PI*f*T*t);
-      const ph=(t*carF*T)%1, tri=ph<0.5?(4*ph-1):(3-4*ph);
-      const high=sine>tri, y=mid-(high?1:-1)*amp*0.9;
-      if(i===0)ctx.moveTo(t*W,y);
-      else{if(prev!==null&&high!==prev)ctx.lineTo(t*W,mid-(prev?1:-1)*amp*0.9);ctx.lineTo(t*W,y);}
-      prev=high;
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle=css('--avg');ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();
-    for(let i=0;i<=N;i++){const t=i/N,y=mid-m*amp*0.82*Math.sin(2*Math.PI*f*T*t);i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
-    ctx.stroke();ctx.setLineDash([]);
-  }
-
-  function drawAll(){
-    const act=document.querySelector('.panel.active');
-    if(!act)return;
-    if(act.id==='panel-rectifier'){drawSchemaRect();drawRect();}
-    else if(act.id==='panel-pwm'){drawSchemaPwm();drawPwm();}
-    else if(act.id==='panel-inverter'){drawSchemaInv();drawInv();}
-  }
-
-  ['vsec','cap','iload','rectTime'].forEach(id=>link(id,id+'Val',drawRect));
-  ['duty','vin','fpwm','pwmTime','pwmVscale'].forEach(id=>link(id,id+'Val',drawPwm));
-  ['fout','ma','fcar','invTime'].forEach(id=>link(id,id+'Val',drawInv));
-
-  window.addEventListener('resize',drawAll);
-  document.documentElement.setAttribute('data-theme','light');
-  drawAll();
+function drawAll(){
+  const a=document.querySelector('.panel.active').id;
+  if(a==='panel-rect')drawRect();else if(a==='panel-pwm')drawPwm();else drawInv();
+}
+window.addEventListener('resize',drawAll);
+applyTheme();
+drawAll();
 })();
 </script>
 </body>
