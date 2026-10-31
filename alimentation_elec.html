@@ -3,421 +3,610 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PWM / MLI • Onduleur • Redressement</title>
+<title>PWM • Onduleur • Redressement</title>
 <style>
-  :root {
-    --bg: #f5f5f7;
-    --card: #ffffff;
-    --text: #1d1d1f;
-    --muted: #6e6e73;
-    --accent: #0071e3;
-    --grid: #d1d1d6;
-    --wave: #0071e3;
-    --avg: #ff3b30;
-    --carrier: #34c759;
-    --ref: #af52de;
-    --border: #d2d2d7;
-    --u0: #4a6fa5;
-    --u1: #5a9e6f;
-    --u2: #c17a4a;
-    --u3: #2c2c2e;
-  }
-  [data-theme="dark"] {
-    --bg: #1c1c1e;
-    --card: #2c2c2e;
-    --text: #f5f5f7;
-    --muted: #98989d;
-    --accent: #0a84ff;
-    --grid: #3a3a3c;
-    --wave: #0a84ff;
-    --avg: #ff453a;
-    --carrier: #30d158;
-    --ref: #bf5af2;
-    --border: #48484a;
-    --u0: #7aa2d4;
-    --u1: #7dcea0;
-    --u2: #e0a070;
-    --u3: #e8e8ed;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
-    padding: 16px;
-    transition: background 0.25s, color 0.25s;
-  }
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  h1 { font-size: 1.4rem; font-weight: 600; }
-  .theme-btn {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 14px;
-    border-radius: 18px;
-    cursor: pointer;
-    font-size: 0.88rem;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-  .theme-btn:hover { opacity: 0.9; }
-  .tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .tab {
-    padding: 9px 15px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 0.88rem;
-  }
-  .tab.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-  .panel {
-    display: none;
-    background: var(--card);
-    border-radius: 14px;
-    padding: 18px;
-    border: 1px solid var(--border);
-  }
-  .panel.active { display: block; }
-  .controls {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-  .control {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .control label {
-    font-size: 0.78rem;
-    color: var(--muted);
-    font-weight: 500;
-  }
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  input[type="range"] {
-    flex: 1;
-    accent-color: var(--accent);
-    height: 5px;
-  }
-  input[type="number"] {
-    width: 58px;
-    padding: 4px 5px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 0.88rem;
-    text-align: center;
-  }
-  .canvas-wrap {
-    position: relative;
-    width: 100%;
-    height: 300px;
-    background: var(--bg);
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    margin-bottom: 10px;
-  }
-  canvas { width: 100%; height: 100%; display: block; }
-  .info {
-    margin-top: 10px;
-    padding: 10px 12px;
-    background: var(--bg);
-    border-radius: 8px;
-    font-size: 0.88rem;
-    color: var(--muted);
-  }
-  .info strong { color: var(--text); }
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    margin-top: 6px;
-    font-size: 0.82rem;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .dot {
-    width: 11px;
-    height: 11px;
-    border-radius: 50%;
-  }
-  .formula {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    background: var(--bg);
-    padding: 1px 4px;
-    border-radius: 3px;
-    font-size: 0.85em;
-  }
-  .scope-label {
-    position: absolute;
-    top: 6px;
-    right: 10px;
-    font-size: 0.72rem;
-    color: var(--muted);
-    background: color-mix(in srgb, var(--bg) 80%, transparent);
-    padding: 2px 7px;
-    border-radius: 5px;
-    pointer-events: none;
-  }
-  .section-title {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin: 0 0 12px;
-  }
-  .schematic-wrap {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 16px;
-    overflow-x: auto;
-  }
-  #canvasSchema {
-    width: 100%;
-    max-width: 720px;
-    height: 180px;
-    display: block;
-    margin: 0 auto;
-  }
-  .wave-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin: 14px 0 6px;
-    color: var(--text);
-  }
-  @media (max-width: 600px) {
-    .canvas-wrap { height: 240px; }
-    #canvasSchema { height: 150px; }
-  }
+:root {
+  --bg:#f4f4f6; --card:#fff; --text:#1d1d1f; --muted:#6e6e73;
+  --accent:#0071e3; --grid:#d8d8dc; --border:#d2d2d7;
+  --u0:#4a6fa5; --u1:#2a9d5c; --u2:#c17a4a; --u3:#1a1a1a;
+  --wave:#0071e3; --avg:#ff3b30; --ref:#af52de; --carrier:#34c759;
+}
+[data-theme="dark"] {
+  --bg:#1c1c1e; --card:#2c2c2e; --text:#f5f5f7; --muted:#98989d;
+  --accent:#0a84ff; --grid:#3a3a3c; --border:#48484a;
+  --u0:#7aa2d4; --u1:#5dd68a; --u2:#e0a070; --u3:#e8e8ed;
+  --wave:#0a84ff; --avg:#ff453a; --ref:#bf5af2; --carrier:#30d158;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:14px;line-height:1.45}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+h1{font-size:1.35rem;font-weight:600}
+.theme-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 13px;border-radius:16px;cursor:pointer;font-size:.86rem;display:flex;align-items:center;gap:6px}
+.tabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:8px 14px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-weight:500;font-size:.86rem}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.panel{display:none;background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border)}
+.panel.active{display:block}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:11px;margin-bottom:12px}
+.control{display:flex;flex-direction:column;gap:3px}
+.control label{font-size:.76rem;color:var(--muted);font-weight:500}
+.slider-row{display:flex;align-items:center;gap:7px}
+input[type=range]{flex:1;accent-color:var(--accent);height:5px}
+input[type=number]{width:56px;padding:4px 5px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:.86rem;text-align:center}
+.canvas-wrap{position:relative;width:100%;height:260px;background:var(--bg);border-radius:9px;overflow:hidden;border:1px solid var(--border);margin-bottom:8px}
+canvas{width:100%;height:100%;display:block}
+.scope-label{position:absolute;top:5px;right:8px;font-size:.7rem;color:var(--muted);background:color-mix(in srgb,var(--bg) 85%,transparent);padding:2px 6px;border-radius:4px;pointer-events:none}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin:4px 0 8px;font-size:.8rem}
+.legend-item{display:flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:50%}
+.info{padding:9px 11px;background:var(--bg);border-radius:7px;font-size:.85rem;color:var(--muted);margin-top:6px}
+.info strong{color:var(--text)}
+.formula{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--bg);padding:1px 4px;border-radius:3px;font-size:.84em}
+.section-title{font-size:1rem;font-weight:600;margin:0 0 10px}
+.schematic-wrap{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px;margin-bottom:14px;text-align:center}
+.schematic-wrap canvas{max-width:100%;height:auto}
+.wave-title{font-size:.88rem;font-weight:600;margin:12px 0 5px}
+@media(max-width:600px){.canvas-wrap{height:210px}}
 </style>
 </head>
 <body>
-  <div class="header">
-    <h1>PWM • Onduleur • Redressement</h1>
-    <button class="theme-btn" id="themeToggle" type="button">
-      <span id="themeIcon">🌙</span>
-      <span id="themeText">Mode sombre</span>
-    </button>
+<div class="header">
+  <h1>PWM • Onduleur • Redressement</h1>
+  <button class="theme-btn" id="themeToggle" type="button"><span id="themeIcon">🌙</span><span id="themeText">Mode sombre</span></button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="rectifier" type="button">1. Redressement AC → DC</button>
+  <button class="tab" data-tab="pwm" type="button">2. Hacheur DC-DC (PWM)</button>
+  <button class="tab" data-tab="inverter" type="button">3. Onduleur (f variable)</button>
+</div>
+
+<!-- ==================== 1. REDRESSEMENT ==================== -->
+<div class="panel active" id="panel-rectifier">
+  <div class="section-title">Convertisseur statique AC/DC</div>
+  <div class="schematic-wrap">
+    <canvas id="schemaRect" width="700" height="170"></canvas>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" data-tab="pwm" type="button">Hacheur DC-DC (PWM)</button>
-    <button class="tab" data-tab="inverter" type="button">Onduleur (f variable)</button>
-    <button class="tab" data-tab="rectifier" type="button">Redressement 230 V → DC</button>
-  </div>
-
-  <!-- ========== PWM ========== -->
-  <div class="panel active" id="panel-pwm">
-    <div class="controls">
-      <div class="control">
-        <label>Rapport cyclique α</label>
-        <div class="slider-row">
-          <input type="range" id="duty" min="0" max="100" value="35" step="1">
-          <input type="number" id="dutyVal" min="0" max="100" value="35" step="1">
-          <span>%</span>
-        </div>
-      </div>
-      <div class="control">
-        <label>Tension d’entrée Vin</label>
-        <div class="slider-row">
-          <input type="range" id="vin" min="5" max="48" value="24" step="1">
-          <input type="number" id="vinVal" min="5" max="48" value="24" step="1">
-          <span>V</span>
-        </div>
-      </div>
-      <div class="control">
-        <label>Fréquence de découpage</label>
-        <div class="slider-row">
-          <input type="range" id="fpwm" min="1" max="25" value="8" step="0.5">
-          <input type="number" id="fpwmVal" min="1" max="25" value="8" step="0.5">
-          <span>kHz</span>
-        </div>
-      </div>
-      <div class="control">
-        <label>Base de temps (périodes)</label>
-        <div class="slider-row">
-          <input type="range" id="pwmTime" min="1" max="12" value="4" step="1">
-          <input type="number" id="pwmTimeVal" min="1" max="12" value="4" step="1">
-        </div>
-      </div>
-      <div class="control">
-        <label>Échelle tension (V max)</label>
-        <div class="slider-row">
-          <input type="range" id="pwmVscale" min="5" max="60" value="30" step="1">
-          <input type="number" id="pwmVscaleVal" min="5" max="60" value="30" step="1">
-          <span>V</span>
-        </div>
+  <div class="controls">
+    <div class="control">
+      <label>Tension secondaire (efficace)</label>
+      <div class="slider-row">
+        <input type="range" id="vsec" min="6" max="48" value="24" step="1">
+        <input type="number" id="vsecVal" min="6" max="48" value="24" step="1">
+        <span>V<sub>eff</sub></span>
       </div>
     </div>
-    <div class="canvas-wrap">
-      <canvas id="canvasPwm"></canvas>
-      <div class="scope-label" id="pwmScopeLabel">4 périodes • 30 V</div>
+    <div class="control">
+      <label>Capacité filtre C</label>
+      <div class="slider-row">
+        <input type="range" id="cap" min="100" max="4700" value="2200" step="100">
+        <input type="number" id="capVal" min="100" max="4700" value="2200" step="100">
+        <span>µF</span>
+      </div>
     </div>
-    <div class="legend">
-      <div class="legend-item"><div class="dot" style="background:var(--wave)"></div> Signal PWM</div>
-      <div class="legend-item"><div class="dot" style="background:var(--avg)"></div> Tension moyenne</div>
+    <div class="control">
+      <label>Courant de charge</label>
+      <div class="slider-row">
+        <input type="range" id="iload" min="0.05" max="2" value="0.35" step="0.05">
+        <input type="number" id="iloadVal" min="0.05" max="2" value="0.35" step="0.05">
+        <span>A</span>
+      </div>
     </div>
-    <div class="info">
-      <strong>Principe :</strong> Découpage de Vin avec un rapport cyclique α.<br>
-      <span class="formula">V<sub>out</sub> = α × V<sub>in</sub></span>
-      → actuellement <strong id="voutText">8.4 V</strong>
+    <div class="control">
+      <label>Temps affiché</label>
+      <div class="slider-row">
+        <input type="range" id="rectTime" min="20" max="100" value="60" step="5">
+        <input type="number" id="rectTimeVal" min="20" max="100" value="60" step="5">
+        <span>ms</span>
+      </div>
     </div>
   </div>
 
-  <!-- ========== Onduleur ========== -->
-  <div class="panel" id="panel-inverter">
-    <div class="controls">
-      <div class="control">
-        <label>Fréquence de sortie f</label>
-        <div class="slider-row">
-          <input type="range" id="fout" min="10" max="120" value="50" step="1">
-          <input type="number" id="foutVal" min="10" max="120" value="50" step="1">
-          <span>Hz</span>
-        </div>
-      </div>
-      <div class="control">
-        <label>Indice de modulation m<sub>a</sub></label>
-        <div class="slider-row">
-          <input type="range" id="ma" min="0.1" max="1.0" value="0.8" step="0.05">
-          <input type="number" id="maVal" min="0.1" max="1.0" value="0.8" step="0.05">
-        </div>
-      </div>
-      <div class="control">
-        <label>Fréquence porteuse (×f)</label>
-        <div class="slider-row">
-          <input type="range" id="fcar" min="5" max="40" value="18" step="1">
-          <input type="number" id="fcarVal" min="5" max="40" value="18" step="1">
-        </div>
-      </div>
-      <div class="control">
-        <label>Base de temps (périodes)</label>
-        <div class="slider-row">
-          <input type="range" id="invTime" min="1" max="6" value="2" step="1">
-          <input type="number" id="invTimeVal" min="1" max="6" value="2" step="1">
-        </div>
-      </div>
-      <div class="control">
-        <label>Échelle tension (±)</label>
-        <div class="slider-row">
-          <input type="range" id="invVscale" min="0.5" max="1.5" value="1.2" step="0.1">
-          <input type="number" id="invVscaleVal" min="0.5" max="1.5" value="1.2" step="0.1">
-        </div>
+  <div class="wave-title">Figure 2 – Transformateur (u₀ primaire & u₁ secondaire)</div>
+  <div class="canvas-wrap" style="height:200px"><canvas id="cU01"></canvas><div class="scope-label" id="labU01"></div></div>
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:var(--u0)"></div>u₀(t) – 230 V<sub>eff</sub></div>
+    <div class="legend-item"><div class="dot" style="background:var(--u1)"></div>u₁(t) – secondaire</div>
+  </div>
+
+  <div class="wave-title">Figure 3 – Pont de diodes (u₁ & u₂)</div>
+  <div class="canvas-wrap" style="height:200px"><canvas id="cU12"></canvas><div class="scope-label" id="labU12"></div></div>
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:var(--u1)"></div>u₁(t)</div>
+    <div class="legend-item"><div class="dot" style="background:var(--u2)"></div>u₂(t) – redressé</div>
+  </div>
+
+  <div class="wave-title">Figure 4 – Filtre RC (u₂ & u₃)</div>
+  <div class="canvas-wrap" style="height:200px"><canvas id="cU23"></canvas><div class="scope-label" id="labU23"></div></div>
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:var(--u2)"></div>u₂(t)</div>
+    <div class="legend-item"><div class="dot" style="background:var(--u3)"></div>u₃(t) – filtré</div>
+  </div>
+
+  <div class="info">
+    <strong>Valeurs :</strong>
+    u₁ crête ≈ <strong id="vpeakText">—</strong> |
+    V<sub>DC</sub> (u₃ moy) ≈ <strong id="vdcText">—</strong> |
+    Ripple ≈ <strong id="rippleText">—</strong><br>
+    <span class="formula">Δu ≈ I / (2·f·C)</span> avec f = 100 Hz
+  </div>
+</div>
+
+<!-- ==================== 2. PWM ==================== -->
+<div class="panel" id="panel-pwm">
+  <div class="section-title">Hacheur abaisseur (Buck) – PWM / MLI</div>
+  <div class="schematic-wrap">
+    <canvas id="schemaPwm" width="520" height="140"></canvas>
+  </div>
+
+  <div class="controls">
+    <div class="control">
+      <label>Rapport cyclique α</label>
+      <div class="slider-row">
+        <input type="range" id="duty" min="0" max="100" value="40" step="1">
+        <input type="number" id="dutyVal" min="0" max="100" value="40" step="1">
+        <span>%</span>
       </div>
     </div>
-    <div class="canvas-wrap">
-      <canvas id="canvasInv"></canvas>
-      <div class="scope-label" id="invScopeLabel">2 périodes • ±1.2</div>
+    <div class="control">
+      <label>Tension d’entrée Vin</label>
+      <div class="slider-row">
+        <input type="range" id="vin" min="5" max="48" value="24" step="1">
+        <input type="number" id="vinVal" min="5" max="48" value="24" step="1">
+        <span>V</span>
+      </div>
     </div>
-    <div class="legend">
-      <div class="legend-item"><div class="dot" style="background:var(--ref)"></div> Référence</div>
-      <div class="legend-item"><div class="dot" style="background:var(--carrier)"></div> Porteuse</div>
-      <div class="legend-item"><div class="dot" style="background:var(--wave)"></div> PWM</div>
-      <div class="legend-item"><div class="dot" style="background:var(--avg)"></div> Fondamentale</div>
+    <div class="control">
+      <label>Fréquence de découpage</label>
+      <div class="slider-row">
+        <input type="range" id="fpwm" min="1" max="20" value="5" step="0.5">
+        <input type="number" id="fpwmVal" min="1" max="20" value="5" step="0.5">
+        <span>kHz</span>
+      </div>
     </div>
-    <div class="info">
-      <strong>Principe :</strong> Comparaison d’une sinusoïde (f, m<sub>a</sub>) avec une porteuse triangulaire.<br>
-      Fréquence de sortie : <strong id="foutText">50 Hz</strong>
+    <div class="control">
+      <label>Temps affiché</label>
+      <div class="slider-row">
+        <input type="range" id="pwmTime" min="0.5" max="10" value="2" step="0.1">
+        <input type="number" id="pwmTimeVal" min="0.5" max="10" value="2" step="0.1">
+        <span>ms</span>
+      </div>
+    </div>
+    <div class="control">
+      <label>Échelle tension (V max)</label>
+      <div class="slider-row">
+        <input type="range" id="pwmVscale" min="5" max="60" value="30" step="1">
+        <input type="number" id="pwmVscaleVal" min="5" max="60" value="30" step="1">
+        <span>V</span>
+      </div>
     </div>
   </div>
 
-  <!-- ========== Redressement ========== -->
-  <div class="panel" id="panel-rectifier">
-    <div class="section-title">Convertisseur statique AC/DC</div>
+  <div class="canvas-wrap"><canvas id="cPwm"></canvas><div class="scope-label" id="labPwm"></div></div>
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:var(--wave)"></div>Signal PWM</div>
+    <div class="legend-item"><div class="dot" style="background:var(--avg)"></div>Tension moyenne</div>
+  </div>
+  <div class="info">
+    <strong>Principe :</strong> Découpage de Vin avec un rapport cyclique α.<br>
+    <span class="formula">V<sub>out</sub> = α × V<sub>in</sub></span> → <strong id="voutText">—</strong>
+  </div>
+</div>
 
-    <div class="schematic-wrap">
-      <canvas id="canvasSchema"></canvas>
-    </div>
+<!-- ==================== 3. ONDULEUR ==================== -->
+<div class="panel" id="panel-inverter">
+  <div class="section-title">Onduleur monophasé – MLI sinusoïdale</div>
+  <div class="schematic-wrap">
+    <canvas id="schemaInv" width="480" height="150"></canvas>
+  </div>
 
-    <div class="controls">
-      <div class="control">
-        <label>Tension secondaire (efficace)</label>
-        <div class="slider-row">
-          <input type="range" id="vsec" min="6" max="48" value="24" step="1">
-          <input type="number" id="vsecVal" min="6" max="48" value="24" step="1">
-          <span>V<sub>eff</sub></span>
-        </div>
-      </div>
-      <div class="control">
-        <label>Capacité du filtre C</label>
-        <div class="slider-row">
-          <input type="range" id="cap" min="100" max="4700" value="2200" step="100">
-          <input type="number" id="capVal" min="100" max="4700" value="2200" step="100">
-          <span>µF</span>
-        </div>
-      </div>
-      <div class="control">
-        <label>Courant de charge (≈)</label>
-        <div class="slider-row">
-          <input type="range" id="iload" min="0.05" max="2.5" value="0.4" step="0.05">
-          <input type="number" id="iloadVal" min="0.05" max="2.5" value="0.4" step="0.05">
-          <span>A</span>
-        </div>
-      </div>
-      <div class="control">
-        <label>Base de temps (périodes 50 Hz)</label>
-        <div class="slider-row">
-          <input type="range" id="rectTime" min="1" max="5" value="3" step="1">
-          <input type="number" id="rectTimeVal" min="1" max="5" value="3" step="1">
-        </div>
+  <div class="controls">
+    <div class="control">
+      <label>Fréquence de sortie f</label>
+      <div class="slider-row">
+        <input type="range" id="fout" min="10" max="100" value="50" step="1">
+        <input type="number" id="foutVal" min="10" max="100" value="50" step="1">
+        <span>Hz</span>
       </div>
     </div>
+    <div class="control">
+      <label>Indice de modulation m<sub>a</sub></label>
+      <div class="slider-row">
+        <input type="range" id="ma" min="0.2" max="1" value="0.8" step="0.05">
+        <input type="number" id="maVal" min="0.2" max="1" value="0.8" step="0.05">
+      </div>
+    </div>
+    <div class="control">
+      <label>Fréquence porteuse (×f)</label>
+      <div class="slider-row">
+        <input type="range" id="fcar" min="8" max="30" value="15" step="1">
+        <input type="number" id="fcarVal" min="8" max="30" value="15" step="1">
+      </div>
+    </div>
+    <div class="control">
+      <label>Temps affiché</label>
+      <div class="slider-row">
+        <input type="range" id="invTime" min="20" max="100" value="40" step="5">
+        <input type="number" id="invTimeVal" min="20" max="100" value="40" step="5">
+        <span>ms</span>
+      </div>
+    </div>
+  </div>
 
-    <div class="wave-title">Figure 2 – Transformateur (u₀ et u₁)</div>
-    <div class="canvas-wrap" style="height:220px">
-      <canvas id="canvasU01"></canvas>
-      <div class="scope-label">u₀ (primaire) • u₁ (secondaire)</div>
-    </div>
-    <div class="legend">
-      <div class="legend-item"><div class="dot" style="background:var(--u0)"></div> u₀(t) – primaire 230 V<sub>eff</sub></div>
-      <div class="legend-item"><div class="dot" style="background:var(--u1)"></div> u₁(t) – secondaire</div>
-    </div>
+  <div class="canvas-wrap"><canvas id="cInv"></canvas><div class="scope-label" id="labInv"></div></div>
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:var(--ref)"></div>Référence</div>
+    <div class="legend-item"><div class="dot" style="background:var(--carrier)"></div>Porteuse</div>
+    <div class="legend-item"><div class="dot" style="background:var(--wave)"></div>PWM</div>
+    <div class="legend-item"><div class="dot" style="background:var(--avg)"></div>Fondamentale</div>
+  </div>
+  <div class="info">
+    <strong>Principe :</strong> Comparaison d’une sinusoïde de référence avec une porteuse triangulaire.<br>
+    Fréquence de sortie : <strong id="foutText">50 Hz</strong>
+  </div>
+</div>
 
-    <div class="wave-title">Figure 3 – Pont de diodes (u₁ et u₂)</div>
-    <div class="canvas-wrap" style="height:220px">
-      <canvas id="canvasU12"></canvas>
-      <div class="scope-label">u₁ (entrée) • u₂ (sortie redressée)</div>
-    </div>
-    <div class="legend">
-      <div class="legend-item"><div class="dot" style="background:var(--u1)"></div> u₁(t)</div>
-      <div class="legend-item"><div class="dot" style="background:var(--u2)"></div> u₂(t) – après pont</div>
-    </div>
+<script>
+(function(){
+  let dark=false;
+  const themeBtn=document.getElementById('themeToggle');
+  function setTheme(d){
+    dark=d;
+    document.documentElement.setAttribute('data-theme',d?'dark':'light');
+    document.getElementById('themeIcon').textContent=d?'☀️':'🌙';
+    document.getElementById('themeText').textContent=d?'Mode clair':'Mode sombre';
+    requestAnimationFrame(()=>requestAnimationFrame(drawAll));
+  }
+  themeBtn.onclick=()=>setTheme(!dark);
 
-    <div class="wave-title">Figure 4 – Filtre RC (u₂ et u₃)</div>
-    <div class="canvas-wrap" style="height:220px">
-      <canvas id="canvasU23"></canvas>
-      <div class="scope-label">u₂ (entrée filtre) • u₃ (sortie filtrée)</div>
-    </div>
-    <div class="legend">
-      <div class="legend-item"><div class="dot" style="background:var(--u2)"></div> u₂(t)</div>
-      <div class="legend-item"><div class="dot"
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+      drawAll();
+    };
+  });
+
+  function link(sid,nid,cb){
+    const s=document.getElementById(sid),n=document.getElementById(nid);
+    if(!s||!n)return;
+    s.oninput=()=>{n.value=s.value;cb();};
+    n.onchange=()=>{
+      let v=parseFloat(n.value);if(isNaN(v))return;
+      v=Math.max(+s.min,Math.min(+s.max,v));n.value=v;s.value=v;cb();
+    };
+  }
+  function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+
+  function prep(id){
+    const c=document.getElementById(id);if(!c)return null;
+    const ctx=c.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const p=c.parentElement;
+    const W=p.clientWidth,H=p.clientHeight;
+    c.width=Math.floor(W*dpr);c.height=Math.floor(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx,W,H};
+  }
+  function grid(ctx,W,H){
+    ctx.strokeStyle=css('--grid');ctx.lineWidth=1;
+    for(let x=0;x<=W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<=H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  }
+
+  function arr(ctx,x1,y1,x2,y2){
+    ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+    const a=Math.atan2(y2-y1,x2-x1);
+    ctx.beginPath();ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-6*Math.cos(a-0.4),y2-6*Math.sin(a-0.4));
+    ctx.lineTo(x2-6*Math.cos(a+0.4),y2-6*Math.sin(a+0.4));
+    ctx.closePath();ctx.fill();
+  }
+
+  // ========== SCHÉMAS ==========
+  function drawSchemaRect(){
+    const c=document.getElementById('schemaRect');if(!c)return;
+    const ctx=c.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const W=700,H=170;
+    c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
+
+    const tc=css('--text'),mu=css('--muted');
+    const u0=css('--u0'),u1=css('--u1'),u2=css('--u2'),u3=css('--u3');
+
+    ctx.strokeStyle=css('--border');ctx.lineWidth=1.2;
+    ctx.strokeRect(8,6,210,130);
+    ctx.strokeRect(230,6,230,130);
+    ctx.strokeRect(472,6,220,130);
+    ctx.fillStyle=mu;ctx.font='11px system-ui';ctx.textAlign='center';
+    ctx.fillText('Transformateur',113,148);
+    ctx.fillText('Pont de diodes',345,148);
+    ctx.fillText('Filtre RC',582,148);
+
+    const tx=110,ty=70;
+    ctx.strokeStyle=tc;ctx.lineWidth=1.7;
+    for(let i=0;i<4;i++){const y=ty-24+i*16;ctx.beginPath();ctx.moveTo(tx-32,y);ctx.bezierCurveTo(tx-20,y-6,tx-20,y+6,tx-32,y+12);ctx.stroke();}
+    for(let i=0;i<4;i++){const y=ty-24+i*16;ctx.beginPath();ctx.moveTo(tx+8,y);ctx.bezierCurveTo(tx+20,y-6,tx+20,y+6,tx+8,y+12);ctx.stroke();}
+    ctx.strokeStyle=mu;ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(tx-4,ty-32);ctx.lineTo(tx-4,ty+32);ctx.moveTo(tx+2,ty-32);ctx.lineTo(tx+2,ty+32);ctx.stroke();
+
+    ctx.strokeStyle=u0;ctx.fillStyle=u0;ctx.lineWidth=1.5;
+    arr(ctx,tx-50,ty+18,tx-50,ty-18);ctx.font='bold 13px system-ui';ctx.textAlign='right';ctx.fillText('u₀',tx-54,ty+4);
+    ctx.strokeStyle=u1;ctx.fillStyle=u1;
+    arr(ctx,tx+36,ty+18,tx+36,ty-18);ctx.textAlign='left';ctx.fillText('u₁',tx+40,ty+4);
+
+    ctx.strokeStyle=tc;ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(tx+28,ty-24);ctx.lineTo(260,ty-24);ctx.moveTo(tx+28,ty+24);ctx.lineTo(260,ty+24);ctx.stroke();
+
+    const bx=345,by=70,br=26;
+    ctx.strokeStyle=tc;ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.moveTo(bx,by-br);ctx.lineTo(bx+br,by);ctx.lineTo(bx,by+br);ctx.lineTo(bx-br,by);ctx.closePath();ctx.stroke();
+    [[-12,-12,1],[12,-12,1],[-12,12,-1],[12,12,-1]].forEach(([dx,dy,dir])=>{
+      ctx.beginPath();ctx.moveTo(bx+dx-4,by+dy-5*dir);ctx.lineTo(bx+dx+4,by+dy-5*dir);ctx.lineTo(bx+dx,by+dy+5*dir);ctx.closePath();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(bx+dx-4,by+dy+5*dir);ctx.lineTo(bx+dx+4,by+dy+5*dir);ctx.stroke();
+    });
+
+    ctx.strokeStyle=u2;ctx.fillStyle=u2;
+    arr(ctx,bx+br+14,by+20,bx+br+14,by-20);ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText('u₂',bx+br+18,by+4);
+
+    ctx.strokeStyle=tc;ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(bx+br,by);ctx.lineTo(500,by);ctx.stroke();
+    ctx.strokeRect(510,by-9,32,18);ctx.fillStyle=tc;ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('R',526,by+5);
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(560,by-20);ctx.lineTo(560,by+20);ctx.moveTo(568,by-20);ctx.lineTo(568,by+20);ctx.stroke();
+    ctx.font='12px system-ui';ctx.fillText('C',564,by+36);
+    ctx.lineWidth=1.4;ctx.beginPath();
+    ctx.moveTo(500,by);ctx.lineTo(500,by+40);ctx.lineTo(590,by+40);ctx.lineTo(590,by);ctx.stroke();
+
+    ctx.strokeStyle=u3;ctx.fillStyle=u3;
+    arr(ctx,600,by+22,600,by-22);ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText('u₃',605,by+4);
+  }
+
+  function drawSchemaPwm(){
+    const c=document.getElementById('schemaPwm');if(!c)return;
+    const ctx=c.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const W=520,H=140;
+    c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
+    const tc=css('--text'),mu=css('--muted'),av=css('--avg');
+
+    ctx.strokeStyle=tc;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(40,40);ctx.lineTo(40,100);ctx.stroke();
+    ctx.fillStyle=tc;ctx.font='12px system-ui';ctx.textAlign='center';
+    ctx.fillText('+',40,32);ctx.fillText('−',40,114);ctx.fillText('Vin',40,70);
+
+    ctx.beginPath();ctx.moveTo(40,40);ctx.lineTo(120,40);ctx.stroke();
+    ctx.strokeRect(120,28,40,24);ctx.fillText('S',140,44);
+    ctx.beginPath();ctx.moveTo(160,40);ctx.lineTo(160,80);ctx.lineTo(140,80);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(150,72);ctx.lineTo(160,80);ctx.lineTo(150,88);ctx.closePath();ctx.stroke();
+
+    ctx.beginPath();ctx.moveTo(160,40);ctx.lineTo(220,40);
+    for(let i=0;i<4;i++){ctx.arc(230+i*12,40,6,Math.PI,0,false);}
+    ctx.lineTo(300,40);ctx.stroke();
+    ctx.fillText('L',250,28);
+
+    ctx.beginPath();ctx.moveTo(300,40);ctx.lineTo(300,55);ctx.stroke();
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(290,55);ctx.lineTo(310,55);ctx.moveTo(290,65);ctx.lineTo(310,65);ctx.stroke();
+    ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(300,65);ctx.lineTo(300,100);ctx.lineTo(40,100);ctx.stroke();
+    ctx.fillText('C',300,80);
+
+    ctx.strokeStyle=av;ctx.fillStyle=av;
+    arr(ctx,340,90,340,50);ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText('Vout',348,72);
+    ctx.fillStyle=mu;ctx.font='11px system-ui';ctx.textAlign='center';
+    ctx.fillText('Hacheur Buck (PWM)',260,130);
+  }
+
+  function drawSchemaInv(){
+    const c=document.getElementById('schemaInv');if(!c)return;
+    const ctx=c.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const W=480,H=150;
+    c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);
+    const tc=css('--text'),mu=css('--muted'),wv=css('--wave');
+
+    ctx.strokeStyle=tc;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(50,30);ctx.lineTo(50,120);ctx.stroke();
+    ctx.fillStyle=tc;ctx.font='12px system-ui';ctx.textAlign='center';
+    ctx.fillText('+',50,22);ctx.fillText('−',50,134);ctx.fillText('Vdc',50,78);
+
+    const sw=[[120,40],[200,40],[120,90],[200,90]];
+    sw.forEach(([x,y],i)=>{
+      ctx.strokeRect(x,y,36,22);
+      ctx.fillText('S'+(i+1),x+18,y+15);
+    });
+    ctx.beginPath();
+    ctx.moveTo(50,30);ctx.lineTo(120,30);ctx.lineTo(120,40);
+    ctx.moveTo(156,40);ctx.lineTo(156,30);ctx.lineTo(200,30);ctx.lineTo(200,40);
+    ctx.moveTo(50,120);ctx.lineTo(120,120);ctx.lineTo(120,112);
+    ctx.moveTo(156,112);ctx.lineTo(156,120);ctx.lineTo(200,120);ctx.lineTo(200,112);
+    ctx.moveTo(138,62);ctx.lineTo(138,90);
+    ctx.moveTo(218,62);ctx.lineTo(218,90);
+    ctx.stroke();
+
+    ctx.beginPath();ctx.moveTo(156,51);ctx.lineTo(280,51);
+    ctx.moveTo(218,101);ctx.lineTo(280,101);ctx.stroke();
+    ctx.strokeRect(280,60,50,32);ctx.fillText('Charge',305,80);
+
+    ctx.strokeStyle=wv;ctx.fillStyle=wv;
+    arr(ctx,350,110,350,50);ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText('u_s',358,82);
+    ctx.fillStyle=mu;ctx.font='11px system-ui';ctx.textAlign='center';
+    ctx.fillText('Pont en H (onduleur monophasé)',240,142);
+  }
+
+  // ========== REDRESSEMENT ==========
+  function drawRect(){
+    const Veff=+document.getElementById('vsec').value;
+    const C=+document.getElementById('cap').value*1e-6;
+    const I=+document.getElementById('iload').value;
+    const Tms=+document.getElementById('rectTime').value;
+    const T=Tms/1000;
+    const Vpeak=Veff*Math.SQRT2;
+    const f=50, Vripple=I/(2*f*C), Vdc=Math.max(0,Vpeak-Vripple/2);
+
+    document.getElementById('vpeakText').textContent=Vpeak.toFixed(1)+' V';
+    document.getElementById('vdcText').textContent=Vdc.toFixed(1)+' V';
+    document.getElementById('rippleText').textContent=Vripple.toFixed(2)+' V';
+
+    let r=prep('cU01');if(r){
+      const {ctx,W,H}=r;
+      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
+      const mid=H/2, sc0=(H*0.36)/(230*Math.SQRT2), sc1=(H*0.36)/(Vpeak*1.1), N=900;
+      ctx.strokeStyle=css('--u0');ctx.lineWidth=2;ctx.beginPath();
+      for(let i=0;i<=N;i++){const t=i/N,y=mid-230*Math.SQRT2*Math.sin(2*Math.PI*f*T*t)*sc0;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
+      ctx.stroke();
+      ctx.strokeStyle=css('--u1');ctx.lineWidth=2.2;ctx.beginPath();
+      for(let i=0;i<=N;i++){const t=i/N,y=mid-Vpeak*Math.sin(2*Math.PI*f*T*t)*sc1;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
+      ctx.stroke();
+      ctx.fillStyle=css('--u0');ctx.font='11px system-ui';ctx.fillText('√2×230 V',6,14);
+      ctx.fillStyle=css('--u1');ctx.fillText('√2×'+Veff+' V',6,28);
+      document.getElementById('labU01').textContent=Tms+' ms';
+    }
+
+    r=prep('cU12');if(r){
+      const {ctx,W,H}=r;
+      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
+      const mid=H*0.55, sc=(mid-18)/(Vpeak*1.05), N=900;
+      ctx.strokeStyle=css('--u1');ctx.lineWidth=1.7;ctx.setLineDash([5,4]);ctx.beginPath();
+      for(let i=0;i<=N;i++){const t=i/N,y=mid-Vpeak*Math.sin(2*Math.PI*f*T*t)*sc;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
+      ctx.stroke();ctx.setLineDash([]);
+      ctx.strokeStyle=css('--u2');ctx.lineWidth=2.2;ctx.beginPath();
+      for(let i=0;i<=N;i++){const t=i/N,y=mid-Math.abs(Vpeak*Math.sin(2*Math.PI*f*T*t))*sc;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
+      ctx.stroke();
+      ctx.fillStyle=css('--u1');ctx.font='11px system-ui';ctx.fillText('√2×'+Veff+' V',6,14);
+      document.getElementById('labU12').textContent=Tms+' ms';
+    }
+
+    r=prep('cU23');if(r){
+      const {ctx,W,H}=r;
+      ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
+      const zero=H*0.82, sc=(zero-20)/(Vpeak*1.1), N=1000, dt=T/N;
+      ctx.strokeStyle=css('--u2');ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();
+      for(let i=0;i<=N;i++){const t=i/N,y=zero-Math.abs(Vpeak*Math.sin(2*Math.PI*f*T*t))*sc;i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
+      ctx.stroke();ctx.setLineDash([]);
+      ctx.strokeStyle=css('--u3');ctx.lineWidth=2.3;ctx.beginPath();
+      let v=Vpeak;
+      for(let i=0;i<=N;i++){
+        const t=i/N, vr=Math.abs(Vpeak*Math.sin(2*Math.PI*f*T*t));
+        if(vr>=v)v=vr; else {v-= (I/C)*dt; if(v<0)v=0;}
+        const y=zero-v*sc; i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);
+      }
+      ctx.stroke();
+      const y24=zero-Veff*sc;
+      ctx.strokeStyle=css('--muted');ctx.lineWidth=1;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(0,y24);ctx.lineTo(W,y24);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle=css('--u3');ctx.font='11px system-ui';ctx.fillText('√2×'+Veff+' V',6,14);
+      ctx.fillStyle=css('--muted');ctx.fillText(Veff+' V',6,y24-3);
+      document.getElementById('labU23').textContent=Tms+' ms';
+    }
+  }
+
+  // ========== PWM ==========
+  function drawPwm(){
+    const α=+document.getElementById('duty').value/100;
+    const Vin=+document.getElementById('vin').value;
+    const fp=+document.getElementById('fpwm').value*1000;
+    const Tms=+document.getElementById('pwmTime').value;
+    const Vmax=+document.getElementById('pwmVscale').value;
+    const Vout=α*Vin;
+    document.getElementById('voutText').textContent=Vout.toFixed(1)+' V';
+    document.getElementById('labPwm').textContent=Tms+' ms • '+Vmax+' V';
+
+    const r=prep('cPwm');if(!r)return;
+    const {ctx,W,H}=r;
+    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
+
+    const zero=H*0.78, sc=(zero-H*0.08)/Vmax;
+    const T=Tms/1000, period=1/fp, nPer=T/period;
+
+    ctx.strokeStyle=css('--muted');ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(0,zero);ctx.lineTo(W,zero);ctx.stroke();ctx.setLineDash([]);
+
+    ctx.strokeStyle=css('--wave');ctx.lineWidth=2.3;ctx.beginPath();
+    const ton=α*period;
+    for(let p=0;p<nPer+1;p++){
+      const t0=p*period, x0=(t0/T)*W, x1=((t0+ton)/T)*W, x2=((t0+period)/T)*W;
+      const yH=zero-Math.min(Vin,Vmax)*sc;
+      if(p===0)ctx.moveTo(x0,zero); else ctx.lineTo(x0,zero);
+      ctx.lineTo(x0,yH);ctx.lineTo(Math.min(x1,W),yH);ctx.lineTo(Math.min(x1,W),zero);ctx.lineTo(Math.min(x2,W),zero);
+    }
+    ctx.stroke();
+
+    const yA=zero-Math.min(Vout,Vmax)*sc;
+    ctx.strokeStyle=css('--avg');ctx.lineWidth=2;ctx.setLineDash([7,4]);
+    ctx.beginPath();ctx.moveTo(0,yA);ctx.lineTo(W,yA);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=css('--avg');ctx.font='12px system-ui';ctx.fillText('Vout='+Vout.toFixed(1)+' V',8,yA-5);
+    ctx.fillStyle=css('--text');ctx.fillText('0',8,zero+12);
+  }
+
+  // ========== ONDULEUR ==========
+  function drawInv(){
+    const f=+document.getElementById('fout').value;
+    const m=+document.getElementById('ma').value;
+    const ratio=+document.getElementById('fcar').value;
+    const Tms=+document.getElementById('invTime').value;
+    document.getElementById('foutText').textContent=f+' Hz';
+    document.getElementById('labInv').textContent=Tms+' ms';
+
+    const r=prep('cInv');if(!r)return;
+    const {ctx,W,H}=r;
+    ctx.fillStyle=css('--bg');ctx.fillRect(0,0,W,H);grid(ctx,W,H);
+
+    const mid=H/2, amp=H*0.38, N=1100, T=Tms/1000;
+    const carF=f*ratio;
+
+    ctx.strokeStyle=css('--ref');ctx.lineWidth=2;ctx.beginPath();
+    for(let i=0;i<=N;i++){const t=i/N,y=mid-m*amp*Math.sin(2*Math.PI*f*T*t);i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
+    ctx.stroke();
+
+    ctx.strokeStyle=css('--carrier');ctx.lineWidth=1.4;ctx.beginPath();
+    for(let i=0;i<=N;i++){
+      const t=i/N, ph=(t*carF*T)%1;
+      const tri=ph<0.5?(4*ph-1):(3-4*ph);
+      const y=mid-amp*tri; i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle=css('--wave');ctx.lineWidth=2;ctx.beginPath();
+    let prev=null;
+    for(let i=0;i<=N;i++){
+      const t=i/N, sine=m*Math.sin(2*Math.PI*f*T*t);
+      const ph=(t*carF*T)%1, tri=ph<0.5?(4*ph-1):(3-4*ph);
+      const high=sine>tri, y=mid-(high?1:-1)*amp*0.9;
+      if(i===0)ctx.moveTo(t*W,y);
+      else{if(prev!==null&&high!==prev)ctx.lineTo(t*W,mid-(prev?1:-1)*amp*0.9);ctx.lineTo(t*W,y);}
+      prev=high;
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle=css('--avg');ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.beginPath();
+    for(let i=0;i<=N;i++){const t=i/N,y=mid-m*amp*0.82*Math.sin(2*Math.PI*f*T*t);i?ctx.lineTo(t*W,y):ctx.moveTo(t*W,y);}
+    ctx.stroke();ctx.setLineDash([]);
+  }
+
+  function drawAll(){
+    const act=document.querySelector('.panel.active');
+    if(!act)return;
+    if(act.id==='panel-rectifier'){drawSchemaRect();drawRect();}
+    else if(act.id==='panel-pwm'){drawSchemaPwm();drawPwm();}
+    else if(act.id==='panel-inverter'){drawSchemaInv();drawInv();}
+  }
+
+  ['vsec','cap','iload','rectTime'].forEach(id=>link(id,id+'Val',drawRect));
+  ['duty','vin','fpwm','pwmTime','pwmVscale'].forEach(id=>link(id,id+'Val',drawPwm));
+  ['fout','ma','fcar','invTime'].forEach(id=>link(id,id+'Val',drawInv));
+
+  window.addEventListener('resize',drawAll);
+  setTheme(false);
+  drawAll();
+})();
+</script>
+</body>
+</html>
