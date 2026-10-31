@@ -17,6 +17,10 @@
     --carrier: #34c759;
     --ref: #af52de;
     --border: #d2d2d7;
+    --u0: #4a6fa5;
+    --u1: #5a9e6f;
+    --u2: #c17a4a;
+    --u3: #2c2c2e;
   }
   [data-theme="dark"] {
     --bg: #1c1c1e;
@@ -30,6 +34,10 @@
     --carrier: #30d158;
     --ref: #bf5af2;
     --border: #48484a;
+    --u0: #7aa2d4;
+    --u1: #7dcea0;
+    --u2: #e0a070;
+    --u3: #e8e8ed;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -130,15 +138,16 @@
   .canvas-wrap {
     position: relative;
     width: 100%;
-    height: 320px;
+    height: 300px;
     background: var(--bg);
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid var(--border);
+    margin-bottom: 10px;
   }
   canvas { width: 100%; height: 100%; display: block; }
   .info {
-    margin-top: 12px;
+    margin-top: 10px;
     padding: 10px 12px;
     background: var(--bg);
     border-radius: 8px;
@@ -149,9 +158,9 @@
   .legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 8px;
-    font-size: 0.8rem;
+    gap: 14px;
+    margin-top: 6px;
+    font-size: 0.82rem;
   }
   .legend-item {
     display: flex;
@@ -159,8 +168,8 @@
     gap: 5px;
   }
   .dot {
-    width: 10px;
-    height: 10px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
   }
   .formula {
@@ -182,26 +191,34 @@
     pointer-events: none;
   }
   .section-title {
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 600;
-    margin: 0 0 10px;
+    margin: 0 0 12px;
   }
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
-    margin-bottom: 14px;
-  }
-  .step {
+  .schematic-wrap {
     background: var(--bg);
-    border-radius: 8px;
-    padding: 10px;
     border: 1px solid var(--border);
-    font-size: 0.82rem;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 16px;
+    overflow-x: auto;
   }
-  .step strong { display: block; margin-bottom: 3px; color: var(--accent); }
+  #canvasSchema {
+    width: 100%;
+    max-width: 720px;
+    height: 180px;
+    display: block;
+    margin: 0 auto;
+  }
+  .wave-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 14px 0 6px;
+    color: var(--text);
+  }
   @media (max-width: 600px) {
-    .canvas-wrap { height: 260px; }
+    .canvas-wrap { height: 240px; }
+    #canvasSchema { height: 150px; }
   }
 </style>
 </head>
@@ -220,7 +237,7 @@
     <button class="tab" data-tab="rectifier" type="button">Redressement 230 V → DC</button>
   </div>
 
-  <!-- PWM -->
+  <!-- ========== PWM ========== -->
   <div class="panel active" id="panel-pwm">
     <div class="controls">
       <div class="control">
@@ -278,7 +295,7 @@
     </div>
   </div>
 
-  <!-- Onduleur -->
+  <!-- ========== Onduleur ========== -->
   <div class="panel" id="panel-inverter">
     <div class="controls">
       <div class="control">
@@ -334,23 +351,14 @@
     </div>
   </div>
 
-  <!-- Redressement -->
+  <!-- ========== Redressement ========== -->
   <div class="panel" id="panel-rectifier">
-    <div class="section-title">Chaîne 230 V<sub>eff</sub> → tension continue</div>
-    <div class="steps">
-      <div class="step">
-        <strong>1. Transformateur</strong>
-        Abaisse 230 V<sub>eff</sub> vers une tension secondaire plus basse et isole galvaniquement.
-      </div>
-      <div class="step">
-        <strong>2. Pont de diodes</strong>
-        Redressement double alternance. La tension devient toujours positive (ondulée).
-      </div>
-      <div class="step">
-        <strong>3. Filtre condensateur</strong>
-        Le condensateur lisse les crêtes → tension quasi-continue avec un faible ripple.
-      </div>
+    <div class="section-title">Convertisseur statique AC/DC</div>
+
+    <div class="schematic-wrap">
+      <canvas id="canvasSchema"></canvas>
     </div>
+
     <div class="controls">
       <div class="control">
         <label>Tension secondaire (efficace)</label>
@@ -363,386 +371,53 @@
       <div class="control">
         <label>Capacité du filtre C</label>
         <div class="slider-row">
-          <input type="range" id="cap" min="100" max="4700" value="1000" step="100">
-          <input type="number" id="capVal" min="100" max="4700" value="1000" step="100">
+          <input type="range" id="cap" min="100" max="4700" value="2200" step="100">
+          <input type="number" id="capVal" min="100" max="4700" value="2200" step="100">
           <span>µF</span>
         </div>
       </div>
       <div class="control">
-        <label>Courant de charge</label>
+        <label>Courant de charge (≈)</label>
         <div class="slider-row">
-          <input type="range" id="iload" min="0.1" max="3" value="0.8" step="0.1">
-          <input type="number" id="iloadVal" min="0.1" max="3" value="0.8" step="0.1">
+          <input type="range" id="iload" min="0.05" max="2.5" value="0.4" step="0.05">
+          <input type="number" id="iloadVal" min="0.05" max="2.5" value="0.4" step="0.05">
           <span>A</span>
         </div>
       </div>
       <div class="control">
         <label>Base de temps (périodes 50 Hz)</label>
         <div class="slider-row">
-          <input type="range" id="rectTime" min="1" max="6" value="3" step="1">
-          <input type="number" id="rectTimeVal" min="1" max="6" value="3" step="1">
-        </div>
-      </div>
-      <div class="control">
-        <label>Échelle tension (V max)</label>
-        <div class="slider-row">
-          <input type="range" id="rectVscale" min="10" max="80" value="40" step="2">
-          <input type="number" id="rectVscaleVal" min="10" max="80" value="40" step="2">
-          <span>V</span>
+          <input type="range" id="rectTime" min="1" max="5" value="3" step="1">
+          <input type="number" id="rectTimeVal" min="1" max="5" value="3" step="1">
         </div>
       </div>
     </div>
-    <div class="canvas-wrap">
-      <canvas id="canvasRect"></canvas>
-      <div class="scope-label" id="rectScopeLabel">3 périodes • 40 V</div>
+
+    <div class="wave-title">Figure 2 – Transformateur (u₀ et u₁)</div>
+    <div class="canvas-wrap" style="height:220px">
+      <canvas id="canvasU01"></canvas>
+      <div class="scope-label">u₀ (primaire) • u₁ (secondaire)</div>
     </div>
     <div class="legend">
-      <div class="legend-item"><div class="dot" style="background:var(--ref)"></div> Secondaire AC</div>
-      <div class="legend-item"><div class="dot" style="background:var(--carrier)"></div> Après pont</div>
-      <div class="legend-item"><div class="dot" style="background:var(--wave)"></div> Après filtre</div>
-      <div class="legend-item"><div class="dot" style="background:var(--avg)"></div> V<sub>DC</sub> moyen</div>
+      <div class="legend-item"><div class="dot" style="background:var(--u0)"></div> u₀(t) – primaire 230 V<sub>eff</sub></div>
+      <div class="legend-item"><div class="dot" style="background:var(--u1)"></div> u₁(t) – secondaire</div>
     </div>
-    <div class="info">
-      <strong>Valeurs :</strong>
-      V<sub>crête</sub> ≈ <strong id="vpeakText">33.9 V</strong> |
-      V<sub>DC</sub> ≈ <strong id="vdcText">32.1 V</strong> |
-      Ripple ≈ <strong id="rippleText">1.6 V</strong><br>
-      <span class="formula">V<sub>ripple pp</sub> ≈ I<sub>load</sub> / (2 × f × C)</span> (f = 100 Hz)
+
+    <div class="wave-title">Figure 3 – Pont de diodes (u₁ et u₂)</div>
+    <div class="canvas-wrap" style="height:220px">
+      <canvas id="canvasU12"></canvas>
+      <div class="scope-label">u₁ (entrée) • u₂ (sortie redressée)</div>
     </div>
-  </div>
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:var(--u1)"></div> u₁(t)</div>
+      <div class="legend-item"><div class="dot" style="background:var(--u2)"></div> u₂(t) – après pont</div>
+    </div>
 
-<script>
-(function() {
-  const themeToggle = document.getElementById('themeToggle');
-  const themeIcon = document.getElementById('themeIcon');
-  const themeText = document.getElementById('themeText');
-  let isDark = false;
-
-  function applyTheme(dark) {
-    isDark = dark;
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    themeIcon.textContent = dark ? '☀️' : '🌙';
-    themeText.textContent = dark ? 'Mode clair' : 'Mode sombre';
-    requestAnimationFrame(() => requestAnimationFrame(drawActive));
-  }
-  themeToggle.addEventListener('click', () => applyTheme(!isDark));
-
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
-      drawActive();
-    });
-  });
-
-  function link(sliderId, numberId, cb) {
-    const s = document.getElementById(sliderId);
-    const n = document.getElementById(numberId);
-    if (!s || !n) return;
-    s.addEventListener('input', () => { n.value = s.value; cb(); });
-    n.addEventListener('change', () => {
-      let v = parseFloat(n.value);
-      if (isNaN(v)) return;
-      v = Math.max(parseFloat(s.min), Math.min(parseFloat(s.max), v));
-      n.value = v; s.value = v; cb();
-    });
-  }
-
-  function css(varName) {
-    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  }
-
-  function drawPwm() {
-    const canvas = document.getElementById('canvasPwm');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const parent = canvas.parentElement;
-    const W = parent.clientWidth, H = parent.clientHeight;
-    canvas.width = Math.floor(W * dpr);
-    canvas.height = Math.floor(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const α = parseFloat(document.getElementById('duty').value) / 100;
-    const Vin = parseFloat(document.getElementById('vin').value);
-    const periods = parseInt(document.getElementById('pwmTime').value, 10);
-    const Vmax = parseFloat(document.getElementById('pwmVscale').value);
-    const Vout = α * Vin;
-
-    document.getElementById('voutText').textContent = Vout.toFixed(1) + ' V';
-    document.getElementById('pwmScopeLabel').textContent =
-      periods + ' période' + (periods > 1 ? 's' : '') + ' • ' + Vmax + ' V';
-
-    ctx.fillStyle = css('--bg');
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.strokeStyle = css('--grid');
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-    for (let y = 0; y <= H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
-    const zeroY = H * 0.75;
-    const scaleY = (zeroY - H * 0.08) / Vmax;
-
-    ctx.strokeStyle = css('--muted');
-    ctx.setLineDash([5,4]);
-    ctx.beginPath(); ctx.moveTo(0, zeroY); ctx.lineTo(W, zeroY); ctx.stroke();
-    ctx.setLineDash([]);
-
-    const periodW = W / periods;
-    const ton = α * periodW;
-    const yHigh = zeroY - Math.min(Vin, Vmax) * scaleY;
-
-    ctx.strokeStyle = css('--wave');
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    for (let p = 0; p < periods; p++) {
-      const x0 = p * periodW;
-      if (p === 0) ctx.moveTo(x0, zeroY); else ctx.lineTo(x0, zeroY);
-      ctx.lineTo(x0, yHigh);
-      ctx.lineTo(x0 + ton, yHigh);
-      ctx.lineTo(x0 + ton, zeroY);
-      ctx.lineTo(x0 + periodW, zeroY);
-    }
-    ctx.stroke();
-
-    const yAvg = zeroY - Math.min(Vout, Vmax) * scaleY;
-    ctx.strokeStyle = css('--avg');
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8,5]);
-    ctx.beginPath(); ctx.moveTo(0, yAvg); ctx.lineTo(W, yAvg); ctx.stroke();
-    ctx.setLineDash([]);
-
-    ctx.fillStyle = css('--text');
-    ctx.font = '12px system-ui, sans-serif';
-    ctx.fillText('0 V', 8, zeroY + 14);
-    ctx.fillStyle = css('--avg');
-    ctx.fillText('Vout = ' + Vout.toFixed(1) + ' V', 8, yAvg - 6);
-  }
-
-  function drawInv() {
-    const canvas = document.getElementById('canvasInv');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const parent = canvas.parentElement;
-    const W = parent.clientWidth, H = parent.clientHeight;
-    canvas.width = Math.floor(W * dpr);
-    canvas.height = Math.floor(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const m = parseFloat(document.getElementById('ma').value);
-    const ratio = parseFloat(document.getElementById('fcar').value);
-    const periods = parseInt(document.getElementById('invTime').value, 10);
-    const Vscale = parseFloat(document.getElementById('invVscale').value);
-
-    document.getElementById('foutText').textContent = document.getElementById('fout').value + ' Hz';
-    document.getElementById('invScopeLabel').textContent =
-      periods + ' période' + (periods > 1 ? 's' : '') + ' • ±' + Vscale.toFixed(1);
-
-    ctx.fillStyle = css('--bg');
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.strokeStyle = css('--grid');
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-    for (let y = 0; y <= H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
-    const midY = H / 2;
-    const amp = (H * 0.40) / Vscale;
-    const samples = 1000;
-    const carPeriods = periods * ratio;
-
-    ctx.strokeStyle = css('--ref');
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let i = 0; i <= samples; i++) {
-      const t = i / samples;
-      const y = midY - m * amp * Math.sin(2 * Math.PI * periods * t);
-      if (i === 0) ctx.moveTo(t * W, y); else ctx.lineTo(t * W, y);
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle = css('--carrier');
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    for (let i = 0; i <= samples; i++) {
-      const t = i / samples;
-      const phase = (t * carPeriods) % 1;
-      const tri = phase < 0.5 ? (4 * phase - 1) : (3 - 4 * phase);
-      const y = midY - amp * tri;
-      if (i === 0) ctx.moveTo(t * W, y); else ctx.lineTo(t * W, y);
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle = css('--wave');
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    let prevHigh = null;
-    for (let i = 0; i <= samples; i++) {
-      const t = i / samples;
-      const sine = m * Math.sin(2 * Math.PI * periods * t);
-      const phase = (t * carPeriods) % 1;
-      const tri = phase < 0.5 ? (4 * phase - 1) : (3 - 4 * phase);
-      const high = sine > tri;
-      const y = midY - (high ? 1 : -1) * amp * 0.92;
-      if (i === 0) ctx.moveTo(t * W, y);
-      else {
-        if (prevHigh !== null && high !== prevHigh) {
-          ctx.lineTo(t * W, midY - (prevHigh ? 1 : -1) * amp * 0.92);
-        }
-        ctx.lineTo(t * W, y);
-      }
-      prevHigh = high;
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle = css('--avg');
-    ctx.lineWidth = 2.2;
-    ctx.setLineDash([6,4]);
-    ctx.beginPath();
-    for (let i = 0; i <= samples; i++) {
-      const t = i / samples;
-      const y = midY - m * amp * 0.82 * Math.sin(2 * Math.PI * periods * t);
-      if (i === 0) ctx.moveTo(t * W, y); else ctx.lineTo(t * W, y);
-    }
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  function drawRect() {
-    const canvas = document.getElementById('canvasRect');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const parent = canvas.parentElement;
-    const W = parent.clientWidth, H = parent.clientHeight;
-    canvas.width = Math.floor(W * dpr);
-    canvas.height = Math.floor(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const Veff = parseFloat(document.getElementById('vsec').value);
-    const C = parseFloat(document.getElementById('cap').value) * 1e-6;
-    const Iload = parseFloat(document.getElementById('iload').value);
-    const periods = parseInt(document.getElementById('rectTime').value, 10);
-    const Vmax = parseFloat(document.getElementById('rectVscale').value);
-
-    const Vpeak = Veff * Math.SQRT2;
-    const f = 50;
-    const Vripple = Iload / (2 * f * C);
-    const Vdc = Math.max(0, Vpeak - Vripple / 2);
-
-    document.getElementById('vpeakText').textContent = Vpeak.toFixed(1) + ' V';
-    document.getElementById('vdcText').textContent = Vdc.toFixed(1) + ' V';
-    document.getElementById('rippleText').textContent = Vripple.toFixed(2) + ' V';
-    document.getElementById('rectScopeLabel').textContent =
-      periods + ' période' + (periods > 1 ? 's' : '') + ' • ' + Vmax + ' V';
-
-    ctx.fillStyle = css('--bg');
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.strokeStyle = css('--grid');
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-    for (let y = 0; y <= H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
-    const zeroY = H * 0.78;
-    const scaleY = (zeroY - H * 0.08) / Vmax;
-    const samples = 1200;
-    const dt = (periods / f) / samples;
-
-    ctx.strokeStyle = css('--muted');
-    ctx.setLineDash([5,4]);
-    ctx.beginPath(); ctx.moveTo(0, zeroY); ctx.lineTo(W, zeroY); ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Secondaire AC
-    ctx.strokeStyle = css('--ref');
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    for (let i = 0; i <= samples; i++) {
-      const t = i / samples;
-      const y = zeroY - Vpeak * Math.sin(2 * Math.PI * periods * t) * scaleY;
-      if (i === 0) ctx.moveTo(t * W, y); else ctx.lineTo(t * W, y);
-    }
-    ctx.stroke();
-
-    // Après pont
-    ctx.strokeStyle = css('--carrier');
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    for (let i = 0; i <= samples; i++) {
-      const t = i / samples;
-      const y = zeroY - Math.abs(Vpeak * Math.sin(2 * Math.PI * periods * t)) * scaleY;
-      if (i === 0) ctx.moveTo(t * W, y); else ctx.lineTo(t * W, y);
-    }
-    ctx.stroke();
-
-    // Après filtre
-    ctx.strokeStyle = css('--wave');
-    ctx.lineWidth = 2.3;
-    ctx.beginPath();
-    let v = Vpeak;
-    for (let i = 0; i <= samples; i++) {
-      const t = i / samples;
-      const vRect = Math.abs(Vpeak * Math.sin(2 * Math.PI * periods * t));
-      if (vRect >= v) v = vRect;
-      else {
-        v -= (Iload / C) * dt;
-        if (v < 0) v = 0;
-      }
-      const y = zeroY - v * scaleY;
-      if (i === 0) ctx.moveTo(t * W, y); else ctx.lineTo(t * W, y);
-    }
-    ctx.stroke();
-
-    const yDc = zeroY - Math.min(Vdc, Vmax) * scaleY;
-    ctx.strokeStyle = css('--avg');
-    ctx.lineWidth = 1.8;
-    ctx.setLineDash([6,4]);
-    ctx.beginPath(); ctx.moveTo(0, yDc); ctx.lineTo(W, yDc); ctx.stroke();
-    ctx.setLineDash([]);
-
-    ctx.fillStyle = css('--text');
-    ctx.font = '12px system-ui, sans-serif';
-    ctx.fillText('0 V', 8, zeroY + 14);
-    ctx.fillStyle = css('--avg');
-    ctx.fillText('VDC ≈ ' + Vdc.toFixed(1) + ' V', 8, yDc - 6);
-  }
-
-  function drawActive() {
-    const active = document.querySelector('.panel.active');
-    if (!active) return;
-    if (active.id === 'panel-pwm') drawPwm();
-    else if (active.id === 'panel-inverter') drawInv();
-    else if (active.id === 'panel-rectifier') drawRect();
-  }
-
-  link('duty', 'dutyVal', drawPwm);
-  link('vin', 'vinVal', drawPwm);
-  link('fpwm', 'fpwmVal', drawPwm);
-  link('pwmTime', 'pwmTimeVal', drawPwm);
-  link('pwmVscale', 'pwmVscaleVal', drawPwm);
-
-  link('fout', 'foutVal', drawInv);
-  link('ma', 'maVal', drawInv);
-  link('fcar', 'fcarVal', drawInv);
-  link('invTime', 'invTimeVal', drawInv);
-  link('invVscale', 'invVscaleVal', drawInv);
-
-  link('vsec', 'vsecVal', drawRect);
-  link('cap', 'capVal', drawRect);
-  link('iload', 'iloadVal', drawRect);
-  link('rectTime', 'rectTimeVal', drawRect);
-  link('rectVscale', 'rectVscaleVal', drawRect);
-
-  window.addEventListener('resize', drawActive);
-
-  applyTheme(false);
-  drawActive();
-})();
-</script>
-</body>
-</html>
+    <div class="wave-title">Figure 4 – Filtre RC (u₂ et u₃)</div>
+    <div class="canvas-wrap" style="height:220px">
+      <canvas id="canvasU23"></canvas>
+      <div class="scope-label">u₂ (entrée filtre) • u₃ (sortie filtrée)</div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:var(--u2)"></div> u₂(t)</div>
+      <div class="legend-item"><div class="dot"
