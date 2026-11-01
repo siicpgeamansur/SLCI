@@ -39,6 +39,7 @@ Aucune installation : chaque outil s'ouvre directement dans le navigateur.
 |---|---|
 | [Alimentation réglable AC ou DC](https://siicpgeamansur.github.io/SLCI/alimentation_elec.html) | Principe d'une alimentation réglable en alternatif ou en continu. |
 | [Moteurs électriques](https://siicpgeamansur.github.io/SLCI/moteurs_electriques.html) | Fonctionnement et caractéristiques des moteurs électriques. |
+| [Identification d'une MCC](https://siicpgeamansur.github.io/SLCI/identification_mcc.html) | Identification des paramètres d'un moteur à courant continu (MCC). |
 
 ---
 
