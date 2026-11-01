@@ -1,0 +1,608 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Identification d'un MCC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Mise en page : une colonne de lecture, chaque essai = texte + instrument (graphique et curseurs).
+   Neutres gris-bleu et bleu d'accent comme les autres ateliers ; rouge pour la mesure, bleu pour le modèle. */
+:root{
+  --bg:#EDF0F4; --surface:#FAFBFC; --ink:#14202E; --muted:#566476; --line:#CCD4DD; --line2:#AEB9C6;
+  --grid:#E3E8EE; --blue:#1F4FD8; --on-accent:#FFFFFF; --soft:#E4EBFB; --red:#C9302C; --red-soft:#FBE6E4;
+  --ref:#14202E; --ok:#1C7A4B; --ok-soft:#DFF3E8; --warn:#B3261E; --warn-soft:#FBE4E2; --rotor:#8D96A3;
+  --sans:Arial,'Helvetica Neue',Helvetica,sans-serif; --mono:Arial,'Helvetica Neue',Helvetica,sans-serif;
+  --math:'Latin Modern Roman','LM Roman 10','Cambria Math','Times New Roman',Times,serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D131A; --surface:#141C25; --ink:#E6ECF3; --muted:#9AA8B9; --line:#2A3643; --line2:#3F4E5E;
+    --grid:#1D2833; --blue:#7AA2FF; --on-accent:#0D131A; --soft:#1B2740; --red:#FF8A80; --red-soft:#3A1F1E;
+    --ref:#E6ECF3; --ok:#5FD193; --ok-soft:#16301F; --warn:#FF8A80; --warn-soft:#3A1F1E; --rotor:#6D7787; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D131A; --surface:#141C25; --ink:#E6ECF3; --muted:#9AA8B9; --line:#2A3643; --line2:#3F4E5E;
+  --grid:#1D2833; --blue:#7AA2FF; --on-accent:#0D131A; --soft:#1B2740; --red:#FF8A80; --red-soft:#3A1F1E;
+  --ref:#E6ECF3; --ok:#5FD193; --ok-soft:#16301F; --warn:#FF8A80; --warn-soft:#3A1F1E; --rotor:#6D7787; color-scheme:dark;
+}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--sans);-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surface);z-index:10}
+*{box-sizing:border-box}
+.wrap{max-width:980px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--sans);font-weight:700;letter-spacing:-.01em;line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:clamp(2.2rem,7vw,3.9rem)}
+h2{font-size:clamp(1.5rem,4.2vw,2.15rem)}
+h3{font-size:1.05rem}
+p{margin:0}
+.m{font-family:var(--math);font-style:italic;font-size:1.08em}
+.mono{font-family:var(--mono)}
+sub,sup{line-height:0}
+a{color:var(--blue)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:3px}
+
+/* barre de navigation */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:11;background:var(--surface);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;gap:6px;overflow-x:auto;padding-block:8px;scrollbar-width:none}
+.nav .wrap::-webkit-scrollbar{display:none}
+.nav a{flex:none;font:500 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--muted);padding:9px 11px;border:1px solid transparent;border-radius:4px}
+.nav a:hover{color:var(--ink);border-color:var(--line)}
+
+.top{display:flex;justify-content:flex-end;padding-top:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:7px 13px;font:13px var(--sans);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--blue);color:var(--on-accent)}
+/* en-tête */
+.hero{padding-block:8px 28px}
+.hero h1{margin-top:12px}
+.lead{margin-top:18px;max-width:60ch;font-size:1.12rem;color:var(--ink)}
+.lead span{color:var(--muted)}
+
+/* sections */
+section{padding-block:44px;border-top:1px solid var(--line)}
+.sec-h{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.kicker{font:500 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.prose{display:flex;flex-direction:column;gap:12px;max-width:68ch}
+.prose p{color:var(--ink)}
+.eq{font-family:var(--math);font-style:italic;font-size:1.05rem;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:4px;overflow-x:auto;white-space:nowrap}
+.eq small{font:400 12px var(--sans);font-style:normal;color:var(--muted);margin-left:8px}
+.note{font-size:.88rem;color:var(--muted)}
+
+/* instrument */
+.panel{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel-h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.panel-h h3{font-size:.95rem}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:12px var(--mono);color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.legend i.dot{width:9px;height:9px;border:0;border-radius:50%;background:var(--red)}
+.chart{min-width:0}
+.chart svg{display:block;width:100%;height:auto}
+.gl{stroke:var(--grid);stroke-width:1}
+.zero{stroke:var(--line2);stroke-width:1}
+.tk{fill:var(--muted);font:11px var(--mono)}
+.axl{fill:var(--muted);font:12px var(--sans)}
+.mod{stroke:var(--blue);stroke-width:2.6;fill:none;stroke-linejoin:round}
+.virt{stroke:var(--blue);stroke-width:2;fill:none;stroke-dasharray:6 5;opacity:.7}
+.mes{fill:var(--red);opacity:.8}
+.res{stroke:var(--red);stroke-width:1.5;opacity:.55}
+.ref{stroke:var(--ref);stroke-width:1.3;stroke-dasharray:5 4;fill:none}
+.reft{fill:var(--ref);font:500 11px var(--mono)}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px 22px}
+.sl{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sl-h{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}
+.sl-h output{font:500 13px var(--mono);color:var(--blue);white-space:nowrap}
+input[type=range]{width:100%;accent-color:var(--blue);margin:0;min-height:24px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:500 13px var(--sans);padding:9px 13px;border-radius:4px;border:1px solid var(--line2);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:var(--on-accent)}
+.btn.pri:hover{color:var(--on-accent);filter:brightness(1.08)}
+.chk{display:inline-flex;gap:8px;align-items:center;font-size:.9rem;cursor:pointer}
+.chk input{accent-color:var(--blue);width:18px;height:18px}
+.read{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fig{padding:10px 12px;background:var(--bg);border-radius:4px;min-width:0}
+.fig b{display:block;font:500 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.fig span{display:block;margin-top:3px;font:500 1.12rem/1.3 var(--mono);overflow-wrap:anywhere}
+.fig span sup{font-size:.6em}
+.pill{display:inline-block;font:500 12px/1.3 var(--mono);padding:5px 9px;border-radius:99px;background:var(--warn-soft);color:var(--warn)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+details{border-top:1px solid var(--line)}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;padding:13px 2px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font:500 18px/1 var(--mono);color:var(--muted)}
+details[open] summary::after{content:"−"}
+details .d{padding:0 2px 14px;max-width:68ch;color:var(--muted);font-size:.95rem}
+.tblw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font:500 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+caption{caption-side:bottom;text-align:left;padding-top:8px;font-size:.82rem;color:var(--muted)}
+
+/* démo du moteur */
+.demo{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:18px;align-items:center}
+.motor svg{display:block;width:100%;height:auto;max-width:300px;margin-inline:auto}
+.mg-n{fill:var(--red)} .mg-s{fill:var(--blue)}
+.mgt{fill:#fff;font:700 18px var(--sans)}
+.rot{fill:var(--rotor)} .com{fill:none;stroke:var(--muted);stroke-width:7}
+.mark{stroke:#fff;stroke-width:3;stroke-linecap:round}
+.shaft{fill:var(--ink)}
+.br-p{fill:var(--red)} .br-m{fill:var(--blue)}
+@media (max-width:640px){.demo{grid-template-columns:1fr}}
+
+/* méthode */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:22px}
+.step{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid var(--line);border-radius:6px;background:var(--surface);text-decoration:none;color:var(--ink)}
+.step:hover{border-color:var(--blue)}
+.step .k{font:500 12px/1 var(--mono);letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.step .t{font-weight:600}
+.step .e{font-family:var(--math);font-style:italic;font-size:.98rem}
+.step .u{font-size:.84rem;color:var(--muted)}
+
+/* bilan */
+.bar{position:relative;height:10px;min-width:110px;background:var(--bg);border-radius:2px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:2px;background:var(--ok)}
+.bar i.hi{background:var(--red)}
+.bar u{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed var(--ref)}
+.ec{display:flex;align-items:center;gap:10px}
+.ec span{font:500 13px var(--mono);min-width:48px}
+
+/* quiz */
+.qz{margin-top:6px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:14px;max-width:720px}
+.qz-p{display:flex;gap:4px}
+.qz-p i{flex:1;height:6px;border-radius:2px;background:var(--grid)}
+.qz-p i.on{background:var(--blue)} .qz-p i.ok{background:var(--ok)} .qz-p i.ko{background:var(--red)}
+.qz-n{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.qz-q{font-size:1.08rem;font-weight:500}
+.qz-o{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;font:inherit;padding:11px 14px;border:1px solid var(--line2);border-radius:4px;background:var(--surface);color:var(--ink);cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--blue)}
+.opt.ok{border-color:var(--ok);background:var(--ok-soft)}
+.opt.ko{border-color:var(--red);background:var(--red-soft)}
+.opt:disabled{cursor:default;opacity:1}
+.qz-x{padding:12px 14px;border-radius:4px;background:var(--bg);font-size:.95rem}
+.qz-score{font:700 2.6rem/1 var(--sans)}
+
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+
+<div lang="fr">
+<nav class="nav" aria-label="Sections"><div class="wrap">
+  <a href="#demo">Démo</a><a href="#methode">Méthode</a><a href="#essai-1">R, L</a><a href="#essai-2">Ke, Kc</a><a href="#essai-3">Cf, f</a><a href="#essai-4">Je</a><a href="#bilan">Bilan</a><a href="#quiz">Quiz</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="top"><div class="seg" role="group" aria-label="Thème d'affichage"><button type="button" data-theme-set="auto" aria-pressed="true">Auto</button><button type="button" data-theme-set="light" aria-pressed="false">Clair</button><button type="button" data-theme-set="dark" aria-pressed="false">Sombre</button></div></div>
+  <h1>Identifier un MCC</h1>
+  <p class="lead">Le constructeur donne des valeurs. La paillasse en donne d'autres. À partir du moteur du robot gyropode Geeros, vous refaites l'identification en quatre essais, puis vous jugez l'écart. <span>Tout ce qui est tracé ici se règle à la main.</span></p>
+</div></header>
+
+<main>
+<section id="demo" style="border-top:0;padding-top:12px"><div class="wrap">
+  <div class="sec-h"><span class="kicker">Le résultat d'abord</span><h2>Le moteur identifié, à vide</h2></div>
+  <div class="prose"><p>Ce simulateur utilise les sept paramètres trouvés dans la suite de la page. Montez la tension : sous une tension de décollage d'environ 0,1 V, le frottement sec garde le rotor à l'arrêt. À 6 V, le modèle donne la vitesse mesurée au TP.</p></div>
+  <div class="panel">
+    <div class="demo">
+      <div class="motor">
+        <svg viewBox="0 0 240 200" role="img" aria-label="Moteur à courant continu : aimants N et S, rotor et collecteur en rotation">
+          <path class="mg-n" d="M14 38 H72 Q52 100 72 162 H14 Z"/><text class="mgt" x="30" y="108">N</text>
+          <path class="mg-s" d="M226 38 H168 Q188 100 168 162 H226 Z"/><text class="mgt" x="196" y="108">S</text>
+          <g id="rotor"><circle class="rot" cx="120" cy="100" r="50"/><circle class="com" cx="120" cy="100" r="55" stroke-dasharray="78 40"/><line class="mark" x1="120" y1="100" x2="120" y2="60"/><circle class="shaft" cx="120" cy="100" r="11"/></g>
+          <rect class="br-p" x="112" y="30" width="16" height="24" rx="2"/><rect class="br-m" x="112" y="146" width="16" height="24" rx="2"/>
+        </svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <label class="sl"><span class="sl-h"><span>Tension d'alimentation <span class="m">u</span></span><output id="hu-o"></output></span><input type="range" id="hu" min="0" max="6" step="0.02" value="6"></label>
+        <div class="read">
+          <div class="fig"><b>Vitesse moteur</b><span id="h-w"></span></div>
+          <div class="fig"><b>Moteur</b><span id="h-rpm"></span></div>
+          <div class="fig"><b>Sortie réducteur</b><span id="h-out"></span></div>
+          <div class="fig"><b>Courant</b><span id="h-i"></span></div>
+        </div>
+        <p class="note" id="h-state"></p>
+      </div>
+    </div>
+    <p class="note">Animation ralentie : la rotation à l'écran est proportionnelle à la vitesse, pas à l'échelle réelle. Modèle : <span class="m">u</span> = <span class="m">R i</span> + <span class="m">K<sub>e</sub> ω</span> et <span class="m">K<sub>c</sub> i</span> = <span class="m">C<sub>f</sub></span> + <span class="m">f ω</span>, en régime permanent.</p>
+  </div>
+</div></section>
+
+<section id="methode"><div class="wrap">
+  <div class="sec-h"><span class="kicker">Méthode</span><h2>Quatre équations, quatre essais</h2></div>
+  <div class="prose">
+    <p>Le modèle de connaissance du moteur tient en quatre relations. Chaque essai isole un morceau du modèle en rendant les autres termes nuls.</p>
+    <div class="eq">u(t) = e(t) + R·i(t) + L·di/dt</div>
+    <div class="eq">e(t) = K<sub>e</sub>·ω<sub>m</sub>(t)</div>
+    <div class="eq">C<sub>m</sub>(t) = K<sub>c</sub>·i(t)</div>
+    <div class="eq">J<sub>e</sub>·dω<sub>m</sub>/dt = C<sub>m</sub> − C<sub>f</sub> − f·ω<sub>m</sub></div>
+    <p>Les essais se suivent parce que chacun réutilise le résultat du précédent. Une erreur sur <span class="m">R</span> se retrouve donc dans <span class="m">K<sub>e</sub></span>, puis dans <span class="m">C<sub>f</sub></span> et <span class="m">f</span>, puis dans <span class="m">J<sub>e</sub></span>.</p>
+  </div>
+  <div class="steps">
+    <a class="step" href="#essai-1"><span class="k">Essai 1</span><span class="t">Rotor bloqué</span><span class="e">ω = 0 ⇒ e = 0</span><span class="u">Trouve R et L. Ne dépend de rien.</span></a>
+    <a class="step" href="#essai-2"><span class="k">Essai 2</span><span class="t">Régime permanent, plusieurs tensions</span><span class="e">e = u − R·i = K<sub>e</sub>·ω</span><span class="u">Trouve K<sub>e</sub> et K<sub>c</sub>. Utilise R.</span></a>
+    <a class="step" href="#essai-3"><span class="k">Essai 3</span><span class="t">Mêmes relevés, côté courant</span><span class="e">K<sub>c</sub>·i = C<sub>f</sub> + f·ω</span><span class="u">Trouve C<sub>f</sub> et f. Utilise K<sub>c</sub>.</span></a>
+    <a class="step" href="#essai-4"><span class="k">Essai 4</span><span class="t">Lâcher</span><span class="e">i = 0 : J<sub>e</sub>·dω/dt = −C<sub>f</sub> − f·ω</span><span class="u">Trouve J<sub>e</sub>. Utilise C<sub>f</sub> et f.</span></a>
+  </div>
+</div></section>
+
+<section id="essai-1"><div class="wrap">
+  <div class="sec-h"><span class="kicker">Essai 1 · rotor bloqué</span><h2>R et L : lire un premier ordre</h2></div>
+  <div class="prose">
+    <p>Rotor bloqué, <span class="m">ω</span> = 0 donc <span class="m">e</span> = 0 et l'équation électrique devient <span class="m">u = R i + L di/dt</span>. Dans le domaine de Laplace, <span class="m">H(p) = I(p)/U(p) = (1/R) / (1 + (L/R)·p)</span> : gain statique 1/<span class="m">R</span>, constante de temps <span class="m">τ = L/R</span>.</p>
+    <p>Superposez le modèle (bleu) à la mesure (rouge). Le palier donne <span class="m">R</span>, le temps à 63 % donne <span class="m">τ</span>, puis <span class="m">L = R·τ</span>. Le constructeur annonce 3,33 Ω : partez de cette valeur et voyez ce qui se passe.</p>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><h3>Réponse à un échelon de 0,2 V, rotor bloqué</h3>
+      <div class="legend"><span><i style="color:var(--blue)"></i>modèle</span><span><i class="dot"></i>mesure</span></div></div>
+    <div class="chart" id="e1-chart"></div>
+    <div class="ctl">
+      <label class="sl"><span class="sl-h"><span>Résistance <span class="m">R</span></span><output id="e1-R-o"></output></span><input type="range" id="e1-R" min="0.6" max="4" step="0.01" value="3.33"></label>
+      <label class="sl"><span class="sl-h"><span>Constante de temps <span class="m">τ</span></span><output id="e1-T-o"></output></span><input type="range" id="e1-T" min="0.5" max="10" step="0.1" value="1"></label>
+    </div>
+    <div class="row">
+      <button class="btn" id="e1-ctor" type="button">Valeur constructeur : 3,33 Ω</button>
+      <button class="btn pri" id="e1-fit" type="button">Voir l'ajustement</button>
+      <label class="chk"><input type="checkbox" id="e1-ref" checked> Repères 63 %</label>
+    </div>
+    <div class="read">
+      <div class="fig"><b>Palier U / R</b><span id="e1-inf"></span></div>
+      <div class="fig"><b>Constante de temps</b><span id="e1-tau"></span></div>
+      <div class="fig"><b>L = R·τ</b><span id="e1-L"></span></div>
+      <div class="fig"><b>Ajustement</b><span id="e1-st"></span></div>
+    </div>
+    <p class="note">Mesure simulée d'après les valeurs du TP (échelon de 0,2 V, palier voisin de 225 mA, τ de 3 ms) avec du bruit ajouté. Corrigé : <span class="m">R</span> ≈ 0,88 Ω et <span class="m">L</span> = <span class="m">R·τ</span> ≈ 0,88 × 3 ms ≈ 2,6 mH.</p>
+  </div>
+</div></section>
+
+<section id="essai-2"><div class="wrap">
+  <div class="sec-h"><span class="kicker">Essai 2 · régime permanent</span><h2>Ke et Kc : une droite qui passe par zéro</h2></div>
+  <div class="prose">
+    <p>Moteur à vide et tension constante, la dérivée du courant est nulle. La fcem se déduit de la tension et du courant : <span class="m">e = u − R i</span>, et <span class="m">e = K<sub>e</sub> ω</span>. Le tracé de <span class="m">e</span> en fonction de <span class="m">ω</span> est une droite de pente <span class="m">K<sub>e</sub></span>.</p>
+    <p>La vitesse se mesure sans le codeur : on compte 10 tours de l'arbre de sortie, on chronomètre, et on remonte à l'arbre moteur avec le réducteur 34:1, soit <span class="m">ω = 10 × 2π × 34 / t</span>. Le courant est lu à la pince avec 3 spires, donc divisé par 3.</p>
+    <p>Placez la droite à la main (les segments rouges sont les résidus), ou lancez les moindres carrés. Puis changez la valeur de <span class="m">R</span> utilisée pour calculer <span class="m">e</span> et regardez bouger <span class="m">K<sub>e</sub></span>.</p>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><h3>Fcem en fonction de la vitesse</h3>
+      <div class="legend"><span><i style="color:var(--blue)"></i>droite réglée</span><span><i class="dot"></i>relevés</span></div></div>
+    <div class="chart" id="l2-chart"></div>
+    <div class="ctl">
+      <label class="sl"><span class="sl-h"><span>Pente <span class="m">K<sub>e</sub></span></span><output id="l2-a-o"></output></span><input type="range" id="l2-a" min="0.004" max="0.016" step="0.00001" value="0.007"></label>
+      <label class="sl"><span class="sl-h"><span>Ordonnée à l'origine</span><output id="l2-b-o"></output></span><input type="range" id="l2-b" min="-0.6" max="1" step="0.001" value="0"></label>
+      <label class="sl"><span class="sl-h"><span><span class="m">R</span> utilisée pour calculer <span class="m">e</span></span><output id="l2-R-o"></output></span><input type="range" id="l2-R" min="0.5" max="3.5" step="0.01" value="0.88"></label>
+    </div>
+    <div class="row"><button class="btn pri" id="l2-fit" type="button">Moindres carrés</button><button class="btn" id="l2-r0" type="button">R = 0,88 Ω (mesuré)</button><button class="btn" id="l2-r1" type="button">R = 3,33 Ω (constructeur)</button><span class="pill" id="l2-pill"></span></div>
+    <div class="read">
+      <div class="fig"><b>K<sub>e</sub> (pente)</b><span id="l2-ke"></span></div>
+      <div class="fig"><b>Écart au constructeur</b><span id="l2-ec"></span></div>
+      <div class="fig"><b>Ordonnée à l'origine</b><span id="l2-ob"></span></div>
+      <div class="fig"><b>Résidu rms</b><span id="l2-rms"></span></div>
+    </div>
+    <details><summary>Voir les relevés</summary><div class="d tblw"><table><caption>10 tours de l'arbre de sortie, réducteur 34:1. i = lecture de la pince ÷ 3 spires. e = u − R·i avec la valeur de R choisie ci-dessus.</caption><thead><tr><th>u (V)</th><th>t, 10 tours (s)</th><th>ω (rad/s)</th><th>i (mA)</th><th>e (V)</th></tr></thead><tbody id="l2-tb"></tbody></table></div></details>
+    <p class="note">Constructeur : <span class="m">K<sub>e</sub></span> = 0,34 V/(rad/s) en sortie de réducteur, soit 0,34 / 34 = 0,01 V/(rad/s) côté rotor. Corrigé : <span class="m">K<sub>e</sub></span> = 9,88 × 10<sup>−3</sup> V/(rad/s), écart de 1,2 %. En unités SI, <span class="m">K<sub>c</sub> = K<sub>e</sub></span> : la puissance électromécanique vaut <span class="m">e·i = C<sub>m</sub>·ω</span>.</p>
+  </div>
+</div></section>
+
+<section id="essai-3"><div class="wrap">
+  <div class="sec-h"><span class="kicker">Essai 3 · mêmes relevés</span><h2>Cf et f : l'ordonnée et la pente du courant</h2></div>
+  <div class="prose">
+    <p>En régime permanent, <span class="m">C<sub>m</sub> = C<sub>f</sub> + f ω</span> et <span class="m">C<sub>m</sub> = K<sub>c</sub> i</span>. Le courant est donc une droite de <span class="m">ω</span> : <span class="m">i = C<sub>f</sub>/K<sub>c</sub> + (f/K<sub>c</sub>)·ω</span>. L'ordonnée à l'origine donne le frottement sec, la pente donne le frottement visqueux. Les deux se multiplient par <span class="m">K<sub>c</sub></span> = 0,01 N·m/A.</p>
+    <p>Après les moindres carrés, regardez le signe des résidus de la plus basse à la plus haute vitesse : sont-ils répartis au hasard ?</p>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><h3>Courant en fonction de la vitesse</h3>
+      <div class="legend"><span><i style="color:var(--blue)"></i>droite réglée</span><span><i class="dot"></i>relevés</span></div></div>
+    <div class="chart" id="l3-chart"></div>
+    <div class="ctl">
+      <label class="sl"><span class="sl-h"><span>Pente <span class="m">f/K<sub>c</sub></span></span><output id="l3-a-o"></output></span><input type="range" id="l3-a" min="0" max="0.001" step="0.000005" value="0.0001"></label>
+      <label class="sl"><span class="sl-h"><span>Ordonnée <span class="m">C<sub>f</sub>/K<sub>c</sub></span></span><output id="l3-b-o"></output></span><input type="range" id="l3-b" min="0" max="0.2" step="0.001" value="0.03"></label>
+    </div>
+    <div class="row"><button class="btn pri" id="l3-fit" type="button">Moindres carrés</button><span class="pill" id="l3-pill"></span></div>
+    <div class="read">
+      <div class="fig"><b>C<sub>f</sub> = K<sub>c</sub> × ordonnée</b><span id="l3-cs"></span></div>
+      <div class="fig"><b>f = K<sub>c</sub> × pente</b><span id="l3-f"></span></div>
+      <div class="fig"><b>Résidu rms</b><span id="l3-rms"></span></div>
+    </div>
+    <p class="note" id="l3-res"></p>
+    <p class="note">Corrigé : <span class="m">C<sub>f</sub>/K<sub>c</sub></span> = 0,109 A donc <span class="m">C<sub>f</sub></span> = 1,09 × 10<sup>−3</sup> N·m ; <span class="m">f/K<sub>c</sub></span> = 3,6 × 10<sup>−4</sup> A/(rad/s) donc <span class="m">f</span> = 3,6 × 10<sup>−6</sup> N·m·s.</p>
+  </div>
+</div></section>
+
+<section id="essai-4"><div class="wrap">
+  <div class="sec-h"><span class="kicker">Essai 4 · lâcher</span><h2>Je : laisser le rotor s'arrêter</h2></div>
+  <div class="prose">
+    <p>On coupe l'alimentation. Le courant tombe à zéro, il ne reste que les frottements : <span class="m">J<sub>e</sub> dω/dt = −C<sub>f</sub> − f ω</span>. La solution est <span class="m">ω(t) = (ω₀ + C<sub>f</sub>/f)·e<sup>−t/τ</sup> − C<sub>f</sub>/f</span> avec <span class="m">τ = J<sub>e</sub>/f</span>.</p>
+    <p>La tension lue aux bornes vaut alors <span class="m">e = K<sub>e</sub> ω</span> : l'oscilloscope mesure la vitesse. L'exponentielle tend vers −<span class="m">C<sub>f</sub>/f</span>, pas vers 0, donc le rotor s'arrête en un temps fini. Ajustez <span class="m">J<sub>e</sub></span> pour superposer la courbe à la mesure, puis décochez le frottement sec.</p>
+  </div>
+  <div class="panel">
+    <div class="panel-h"><h3>Vitesse après coupure de l'alimentation</h3>
+      <div class="legend"><span><i style="color:var(--blue)"></i>modèle</span><span><i style="color:var(--blue);border-top-style:dashed"></i>exponentielle prolongée</span><span><i class="dot"></i>mesure</span></div></div>
+    <div class="chart" id="e4-chart"></div>
+    <div class="ctl">
+      <label class="sl"><span class="sl-h"><span>Inertie <span class="m">J<sub>e</sub></span></span><output id="e4-J-o"></output></span><input type="range" id="e4-J" min="1" max="15" step="0.1" value="12"></label>
+      <label class="sl"><span class="sl-h"><span>Vitesse initiale <span class="m">ω₀</span></span><output id="e4-w-o"></output></span><input type="range" id="e4-w" min="100" max="650" step="1" value="572"></label>
+    </div>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="e4-dry" checked> Frottement sec <span class="m">C<sub>f</sub></span></label>
+      <button class="btn pri" id="e4-fit" type="button">Voir l'ajustement</button>
+    </div>
+    <div class="read">
+      <div class="fig"><b>τ = J<sub>e</sub> / f</b><span id="e4-tau"></span></div>
+      <div class="fig"><b>Temps d'arrêt</b><span id="e4-stop"></span></div>
+      <div class="fig"><b>Tension initiale</b><span id="e4-e0"></span></div>
+      <div class="fig"><b>Ajustement</b><span id="e4-st"></span></div>
+    </div>
+    <p class="note">Mesure simulée d'après le corrigé (<span class="m">τ = J<sub>e</sub>/f</span> = 0,16 s, <span class="m">f</span> = 3,6 × 10<sup>−6</sup> N·m·s), avec du bruit ajouté. Corrigé : <span class="m">J<sub>e</sub></span> = 3,6 × 10<sup>−6</sup> × 0,16 ≈ 5,76 × 10<sup>−7</sup> kg·m². C'est l'inertie du rotor et du réducteur ramenée à l'axe moteur.</p>
+  </div>
+</div></section>
+
+<section id="bilan"><div class="wrap">
+  <div class="sec-h"><span class="kicker">Bilan</span><h2>Le constructeur avait-il raison ?</h2></div>
+  <div class="prose"><p><span class="m">K<sub>e</sub></span> est confirmé à environ 1 % près. <span class="m">R</span> s'écarte de 74 %, bien au-delà des 30 % recherchés : c'est la valeur à discuter en premier, puisqu'elle sert à calculer <span class="m">e</span>, donc <span class="m">K<sub>e</sub></span>, <span class="m">C<sub>f</sub></span>, <span class="m">f</span> et <span class="m">J<sub>e</sub></span>.</p></div>
+  <div class="panel tblw" style="padding:6px 12px">
+    <table>
+      <thead><tr><th>Paramètre</th><th>Constructeur</th><th>Identifié</th><th>Écart (repère à 30 %)</th></tr></thead>
+      <tbody>
+        <tr><td><span class="m">R</span> (Ω)</td><td class="n">3,33</td><td class="n">0,88</td><td><div class="ec"><span>74 %</span><div class="bar" style="flex:1"><i class="hi" style="width:73.6%"></i><u style="left:30%"></u></div></div></td></tr>
+        <tr><td><span class="m">L</span> (mH)</td><td class="n">non fournie</td><td class="n">2,6</td><td class="note">Fiche sans inductance</td></tr>
+        <tr><td><span class="m">K<sub>e</sub> = K<sub>c</sub></span> (mV/(rad/s))</td><td class="n">10</td><td class="n">9,88</td><td><div class="ec"><span>1,2 %</span><div class="bar" style="flex:1"><i style="width:1.2%"></i><u style="left:30%"></u></div></div></td></tr>
+        <tr><td><span class="m">C<sub>f</sub></span> (mN·m)</td><td class="n">non fournie</td><td class="n">1,09</td><td class="note">Identifié seulement</td></tr>
+        <tr><td><span class="m">f</span> (µN·m·s)</td><td class="n">non fournie</td><td class="n">3,6</td><td class="note">Identifié seulement</td></tr>
+        <tr><td><span class="m">J<sub>e</sub></span> (10<sup>−7</sup> kg·m²)</td><td class="n">non fournie</td><td class="n">5,76</td><td class="note">Rotor + réducteur, côté moteur</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose" style="margin-top:26px"><h3>Pour le rapport d'activité</h3><p class="note">La dernière question du TP demande une synthèse, ses limites de validité et un regard critique. Chaque piste s'ouvre.</p></div>
+  <div style="margin-top:12px;max-width:760px">
+    <details><summary>Pourquoi 0,88 Ω au lieu de 3,33 Ω ?</summary><div class="d">La valeur du constructeur est une extrapolation à rotor bloqué : la fiche la marque « Stall Extrapolation ». La mesure, elle, est faite sous 0,2 V seulement. Quel rôle jouent le contact balais-collecteur, l'échauffement, ou un rotor qui n'est pas réellement bloqué ?</div></details>
+    <details><summary>Que signifie l'ordonnée à l'origine de e(ω) ?</summary><div class="d">Le modèle prévoit une fcem nulle à vitesse nulle. La régression donne environ 0,16 V. Une chute de tension aux balais, ou une erreur sur R, peuvent l'expliquer. Dans le simulateur de l'essai 2, que devient cette ordonnée quand R change ?</div></details>
+    <details><summary>Pourquoi Kc = Ke en unités SI ?</summary><div class="d">Écrivez la puissance électrique convertie en puissance mécanique, sans pertes : e·i = C<sub>m</sub>·ω. Remplacez e et C<sub>m</sub> par leurs expressions et simplifiez.</div></details>
+    <details><summary>Les résidus de la régression i(ω) sont-ils aléatoires ?</summary><div class="d">Dans l'essai 3, le point à plus basse vitesse est nettement sous la droite et les points voisins sont au-dessus. Un frottement sec constant suffit-il à décrire le comportement à basse vitesse ?</div></details>
+    <details><summary>Quelle confiance accorder à Je ?</summary><div class="d">J<sub>e</sub> = f × (J<sub>e</sub>/f). Or f est très petit (3,6 µN·m·s) et vient d'une pente faible. L'erreur relative sur f s'ajoute à celle sur τ. Comment l'incertitude sur J<sub>e</sub> se compare-t-elle à celle sur K<sub>e</sub> ?</div></details>
+    <details><summary>Quel terme domine l'incertitude sur le courant ?</summary><div class="d">L'incertitude totale suit δX<sub>tot</sub> = √(Σ δX<sub>i</sub>²), avec le boîtier PicoScope, la pince ampèremétrique et le bruit. Pour un courant de 225 mA, comparez les trois contributions à partir des fiches de l'annexe.</div></details>
+    <details><summary>Et avec le robot chargé ?</summary><div class="d">J<sub>e</sub> est l'inertie du rotor et du réducteur ramenée à l'axe moteur. Sur le Geeros, les roues et le châssis ajoutent une inertie : comment se ramène-t-elle à l'axe moteur à travers un réducteur de rapport 34 ?</div></details>
+  </div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="sec-h"><span class="kicker">Pour vérifier</span><h2>Quiz en 8 questions</h2></div>
+  <div class="qz" id="qz" aria-live="polite"></div>
+</div></section>
+</main>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s);};
+var TAU2=2*Math.PI;
+function fr(x,d){d=(d==null)?2:d;return x.toFixed(d).replace('.',',').replace('-','−');}
+function sci(x,d){if(x===0)return '0';var e=Math.floor(Math.log10(Math.abs(x)));var m=x/Math.pow(10,e);return fr(m,d)+' × 10<sup>'+(e<0?'−':'')+Math.abs(e)+'</sup>';}
+function prng(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function gaussFrom(r){return function(){var s=0;for(var k=0;k<6;k++)s+=r();return (s-3)*1.2;};}
+function lsq(x,y){var n=x.length,mx=0,my=0,k;for(k=0;k<n;k++){mx+=x[k];my+=y[k];}mx/=n;my/=n;var sxy=0,sxx=0;for(k=0;k<n;k++){sxy+=(x[k]-mx)*(y[k]-my);sxx+=(x[k]-mx)*(x[k]-mx);}var a=sxy/sxx;return [a,my-a*mx];}
+function r1(v){return Math.round(v*10)/10;}
+
+var P={R:0.88,Ke:0.01,Kc:0.01,cs:1.09e-3,f:3.6e-6,Je:5.76e-7,N:34};
+
+/* ---------- cadre de graphique ---------- */
+function frame(host,c){
+  var W=Math.max(300,host.clientWidth||600),H=Math.round(Math.min(360,Math.max(250,W*0.58)));
+  var m={l:c.ml||52,r:c.mr||14,t:12,b:40};
+  var sx=function(v){return m.l+(v-c.x0)/(c.x1-c.x0)*(W-m.l-m.r);};
+  var sy=function(v){return H-m.b-(v-c.y0)/(c.y1-c.y0)*(H-m.t-m.b);};
+  var s='',i,v;
+  for(i=0;i<c.xt.length;i++){v=c.xt[i];s+='<line class="gl" x1="'+r1(sx(v))+'" x2="'+r1(sx(v))+'" y1="'+m.t+'" y2="'+(H-m.b)+'"/><text class="tk" x="'+r1(sx(v))+'" y="'+(H-m.b+16)+'" text-anchor="middle">'+(c.xf?c.xf(v):v)+'</text>';}
+  for(i=0;i<c.yt.length;i++){v=c.yt[i];s+='<line class="gl" y1="'+r1(sy(v))+'" y2="'+r1(sy(v))+'" x1="'+m.l+'" x2="'+(W-m.r)+'"/><text class="tk" x="'+(m.l-8)+'" y="'+r1(sy(v)+4)+'" text-anchor="end">'+(c.yf?c.yf(v):v)+'</text>';}
+  if(c.y0<0)s+='<line class="zero" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+r1(sy(0))+'" y2="'+r1(sy(0))+'"/>';
+  if(c.x0<0)s+='<line class="zero" y1="'+m.t+'" y2="'+(H-m.b)+'" x1="'+r1(sx(0))+'" x2="'+r1(sx(0))+'"/>';
+  s+='<text class="axl" x="'+r1(m.l+(W-m.l-m.r)/2)+'" y="'+(H-4)+'" text-anchor="middle">'+c.xlab+'</text>';
+  s+='<text class="axl" transform="translate(13 '+r1(m.t+(H-m.t-m.b)/2)+') rotate(-90)" text-anchor="middle">'+c.ylab+'</text>';
+  return {W:W,H:H,m:m,sx:sx,sy:sy,s:s};
+}
+function clip(f,id){return '<clipPath id="'+id+'"><rect x="'+f.m.l+'" y="'+f.m.t+'" width="'+(f.W-f.m.l-f.m.r)+'" height="'+(f.H-f.m.t-f.m.b)+'"/></clipPath>';}
+function wrap(f,inner,label){return '<svg viewBox="0 0 '+f.W+' '+f.H+'" width="'+f.W+'" height="'+f.H+'" role="img" aria-label="'+label+'">'+inner+'</svg>';}
+function path(pts,f){var d='';for(var i=0;i<pts.length;i++)d+=(i?'L':'M')+r1(f.sx(pts[i][0]))+' '+r1(f.sy(pts[i][1]));return d;}
+
+/* ---------- démo ---------- */
+var hu=$('#hu'),rotor=$('#rotor'),ang=0,wVis=0,last=0;
+var Udec=P.R*P.cs/P.Kc;
+function steady(U){
+  if(U<=Udec)return {w:0,i:U/P.R};
+  var w=(U-P.R*P.cs/P.Kc)/(P.Ke+P.R*P.f/P.Kc);
+  return {w:w,i:(P.cs+P.f*w)/P.Kc};
+}
+function heroUpdate(){
+  var U=+hu.value,s=steady(U);
+  $('#hu-o').textContent=fr(U,2)+' V';
+  $('#h-w').textContent=Math.round(s.w)+' rad/s';
+  $('#h-rpm').textContent=Math.round(s.w*60/TAU2)+' tr/min';
+  $('#h-out').textContent=Math.round(s.w/P.N*60/TAU2)+' tr/min';
+  $('#h-i').textContent=Math.round(s.i*1000)+' mA';
+  $('#h-state').textContent=(s.w===0)?('Le rotor reste à l’arrêt : le couple moteur ne vainc pas le frottement sec. Tension de décollage du modèle : R·Cf/Kc ≈ '+fr(Udec,2)+' V.'):('Régime permanent : '+fr(U,2)+' V = R·i + Ke·ω, avec i = (Cf + f·ω)/Kc.');
+  wVis=s.w/572*1080;
+}
+hu.addEventListener('input',heroUpdate);
+if(!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){
+  var tick=function(ts){var dt=Math.min(0.05,(ts-last)/1000);last=ts;ang=(ang+wVis*dt)%360;rotor.setAttribute('transform','rotate('+ang.toFixed(1)+' 120 100)');requestAnimationFrame(tick);};
+  requestAnimationFrame(function(ts){last=ts;requestAnimationFrame(tick);});
+}
+
+/* ---------- essai 1 ---------- */
+var g1=gaussFrom(prng(11)),E1={U:0.2,Rt:0.88,tau:3},e1d=[];
+(function(){for(var k=-20;k<=200;k++){var t=k/10,c=t<0?0:E1.U/E1.Rt*(1-Math.exp(-t/E1.tau))*1000;e1d.push([t,c+g1()*6.5]);}})();
+function drawE1(){
+  var R=+$('#e1-R').value,tau=+$('#e1-T').value,U=E1.U,inf=U/R*1000;
+  $('#e1-R-o').textContent=fr(R,2)+' Ω';$('#e1-T-o').textContent=fr(tau,1)+' ms';
+  var host=$('#e1-chart');
+  var f=frame(host,{x0:-2,x1:20,y0:-25,y1:345,xt:[0,5,10,15,20],yt:[0,100,200,300],xlab:'t (ms)',ylab:'i (mA)'});
+  var s=f.s+clip(f,'e1c')+'<g clip-path="url(#e1c)">',i,pts=[];
+  for(i=0;i<e1d.length;i++)s+='<circle class="mes" cx="'+r1(f.sx(e1d[i][0]))+'" cy="'+r1(f.sy(e1d[i][1]))+'" r="2"/>';
+  for(i=0;i<=220;i++){var t=-2+i*0.1;pts.push([t,t<0?0:inf*(1-Math.exp(-t/tau))]);}
+  s+='<path class="mod" d="'+path(pts,f)+'"/>';
+  if($('#e1-ref').checked){
+    s+='<line class="ref" x1="'+f.m.l+'" x2="'+(f.W-f.m.r)+'" y1="'+r1(f.sy(inf))+'" y2="'+r1(f.sy(inf))+'"/>';
+    s+='<line class="ref" x1="'+f.m.l+'" x2="'+r1(f.sx(tau))+'" y1="'+r1(f.sy(0.63*inf))+'" y2="'+r1(f.sy(0.63*inf))+'"/>';
+    s+='<line class="ref" x1="'+r1(f.sx(tau))+'" x2="'+r1(f.sx(tau))+'" y1="'+r1(f.sy(0.63*inf))+'" y2="'+r1(f.sy(0))+'"/>';
+    s+='<text class="reft" x="'+(f.W-f.m.r-6)+'" y="'+r1(f.sy(inf)-6)+'" text-anchor="end">U/R</text>';
+    s+='<text class="reft" x="'+(f.m.l+6)+'" y="'+r1(f.sy(0.63*inf)-6)+'">63 %</text>';
+    s+='<text class="reft" x="'+r1(f.sx(tau)+5)+'" y="'+r1(f.sy(0)-6)+'">τ</text>';
+  }
+  s+='</g>';
+  host.innerHTML=wrap(f,s,'Courant en fonction du temps, mesure et modèle du premier ordre');
+  var se=0,n=0;for(i=0;i<e1d.length;i++){if(e1d[i][0]>=0){var mi=inf*(1-Math.exp(-e1d[i][0]/tau));se+=Math.pow(e1d[i][1]-mi,2);n++;}}
+  var rms=Math.sqrt(se/n);
+  $('#e1-inf').textContent=Math.round(inf)+' mA';$('#e1-tau').textContent=fr(tau,1)+' ms';$('#e1-L').textContent=fr(R*tau,2)+' mH';
+  var ok=rms<9;
+  $('#e1-st').innerHTML='<span class="pill'+(ok?' ok':'')+'">'+(ok?'Superposé':'Écart '+Math.round(rms)+' mA rms')+'</span>';
+}
+$('#e1-R').addEventListener('input',drawE1);$('#e1-T').addEventListener('input',drawE1);$('#e1-ref').addEventListener('change',drawE1);
+$('#e1-ctor').addEventListener('click',function(){$('#e1-R').value=3.33;drawE1();});
+$('#e1-fit').addEventListener('click',function(){$('#e1-R').value=0.88;$('#e1-T').value=3;drawE1();});
+
+/* ---------- relevés essais 2 et 3 ---------- */
+var RAW={t:[3.77,4.35,5.40,6.49,8.69,12.66,23.49,103],ic:[0.930,0.830,0.730,0.672,0.630,0.550,0.460,0.272],u:[6,5.2,4.4,3.6,2.8,2,1.2,0.4]};
+var DATA=RAW.t.map(function(t,k){return {t:t,u:RAW.u[k],w:10*TAU2*P.N/t,i:RAW.ic[k]/3};}).sort(function(a,b){return a.w-b.w;});
+function xs(){return DATA.map(function(d){return d.w;});}
+
+function makeLab(o){
+  var A=$(o.a),B=$(o.b);
+  function draw(){
+    var a=+A.value,b=+B.value,x=xs(),y=o.y(),fit=lsq(x,y),k;
+    var host=$(o.chart);
+    var f=frame(host,{x0:0,x1:600,y0:o.y0,y1:o.y1,xt:[0,100,200,300,400,500,600],yt:o.yt,yf:o.yf,xlab:'ω moteur (rad/s)',ylab:o.ylab});
+    var s=f.s+clip(f,o.id+'c')+'<g clip-path="url(#'+o.id+'c)">';
+    for(k=0;k<x.length;k++)s+='<line class="res" x1="'+r1(f.sx(x[k]))+'" x2="'+r1(f.sx(x[k]))+'" y1="'+r1(f.sy(y[k]))+'" y2="'+r1(f.sy(a*x[k]+b))+'"/>';
+    s+='<line class="mod" x1="'+r1(f.sx(0))+'" y1="'+r1(f.sy(b))+'" x2="'+r1(f.sx(600))+'" y2="'+r1(f.sy(a*600+b))+'"/>';
+    for(k=0;k<x.length;k++)s+='<circle class="mes" cx="'+r1(f.sx(x[k]))+'" cy="'+r1(f.sy(y[k]))+'" r="4.5"/>';
+    s+='</g>';
+    host.innerHTML=wrap(f,s,o.label);
+    var res=x.map(function(xx,j){return y[j]-(a*xx+b);});
+    var rms=Math.sqrt(res.reduce(function(p,r){return p+r*r;},0)/res.length);
+    var near=Math.abs(a-fit[0])/Math.abs(fit[0])<0.03&&Math.abs(b-fit[1])<o.btol;
+    o.update({a:a,b:b,fit:fit,res:res,rms:rms,near:near});
+  }
+  A.addEventListener('input',draw);B.addEventListener('input',draw);
+  $(o.fit).addEventListener('click',function(){var fit=lsq(xs(),o.y());A.value=fit[0];B.value=fit[1];draw();});
+  return draw;
+}
+function pill(el,ok,txtOk,txtKo){el.className='pill'+(ok?' ok':'');el.textContent=ok?txtOk:txtKo;}
+
+/* ---------- essai 2 ---------- */
+function l2R(){return +$('#l2-R').value;}
+var drawL2=makeLab({id:'l2',chart:'#l2-chart',a:'#l2-a',b:'#l2-b',fit:'#l2-fit',y0:-0.5,y1:6.6,yt:[0,1,2,3,4,5,6],yf:function(v){return v;},ylab:'e = u − R·i (V)',label:'Fcem en fonction de la vitesse, points de mesure et droite réglée',btol:0.04,
+  y:function(){var R=l2R();return DATA.map(function(d){return d.u-R*d.i;});},
+  update:function(r){
+    $('#l2-a-o').textContent=fr(r.a*1000,2)+' mV/(rad/s)';$('#l2-b-o').textContent=fr(r.b,3)+' V';$('#l2-R-o').textContent=fr(l2R(),2)+' Ω';
+    $('#l2-ke').innerHTML=sci(r.a,2)+' V/(rad/s)';
+    $('#l2-ec').textContent=fr(Math.abs(P.Ke-r.a)/P.Ke*100,1)+' %';
+    $('#l2-ob').textContent=fr(r.b,2)+' V';$('#l2-rms').textContent=fr(r.rms,3)+' V';
+    pill($('#l2-pill'),r.near,'Moindres carrés','Ajustez ou lancez la régression');
+    var tb='';for(var k=DATA.length-1;k>=0;k--){var d=DATA[k];tb+='<tr><td class="n">'+fr(d.u,1)+'</td><td class="n">'+fr(d.t,2)+'</td><td class="n">'+fr(d.w,1)+'</td><td class="n">'+fr(d.i*1000,1)+'</td><td class="n">'+fr(d.u-l2R()*d.i,3)+'</td></tr>';}
+    $('#l2-tb').innerHTML=tb;
+  }});
+$('#l2-R').addEventListener('input',drawL2);
+$('#l2-r0').addEventListener('click',function(){$('#l2-R').value=0.88;$('#l2-fit').click();});
+$('#l2-r1').addEventListener('click',function(){$('#l2-R').value=3.33;$('#l2-fit').click();});
+
+/* ---------- essai 3 ---------- */
+var drawL3=makeLab({id:'l3',chart:'#l3-chart',a:'#l3-a',b:'#l3-b',fit:'#l3-fit',y0:-0.01,y1:0.35,yt:[0,0.05,0.1,0.15,0.2,0.25,0.3,0.35],yf:function(v){return fr(v,2);},ylab:'i moteur (A)',label:'Courant en fonction de la vitesse, points de mesure et droite réglée',btol:0.012,ml:56,
+  y:function(){return DATA.map(function(d){return d.i;});},
+  update:function(r){
+    $('#l3-a-o').innerHTML=sci(r.a,2)+' A/(rad/s)';$('#l3-b-o').textContent=fr(r.b,3)+' A';
+    $('#l3-cs').innerHTML=fr(P.Kc*r.b*1000,2)+' mN·m';
+    $('#l3-f').innerHTML=fr(P.Kc*r.a*1e6,1)+' µN·m·s';
+    $('#l3-rms').textContent=fr(r.rms*1000,1)+' mA';
+    pill($('#l3-pill'),r.near,'Moindres carrés','Ajustez ou lancez la régression');
+    $('#l3-res').textContent='Résidus (mA), de la vitesse la plus basse à la plus haute : '+r.res.map(function(v){return (v>=0?'+':'−')+Math.abs(v*1000).toFixed(0);}).join(' ; ');
+  }});
+
+/* ---------- essai 4 ---------- */
+var g4=gaussFrom(prng(23)),e4d=[],K4=P.cs/P.f,TAUT=P.Je/P.f;
+(function(){for(var k=0;k<=75;k++){var t=k*0.004,w=Math.max(0,(572+K4)*Math.exp(-t/TAUT)-K4);e4d.push([t,w+g4()*3.2]);}})();
+function drawE4(){
+  var Je=+$('#e4-J').value*1e-7,w0=+$('#e4-w').value,dry=$('#e4-dry').checked,tau=Je/P.f;
+  $('#e4-J-o').innerHTML=fr(+$('#e4-J').value,1)+' × 10<sup>−7</sup> kg·m²';$('#e4-w-o').textContent=Math.round(w0)+' rad/s';
+  function om(t){return dry?(w0+K4)*Math.exp(-t/tau)-K4:w0*Math.exp(-t/tau);}
+  var tstop=dry?tau*Math.log(1+w0/K4):Infinity;
+  var host=$('#e4-chart');
+  var f=frame(host,{x0:0,x1:0.3,y0:-350,y1:650,xt:[0,0.05,0.1,0.15,0.2,0.25,0.3],xf:function(v){return fr(v,2);},yt:[-300,0,200,400,600],xlab:'t après la coupure (s)',ylab:'ω moteur (rad/s)',mr:54});
+  var s=f.s+clip(f,'e4c'),vv=[0,2,4,6],i;
+  for(i=0;i<vv.length;i++)s+='<text class="tk" x="'+(f.W-f.m.r+8)+'" y="'+r1(f.sy(vv[i]/P.Ke)+4)+'">'+vv[i]+'</text>';
+  s+='<text class="axl" transform="translate('+(f.W-6)+' '+r1(f.m.t+(f.H-f.m.t-f.m.b)/2)+') rotate(-90)" text-anchor="middle">e = Ke·ω (V)</text>';
+  s+='<g clip-path="url(#e4c)">';
+  for(i=0;i<e4d.length;i++)s+='<circle class="mes" cx="'+r1(f.sx(e4d[i][0]))+'" cy="'+r1(f.sy(e4d[i][1]))+'" r="2.6"/>';
+  var ph=[],vt=[],t;
+  for(i=0;i<=150;i++){t=i*0.002;var w=om(t);ph.push([t,(dry&&w<0)?0:w]);if(dry&&t>=tstop-0.002)vt.push([t,w]);}
+  if(dry){
+    s+='<line class="ref" x1="'+f.m.l+'" x2="'+(f.W-f.m.r)+'" y1="'+r1(f.sy(-K4))+'" y2="'+r1(f.sy(-K4))+'"/><text class="reft" x="'+(f.m.l+6)+'" y="'+r1(f.sy(-K4)-6)+'">−Cf/f ≈ −'+Math.round(K4)+' rad/s</text>';
+    if(vt.length)s+='<path class="virt" d="'+path(vt,f)+'"/>';
+  }
+  s+='<path class="mod" d="'+path(ph,f)+'"/></g>';
+  host.innerHTML=wrap(f,s,'Vitesse du moteur après coupure, mesure et modèle');
+  $('#e4-tau').textContent=fr(tau,2)+' s';
+  $('#e4-stop').textContent=dry?(fr(tstop,2)+' s'):'jamais';
+  $('#e4-e0').textContent=fr(P.Ke*w0,2)+' V';
+  var ok=dry&&Math.abs(Je-P.Je)/P.Je<0.07&&Math.abs(w0-572)<25;
+  $('#e4-st').innerHTML='<span class="pill'+(ok?' ok':'')+'">'+(ok?'Superposé':'À ajuster')+'</span>';
+}
+$('#e4-J').addEventListener('input',drawE4);$('#e4-w').addEventListener('input',drawE4);$('#e4-dry').addEventListener('change',drawE4);
+$('#e4-fit').addEventListener('click',function(){$('#e4-J').value=5.76;$('#e4-w').value=572;$('#e4-dry').checked=true;drawE4();});
+
+/* ---------- quiz ---------- */
+var QZ=[
+ {q:'Rotor bloqué : pourquoi la fcem est-elle nulle ?',o:['Parce que le courant est nul','Parce que ω = 0 et e = Ke·ω','Parce que L = 0','Parce que la tension est constante'],a:1,x:'La fcem est proportionnelle à la vitesse : ω = 0 donne e = 0, et il reste u = R·i + L·di/dt.'},
+ {q:'Rotor bloqué, quel est le gain statique de H(p) = I(p)/U(p) ?',o:['R','1/R','L/R','1/L'],a:1,x:'H(p) = (1/R)/(1 + (L/R)·p). En régime établi, i = u/R, donc le gain statique vaut 1/R.'},
+ {q:'Sur la réponse i(t) à un échelon, à quel pourcentage de la valeur finale lit-on τ ?',o:['37 %','50 %','63 %','95 %'],a:2,x:'1 − e⁻¹ ≈ 0,63. Le temps à 63 % de la valeur finale vaut τ = L/R.'},
+ {q:'Le constructeur donne Ke = 0,34 V/(rad/s) en sortie du réducteur 34:1. Que vaut Ke côté rotor ?',o:['0,34 V/(rad/s)','0,01 V/(rad/s)','11,6 V/(rad/s)','0,058 V/(rad/s)'],a:1,x:'Le rotor tourne 34 fois plus vite que la sortie : Ke(rotor) = 0,34 / 34 = 0,01 V/(rad/s). Il faut toujours préciser l’arbre de référence.'},
+ {q:'Pourquoi Kc = Ke en unités SI ?',o:['Par définition du constructeur','Parce que la puissance électrique convertie égale la puissance mécanique : e·i = Cm·ω','Parce que R est petite','Parce que le réducteur est idéal'],a:1,x:'Sans pertes, Ke·ω·i = Kc·i·ω, donc Kc = Ke.'},
+ {q:'En régime permanent, que représente l’ordonnée à l’origine de i(ω) ?',o:['f/Kc','Cf/Kc','Ke','R'],a:1,x:'Kc·i = Cf + f·ω, soit i = Cf/Kc + (f/Kc)·ω. L’ordonnée vaut Cf/Kc et la pente f/Kc.'},
+ {q:'Après la coupure de l’alimentation, que mesure la tension aux bornes du moteur ?',o:['La tension de l’alimentation','R·i','La fcem e = Ke·ω, donc la vitesse','Rien : elle est nulle'],a:2,x:'Le courant est nul, donc u = e = Ke·ω. L’oscilloscope visualise la décélération du rotor.'},
+ {q:'Pourquoi le rotor s’arrête-t-il en un temps fini au lieu de décroître indéfiniment ?',o:['L’inductance retient l’énergie','Le frottement sec : l’exponentielle tend vers −Cf/f, qui est négatif','Le réducteur bloque','La résistance est trop faible'],a:1,x:'ω(t) = (ω₀ + Cf/f)·e^(−t/τ) − Cf/f s’annule en un temps fini. Sans Cf, on retrouve une exponentielle pure qui ne s’annule jamais.'}
+];
+var qi=0,score=0,answered=false,hist=[];
+function bar(){var h='<div class="qz-p" aria-hidden="true">';for(var k=0;k<QZ.length;k++)h+='<i class="'+(k<hist.length?(hist[k]?'ok':'ko'):(k===qi?'on':''))+'"></i>';return h+'</div>';}
+function renderQ(){
+  var root=$('#qz'),h;
+  if(qi>=QZ.length){
+    var msg=score>=7?'La méthode est solide.':(score>=4?'Correct. Relisez les essais où vous avez hésité.':'À reprendre : refaites les simulateurs dans l’ordre.');
+    root.innerHTML=bar()+'<p class="qz-n">Résultat</p><p class="qz-score">'+score+' / '+QZ.length+'</p><p>'+msg+'</p><div class="row"><button class="btn pri" id="qz-again" type="button">Rejouer</button></div>';
+    return;
+  }
+  var it=QZ[qi];answered=false;
+  h=bar()+'<p class="qz-n">Question '+(qi+1)+' / '+QZ.length+'</p><p class="qz-q">'+it.q+'</p><div class="qz-o">';
+  for(var k=0;k<it.o.length;k++)h+='<button class="opt" type="button" data-k="'+k+'">'+it.o[k]+'</button>';
+  root.innerHTML=h+'</div><div class="qz-x" hidden></div><div class="row"><button class="btn pri" id="qz-next" type="button" hidden>'+(qi===QZ.length-1?'Voir le résultat':'Question suivante')+'</button></div>';
+}
+$('#qz').addEventListener('click',function(e){
+  var t=e.target;
+  if(t.id==='qz-again'){qi=0;score=0;hist=[];renderQ();return;}
+  if(t.id==='qz-next'){qi++;renderQ();return;}
+  if(t.classList&&t.classList.contains('opt')&&!answered){
+    answered=true;var k=+t.getAttribute('data-k'),it=QZ[qi],ok=(k===it.a),btns=document.querySelectorAll('#qz .opt');
+    for(var j=0;j<btns.length;j++){btns[j].disabled=true;if(j===it.a)btns[j].classList.add('ok');}
+    if(!ok)t.classList.add('ko');
+    if(ok)score++;hist.push(ok);
+    var x=$('#qz .qz-x');x.hidden=false;x.textContent=(ok?'Exact. ':'Pas tout à fait. ')+it.x;
+    $('#qz-next').hidden=false;
+  }
+});
+
+/* thème clair / sombre / auto */
+var root=document.documentElement;
+function applyTheme(m,save){
+  if(m==='auto')root.removeAttribute('data-theme');else root.setAttribute('data-theme',m);
+  var bs=document.querySelectorAll('[data-theme-set]');
+  for(var i=0;i<bs.length;i++)bs[i].setAttribute('aria-pressed',String(bs[i].getAttribute('data-theme-set')===m));
+  if(save){try{localStorage.setItem('mcc-theme',m);}catch(e){}}
+}
+(function(){
+  var bs=document.querySelectorAll('[data-theme-set]');
+  for(var i=0;i<bs.length;i++)bs[i].addEventListener('click',function(e){applyTheme(e.currentTarget.getAttribute('data-theme-set'),true);});
+  try{var m=localStorage.getItem('mcc-theme');if(m==='light'||m==='dark')applyTheme(m,false);}catch(e){}
+})();
+
+function all(){heroUpdate();drawE1();drawL2();drawL3();drawE4();}
+var raf=0;window.addEventListener('resize',function(){cancelAnimationFrame(raf);raf=requestAnimationFrame(function(){drawE1();drawL2();drawL3();drawE4();});});
+all();renderQ();
+})();
+</script>
+
+</body></html>
