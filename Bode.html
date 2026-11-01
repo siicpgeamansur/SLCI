@@ -3,7 +3,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;1,400&display=swap">
 <style>
-/* Mise en page à la GeoGebra : volet « Algèbre » à gauche (fonctions de transfert, paramètres, marges),
+/* Mise en page : volet « Algèbre » à gauche (fonctions de transfert, paramètres, marges),
    vues graphiques à droite (gain puis phase) sur fond blanc. Le volet passe au-dessus sur écran étroit. */
 :root {
   --bg: #ffffff;
@@ -25,7 +25,33 @@
   --bad-bg: #fdecea;
   --bad-fg: #a12622;
   --font: 'Open Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  --on-ui: #ffffff;
+  --on-bc: #ffffff;
   color-scheme: light;
+}
+/* Thème sombre */
+:root[data-theme="dark"] {
+  --bg: #15171c;
+  --panel: #1d2027;
+  --head: #262a33;
+  --fg: #e6e8ec;
+  --muted: #9aa1ad;
+  --rule: #3a3f4a;
+  --grid: #3a3f4a;
+  --grid-minor: #2a2e37;
+  --axis: #d5d8de;
+  --ui: #9a8cff;
+  --curve: #64b5f6;
+  --pm: #ef5350;
+  --gm: #66bb6a;
+  --corner: #ffb74d;
+  --ok-bg: #1b3a26;
+  --ok-fg: #8be0a4;
+  --bad-bg: #44211f;
+  --bad-fg: #ff9a94;
+  --on-ui: #15171c;
+  --on-bc: #15171c;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -77,6 +103,8 @@ figure.view { margin: 0; }
 .dot.red { background: var(--pm); box-shadow: 0 0 0 1px var(--pm); }
 .dot.green { background: var(--gm); box-shadow: 0 0 0 1px var(--gm); }
 .dot.grey { background: var(--muted); box-shadow: 0 0 0 1px var(--muted); }
+/* Chaque bloc a sa couleur (variable --bc) */
+.item[data-id] .dot { background: var(--bc); box-shadow: 0 0 0 1px var(--bc); }
 .item .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .head-row { display: flex; align-items: center; gap: 8px; }
 .head-row .ttl { font-style: italic; font-weight: 600; flex: none; }
@@ -127,6 +155,10 @@ input[type="range"]::-webkit-slider-runnable-track { height: 3px; background: va
 input[type="range"]::-moz-range-track { height: 3px; background: var(--ui); border-radius: 2px; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6.5px; border-radius: 50%; background: var(--ui); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--ui); }
 input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--ui); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--ui); }
+.item[data-id] input[type="range"]::-webkit-slider-runnable-track { background: var(--bc); }
+.item[data-id] input[type="range"]::-moz-range-track { background: var(--bc); }
+.item[data-id] input[type="range"]::-webkit-slider-thumb { background: var(--bc); box-shadow: 0 0 0 1px var(--bc); }
+.item[data-id] input[type="range"]::-moz-range-thumb { background: var(--bc); box-shadow: 0 0 0 1px var(--bc); }
 input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--ui); outline-offset: 2px; }
 
 .adders { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -142,6 +174,13 @@ input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px s
   cursor: pointer;
 }
 .btn:hover { background: var(--head); }
+/* Bouton « Ajout à la FT totale » : plein et coloré quand la courbe du bloc est superposée */
+.togs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tog { border-color: var(--bc); color: var(--bc); font-weight: 600; }
+.tog:hover { background: var(--head); }
+.tog[aria-pressed="true"] { background: var(--bc); color: var(--on-bc); }
+#theme { margin-left: auto; }
+.tog[aria-pressed="true"]:hover { filter: brightness(1.08); }
 
 .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
 .line .k { color: var(--muted); }
@@ -150,7 +189,7 @@ input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px s
 .seg label { padding: 2px 12px; cursor: pointer; font-size: 0.85rem; border-right: 1px solid var(--rule); }
 .seg label:last-child { border-right: 0; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
-.seg label:has(input:checked) { background: var(--ui); color: #fff; }
+.seg label:has(input:checked) { background: var(--ui); color: var(--on-ui); }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--ui); outline-offset: -2px; }
 .range-row { display: grid; grid-template-columns: auto 6rem auto 6rem; gap: 6px 8px; align-items: center; }
 .pill { display: inline-block; padding: 1px 10px; border-radius: 999px; font-weight: 600; font-size: 0.85rem; }
@@ -174,6 +213,8 @@ svg .axis { stroke: var(--axis); stroke-width: 1.4; }
 svg .zero { stroke: var(--axis); stroke-width: 1.2; opacity: 0.7; }
 svg .arrow { fill: var(--axis); }
 svg .curve { fill: none; stroke: var(--curve); stroke-width: 2.4; stroke-linejoin: round; }
+/* Courbes de chaque FT : couleur propre au bloc (attribut stroke), opacité 60 % */
+svg .bcurve { fill: none; stroke-width: 1.6; stroke-linejoin: round; stroke-opacity: 0.6; stroke-dasharray: 7 4; }
 svg .ref180 { stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 6 4; }
 svg .mline-pm { stroke: var(--pm); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: 0.8; }
 svg .mline-gm { stroke: var(--gm); stroke-width: 1.2; stroke-dasharray: 4 4; opacity: 0.8; }
@@ -199,6 +240,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
   <header>
     <h1>Diagramme de Bode</h1>
     <p id="g-formula"></p>
+    <button type="button" class="btn" id="theme" aria-label="Changer de thème clair ou sombre"></button>
     <p id="g-formula-num" class="num"></p>
   </header>
 
@@ -258,7 +300,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
       <figure class="view">
         <h2>Phase</h2>
         <div class="plot" id="plotP"></div>
-        <figcaption>Rouge : marge de phase M<sub>φ</sub> = 180° + φ(ω<sub>c</sub>). Orange pointillé : pulsations de cassure de chaque fonction. Vert : marge de gain M<sub>G</sub> = −G(ω<sub>180</sub>).</figcaption>
+        <figcaption>Bleu : FT totale, produit des H<sub>i</sub> dont « Ajout FT totale » est actif. Courbes colorées en tirets fins (opacité 60 %) : Bode de chaque H<sub>i</sub> dont « Ajout FT individuelle » est actif. Rouge : marge de phase M<sub>φ</sub> = 180° + φ(ω<sub>c</sub>). Orange pointillé : pulsations de cassure de chaque fonction. Vert : marge de gain M<sub>G</sub> = −G(ω<sub>180</sub>).</figcaption>
       </figure>
     </div>
   </div>
@@ -271,6 +313,11 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
   var fmt = function (x, d) { return x.toFixed(d).replace('.', ',').replace('-', '−'); };
   var numStr = function (v) { return String(+v.toPrecision(4)); };
   var fw = function (w) { return String(+w.toPrecision(3)).replace('.', ','); };
+
+  /* Couleurs attribuées aux blocs (distinctes du bleu de la FT totale, du rouge et du vert des marges) */
+  var BCOL = ['#e65100', '#8e24aa', '#00897b', '#c2185b', '#6d4c41', '#0097a7', '#827717', '#455a64'];
+  var BCOL_DARK = ['#ffb74d', '#ce93d8', '#4db6ac', '#f48fb1', '#bcaaa4', '#4dd0e1', '#dce775', '#90a4ae'];
+  function colorOf(b) { return (S.theme === 'dark' ? BCOL_DARK : BCOL)[(b.id - 1) % BCOL.length]; }
 
   /* Types de fonctions : chaque ev(p, w) renvoie [gain en dB, phase en rad] (phase continue) */
   var TYPES = {
@@ -334,8 +381,8 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
   var ORDER = ['first', 'second', 'P', 'PI', 'lead', 'integ'];
 
   /* État */
-  var S = { blocks: [], nextId: 1, unit: 'deg', auto: true, wmin: 0.1, wmax: 100, hover: null };
-  var cache = { m: null, W: [], G: [], P: [], g: null, p: null, W0: 600 };
+  var S = { blocks: [], nextId: 1, unit: 'deg', auto: true, wmin: 0.1, wmax: 100, hover: null, theme: 'light' };
+  var cache = { m: null, W: [], G: [], P: [], B: [], g: null, p: null, W0: 600 };
   var M = { l: 68, r: 26, t: 18, b: 44 };
 
   function defaults(type) {
@@ -343,18 +390,25 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     TYPES[type].params.forEach(function (d) { p[d.key] = d.def; });
     return p;
   }
+  /* show : le bloc est superposé à la FT totale (bouton « Ajout à la FT totale ») */
   function addBlock(type, params, inv) {
-    S.blocks.push({ id: S.nextId++, type: type, p: params || defaults(type), inv: !!inv });
+    S.blocks.push({ id: S.nextId++, type: type, p: params || defaults(type), inv: !!inv, show: true, tot: true });
   }
   addBlock('integ', { K: 5 });
   addBlock('first', { K: 1, tau: 1 });
   addBlock('first', { K: 1, tau: 0.1 });
 
+  /* Gain (dB) et phase (rad) d'un seul bloc, en tenant compte de l'inversion */
+  function evalBlock(b, w) {
+    var r = TYPES[b.type].ev(b.p, w), s = b.inv ? -1 : 1;
+    return [s * r[0], s * r[1]];
+  }
   function evalAt(w) {
     var db = 0, ph = 0;
     for (var i = 0; i < S.blocks.length; i++) {
-      var b = S.blocks[i], r = TYPES[b.type].ev(b.p, w), s = b.inv ? -1 : 1;
-      db += s * r[0]; ph += s * r[1];
+      if (!S.blocks[i].tot) continue; /* seuls les blocs « ajoutés à la FT totale » comptent */
+      var r = evalBlock(S.blocks[i], w);
+      db += r[0]; ph += r[1];
     }
     return [db, ph];
   }
@@ -392,7 +446,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
 
   function autoRange() {
     var c = [];
-    S.blocks.forEach(function (b) { c = c.concat(TYPES[b.type].corners(b.p)); });
+    S.blocks.forEach(function (b) { if (b.tot || b.show) c = c.concat(TYPES[b.type].corners(b.p)); });
     if (cache.m.wc) c.push(cache.m.wc);
     if (cache.m.w180) c.push(cache.m.w180);
     if (!c.length) c = [1];
@@ -408,19 +462,43 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     return list[list.length - 1];
   }
 
+  /* Étend [lo, hi] pour couvrir toutes les valeurs des tableaux de la liste */
+  function span(lists, lo, hi) {
+    lists.forEach(function (a) {
+      for (var i = 0; i < a.length; i++) {
+        if (a[i] < lo) lo = a[i];
+        if (a[i] > hi) hi = a[i];
+      }
+    });
+    return [lo, hi];
+  }
+
   function sample() {
     var N = 700, l0 = L(S.wmin), l1 = L(S.wmax), i;
-    cache.W = []; cache.G = []; cache.P = [];
+    cache.W = []; cache.G = []; cache.P = []; cache.B = [];
     for (i = 0; i <= N; i++) {
       var w = Math.pow(10, l0 + (l1 - l0) * i / N), v = evalAt(w);
       cache.W.push(w); cache.G.push(v[0]); cache.P.push(v[1] * 180 / PI);
     }
-    var gmin = Math.min(0, Math.min.apply(null, cache.G)), gmax = Math.max(0, Math.max.apply(null, cache.G));
+    /* courbes individuelles des blocs superposés */
+    S.blocks.forEach(function (b, bi) {
+      if (!b.show) return;
+      var c = { id: b.id, idx: bi, color: colorOf(b), G: [], P: [] };
+      for (var j = 0; j < cache.W.length; j++) {
+        var r = evalBlock(b, cache.W[j]);
+        c.G.push(r[0]); c.P.push(r[1] * 180 / PI);
+      }
+      cache.B.push(c);
+    });
+    var gl = [cache.G], pl = [cache.P];
+    cache.B.forEach(function (c) { gl.push(c.G); pl.push(c.P); });
+
+    var gr = span(gl, 0, 0), gmin = gr[0], gmax = gr[1];
     var gs = niceStep(gmax - gmin, [5, 10, 20, 40, 50, 100, 200, 500], 7);
     var g0 = Math.floor(gmin / gs) * gs, g1 = Math.ceil((gmax + (gmax - gmin) * 0.04) / gs) * gs;
     if (g1 - g0 < 2 * gs) { g0 -= gs; g1 += gs; }
     cache.g = { min: g0, max: g1, step: gs };
-    var m = cache.m, pmin = Math.min(-180, Math.min.apply(null, cache.P)), pmax = Math.max(-180, Math.max.apply(null, cache.P));
+    var m = cache.m, pr = span(pl, -180, -180), pmin = pr[0], pmax = pr[1];
     if (m.wc !== null) {
       var tgt = m.phc * 180 / PI - m.pm * 180 / PI;
       pmin = Math.min(pmin, tgt, m.phc * 180 / PI); pmax = Math.max(pmax, tgt, m.phc * 180 / PI);
@@ -437,11 +515,12 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     return b.inv ? '(' + f + ')<sup>−1</sup>' : f;
   }
   function globalFormula() {
-    if (!S.blocks.length) return 'H(p) = 1';
+    if (!hasTot()) return 'H(p) = 1';
     return 'H(p) = ' + S.blocks.map(function (b, i) {
-      return 'H<sub>' + (i + 1) + '</sub>' + (b.inv ? '<sup>−1</sup>' : '');
-    }).join(' · ');
+      return b.tot ? 'H<sub>' + (i + 1) + '</sub>' + (b.inv ? '<sup>−1</sup>' : '') : null;
+    }).filter(Boolean).join(' · ');
   }
+  function hasTot() { return S.blocks.some(function (b) { return b.tot; }); }
 
   /* Titre : produit symbolique puis valeurs actuelles */
   function coef(v) { return v === 1 ? '' : fw(v) + '·'; }
@@ -469,6 +548,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
   function buildFrac(num) {
     var N = [], D = [], k = 1;
     S.blocks.forEach(function (b, i) {
+      if (!b.tot) return;
       var t = terms(b, i, num);
       if (num) k *= b.inv ? 1 / t.k : t.k;
       Array.prototype.push.apply(b.inv ? D : N, t.g);
@@ -480,8 +560,8 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     return D.length ? '<span class="frac"><span>' + top + '</span><span>' + D.join(' ') + '</span></span>' : top;
   }
   function updateTitle() {
-    $('g-formula').innerHTML = globalFormula() + (S.blocks.length ? ' = ' + buildFrac(false) : '');
-    $('g-formula-num').innerHTML = S.blocks.length ? 'Valeurs actuelles : H(p) = ' + buildFrac(true) : '';
+    $('g-formula').innerHTML = globalFormula() + (hasTot() ? ' = ' + buildFrac(false) : '');
+    $('g-formula-num').innerHTML = hasTot() ? 'Valeurs actuelles : H(p) = ' + buildFrac(true) : '';
   }
 
   /* Volet Algèbre : construction des cartes */
@@ -500,11 +580,14 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
         '<input type="number" step="any" min="0" id="n-' + id + '-' + d.key + '" data-p="' + d.key + '" value="' + numStr(b.p[d.key]) + '">' +
         '<input type="range" min="0" max="1000" step="1" id="r-' + id + '-' + d.key + '" data-p="' + d.key + '" value="' + valToPos(b.p[d.key], d.min, d.max) + '" aria-label="Curseur de ' + d.n + '"></div>';
     }).join('');
-    return '<div class="item" data-id="' + id + '"><span class="dot" aria-hidden="true"></span><div class="body">' +
+    return '<div class="item" data-id="' + id + '" style="--bc:' + colorOf(b) + '"><span class="dot" aria-hidden="true"></span><div class="body">' +
       '<div class="head-row"><span class="ttl">H<sub>' + (idx + 1) + '</sub>(p)</span>' +
       '<select id="sel-' + id + '" data-type aria-label="Type de la fonction H' + (idx + 1) + '">' + opts + '</select>' +
       '<button type="button" class="del" data-del aria-label="Supprimer H' + (idx + 1) + '">×</button></div>' +
       '<div class="formula" data-formula>' + formulaHTML(b) + '</div>' +
+      '<div class="togs">' +
+      '<button type="button" class="btn tog" data-show aria-pressed="' + (b.show ? 'true' : 'false') + '">Ajout FT individuelle</button>' +
+      '<button type="button" class="btn tog" data-tot aria-pressed="' + (b.tot ? 'true' : 'false') + '">Ajout FT totale</button></div>' +
       '<label class="chk"><input type="checkbox" data-inv' + (b.inv ? ' checked' : '') + '> Inverser (puissance −1)</label>' +
       rows + '</div></div>';
   }
@@ -562,6 +645,16 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     }
   });
   blocksEl.addEventListener('click', function (e) {
+    var tog = e.target.closest('[data-show],[data-tot]');
+    if (tog) {
+      var ot = blockOf(tog);
+      if (!ot) return;
+      var key = tog.hasAttribute('data-show') ? 'show' : 'tot';
+      ot.b[key] = !ot.b[key];
+      tog.setAttribute('aria-pressed', ot.b[key] ? 'true' : 'false');
+      renderAll();
+      return;
+    }
     var btn = e.target.closest('[data-del]');
     if (!btn) return;
     var o = blockOf(btn);
@@ -647,6 +740,15 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     var YP = function (v) { return M.t + (1 - (v - p.min) / (p.max - p.min)) * ph; };
     var i, k, n, s;
 
+    /* courbes individuelles des blocs superposés (couleur du bloc, opacité 60 %) */
+    var blockPaths = function (Y, key, clip) {
+      var o = '';
+      cache.B.forEach(function (c) {
+        o += '<path class="bcurve" stroke="' + c.color + '" clip-path="url(#' + clip + ')" d="' + curvePath(X, Y, cache.W, c[key]) + '"/>';
+      });
+      return o;
+    };
+
     /* grille et graduations en ω (communes aux deux vues) */
     var vgrid = '', xt = '', n0 = Math.floor(l0), n1 = Math.ceil(l1), nd = 0;
     for (n = n0; n <= n1; n++) {
@@ -670,6 +772,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     /* pulsations de cassure de chaque fonction */
     var cornerLines = '', cornerLabels = '';
     S.blocks.forEach(function (b, bi) {
+      if (!b.tot && !b.show) return;
       TYPES[b.type].corners(b.p).forEach(function (cw) {
         if (!inView(cw)) return;
         cornerLines += ln('corner', X(cw), M.t, X(cw), M.t + ph);
@@ -691,6 +794,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     s += ln('zero', M.l, YG(0), M.l + pw, YG(0)) + cornerLines;
     if (inView(m.wc)) s += ln('mline-pm', X(m.wc), M.t, X(m.wc), M.t + ph);
     if (inView(m.w180)) s += ln('mline-gm', X(m.w180), M.t, X(m.w180), M.t + ph);
+    s += blockPaths(YG, 'G', 'clipG');
     s += '<path class="curve" clip-path="url(#clipG)" d="' + curvePath(X, YG, cache.W, cache.G) + '"/>';
     if (inView(m.wc)) {
       var xc = X(m.wc), rc = anchorR(xc);
@@ -726,6 +830,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     s += ln('ref180', M.l, YP(-180), M.l + pw, YP(-180)) + cornerLines;
     if (inView(m.wc)) s += ln('mline-pm', X(m.wc), M.t, X(m.wc), M.t + ph);
     if (inView(m.w180)) s += ln('mline-gm', X(m.w180), M.t, X(m.w180), M.t + ph);
+    s += blockPaths(YP, 'P', 'clipP');
     s += '<path class="curve" clip-path="url(#clipP)" d="' + curvePath(X, YP, cache.W, cache.P) + '"/>';
     if (inView(m.wc)) {
       var xp = X(m.wc), phc = m.phc * 180 / PI, tgt = phc - m.pm * 180 / PI, rp = anchorR(xp);
@@ -751,7 +856,7 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
     /* lecture au survol */
     var hb = $('hover');
     if (hv) {
-      hb.innerHTML = 'ω = <b>' + fw(hv.w) + '</b> rad/s  ·  G = <b>' + fmt(hv.g, 2) + '</b> dB  ·  φ = <b>' + phStr(hv.p * PI / 180) + '</b>';
+      hb.innerHTML = 'ω = <b>' + fw(hv.w) + '</b> rad/s  ·  G = <b>' + fmt(hv.g, 2) + '</b> dB  ·  φ = <b>' + phStr(hv.p * PI / 180) + '</b>';
     } else {
       hb.textContent = 'Survolez une courbe pour lire ω, le gain et la phase.';
     }
@@ -796,6 +901,22 @@ svg .hov-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
   } else {
     window.addEventListener('resize', onResize);
   }
+
+  /* Thème clair / sombre : préférence du système par défaut, puis choix mémorisé */
+  function applyTheme(t) {
+    S.theme = t;
+    document.documentElement.setAttribute('data-theme', t);
+    $('theme').textContent = t === 'dark' ? '☀ Mode clair' : '☾ Mode sombre';
+    try { localStorage.setItem('bode-theme', t); } catch (e) {}
+    if (cache.m) { buildBlocks(); renderAll(); }
+  }
+  $('theme').addEventListener('click', function () { applyTheme(S.theme === 'dark' ? 'light' : 'dark'); });
+  var t0 = null;
+  try { t0 = localStorage.getItem('bode-theme'); } catch (e) {}
+  if (t0 !== 'dark' && t0 !== 'light') {
+    t0 = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  applyTheme(t0);
 
   buildBlocks();
   renderAll();
