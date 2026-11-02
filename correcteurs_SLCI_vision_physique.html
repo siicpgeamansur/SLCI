@@ -1,0 +1,712 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Correcteurs SLCI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout : bandeau collant + une colonne de sections ; le simulateur et les graphiques en grille adaptative.
+   Couleurs : papier gris-vert, encre quasi noire, trace principale turquoise, ambre pour les alertes. */
+:root{
+ --bg:#f2f5f4;--surface:#ffffff;--ink:#14201e;--mut:#566663;--line:#d5dfdc;
+ --accent:#0a6d73;--accent-soft:#dcefef;--on-accent:#ffffff;
+ --ok:#1a7f4b;--ok-soft:#dff3e8;--bad:#bf3b3b;--bad-soft:#f9e3e1;--warn:#9a6700;--warn-soft:#f7ecd0;
+ --tr-i:#b36b00;--tr-d:#8a3fb5;
+ --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+ --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+ --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#0e1615;--surface:#152120;--ink:#e4eeec;--mut:#96aaa6;--line:#273a38;
+ --accent:#4fd0c8;--accent-soft:#15302f;--on-accent:#06201f;
+ --ok:#4cd08e;--ok-soft:#12301f;--bad:#ff8080;--bad-soft:#3a1c1c;--warn:#f0c050;--warn-soft:#382d10;--tr-i:#f0a640;--tr-d:#c58cff;color-scheme:dark}}
+:root[data-theme="dark"]{
+ --bg:#0e1615;--surface:#152120;--ink:#e4eeec;--mut:#96aaa6;--line:#273a38;
+ --accent:#4fd0c8;--accent-soft:#15302f;--on-accent:#06201f;
+ --ok:#4cd08e;--ok-soft:#12301f;--bad:#ff8080;--bad-soft:#3a1c1c;--warn:#f0c050;--warn-soft:#382d10;--tr-i:#f0a640;--tr-d:#c58cff;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:12;background:var(--surface)}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hd{position:sticky;top:env(safe-area-inset-top,0px);z-index:11;background:var(--surface);border-bottom:1px solid var(--line)}
+.hd-in{max-width:1040px;margin:0 auto;padding-block:8px 0}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top h1{font:600 1.15rem/1.2 var(--f-display);letter-spacing:.02em;margin:0;flex:1;min-width:180px;text-wrap:balance}
+.top h1 small{display:block;font:400 .72rem var(--f-mono);color:var(--mut);letter-spacing:.04em}
+.xp{display:flex;align-items:center;gap:8px;font:.8rem var(--f-mono);color:var(--mut)}
+.bar{width:90px;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+nav{display:flex;gap:4px;overflow-x:auto;padding-block:8px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--mut);padding:3px 11px;border-radius:6px;font-size:.85rem}
+nav a:hover{color:var(--accent);background:var(--accent-soft)}
+main{max-width:1040px;margin:0 auto;padding-block:8px 48px}
+section{margin:32px 0;scroll-margin-top:120px}
+h2{font:600 1.55rem/1.2 var(--f-display);letter-spacing:.01em;margin:0 0 4px;text-wrap:balance}
+h3{font:600 1.15rem/1.3 var(--f-display);margin:.2em 0 .4em}
+h4{margin:.4em 0 .3em;font:500 .72rem var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+.sub{color:var(--mut);margin:0 0 14px;max-width:70ch}
+p{margin:.5em 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+details.card summary{cursor:pointer}
+details.card[open]{border-color:var(--accent)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr))}
+.two{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
+.stack{display:grid;gap:12px}
+.rule{background:var(--accent-soft);border-radius:8px;padding:10px 14px;margin:12px 0}
+.rule p{margin:.25em 0}
+button,input,select{font:inherit;color:inherit}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.tabs button,.btn,.opt{cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:6px 12px}
+.tabs button.on,.btn{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.tabs button:hover:not(.on),.opt:hover{border-color:var(--accent)}
+.btn.alt{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.btn.alt:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opts{display:grid;gap:8px;margin:10px 0}
+.opt{text-align:left}
+.opt.ok{background:var(--ok-soft);border-color:var(--ok)}.opt.ko{background:var(--bad-soft);border-color:var(--bad)}.opt.sel{background:var(--accent-soft);border-color:var(--accent)}
+.fb{background:var(--accent-soft);border-radius:8px;padding:10px 12px;margin-top:8px}
+.row{display:grid;grid-template-columns:56px minmax(0,1fr) 84px;gap:8px;align-items:center;margin:6px 0}
+.row input{width:100%;accent-color:var(--accent)}
+.row output{font:.85rem var(--f-mono);color:var(--mut)}
+canvas{width:100%;display:block;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.tfbox{background:var(--accent-soft);border-radius:6px;padding:8px 12px;margin:8px 0;font-family:var(--f-mono);font-size:.92rem;overflow-x:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{padding:2px 10px;border-radius:99px;font-size:.85rem;border:1px solid var(--line)}
+.chip.g{background:var(--ok-soft);border-color:var(--ok)}.chip.r{background:var(--bad-soft);border-color:var(--bad)}.chip.o{background:var(--warn-soft);border-color:var(--warn)}.chip.n{background:var(--accent-soft);border-color:var(--accent)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:12px 0}
+.m{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.m span{display:block;font:.7rem var(--f-mono);color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.m b{font:500 1.05rem var(--f-mono);font-variant-numeric:tabular-nums}
+.obj{list-style:none;padding:0;margin:8px 0}
+.obj li{padding:5px 10px;border-radius:6px;margin:4px 0;background:var(--bad-soft)}.obj li.ok{background:var(--ok-soft)}
+.out{margin-top:8px;padding:8px 10px;background:var(--accent-soft);border-radius:6px;overflow-wrap:anywhere}
+label{display:inline-block;margin:3px 0}
+input[type=number],input[type=text],select{width:110px;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+select{width:auto;max-width:100%}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}th,td{border:1px solid var(--line);padding:7px 9px;text-align:center}
+th{background:var(--accent-soft);font-weight:600}td.g{background:var(--ok-soft)}td.r{background:var(--bad-soft)}td.n{background:var(--accent-soft)}
+.fc{min-height:150px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:1.1rem;cursor:pointer;user-select:none;overflow-wrap:anywhere}
+.fc.back{background:var(--accent-soft);border-color:var(--accent)}
+.note{color:var(--mut);font-size:.9rem}
+#badges:empty::before{content:"Aucun badge pour l'instant.";color:var(--mut)}
+.exnav{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.exnav button{width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font:.8rem var(--f-mono)}
+.exnav button.ans{background:var(--accent-soft);border-color:var(--accent)}
+.exnav button.cur{outline:2px solid var(--accent);outline-offset:1px}
+.timer{font:500 1.3rem var(--f-mono);font-variant-numeric:tabular-nums}
+.timer.low{color:var(--bad)}
+.qrow{display:grid;gap:6px;margin:10px 0;padding:10px 12px;border-radius:8px;border:1px solid var(--line)}
+.qrow.ok{background:var(--ok-soft);border-color:var(--ok)}.qrow.ko{background:var(--bad-soft);border-color:var(--bad)}
+.xq{display:grid;gap:6px;padding:12px 0;border-top:1px solid var(--line)}
+.xq:first-of-type{border-top:0}
+.xq .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.res{font-weight:500}
+.res.ok{color:var(--ok)}.res.ko{color:var(--bad)}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,40px);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:99px;opacity:0;transition:.3s;pointer-events:none;z-index:20;max-width:calc(100% - 32px)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="hd">
+ <div class="hd-in gut">
+  <div class="top">
+   <h1>Régler la commande des SLCI<small>CPGE 2<sup>e</sup> année</small></h1>
+   <div class="xp">Niv. <b id="lvl">1</b><div class="bar"><i id="xpb"></i></div><span id="xpt">0 XP</span></div>
+   <button class="btn alt" id="theme" type="button" aria-label="Changer de thème">Thème : auto</button>
+  </div>
+  <nav>
+   <a href="#perf">Performances</a><a href="#labo">Simulateur</a><a href="#galerie">Correcteurs</a><a href="#atelier">Réglages</a>
+   <a href="#synthese">Synthèse</a><a href="#jeux">Entraînement</a><a href="#concours">Exercice PI</a><a href="#memo">Mémo</a>
+  </nav>
+ </div>
+</div>
+<main class="gut">
+
+<section id="perf">
+ <h2>1. Les performances d'un SLCI</h2>
+ <p class="sub">Stabilité, précision et rapidité ne sont pas indépendantes. Ouvre chaque carte pour voir le lien avec la FTBO.</p>
+ <div class="grid">
+  <details class="card"><summary><b>Stabilité</b> (amortissement)</summary>
+   <p><b>Cahier des charges :</b> 1<sup>er</sup> dépassement D<sub>1%</sub> = 10 à 20 % maxi ; facteur de résonance Q<sub>dB</sub> ≈ 2,3 dB soit Q ≈ 1,3.</p>
+   <p><b>Lien avec la FTBO :</b> marges imposées, en général M<sub>G</sub> ≥ 12 dB et M<sub>φ</sub> ≥ 45°.</p></details>
+  <details class="card"><summary><b>Précision</b></summary>
+   <p><b>Cahier des charges :</b> erreur permanente vis-à-vis d'un échelon ou d'une rampe nulle ou limitée ; sensibilité à une perturbation en échelon ou en rampe : aucune.</p>
+   <p><b>Lien avec la FTBO :</b> gain statique K<sub>BO</sub> et classe α ; pour les perturbations, gain statique K<sub>1</sub> et classe α<sub>1</sub> de la FTBO en amont de la perturbation.</p></details>
+  <details class="card"><summary><b>Rapidité</b></summary>
+   <p><b>Cahier des charges :</b> temps de réponse à 5 % limité ; temps de montée limité (première fois que la sortie atteint sa valeur finale) ; bande passante à −3 dB limitée.</p>
+   <p><b>Lien avec la FTBO :</b> bande passante à 0 dB de la FTBO.</p></details>
+ </div>
+ <div class="rule">
+  <p><b>Pour améliorer…</b></p>
+  <p>• la <b>précision</b> : augmenter le gain statique de la FTBO ;</p>
+  <p>• la <b>rapidité</b> : choisir une pulsation de coupure à 0 dB plus élevée ;</p>
+  <p>• la <b>stabilité</b> : corriger la courbe de phase au voisinage de la pulsation de coupure à 0 dB.</p>
+  <p class="note">L'action d'un correcteur est globale (elle modifie toute la FTBO) : il y a toujours des compromis.</p>
+ </div>
+ <div class="card">
+  <h3>Mini-diagnostic : quel est le défaut ?</h3>
+  <div class="tabs" id="diag">
+   <button type="button" data-d="0">Trop lent</button><button type="button" data-d="1">Pas assez précis</button><button type="button" data-d="2">Trop d'oscillations</button>
+  </div>
+  <div class="out" id="diagOut">Choisis un défaut.</div>
+ </div>
+ <details class="card" style="margin-top:12px"><summary>Ce qu'un correcteur ne peut pas faire</summary>
+  <p>Il ne compense pas les défauts majeurs de la chaîne d'action : un retard qui rend le processus instable, un actionneur sous-dimensionné donc saturé, des non-linéarités fortes comme le frottement sec.</p></details>
+</section>
+
+<section id="labo">
+ <h2>2. Simulateur de correcteurs</h2>
+ <p class="sub">Système simulé : H(p) = 1 / (1 + 0,175 p + 0,0625 p²), soit K = 1, ω₀ = 4 rad/s, z = 0,35. Retour unitaire, consigne en échelon unitaire. Une perturbation en échelon (−0,3) est appliquée en entrée de la chaîne d'action à t = 8 s. Trait plein : système corrigé. Pointillés : non corrigé (C = 1).</p>
+ <div class="card">
+  <div class="tabs" id="modeTabs">
+   <button type="button" data-m="p" class="on">P</button><button type="button" data-m="i">I</button><button type="button" data-m="pi">PI</button><button type="button" data-m="pd">PD</button><button type="button" data-m="pid">PID</button><button type="button" data-m="lead">Avance de phase</button>
+  </div>
+  <div id="sl"></div>
+  <div class="tfbox" id="tfTxt"></div>
+  <label><input type="checkbox" id="pert" checked> perturbation à t = 8 s</label> &nbsp;
+  <label><input type="checkbox" id="cmp" checked> comparer au non corrigé</label>
+ </div>
+ <div class="card" style="margin-top:12px">
+  <h3>Objectifs du cahier des charges</h3>
+  <ul class="obj" id="obj"></ul>
+  <p class="note">Valide les cinq objectifs en même temps pour gagner un badge. Un PI avec K<sub>p</sub> ≈ 0,5 et K<sub>i</sub> ≈ 1 y parvient.</p>
+ </div>
+ <div class="metrics" id="metrics"></div>
+ <div class="two">
+  <div><h4>Sortie x(t) et consigne</h4><canvas id="cY"></canvas></div>
+  <div><h4>Erreur ε(t)</h4><canvas id="cE"></canvas></div>
+  <div><h4>Commande u(t)</h4><canvas id="cU"></canvas></div>
+  <div><h4>Dérivée de l'erreur dε/dt</h4><canvas id="cD"></canvas></div>
+  <div id="wC"><h4>Contributions à la commande</h4><canvas id="cC"></canvas><div class="chips" id="legC"></div></div>
+  <div><h4>Bode de la FTBO : gain (dB)</h4><canvas id="cG"></canvas></div>
+  <div><h4>Bode de la FTBO : phase (°)</h4><canvas id="cP"></canvas></div>
+ </div>
+ <p class="note">Lecture de la dérivée : quand l'erreur diminue vite, dε/dt est négative et la part K<sub>d</sub>·dε/dt retranche de la commande, ce qui freine le système avant qu'il n'atteigne la consigne. À t = 0, l'échelon de consigne provoque un pic de dε/dt (et donc de la part dérivée) qui sort du cadre. Dérivée filtrée (constante 0,02 s), car la dérivée pure n'est pas réalisable. Les marges sont lues sur la FTBO corrigée.</p>
+</section>
+
+<section id="galerie">
+ <h2>3. Les correcteurs, un par un</h2>
+ <p class="sub">Intuition physique, fonction de transfert, Bode du correcteur seul et effets sur les performances.</p>
+ <div class="card">
+  <div class="tabs" id="galTabs"></div>
+  <div id="galPane"></div>
+ </div>
+</section>
+
+<section id="atelier">
+ <h2>4. Atelier de réglage</h2>
+ <p class="sub">Les démarches de réglage, avec calcul automatique. Aux concours, suis toujours la démarche imposée par le sujet.</p>
+ <div id="atTabs">
+  <div class="tabs">
+   <button type="button" data-p="aP" class="on">P</button><button type="button" data-p="aPI1">PI · marge de phase</button><button type="button" data-p="aPI2">PI · pôle dominant</button><button type="button" data-p="aL">Avance de phase</button>
+  </div>
+  <div class="pane" id="aP">
+   <div class="grid">
+    <div class="card"><h4>Par les marges (graphique)</h4>
+     <p>Translation verticale Δ<sub>dB</sub> lue sur le Bode non corrigé (haut &gt; 0, bas &lt; 0).</p>
+     <label>Δ<sub>dB</sub> = <input type="number" id="pDb" value="-8" step="0.5"> dB</label>
+     <div class="out" id="pDbOut"></div></div>
+    <div class="card"><h4>Par l'erreur permanente imposée</h4>
+     <label>Consigne : <select id="pType"><option value="0">échelon (e = E₀/(1+K_BO))</option><option value="1">rampe (e = V₀/K_BO)</option></select></label><br>
+     <label>K<sub>BO</sub> non corrigé = <input type="number" id="pKbo" value="2" step="0.1"></label><br>
+     <label>Amplitude (E₀ ou V₀) = <input type="number" id="pA" value="1" step="0.1"></label><br>
+     <label>Erreur maxi = <input type="number" id="pEm" value="0.05" step="0.01"></label>
+     <div class="out" id="pErrOut"></div></div>
+    <div class="card"><h4>Par t<sub>5%</sub> ou bande passante (FTBF du 1<sup>er</sup> ordre)</h4>
+     <p>FTBO non corrigée K/(1+τp), retour unitaire.</p>
+     <label>K = <input type="number" id="pK" value="2" step="0.1"></label>
+     <label>τ = <input type="number" id="pTau" value="0.5" step="0.05"> s</label><br>
+     <label>t<sub>5%</sub> imposé = <input type="number" id="pT5" value="0.3" step="0.05"> s</label>
+     <div class="out" id="pT5Out"></div>
+     <label>ω<sub>−3dB</sub> imposée = <input type="number" id="pW" value="20" step="1"> rad/s</label>
+     <div class="out" id="pWOut"></div></div>
+   </div>
+   <p class="note">Pour une FTBF du 2<sup>e</sup> ordre, t<sub>5%</sub>, ω₀ et z dépendent tous de K<sub>p</sub> : on retient seulement la tendance (K<sub>p</sub> augmente, t<sub>5%</sub> diminue, jusqu'à une certaine limite).</p>
+  </div>
+  <div class="pane" id="aPI1" hidden>
+   <div class="card">
+    <p>3 étapes : (1) K<sub>p</sub>' par marge de phase avec P seul ; (2) 1/T<sub>i</sub> = ω<sub>0dB</sub>'/10 ; (3) ajustement de K<sub>p</sub> pour récupérer la perte d'environ 5°.</p>
+    <label>M<sub>φ</sub> imposée = <input type="number" id="i1M" value="45" step="1"> °</label><br>
+    <label>ω<sub>0dB</sub>' obtenue à l'étape 1 = <input type="number" id="i1W" value="6" step="0.5"> rad/s</label><br>
+    <label>K<sub>p</sub> retenu = <input type="number" id="i1K" value="1" step="0.1"></label>
+    <div class="out" id="i1Out"></div>
+   </div>
+  </div>
+  <div class="pane" id="aPI2" hidden>
+   <div class="card">
+    <p>Si la FTBO non corrigée a un pôle dominant <b>réel</b> −1/τ, on prend T<sub>i</sub> = τ pour le simplifier. Puis K<sub>p</sub> se règle sur la marge de phase.</p>
+    <label>τ du pôle dominant = <input type="number" id="i2T" value="0.5" step="0.05"> s</label><br>
+    <label>K<sub>p</sub> = <input type="number" id="i2K" value="1" step="0.1"></label>
+    <div class="out" id="i2Out"></div>
+   </div>
+  </div>
+  <div class="pane" id="aL" hidden>
+   <div class="card">
+    <p>À utiliser si la marge de phase non corrigée est insuffisante. Le maximum de phase du correcteur est placé à la pulsation de coupure à 0 dB visée.</p>
+    <label>M<sub>φ</sub> non corrigée à cette pulsation = <input type="number" id="lMn" value="20" step="1"> °</label><br>
+    <label>M<sub>φ</sub> imposée = <input type="number" id="lMi" value="50" step="1"> °</label><br>
+    <label>ω<sub>0dB</sub> (non corrigée ou visée) = <input type="number" id="lW" value="10" step="0.5"> rad/s</label>
+    <div class="out" id="lOut"></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="synthese">
+ <h2>5. Synthèse : qui corrige quoi ?</h2>
+ <div class="card tw">
+ <table>
+  <tr><th>Correcteur</th><th>C(p)</th><th>Stabilité</th><th>Précision</th><th>Rapidité</th></tr>
+  <tr><td rowspan="2"><b>P</b></td><td rowspan="2">K<sub>p</sub></td><td class="r">↘ si K<sub>p</sub> &gt; 1</td><td class="g">↗ si K<sub>p</sub> &gt; 1</td><td class="g">↗ si K<sub>p</sub> &gt; 1</td></tr>
+  <tr><td class="g">↗ si K<sub>p</sub> &lt; 1</td><td class="r">↘ si K<sub>p</sub> &lt; 1</td><td class="r">↘ si K<sub>p</sub> &lt; 1</td></tr>
+  <tr><td><b>PI</b></td><td>K<sub>p</sub> + K<sub>i</sub>/p</td><td class="n">~ ou ↗</td><td class="g">↗↗</td><td class="n">~ ou ↗</td></tr>
+  <tr><td><b>Avance de phase</b></td><td>K<sub>p</sub>(1+aT<sub>d</sub>p)/(1+T<sub>d</sub>p), a &gt; 1</td><td class="g">↗↗</td><td class="n">↗ ou ↘</td><td class="n">~ ou ↗</td></tr>
+ </table>
+ </div>
+ <p class="note">~ conservée · ↗ améliorée · ↘ dégradée. Pour le PI et l'avance de phase, les paramètres sont fortement interdépendants : certains exercices contredisent ce tableau.</p>
+</section>
+
+<section id="jeux">
+ <h2>6. Entraînement</h2>
+ <div class="card">
+  <div class="tabs" id="trTabs">
+   <button type="button" data-t="tQuiz" class="on">Quiz libre</button><button type="button" data-t="tExam">Mode examen</button><button type="button" data-t="tAssoc">Symptôme → correcteur</button><button type="button" data-t="tCards">Cartes mémoire</button>
+  </div>
+  <div class="tp" id="tQuiz"><p class="note">10 questions tirées au hasard, avec correction immédiate.</p><div id="quiz"></div></div>
+  <div class="tp" id="tExam" hidden><div id="exam"></div></div>
+  <div class="tp" id="tAssoc" hidden><div id="assoc"></div></div>
+  <div class="tp" id="tCards" hidden>
+   <div class="card fc" id="fc" role="button" tabindex="0"></div>
+   <p style="text-align:center;margin:10px 0 0">
+    <button type="button" class="btn alt" id="fcP" aria-label="Carte précédente">◀</button> <span id="fcN" class="note"></span> <button type="button" class="btn alt" id="fcNx" aria-label="Carte suivante">▶</button> <button type="button" class="btn alt" id="fcS">Mélanger</button></p>
+   <p class="note" style="text-align:center">Touche la carte pour la retourner.</p>
+  </div>
+ </div>
+</section>
+
+<section id="concours">
+ <h2>7. Exercice type concours : correcteur PI</h2>
+ <p class="sub">Exercice d'entraînement original, dans le style des sujets de concours. Deux démarches : compensation du pôle dominant réel, puis placement fréquentiel en 3 étapes. Réponds avec la calculatrice, puis vérifie.</p>
+ <div class="card">
+  <h3>Énoncé</h3>
+  <p>Un asservissement de vitesse à retour unitaire a pour FTBO non corrigée</p>
+  <div class="tfbox">H<sub>BOnc</sub>(p) = K<sub>0</sub> / ((1 + τ<sub>1</sub>p)(1 + τ<sub>2</sub>p)) &nbsp; avec K<sub>0</sub> = 5, τ<sub>1</sub> = 0,5 s, τ<sub>2</sub> = 0,02 s</div>
+  <p>Cahier des charges : erreur permanente nulle vis-à-vis d'un échelon, marge de phase M<sub>φ</sub> = 60°. On choisit un correcteur PI : C(p) = K<sub>p</sub>(1 + T<sub>i</sub>p)/(T<sub>i</sub>p) = K<sub>p</sub> + K<sub>i</sub>/p, avec T<sub>i</sub> = K<sub>p</sub>/K<sub>i</sub>.</p>
+  <p class="note">Entre chaque réponse avec trois chiffres significatifs. La virgule ou le point sont acceptés.</p>
+  <h4>Partie A · compensation du pôle dominant</h4>
+  <div id="exA"></div>
+  <h4>Partie B · placement fréquentiel en 3 étapes (sans compenser le pôle)</h4>
+  <p class="note">On repart de la FTBO non corrigée et on applique la démarche du placement fréquentiel : K<sub>p</sub>' avec le P seul, puis T<sub>i</sub>, puis ajustement de K<sub>p</sub>.</p>
+  <div id="exB"></div>
+ </div>
+ <div class="card" style="margin-top:12px">
+  <h3>Teste tes propres réglages</h3>
+  <p class="note">Entre K<sub>p</sub> et T<sub>i</sub> et lis la marge de phase obtenue sur la FTBO corrigée de l'exercice.</p>
+  <label>K<sub>p</sub> = <input type="number" id="vK" value="3.97" step="0.05"></label>
+  <label>T<sub>i</sub> = <input type="number" id="vT" value="0.30" step="0.01"> s</label>
+  <div class="out" id="vOut"></div>
+ </div>
+</section>
+
+<section id="memo">
+ <h2>8. Fiche mémo</h2>
+ <div class="card">
+  <h4>Badges</h4><div class="chips" id="badges"></div>
+  <div id="memoTxt">
+  <h4>Correcteurs</h4>
+  <p>P : C = K<sub>p</sub>, translation de 20·log K<sub>p</sub>, phase inchangée.<br>
+  I : C = K<sub>i</sub>/p, déphasage de −90° partout, précision ↗↗, stabilité ↘↘.<br>
+  PI : C = K<sub>p</sub>(1+T<sub>i</sub>p)/(T<sub>i</sub>p), T<sub>i</sub> = K<sub>p</sub>/K<sub>i</sub> (attention à l'écriture K<sub>p</sub> + 1/(T<sub>i</sub>p)).<br>
+  Avance de phase : C = K<sub>p</sub>(1+aT<sub>d</sub>p)/(1+T<sub>d</sub>p), a &gt; 1.<br>
+  Dérivé pur : jamais utilisé seul (précision dégradée, bruits haute fréquence amplifiés).</p>
+  <h4>Démarches</h4>
+  <p><b>P</b> : Δ<sub>dB</sub> ≈ 20 log K<sub>p</sub> ; erreur échelon e = E₀/(1+K<sub>BO</sub>), rampe e = V₀/K<sub>BO</sub> ; t<sub>5%</sub> = 3τ<sub>BF</sub> et ω<sub>−3dB</sub> = 1/τ<sub>BF</sub> (1<sup>er</sup> ordre, FTBF uniquement).<br>
+  <b>PI par marge de phase</b> : (1) K<sub>p</sub>' ; (2) 1/T<sub>i</sub> = ω<sub>0dB</sub>'/10 ; (3) ajuster K<sub>p</sub> pour compenser environ 5°.<br>
+  <b>PI par pôle dominant réel</b> : T<sub>i</sub> = τ, puis K<sub>p</sub> par la marge de phase.<br>
+  <b>Avance de phase (a &gt; 1)</b> : φ<sub>m</sub> = M<sub>φ imposée</sub> − M<sub>φ nc</sub> ; a = (1+sin φ<sub>m</sub>)/(1−sin φ<sub>m</sub>) ; T<sub>d</sub> = 1/(ω<sub>0dB</sub>√a) ; K<sub>p</sub> = 1/√a.<br>
+  <b>Forme b &lt; 1</b> : b = (1−sin φ<sub>m</sub>)/(1+sin φ<sub>m</sub>) ; K<sub>p</sub> = √b ; ω<sub>m</sub> = 1/(T<sub>d</sub>√b).</p>
+  <h4>Pièges</h4>
+  <p>• Critère −3 dB : à appliquer à la FTBF.<br>• Compensation de pôle : possible uniquement si le pôle est réel.<br>• Un intégrateur n'annule une perturbation en échelon que s'il est en amont de celle-ci.<br>• Suivre la démarche du sujet quand il en impose une.</p>
+  </div>
+  <button type="button" class="btn" id="copyMemo">Copier la fiche</button> <span class="note" id="copyMsg"></span>
+ </div>
+</section>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(x,d=3)=>Number.isFinite(x)?x.toLocaleString('fr-FR',{maximumFractionDigits:d}):'—';
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const D2R=Math.PI/180;
+
+/* ---------- Thème ---------- */
+let themeState=document.documentElement.getAttribute('data-theme')||'auto';
+function applyTheme(){const r=document.documentElement;if(themeState==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',themeState);
+ $('theme').textContent='Thème : '+({auto:'auto',light:'clair',dark:'sombre'})[themeState]}
+$('theme').onclick=()=>{themeState=({auto:'light',light:'dark',dark:'auto'})[themeState]||'auto';applyTheme()};
+applyTheme();
+
+/* ---------- XP & badges ---------- */
+let xp=0;const badges=new Set();
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200)}
+function addXP(n,m){xp+=n;$('lvl').textContent=Math.floor(xp/50)+1;$('xpb').style.width=(xp%50)*2+'%';$('xpt').textContent=xp+' XP';toast('+'+n+' XP'+(m?' · '+m:''))}
+function badge(id,l){if(badges.has(id))return;badges.add(id);const s=document.createElement('span');s.className='chip g';s.textContent='Badge · '+l;$('badges').appendChild(s);toast('Badge : '+l)}
+
+/* ---------- Graphiques ---------- */
+function prep(cv,h){const d=window.devicePixelRatio||1,w=cv.clientWidth||300;cv.style.height=h+'px';cv.width=Math.round(w*d);cv.height=Math.round(h*d);const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);return[g,w]}
+function nice(r,n){const raw=r/n,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p;return(f<1.5?1:f<3.5?2:f<7.5?5:10)*p}
+function plot(cv,o){
+ const h=o.h||170,[g,w]=prep(cv,h),L=42,R=8,T=8,B=20,pw=w-L-R,ph=h-T-B,lx=Math.log10;
+ const X=x=>o.log?L+(lx(x)-lx(o.x0))/(lx(o.x1)-lx(o.x0))*pw:L+(x-o.x0)/(o.x1-o.x0)*pw;
+ const Y=y=>T+ph-(y-o.y0)/(o.y1-o.y0)*ph;
+ const mut=css('--mut'),line=css('--line');
+ g.clearRect(0,0,w,h);g.font='11px "IBM Plex Mono",ui-monospace,monospace';g.lineWidth=1;g.setLineDash([]);
+ const st=nice(o.y1-o.y0,4),dec=Math.max(0,-Math.floor(Math.log10(st)));
+ g.textAlign='right';g.textBaseline='middle';
+ for(let i=Math.ceil(o.y0/st-1e-9);i*st<=o.y1+1e-9;i++){const y=i*st,py=Y(y);g.strokeStyle=line;g.beginPath();g.moveTo(L,py);g.lineTo(w-R,py);g.stroke();g.fillStyle=mut;g.fillText(y.toFixed(dec),L-5,py)}
+ g.textAlign='center';g.textBaseline='top';
+ if(o.log){for(let k=Math.ceil(lx(o.x0)-1e-9);k<=Math.floor(lx(o.x1)+1e-9);k++){const v=Math.pow(10,k),px=X(v);g.strokeStyle=line;g.beginPath();g.moveTo(px,T);g.lineTo(px,T+ph);g.stroke();g.fillStyle=mut;g.fillText(String(v),px,T+ph+4)}}
+ else{const sx=nice(o.x1-o.x0,6);for(let i=Math.ceil(o.x0/sx-1e-9);i*sx<=o.x1+1e-9;i++){const v=i*sx,px=X(v);g.strokeStyle=line;g.beginPath();g.moveTo(px,T);g.lineTo(px,T+ph);g.stroke();g.fillStyle=mut;g.fillText(fmt(v,1),px,T+ph+4)}}
+ g.save();g.beginPath();g.rect(L,T,pw,ph);g.clip();
+ (o.hl||[]).forEach(l=>{g.strokeStyle=l.c;g.setLineDash(l.dash||[]);g.beginPath();g.moveTo(L,Y(l.y));g.lineTo(w-R,Y(l.y));g.stroke()});
+ (o.vl||[]).forEach(l=>{g.strokeStyle=l.c;g.setLineDash(l.dash||[]);g.beginPath();g.moveTo(X(l.x),T);g.lineTo(X(l.x),T+ph);g.stroke()});
+ o.s.forEach(s=>{g.strokeStyle=s.c;g.lineWidth=2;g.setLineDash(s.dash||[]);g.beginPath();s.y.forEach((v,i)=>{const px=X(s.x[i]),py=Y(v);i?g.lineTo(px,py):g.moveTo(px,py)});g.stroke()});
+ g.restore();g.setLineDash([]);g.strokeStyle=line;g.strokeRect(L,T,pw,ph);
+}
+
+/* ---------- Complexes, plant, correcteurs ---------- */
+const cx={add:(a,b)=>[a[0]+b[0],a[1]+b[1]],mul:(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]],div:(a,b)=>{const d=b[0]*b[0]+b[1]*b[1];return[(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d]}};
+const TF=0.02,PL={K:1,w0:4,z:.35},TMAX=14,TP=8,DT=0.0005,EV=40;
+function Hjw(w){const u=w/PL.w0;return cx.div([PL.K,0],[1-u*u,2*PL.z*u])}
+function Cjw(c,w){
+ if(c.mode==='lead')return cx.mul([c.Kp,0],cx.div([1,c.a*c.Td*w],[1,c.Td*w]));
+ let r=[c.mode==='i'?0:c.Kp,0];
+ if(c.mode==='i'||c.mode==='pi'||c.mode==='pid')r=cx.add(r,cx.div([c.Ki,0],[0,w]));
+ if(c.mode==='pd'||c.mode==='pid')r=cx.add(r,cx.div([0,c.Kd*w],[1,TF*w]));
+ return r}
+function sim(c,withPert){
+ const n=Math.round(TMAX/DT),Td=Math.max(c.Td||.1,.01);let y=0,v=0,I=0,yd=0,zl=0;
+ const t=[],Y=[],E=[],U=[],DE=[],UP=[],UI=[],UD=[];let bad=false;
+ for(let i=0;i<=n;i++){
+  const tt=i*DT,e=1-y,de=(e-yd)/TF;let u,up=0,ui=0,ud=0;
+  if(c.mode==='lead')u=c.Kp*(c.a*e-(c.a-1)*zl);
+  else{up=(c.mode==='i'?0:c.Kp)*e;if(c.mode==='i'||c.mode==='pi'||c.mode==='pid')ui=c.Ki*I;if(c.mode==='pd'||c.mode==='pid')ud=c.Kd*de;u=up+ui+ud}
+  if(i%EV===0){t.push(tt);Y.push(y);E.push(e);U.push(u);DE.push(de);UP.push(up);UI.push(ui);UD.push(ud)}
+  const d=(withPert&&tt>=TP)?-0.3:0;
+  const acc=PL.w0*PL.w0*(PL.K*(u+d)-y)-2*PL.z*PL.w0*v;
+  v+=acc*DT;y+=v*DT;I+=e*DT;yd+=(e-yd)/TF*DT;zl+=(e-zl)/Td*DT;
+  if(Math.abs(y)>1e3||!isFinite(y)){bad=true;break}
+ }
+ return{t,Y,E,U,DE,UP,UI,UD,bad}}
+const REF0=sim({mode:'p',Kp:1},false),REF1=sim({mode:'p',Kp:1},true);
+
+const WS=Array.from({length:301},(_,i)=>Math.pow(10,-1+3*i/300));
+function margins(w,mag,ph){
+ let w0=null,Mp=Infinity,w180=null,MG=Infinity;
+ for(let i=w.length-2;i>=0;i--)if(mag[i]>=0&&mag[i+1]<0){const f=mag[i]/(mag[i]-mag[i+1]);w0=Math.pow(10,Math.log10(w[i])+f*(Math.log10(w[i+1])-Math.log10(w[i])));Mp=180+ph[i]+f*(ph[i+1]-ph[i]);break}
+ for(let i=0;i<w.length-1;i++)if(ph[i]>-180&&ph[i+1]<=-180){const f=(ph[i]+180)/(ph[i]-ph[i+1]);w180=Math.pow(10,Math.log10(w[i])+f*(Math.log10(w[i+1])-Math.log10(w[i])));MG=-(mag[i]+f*(mag[i+1]-mag[i]));break}
+ return{w0,Mp,w180,MG}}
+function bode(c){const mag=[],ph=[];let prev=null;
+ WS.forEach(w=>{const L=cx.mul(Cjw(c,w),Hjw(w));mag.push(20*Math.log10(Math.hypot(L[0],L[1])));let p=Math.atan2(L[1],L[0])/D2R;if(prev!==null)p+=360*Math.round((prev-p)/360);ph.push(p);prev=p});
+ return{mag,ph,m:margins(WS,mag,ph)}}
+const BODE_REF=bode({mode:'p',Kp:1});
+
+function tmet(c,r){
+ const integ=c.mode==='i'||c.mode==='pi'||c.mode==='pid',yf=integ?1:c.Kp/(1+c.Kp*PL.K),ess=1-yf,n=Math.round(TP/(DT*EV));
+ const pdev=integ?0:-0.3/(1+c.Kp);
+ if(r.bad||r.Y.length<=n)return{ov:NaN,ts:null,ess,pdev,bad:true};
+ let ymax=-1e9;for(let i=0;i<=n;i++)ymax=Math.max(ymax,r.Y[i]);
+ const ov=ymax>yf*1.0001?(ymax-yf)/yf*100:0;
+ let ts=0;for(let i=n;i>=0;i--)if(Math.abs(r.Y[i]-yf)>0.05*Math.abs(yf)){ts=r.t[i];break}
+ return{ov,ts:ts<TP-0.1?ts:null,ess,pdev,bad:false}}
+
+/* ---------- Simulateur : état & UI ---------- */
+const SL={Kp:[.1,15,.1,'K<sub>p</sub>',''],Ki:[0,10,.05,'K<sub>i</sub>',' s⁻¹'],Kd:[0,2,.01,'K<sub>d</sub>',' s'],a:[1.5,20,.1,'a',''],Td:[.02,1,.01,'T<sub>d</sub>',' s']};
+const SHOW={p:['Kp'],i:['Ki'],pi:['Kp','Ki'],pd:['Kp','Kd'],pid:['Kp','Ki','Kd'],lead:['Kp','a','Td']};
+const PRE={p:{Kp:2},i:{Ki:1},pi:{Kp:.5,Ki:1},pd:{Kp:2,Kd:.4},pid:{Kp:1.5,Ki:1,Kd:.4},lead:{Kp:1,a:6,Td:.1}};
+const S={mode:'p',Kp:2,Ki:1,Kd:.4,a:6,Td:.1};
+function buildSliders(){const box=$('sl');box.innerHTML='';
+ SHOW[S.mode].forEach(k=>{const[m,M,s,l,u]=SL[k],d=document.createElement('div');d.className='row';
+  d.innerHTML=`<label for="sl_${k}">${l}</label><input id="sl_${k}" type="range" min="${m}" max="${M}" step="${s}" value="${S[k]}"><output></output>`;
+  const r=d.querySelector('input'),o=d.querySelector('output'),sh=()=>o.textContent=fmt(+r.value,2)+u;sh();
+  r.oninput=()=>{S[k]=+r.value;sh();update()};box.appendChild(d)})}
+$('modeTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+ S.mode=b.dataset.m;Object.assign(S,PRE[S.mode]);
+ $('modeTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));buildSliders();update()});
+$('pert').onchange=update;$('cmp').onchange=update;
+function tfTxt(c){
+ if(c.mode==='p')return`C(p) = K<sub>p</sub> = ${fmt(c.Kp,2)}`;
+ if(c.mode==='i')return`C(p) = K<sub>i</sub>/p = ${fmt(c.Ki,2)}/p`;
+ if(c.mode==='pi')return`C(p) = K<sub>p</sub> + K<sub>i</sub>/p &nbsp;·&nbsp; T<sub>i</sub> = K<sub>p</sub>/K<sub>i</sub> = ${c.Ki>0?fmt(c.Kp/c.Ki,2)+' s':'∞'}`;
+ if(c.mode==='pd')return`C(p) = K<sub>p</sub> + K<sub>d</sub>·p (dérivée filtrée)`;
+ if(c.mode==='pid')return`C(p) = K<sub>p</sub> + K<sub>i</sub>/p + K<sub>d</sub>·p &nbsp;·&nbsp; u = K<sub>p</sub>·ε + K<sub>i</sub>·∫ε + K<sub>d</sub>·dε/dt`;
+ const fm=Math.asin((c.a-1)/(c.a+1))/D2R;
+ return`C(p) = K<sub>p</sub>(1+aT<sub>d</sub>p)/(1+T<sub>d</sub>p) &nbsp;·&nbsp; φ<sub>m</sub> = ${fmt(fm,1)}° à ω<sub>m</sub> = ${fmt(1/(c.Td*Math.sqrt(c.a)),2)} rad/s`}
+const OBJ=[['M<sub>φ</sub> ≥ 45°',m=>m.Mp>=45],['M<sub>G</sub> ≥ 12 dB',m=>m.MG>=12],['D<sub>1%</sub> ≤ 20 %',m=>m.ov<=20],['Erreur permanente nulle (échelon)',m=>Math.abs(m.ess)<.005],['t<sub>5%</sub> ≤ 6 s',m=>m.ts!==null&&m.ts<=6]];
+function update(){
+ const c={...S},pertOn=$('pert').checked,cmp=$('cmp').checked;
+ const r=sim(c,pertOn),ref=cmp?(pertOn?REF1:REF0):null,b=bode(c),tm=tmet(c,r),m={...b.m,...tm};
+ $('tfTxt').innerHTML=tfTxt(c);
+ const mut=css('--mut'),pri=css('--accent'),bad=css('--bad'),ok=css('--ok');
+ const mp=b.m.w0===null?'∞':fmt(b.m.Mp,1)+'°',mg=b.m.w180===null?'∞':fmt(b.m.MG,1)+' dB';
+ $('metrics').innerHTML=[['M<sub>φ</sub>',mp],['M<sub>G</sub>',mg],['ω<sub>0dB</sub>',b.m.w0===null?'—':fmt(b.m.w0,2)+' rad/s'],
+  ['Dépassement',tm.bad?'instable':fmt(tm.ov,1)+' %'],['t<sub>5%</sub>',tm.bad?'—':(tm.ts===null?'non établi':fmt(tm.ts,2)+' s')],
+  ['Erreur permanente',fmt(tm.ess,3)],...(pertOn?[['Écart dû à la perturbation',fmt(tm.pdev,3)]]:[])].map(x=>`<div class="m"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');
+ let all=true;
+ $('obj').innerHTML=OBJ.map(o=>{const v=!tm.bad&&o[1](m);all=all&&v;return`<li class="${v?'ok':''}">${v?'✔':'○'} ${o[0]}</li>`}).join('');
+ if(all&&!update.done){update.done=true;addXP(30,'Cahier des charges validé');badge('sim','Réglage validé')}
+ const vl=pertOn?[{x:TP,c:mut,dash:[3,3]}]:[];
+ const rng=(arrs,lo,hi)=>{let mn=Infinity,mx=-Infinity;arrs.forEach(a=>a.forEach(v=>{if(v<mn)mn=v;if(v>mx)mx=v}));return[Math.max(mn,lo),Math.min(mx,hi)]};
+ const S1=(a,k,col,dash)=>({x:a.t,y:a[k],c:col,dash});
+ const ser=k=>{const s=[S1(r,k,pri)];if(ref)s.unshift(S1(ref,k,mut,[5,4]));return s};
+ const arrs=k=>ref?[r[k],ref[k]]:[r[k]];
+ let[a0,a1]=rng(arrs('Y'),-3,4);plot($('cY'),{x0:0,x1:TMAX,y0:Math.min(0,a0),y1:Math.max(1.2,a1)+.05,s:ser('Y'),hl:[{y:1,c:ok,dash:[6,3]}],vl});
+ [a0,a1]=rng(arrs('E'),-3,3);plot($('cE'),{x0:0,x1:TMAX,y0:Math.min(a0,-.1),y1:Math.max(a1,1.05),s:ser('E'),hl:[{y:0,c:mut,dash:[3,3]}],vl});
+ [a0,a1]=rng(arrs('U'),-30,30);plot($('cU'),{x0:0,x1:TMAX,y0:Math.min(a0,0)-.05,y1:Math.max(a1,.5)+.05,s:ser('U'),vl});
+ const dr=(k)=>ref?[r[k].slice(1),ref[k].slice(1)]:[r[k].slice(1)];
+ [a0,a1]=rng(dr('DE'),-8,8);plot($('cD'),{x0:0,x1:TMAX,y0:Math.min(a0,-.5)-.05,y1:Math.max(a1,.5)+.05,s:ser('DE'),hl:[{y:0,c:mut,dash:[3,3]}],vl});
+ const parts=[['UP','K<sub>p</sub>·ε','--accent',['p','pi','pd','pid']],['UI','K<sub>i</sub>·∫ε','--tr-i',['i','pi','pid']],['UD','K<sub>d</sub>·dε/dt','--tr-d',['pd','pid']]].filter(x=>x[3].includes(c.mode));
+ $('wC').hidden=c.mode==='lead';
+ if(c.mode!=='lead'){
+  $('legC').innerHTML=parts.map(x=>`<span class="chip" style="border-color:var(${x[2]});color:var(${x[2]})">${x[1]}</span>`).join('');
+  [a0,a1]=rng(parts.map(x=>r[x[0]].slice(1)),-30,30);
+  plot($('cC'),{x0:0,x1:TMAX,y0:Math.min(a0,-.2)-.05,y1:Math.max(a1,.5)+.05,s:parts.map(x=>S1(r,x[0],css(x[2]))),hl:[{y:0,c:mut,dash:[3,3]}],vl})}
+ const mags=cmp?[b.mag,BODE_REF.mag]:[b.mag],phs=cmp?[b.ph,BODE_REF.ph]:[b.ph];
+ const gl=Math.max(Math.min(...mags.flat()),-80),gh=Math.min(Math.max(...mags.flat()),60);
+ const gy0=Math.floor(gl/20)*20,gy1=Math.max(Math.ceil(gh/20)*20,gy0+20);
+ const py0=Math.max(-360,Math.floor(Math.min(...phs.flat(),-180)/90)*90),py1=Math.min(90,Math.ceil(Math.max(...phs.flat(),-90)/90)*90);
+ const vlb=[];if(b.m.w0)vlb.push({x:b.m.w0,c:b.m.Mp>=45?ok:bad});
+ const bs=(k)=>{const s=[{x:WS,y:b[k],c:pri}];if(cmp)s.unshift({x:WS,y:BODE_REF[k],c:mut,dash:[5,4]});return s};
+ plot($('cG'),{log:1,x0:.1,x1:100,y0:gy0,y1:gy1,s:bs('mag'),hl:[{y:0,c:mut,dash:[4,4]}],vl:vlb});
+ plot($('cP'),{log:1,x0:.1,x1:100,y0:py0,y1:py1,s:bs('ph'),hl:[{y:-180,c:bad,dash:[4,4]}],vl:vlb});
+}
+
+/* ---------- Mini-diagnostic ---------- */
+const DIAG=[
+ '<b>Trop lent → correcteur P (K<sub>p</sub> &gt; 1).</b> On « laisse croire » au moteur que l\'erreur est K<sub>p</sub> fois plus grande pour amplifier sa réaction. Limite : K<sub>p</sub> ≫ 1 donne un système oscillant, parfois instable.',
+ '<b>Pas assez précis → action intégrale.</b> On commande en fonction du cumul des erreurs : la commande augmente tant qu\'une erreur subsiste. Seul, il ralentit et dégrade la stabilité (dépassement) : on l\'associe à une action proportionnelle, d\'où le <b>PI</b>.',
+ '<b>Trop d\'oscillations → anticiper et freiner.</b> On diminue la commande quand l\'erreur diminue vite : action dérivée. Jamais seule (précision dégradée, bruits amplifiés) : en pratique <b>PD</b> ou <b>avance de phase</b>.'];
+$('diag').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('diag').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('diagOut').innerHTML=DIAG[b.dataset.d]});
+
+/* ---------- Galerie ---------- */
+const GAL=[
+ {id:'p',t:'P · Proportionnel',idea:'L\'amplificateur d\'erreur : la commande est proportionnelle à l\'erreur.',tf:'C(p) = K<sub>p</sub>',c:{mode:'p',Kp:3},x:[.01,100],
+  eff:[['Stabilité','↘ si Kp>1 · ↗ si Kp<1','o'],['Précision','↗ si Kp>1 · ↘ si Kp<1','o'],['Rapidité','↗ si Kp>1 · ↘ si Kp<1','o']],
+  note:'Gain pur : translation verticale de 20·log K<sub>p</sub>, phase inchangée. Pour K<sub>p</sub> ≫ 1, le système est très rapide mais oscillant : t<sub>5%</sub> peut remonter alors que le temps de montée continue de diminuer.'},
+ {id:'i',t:'I · Intégral',idea:'L\'accumulateur : la commande est proportionnelle au cumul des erreurs, ce qui apporte l\'énergie permanente.',tf:'C(p) = K<sub>i</sub>/p = 1/(T<sub>i</sub>p)',c:{mode:'i',Ki:1},x:[.01,100],
+  eff:[['Stabilité','↘↘','r'],['Précision','↗↗','g'],['Rapidité','≈ (selon Kᵢ)','n']],
+  note:'Gain augmenté en basses pulsations et diminué en hautes, déphasage de −90° pour toutes les pulsations. Il annule l\'erreur vis-à-vis d\'un échelon (et la perturbation en échelon s\'il est en amont de celle-ci). Très peu utilisé seul.'},
+ {id:'pi',t:'PI · Proportionnel intégral',idea:'Le P agit au début du mouvement, le I prend le relais en fin de transitoire.',tf:'C(p) = K<sub>p</sub> + K<sub>i</sub>/p = K<sub>p</sub>(1+T<sub>i</sub>p)/(T<sub>i</sub>p), T<sub>i</sub> = K<sub>p</sub>/K<sub>i</sub>',c:{mode:'pi',Kp:3,Ki:3},x:[.01,100],
+  eff:[['Stabilité','~ ou ↗','n'],['Précision','↗↗','g'],['Rapidité','~ ou ↗','n']],
+  note:'Intégral pur en basses pulsations, proportionnel en hautes. Plus la pulsation de cassure 1/T<sub>i</sub> est faible, plus K<sub>i</sub> est faible et plus le système est lent. Attention : certains sujets écrivent C(p) = K<sub>p</sub> + 1/(T<sub>i</sub>p).'},
+ {id:'pd',t:'PD · Proportionnel dérivé',idea:'Le frein artificiel : la commande tient compte des variations de l\'erreur et limite l\'inertie accumulée.',tf:'C(p) = K<sub>p</sub> + K<sub>d</sub>·p',c:{mode:'pd',Kp:1,Kd:.5},x:[.01,100],
+  eff:[['Stabilité','↗ (moins de dépassements)','g'],['Précision','pas améliorée (Kp décide)','n'],['Rapidité','surtout via moins d\'oscillations','n']],
+  note:'L\'action dérivée pure n\'est jamais utilisée : commande nulle dès que l\'erreur est constante, donc précision dégradée. Gain très élevé en hautes fréquences, donc bruits amplifiés et saturation des préactionneurs. C\'est un correcteur théorique : on utilise l\'avance de phase.'},
+ {id:'pid',t:'PID · Proportionnel intégral dérivé',idea:'Les trois actions réunies : le P réagit, le I annule l\'erreur permanente, le D freine quand l\'erreur diminue vite.',tf:'C(p) = K<sub>p</sub> + K<sub>i</sub>/p + K<sub>d</sub>·p',c:{mode:'pid',Kp:1,Ki:1,Kd:.3},x:[.01,100],
+  eff:[['Stabilité','selon K_d : ↗ si bien réglé','n'],['Précision','↗↗ (grâce au I)','g'],['Rapidité','~ ou ↗','n']],
+  note:'Dans le simulateur, l\'onglet PID affiche la dérivée de l\'erreur et la part de chaque action dans la commande : u = K<sub>p</sub>·ε + K<sub>i</sub>·∫ε + K<sub>d</sub>·dε/dt. Le terme dérivé est un correcteur théorique : en pratique on le filtre ou on utilise l\'avance de phase.'},
+ {id:'lead',t:'Avance de phase',idea:'La dérivée réaliste : elle remonte la phase dans une bande de fréquences et limite le gain en hautes fréquences.',tf:'C(p) = K<sub>p</sub>(1+aT<sub>d</sub>p)/(1+T<sub>d</sub>p), a &gt; 1<br>φ<sub>m</sub> = arcsin((a−1)/(a+1)) à ω<sub>m</sub> = 1/(T<sub>d</sub>√a)',c:{mode:'lead',Kp:1,a:8,Td:.2},x:[.1,100],
+  eff:[['Stabilité','↗↗','g'],['Précision','↗ ou ↘','o'],['Rapidité','~ ou ↗','n']],
+  note:'Exemple a = 8, T<sub>d</sub> = 0,2 s : φ<sub>m</sub> ≈ 51° à ω<sub>m</sub> ≈ 1,77 rad/s, gain en hautes fréquences 20·log a. En échelle logarithmique, ω<sub>m</sub> est au milieu de 1/(aT<sub>d</sub>) et 1/T<sub>d</sub>. Autre forme : K<sub>p</sub>(1+T<sub>d</sub>p)/(1+bT<sub>d</sub>p), b &lt; 1.'}];
+let gi='p';
+$('galTabs').innerHTML=GAL.map(g=>`<button type="button" data-g="${g.id}" class="${g.id==='p'?'on':''}">${g.t.split(' ·')[0]}</button>`).join('');
+$('galTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('galTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));showGal(b.dataset.g)});
+function showGal(id){gi=id;const g=GAL.find(x=>x.id===id);
+ $('galPane').innerHTML=`<h3>${g.t}</h3><p>${g.idea}</p><div class="tfbox">${g.tf}</div><div class="chips">${g.eff.map(e=>`<span class="chip ${e[2]}"><b>${e[0]}</b> ${e[1]}</span>`).join('')}</div><div class="two"><div><h4>Gain (dB), correcteur seul</h4><canvas id="gG"></canvas></div><div><h4>Phase (°), correcteur seul</h4><canvas id="gP"></canvas></div></div><p class="note">${g.note}</p>`;
+ requestAnimationFrame(drawGal)}
+function drawGal(){const g=GAL.find(x=>x.id===gi),c=g.c,[x0,x1]=g.x,N=240,W=Array.from({length:N+1},(_,i)=>x0*Math.pow(x1/x0,i/N)),mag=[],ph=[];let prev=null;
+ W.forEach(w=>{const C=Cjw(c,w);mag.push(20*Math.log10(Math.hypot(C[0],C[1])));let p=Math.atan2(C[1],C[0])/D2R;if(prev!==null)p+=360*Math.round((prev-p)/360);ph.push(p);prev=p});
+ const mn=Math.min(...mag),mx=Math.max(...mag);let y0=Math.floor((mn-1)/20)*20,y1=Math.ceil((mx+1)/20)*20;
+ let p0=Math.floor(Math.min(...ph,0)/45)*45,p1=Math.ceil(Math.max(...ph,0)/45)*45;if(p1-p0<90){p0=Math.min(p0,-45);p1=Math.max(p1,45)}
+ const mut=css('--mut'),pri=css('--accent'),warn=css('--warn');let vl=[];
+ if(g.id==='lead')vl=[{x:1/(c.a*c.Td),c:mut,dash:[3,3]},{x:1/(c.Td*Math.sqrt(c.a)),c:warn},{x:1/c.Td,c:mut,dash:[3,3]}];
+ if(g.id==='pi')vl=[{x:c.Ki/c.Kp,c:warn,dash:[3,3]}];
+ plot($('gG'),{log:1,x0,x1,y0,y1,s:[{x:W,y:mag,c:pri}],hl:[{y:0,c:mut,dash:[4,4]}],vl});
+ plot($('gP'),{log:1,x0,x1,y0:p0,y1:p1,s:[{x:W,y:ph,c:pri}],vl})}
+
+/* ---------- Atelier ---------- */
+function bind(ids,out,fn){const f=()=>{try{$(out).innerHTML=fn(...ids.map(i=>parseFloat($(i).value)))}catch(e){}};ids.forEach(i=>$(i).addEventListener('input',f));f()}
+bind(['pDb'],'pDbOut',d=>`K<sub>p</sub> ≈ 10<sup>Δ/20</sup> = <b>${fmt(Math.pow(10,d/20))}</b><br>${d>0?'Translation vers le haut : K<sub>p</sub> &gt; 1.':'Translation vers le bas : K<sub>p</sub> &lt; 1.'}`);
+bind(['pType','pKbo','pA','pEm'],'pErrOut',(t,K,A,e)=>{const kp=t===0?(A/e-1)/K:A/(K*e);
+ return kp<=0?'Erreur déjà respectée sans correction.':`K<sub>p</sub> minimal = <b>${fmt(kp)}</b><br>K<sub>BO corrigé</sub> = K<sub>p</sub>·K<sub>BO</sub> ≥ ${fmt(kp*K)}`});
+bind(['pK','pTau','pT5'],'pT5Out',(K,tau,t5)=>{const kp=(3*tau/t5-1)/K;return`t<sub>5%</sub> = 3τ<sub>BF</sub>, τ<sub>BF</sub> = τ/(1+K·K<sub>p</sub>)<br>K<sub>p</sub> = <b>${fmt(kp)}</b>${kp<0?' (déjà plus rapide sans correction)':''}`});
+bind(['pK','pTau','pW'],'pWOut',(K,tau,w)=>{const kp=(tau*w-1)/K;return`ω<sub>−3dB</sub> = 1/τ<sub>BF</sub><br>K<sub>p</sub> = <b>${fmt(kp)}</b>${kp<0?' (déjà plus rapide sans correction)':''}`});
+bind(['i1M','i1W','i1K'],'i1Out',(M,w,K)=>{const Ti=10/w;return`<b>Étape 1 (graphique)</b> : viser M<sub>φ</sub> + 5° = <b>${fmt(M+5,1)}°</b> avec P seul, pour anticiper la perte.<br><b>Étape 2</b> : 1/T<sub>i</sub> = ω<sub>0dB</sub>'/10 = ${fmt(w/10)} rad/s, donc T<sub>i</sub> = <b>${fmt(Ti)} s</b>.<br>K<sub>i</sub> = K<sub>p</sub>/T<sub>i</sub> = <b>${fmt(K/Ti)}</b>.<br><b>Étape 3</b> : vérifier la marge de phase et réajuster K<sub>p</sub> (K<sub>p</sub>' → K<sub>p</sub>) si besoin.`});
+bind(['i2T','i2K'],'i2Out',(t,K)=>`<b>Étape 1</b> : T<sub>i</sub> = τ = <b>${fmt(t)} s</b>.<br>FTBO corrigée = G(p)·K<sub>p</sub>/(T<sub>i</sub>p), K<sub>i</sub> = K<sub>p</sub>/T<sub>i</sub> = <b>${fmt(K/t)}</b>.<br><b>Étape 2</b> : régler K<sub>p</sub> pour obtenir la marge de phase imposée.`);
+bind(['lMn','lMi','lW'],'lOut',(Mn,Mi,w)=>{const fm=Mi-Mn;if(fm<=0)return'φ<sub>m</sub> ≤ 0 : la marge est déjà suffisante, pas besoin d\'avance de phase.';if(fm>=90)return'φ<sub>m</sub> ≥ 90° : impossible avec un seul correcteur à avance de phase.';
+ const s=Math.sin(fm*D2R),a=(1+s)/(1-s),b=1/a;
+ return`φ<sub>m</sub> = M<sub>φ imposée</sub> − M<sub>φ nc</sub> = <b>${fmt(fm,1)}°</b><br><b>Forme a &gt; 1</b> : a = <b>${fmt(a)}</b> · T<sub>d</sub> = 1/(ω√a) = <b>${fmt(1/(w*Math.sqrt(a)))} s</b> · K<sub>p</sub> = 1/√a = <b>${fmt(1/Math.sqrt(a))}</b><br><b>Forme b &lt; 1</b> : b = <b>${fmt(b)}</b> · T<sub>d</sub> = 1/(ω√b) = <b>${fmt(1/(w*Math.sqrt(b)))} s</b> · K<sub>p</sub> = √b = <b>${fmt(Math.sqrt(b))}</b><br><span class="note">Les relations diffèrent selon la forme. Le gain monte de 10·log a = ${fmt(10*Math.log10(a),1)} dB à ω<sub>m</sub>.</span>`});
+(function(){const root=$('atTabs'),bs=root.querySelectorAll('.tabs button');bs.forEach(b=>b.onclick=()=>{bs.forEach(x=>x.classList.toggle('on',x===b));root.querySelectorAll('.pane').forEach(p=>p.hidden=p.id!==b.dataset.p)})})();
+
+/* ---------- Banque de questions ---------- */
+const Q=[
+ {q:'Un correcteur placé en série modifie directement…',o:['la structure mécanique de la chaîne d\'action','la FTBO (donc la façon de générer la commande)','uniquement la FTBF, pas la FTBO','le capteur'],a:1,e:'Il agit sur la commande, donc sur la FTBO, et son action est globale : d\'où les compromis.'},
+ {q:'Effet d\'un gain K<sub>p</sub> &gt; 1 sur les marges de stabilité ?',o:['Elles augmentent','Elles diminuent (ω<sub>0dB</sub> augmente, M<sub>G</sub> baisse de 20·log K<sub>p</sub>)','Elles ne changent pas','Seule la marge de gain change'],a:1,e:'Le gain augmente, la pulsation de coupure à 0 dB aussi : marges de phase et de gain diminuent.'},
+ {q:'Que peut-on observer pour K<sub>p</sub> ≫ 1 ?',o:['t<sub>5%</sub> diminue sans limite','Système très rapide mais oscillant ; t<sub>5%</sub> peut remonter','Précision dégradée','Aucun effet'],a:1,e:'Les dépassements importants peuvent augmenter t<sub>5%</sub>, même si le temps de montée continue de diminuer.'},
+ {q:'Pourquoi un correcteur P seul ne règle-t-il pas un problème de précision ?',o:['Il est trop lent','Sa commande s\'annule quand l\'erreur s\'annule : plus d\'énergie apportée','Il déphase de −90°','Il amplifie le bruit'],a:1,e:'Pour un système qui a besoin d\'énergie pour tenir la consigne, il faut une commande non nulle à erreur nulle : c\'est le rôle de l\'intégrale.'},
+ {q:'Un correcteur intégral apporte à la FTBO…',o:['+90° pour toutes les pulsations','−90° pour toutes les pulsations','0° mais du gain en plus','un déphasage qui dépend de K<sub>i</sub>'],a:1,e:'Intégrateur pur : −90° partout, d\'où la forte dégradation de la stabilité.'},
+ {q:'Pour C(p) = K<sub>p</sub>(1+T<sub>i</sub>p)/(T<sub>i</sub>p), que vaut T<sub>i</sub> ?',o:['K<sub>i</sub>/K<sub>p</sub>','K<sub>p</sub>/K<sub>i</sub>','K<sub>p</sub>·K<sub>i</sub>','1/(K<sub>p</sub>K<sub>i</sub>)'],a:1,e:'K<sub>p</sub> + K<sub>i</sub>/p = K<sub>p</sub>(1 + (K<sub>i</sub>/K<sub>p</sub>)/p), d\'où T<sub>i</sub> = K<sub>p</sub>/K<sub>i</sub>.'},
+ {q:'PI par marge de phase : pourquoi 1/T<sub>i</sub> = ω<sub>0dB</sub>\'/10 ?',o:['Pour doubler la rapidité','Pour que l\'intégrateur modifie peu la phase à ω<sub>0dB</sub>\' (perte d\'environ 5°)','Pour annuler l\'erreur plus vite','Pour compenser un pôle'],a:1,e:'Un écart d\'une décade limite l\'effet déstabilisant de l\'intégrale.'},
+ {q:'Quelle perte de marge de phase environ, à compenser à l\'étape 3 ?',o:['≈ 5°','≈ 25°','≈ 45°','≈ 90°'],a:0,e:'On anticipe en visant la marge souhaitée + 5° dès l\'étape 1 (réglage graphique).'},
+ {q:'Pourquoi n\'utilise-t-on jamais une action dérivée pure ?',o:['Elle ralentit trop','Elle dégrade la précision et amplifie les bruits hautes fréquences','Elle déstabilise en basses fréquences','Elle n\'agit pas sur la phase'],a:1,e:'Erreur constante ⇒ commande nulle ; et le gain croît avec la fréquence, ce qui n\'est pas réalisable.'},
+ {q:'Phase maximale d\'un correcteur à avance de phase (a &gt; 1) ?',o:['arcsin((a−1)/(a+1))','arcsin((a+1)/(a−1))','arctan(a)','90° quel que soit a'],a:0,e:'φ<sub>m</sub> = arcsin((a−1)/(a+1)), obtenu en annulant la dérivée de la phase.'},
+ {q:'À quelle pulsation ce maximum a-t-il lieu ?',o:['1/T<sub>d</sub>','1/(a·T<sub>d</sub>)','1/(T<sub>d</sub>√a), milieu de 1/(aT<sub>d</sub>) et 1/T<sub>d</sub> en échelle log','a/T<sub>d</sub>'],a:2,e:'ω<sub>m</sub> = 1/(T<sub>d</sub>√a).'},
+ {q:'Pourquoi K<sub>p</sub> = 1/√a (forme a &gt; 1) ?',o:['Pour annuler l\'erreur','Le gain monte de 10·log a à ω<sub>m</sub> : K<sub>p</sub> compense pour que ω<sub>0dB</sub> coïncide avec ω<sub>m</sub>','Pour avoir a = 1','Pour que T<sub>i</sub> = T<sub>d</sub>'],a:1,e:'K<sub>p</sub> = 10<sup>−10 log a/20</sup> = 1/√a.'},
+ {q:'Forme K<sub>p</sub>(1+T<sub>d</sub>p)/(1+bT<sub>d</sub>p) avec b &lt; 1 : b = ?',o:['(1+sin φ<sub>m</sub>)/(1−sin φ<sub>m</sub>)','(1−sin φ<sub>m</sub>)/(1+sin φ<sub>m</sub>)','sin φ<sub>m</sub>','1/sin φ<sub>m</sub>'],a:1,e:'Les relations diffèrent selon la forme : b = (1−sin φ<sub>m</sub>)/(1+sin φ<sub>m</sub>) et K<sub>p</sub> = √b.'},
+ {q:'Le critère de bande passante à −3 dB s\'applique à…',o:['la FTBO','la FTBF uniquement','au correcteur','aux deux indifféremment'],a:1,e:'C\'est un critère de rapidité à appliquer à la FTBF (la FTBO sert à la bande passante à 0 dB).'},
+ {q:'La compensation du pôle dominant par un PI n\'est possible que si…',o:['le pôle est réel','le système est instable','K<sub>p</sub> = 1','l\'erreur est nulle'],a:0,e:'On choisit T<sub>i</sub> = τ pour simplifier le pôle réel −1/τ.'},
+ {q:'Un intégrateur annule l\'effet d\'une perturbation en échelon s\'il est placé…',o:['en amont de la perturbation','en aval de la perturbation','n\'importe où','dans le capteur'],a:0,e:'Seul l\'intégrateur situé en amont de la perturbation (dans la FTBO en amont) annule son effet.'},
+ {q:'Un correcteur P modifie la phase de la FTBO ?',o:['Oui, de +90°','Non, il ne change que le gain de 20·log K<sub>p</sub>','Oui, de −90°','Seulement en hautes fréquences'],a:1,e:'C\'est un gain pur : phase inchangée, gain translaté de 20·log K<sub>p</sub> pour toutes les pulsations.'},
+ {q:'Pour améliorer la rapidité de la FTBO, on cherche…',o:['une pulsation de coupure à 0 dB plus élevée','une pulsation de coupure à 0 dB plus faible','un gain statique plus faible','une classe plus faible'],a:0,e:'La rapidité est liée à la bande passante à 0 dB de la FTBO.'},
+ {q:'Quelle valeur de facteur de résonance vise-t-on pour une stabilité correcte ?',o:['Q ≈ 1,3 (2,3 dB)','Q ≈ 10','Q ≈ 0,1','Q = 1 exactement'],a:0,e:'Les automaticiens retiennent Q<sub>dB</sub> ≈ 2,3 dB, soit Q ≈ 1,3.'},
+ {q:'Dans un PI, une pulsation de cassure 1/T<sub>i</sub> très faible entraîne…',o:['un K<sub>i</sub> faible et un système plus lent','un K<sub>i</sub> fort et un système plus rapide','une perte de précision','un gain nul'],a:0,e:'Plus 1/T<sub>i</sub> est faible, plus K<sub>i</sub> est faible, donc plus le système est lent.'},
+ {q:'Avec une avance de phase, la valeur finale de K<sub>p</sub> modifie…',o:['peu l\'erreur en régime permanent','fortement la classe de la FTBO','la phase maximale','la valeur de a'],a:0,e:'K<sub>p</sub> est la conséquence du réglage et modifie peu l\'erreur permanente.'},
+ {q:'Un gain K<sub>p</sub> &lt; 1 rend le système…',o:['plus stable mais moins précis et plus lent','moins stable et plus rapide','plus précis','instable'],a:0,e:'Les marges augmentent, mais le gain statique et la pulsation de coupure diminuent.'}];
+
+function packQ(n){return shuffle(Q).slice(0,n).map(q=>({...q,opts:shuffle(q.o.map((t,i)=>({t,ok:i===q.a})))}))}
+(function(){const root=$('trTabs'),bs=root.querySelectorAll('button');bs.forEach(b=>b.onclick=()=>{bs.forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.tp').forEach(p=>p.hidden=p.id!==b.dataset.t)})})();
+
+/* ---------- Quiz libre ---------- */
+let qi=0,qs=0,ql=[];
+function qStart(){ql=packQ(10);qi=0;qs=0;qShow()}
+function qShow(){const box=$('quiz');
+ if(qi>=ql.length){const p=Math.round(100*qs/ql.length);box.innerHTML=`<h3>Score : ${qs}/${ql.length} (${p} %)</h3><p>${p>=80?'Très bien.':'Relis les explications puis recommence.'}</p><button type="button" class="btn" id="qr">Rejouer</button>`;$('qr').onclick=qStart;if(p>=80)badge('quiz','Quiz ≥ 80 %');return}
+ const q=ql[qi];box.innerHTML=`<p class="note">Question ${qi+1}/${ql.length} · score ${qs}</p><p><b>${q.q}</b></p><div class="opts"></div><div class="fb" hidden></div>`;
+ const o=box.querySelector('.opts'),fb=box.querySelector('.fb');
+ q.opts.forEach(op=>{const b=document.createElement('button');b.type='button';b.className='opt';b.innerHTML=op.t;
+  b.onclick=()=>{if(o.dataset.d)return;o.dataset.d=1;o.querySelectorAll('.opt').forEach((x,i)=>{if(q.opts[i].ok)x.classList.add('ok')});
+   if(op.ok){qs++;addXP(10)}else b.classList.add('ko');
+   fb.hidden=false;fb.innerHTML=`${op.ok?'Correct.':'Pas tout à fait.'} ${q.e}<br><br><button type="button" class="btn" id="qn">${qi+1<ql.length?'Suivante':'Voir le score'}</button>`;
+   $('qn').onclick=()=>{qi++;qShow()}};o.appendChild(b)})}
+
+/* ---------- Mode examen ---------- */
+const EX={n:10,secs:480};let ex=null;
+function mmss(s){s=Math.max(0,s);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function exIntro(){if(ex&&ex.h)clearInterval(ex.h);ex=null;
+ $('exam').innerHTML=`<p>${EX.n} questions tirées au hasard dans une banque de ${Q.length}, ${EX.secs/60} minutes. Aucune correction avant la fin. Tu peux revenir sur une question et changer ta réponse.</p><p class="note">Chaque bonne réponse vaut 2 points (note sur 20). À 16/20 ou plus, tu gagnes un badge.</p><button type="button" class="btn" id="exGo">Lancer l'examen</button>`;
+ $('exGo').onclick=exStart}
+function exStart(){if(ex&&ex.h)clearInterval(ex.h);
+ ex={q:packQ(EX.n),ans:Array(EX.n).fill(-1),i:0,left:EX.secs,confirm:false,h:null};
+ ex.h=setInterval(()=>{ex.left--;const t=$('exT');if(t){t.textContent=mmss(ex.left);t.classList.toggle('low',ex.left<=60)}if(ex.left<=0)exEnd(true)},1000);
+ exShow()}
+function exShow(){const q=ex.q[ex.i],box=$('exam'),done=ex.ans.filter(a=>a>=0).length;
+ box.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><span class="note">Question ${ex.i+1}/${EX.n} · ${done} répondue(s)</span><span class="timer${ex.left<=60?' low':''}" id="exT" aria-label="Temps restant">${mmss(ex.left)}</span></div>
+ <div class="exnav">${ex.q.map((_,k)=>`<button type="button" data-k="${k}" class="${ex.ans[k]>=0?'ans ':''}${k===ex.i?'cur':''}" aria-label="Question ${k+1}">${k+1}</button>`).join('')}</div>
+ <p><b>${q.q}</b></p><div class="opts">${q.opts.map((op,k)=>`<button type="button" class="opt${ex.ans[ex.i]===k?' sel':''}" data-o="${k}" aria-pressed="${ex.ans[ex.i]===k}">${op.t}</button>`).join('')}</div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn alt" id="exP"${ex.i===0?' disabled':''}>Précédente</button><button type="button" class="btn alt" id="exN"${ex.i===EX.n-1?' disabled':''}>Suivante</button><button type="button" class="btn" id="exF">Terminer</button></div>
+ ${ex.confirm?`<div class="fb"><b>${EX.n-done} question(s) sans réponse.</b> Terminer quand même ?<br><br><button type="button" class="btn" id="exY">Oui, terminer</button> <button type="button" class="btn alt" id="exC">Continuer</button></div>`:''}`;
+ box.querySelectorAll('.exnav button').forEach(b=>b.onclick=()=>{ex.i=+b.dataset.k;ex.confirm=false;exShow()});
+ box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{ex.ans[ex.i]=+b.dataset.o;ex.confirm=false;exShow()});
+ $('exP').onclick=()=>{ex.i--;ex.confirm=false;exShow()};$('exN').onclick=()=>{ex.i++;ex.confirm=false;exShow()};
+ $('exF').onclick=()=>{if(ex.ans.every(a=>a>=0))exEnd(false);else{ex.confirm=true;exShow()}};
+ if(ex.confirm){$('exY').onclick=()=>exEnd(false);$('exC').onclick=()=>{ex.confirm=false;exShow()}}}
+function exEnd(timeout){clearInterval(ex.h);
+ const sc=ex.q.reduce((s,q,k)=>s+(ex.ans[k]>=0&&q.opts[ex.ans[k]].ok?1:0),0),note=sc*2,used=EX.secs-Math.max(0,ex.left);
+ addXP(sc*3,'Examen');if(note>=16)badge('exam','Examen ≥ 16/20');
+ $('exam').innerHTML=`<h3>Note : ${note}/20</h3><p>${timeout?'Temps écoulé. ':''}${sc}/${EX.n} bonnes réponses en ${mmss(used)}.</p>
+ ${ex.q.map((q,k)=>{const a=ex.ans[k],ok=a>=0&&q.opts[a].ok,good=q.opts.find(o=>o.ok).t;return`<div class="qrow ${ok?'ok':'ko'}"><div><b>${k+1}.</b> ${q.q}</div><div>Ta réponse : ${a>=0?q.opts[a].t:'<i>aucune</i>'}</div>${ok?'':`<div>Bonne réponse : ${good}</div>`}<div class="note">${q.e}</div></div>`}).join('')}
+ <button type="button" class="btn" id="exR">Refaire un examen</button>`;
+ $('exR').onclick=exIntro}
+
+/* ---------- Symptôme → correcteur ---------- */
+const AS=[
+ ['La réponse est trop lente, mais le système est stable avec de bonnes marges.','P','Augmenter K<sub>p</sub> (&gt; 1) accélère la réponse et améliore la précision.'],
+ ['Erreur permanente non nulle vis-à-vis d\'un échelon.','PI','L\'intégrale annule l\'erreur ; le P évite de trop dégrader rapidité et stabilité.'],
+ ['Un intégrateur pur donne un temps de réponse long et un dépassement.','PI','On lui adjoint une action proportionnelle.'],
+ ['Marge de phase insuffisante : trop d\'oscillations.','Avance de phase','Elle remonte la phase autour de ω<sub>0dB</sub>.'],
+ ['Une perturbation en échelon laisse une erreur non nulle (FTBO de classe 0 en amont).','PI','Il faut un intégrateur en amont de la perturbation.'],
+ ['On veut l\'effet « dérivée » sans amplification infinie des hautes fréquences.','Avance de phase','Le gain est limité à 20·log a en hautes fréquences.'],
+ ['Marge de gain trop faible, mais la précision est large.','P','K<sub>p</sub> &lt; 1 augmente les marges (au prix de la précision et de la rapidité).'],
+ ['Il faut annuler l\'erreur de position sans aucune autre action.','I','L\'intégral annule l\'erreur, mais il dégrade fortement la stabilité : peu utilisé seul.']];
+let ai=-1,streak=0;
+function aNext(){let n;do{n=Math.floor(Math.random()*AS.length)}while(n===ai);ai=n;const it=AS[n],box=$('assoc');delete box.dataset.d;
+ box.innerHTML=`<p class="note">Série : ${streak}</p><p><b>${it[0]}</b></p><div class="opts">${['P','I','PI','Avance de phase'].map(x=>`<button type="button" class="opt">${x}</button>`).join('')}</div><div class="fb" hidden></div>`;
+ const fb=box.querySelector('.fb'),bs=box.querySelectorAll('.opt');
+ bs.forEach(b=>b.onclick=()=>{if(box.dataset.d)return;box.dataset.d=1;const ok=b.textContent===it[1];
+  bs.forEach(x=>{if(x.textContent===it[1])x.classList.add('ok')});
+  if(ok){streak++;addXP(5);if(streak>=5)badge('streak','Série de 5')}else{b.classList.add('ko');streak=0}
+  fb.hidden=false;fb.innerHTML=`${ok?'Correct.':'Raté.'} ${it[2]}<br><br><button type="button" class="btn" id="an">Suivant</button>`;$('an').onclick=aNext})}
+
+/* ---------- Cartes mémoire ---------- */
+const FC=[
+ ['Correcteur P','C(p) = K<sub>p</sub> · translation de 20·log K<sub>p</sub> · phase inchangée'],
+ ['Correcteur I','C(p) = K<sub>i</sub>/p = 1/(T<sub>i</sub>p) · −90° partout · précision ↗↗, stabilité ↘↘'],
+ ['Correcteur PI','C(p) = K<sub>p</sub>(1+T<sub>i</sub>p)/(T<sub>i</sub>p) · T<sub>i</sub> = K<sub>p</sub>/K<sub>i</sub> · cassure à 1/T<sub>i</sub>'],
+ ['Réglage PI par marge de phase','1/T<sub>i</sub> = ω<sub>0dB</sub>\'/10 · perte d\'environ 5° à compenser en ajustant K<sub>p</sub>'],
+ ['Réglage PI par pôle dominant','T<sub>i</sub> = τ du pôle réel dominant (uniquement si le pôle est réel)'],
+ ['Avance de phase (a &gt; 1)','C(p) = K<sub>p</sub>(1+aT<sub>d</sub>p)/(1+T<sub>d</sub>p)'],
+ ['φ<sub>m</sub> et ω<sub>m</sub> (avance de phase)','φ<sub>m</sub> = arcsin((a−1)/(a+1)) · ω<sub>m</sub> = 1/(T<sub>d</sub>√a)'],
+ ['Réglage de l\'avance de phase (a &gt; 1)','a = (1+sin φ<sub>m</sub>)/(1−sin φ<sub>m</sub>) · T<sub>d</sub> = 1/(ω<sub>0dB</sub>√a) · K<sub>p</sub> = 1/√a'],
+ ['Forme avec b &lt; 1','b = (1−sin φ<sub>m</sub>)/(1+sin φ<sub>m</sub>) · K<sub>p</sub> = √b · ω<sub>m</sub> = 1/(T<sub>d</sub>√b)'],
+ ['Erreur permanente (système non perturbé)','Échelon : e = E₀/(1+K<sub>BO</sub>) · Rampe : e = V₀/K<sub>BO</sub>'],
+ ['Réglage par t<sub>5%</sub> et ω<sub>−3dB</sub> (1<sup>er</sup> ordre)','t<sub>5%</sub> = 3τ<sub>BF</sub> · ω<sub>−3dB</sub> = 1/τ<sub>BF</sub> · critère −3 dB : FTBF uniquement'],
+ ['Critères de stabilité usuels','M<sub>G</sub> ≥ 12 dB · M<sub>φ</sub> ≥ 45° · D<sub>1%</sub> = 10 à 20 % · Q ≈ 1,3 (2,3 dB)'],
+ ['Action dérivée pure','Jamais utilisée : précision dégradée, bruits haute fréquence amplifiés']];
+let fl=FC.slice(),fi=0,fb=false;
+function fcShow(){const c=$('fc');c.className='card fc'+(fb?' back':'');c.innerHTML=fb?fl[fi][1]:`<b>${fl[fi][0]}</b>`;$('fcN').textContent=`${fi+1}/${fl.length}`}
+const fcFlip=()=>{fb=!fb;fcShow()};
+$('fc').onclick=fcFlip;$('fc').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fcFlip()}};
+$('fcP').onclick=()=>{fi=(fi-1+fl.length)%fl.length;fb=false;fcShow()};
+$('fcNx').onclick=()=>{fi=(fi+1)%fl.length;fb=false;fcShow()};
+$('fcS').onclick=()=>{fl=shuffle(FC);fi=0;fb=false;fcShow()};
+
+/* ---------- Exercice PI ---------- */
+/*EXFN*/
+const XK0=5,Xt1=.5,Xt2=.02,XM=60;
+const Xph=(w,Ti)=>-90+Math.atan(Ti*w)/D2R-Math.atan(Xt1*w)/D2R-Math.atan(Xt2*w)/D2R;
+const Xmag=(w,Kp,Ti)=>Kp*Math.hypot(1,Ti*w)/(Ti*w)*XK0/(Math.hypot(1,Xt1*w)*Math.hypot(1,Xt2*w));
+const Pph=w=>-Math.atan(Xt1*w)/D2R-Math.atan(Xt2*w)/D2R;
+const Pmag=w=>XK0/(Math.hypot(1,Xt1*w)*Math.hypot(1,Xt2*w));
+function bis(f,a,b){let fa=f(a);for(let i=0;i<80;i++){const m=(a+b)/2,fm=f(m);if((fm<0)===(fa<0)){a=m;fa=fm}else b=m}return(a+b)/2}
+function Xcross(Kp,Ti){let w0=null;const N=4000;
+ for(let i=0;i<N;i++){const a=Math.pow(10,-2+6*i/N),b=Math.pow(10,-2+6*(i+1)/N);
+  if(Xmag(a,Kp,Ti)>=1&&Xmag(b,Kp,Ti)<1)w0=bis(w=>Xmag(w,Kp,Ti)-1,a,b)}
+ return w0}
+function Xmphi(Kp,Ti){const w=Xcross(Kp,Ti);return w===null?null:{w,M:180+Xph(w,Ti)}}
+const A_e=1/(1+XK0),A_Ti=Xt1,A_w=Math.tan((90-XM)*D2R)/Xt2,A_Kp=A_w*Math.hypot(1,Xt2*A_w)/(XK0/A_Ti),A_Ki=A_Kp/A_Ti;
+const B_w=bis(w=>-Pph(w)-(180-XM),.01,1000),B_Kp1=1/Pmag(B_w),B_Ti=10/B_w,B_M=Xmphi(B_Kp1,B_Ti).M;
+const B_Kp=bis(k=>{const r=Xmphi(k,B_Ti);return(r?r.M:200)-XM},.3,B_Kp1*1.2);
+/*ENDEXFN*/
+const XQ={
+ A:[
+  {t:'Calcule l\'erreur permanente de la FTBF non corrigée pour un échelon d\'amplitude 1.',ans:A_e,tol:.005,u:'',sol:()=>`La FTBO est de classe 0 : e = E₀/(1+K<sub>BO</sub>) = 1/(1+5) = <b>${fmt(A_e,3)}</b>. Elle n'est pas nulle : le cahier des charges impose un intégrateur, d'où le PI.`},
+  {t:'On compense le pôle dominant réel. Donne la valeur de T<sub>i</sub>.',ans:A_Ti,tol:.01,u:'s',sol:()=>`Le pôle dominant est −1/τ₁ (le plus lent). On prend T<sub>i</sub> = τ₁ = <b>${fmt(A_Ti)} s</b>. La FTBO corrigée devient K<sub>p</sub>K<sub>0</sub>/(T<sub>i</sub>p(1+τ₂p)).`},
+  {t:'La marge de phase imposée est 60°. Quelle est la pulsation de coupure à 0 dB ω<sub>0dB</sub> ?',ans:A_w,tol:.5,u:'rad/s',sol:()=>`Phase de la FTBO corrigée : −90° − arctan(τ₂ω). M<sub>φ</sub> = 90° − arctan(τ₂ω) = 60°, donc arctan(τ₂ω) = 30° et ω<sub>0dB</sub> = tan 30° / τ₂ = <b>${fmt(A_w,2)} rad/s</b>.`},
+  {t:'En déduire K<sub>p</sub>, tel que |FTBO corrigée(jω<sub>0dB</sub>)| = 1.',ans:A_Kp,tol:.1,u:'',sol:()=>`|FTBO| = K<sub>p</sub>K<sub>0</sub>/(T<sub>i</sub>ω√(1+τ₂²ω²)) = 1, donc K<sub>p</sub> = T<sub>i</sub>ω√(1+τ₂²ω²)/K<sub>0</sub> = <b>${fmt(A_Kp,2)}</b>.`},
+  {t:'En déduire K<sub>i</sub> (en s⁻¹), avec T<sub>i</sub> = K<sub>p</sub>/K<sub>i</sub>.',ans:A_Ki,tol:.2,u:'s⁻¹',sol:()=>`K<sub>i</sub> = K<sub>p</sub>/T<sub>i</sub> = ${fmt(A_Kp,2)}/${fmt(A_Ti)} = <b>${fmt(A_Ki,2)} s⁻¹</b>.`}],
+ B:[
+  {t:'Étape 1 : avec le P seul, quelle pulsation ω<sub>0dB</sub>\' donne M<sub>φ</sub> = 60° sur la FTBO non corrigée ?',ans:B_w,tol:.8,u:'rad/s',sol:()=>`On cherche arg(H<sub>BOnc</sub>) = −120°, soit arctan(τ₁ω) + arctan(τ₂ω) = 120°. Résolution numérique : ω<sub>0dB</sub>' ≈ <b>${fmt(B_w,1)} rad/s</b>.`},
+  {t:'Étape 1 : en déduire K<sub>p</sub>\' tel que |K<sub>p</sub>\'·H<sub>BOnc</sub>(jω<sub>0dB</sub>\')| = 1.',ans:B_Kp1,tol:.1,u:'',sol:()=>`K<sub>p</sub>' = 1/|H<sub>BOnc</sub>(jω')| = <b>${fmt(B_Kp1,2)}</b>.`},
+  {t:'Étape 2 : donne T<sub>i</sub> avec 1/T<sub>i</sub> = ω<sub>0dB</sub>\'/10.',ans:B_Ti,tol:.01,u:'s',sol:()=>`T<sub>i</sub> = 10/ω<sub>0dB</sub>' = 10/${fmt(B_w,1)} = <b>${fmt(B_Ti)} s</b>.`},
+  {t:'Avec K<sub>p</sub>\' et ce T<sub>i</sub>, quelle marge de phase obtient-on réellement ?',ans:B_M,tol:1.5,u:'°',sol:()=>`On recalcule M<sub>φ</sub> sur la FTBO corrigée : <b>${fmt(B_M,1)}°</b>. On a perdu environ ${fmt(XM-B_M,1)}°, ce qui correspond à la perte d'environ 5° attendue.`},
+  {t:'Étape 3 : quelle valeur finale de K<sub>p</sub> (T<sub>i</sub> conservé) redonne M<sub>φ</sub> = 60° ?',ans:B_Kp,tol:.12,u:'',sol:()=>`On rebalaye K<sub>p</sub> pour retrouver 60° : K<sub>p</sub> ≈ <b>${fmt(B_Kp,2)}</b> (nettement inférieur à K<sub>p</sub>' : on décale ω<sub>0dB</sub> vers les basses pulsations, où la phase de la FTBO est meilleure).`}]};
+const xdone=new Set();
+function exBuild(id,list,pre){$(id).innerHTML=list.map((q,i)=>`<div class="xq"><div><b>${pre}${i+1}.</b> ${q.t}</div><div class="ctl"><input type="text" inputmode="decimal" id="x${pre}${i}" aria-label="Réponse ${pre}${i+1}"><span>${q.u}</span><button type="button" class="btn" data-k="${pre}${i}">Vérifier</button><button type="button" class="btn alt" data-s="${pre}${i}">Voir la solution</button></div><div id="r${pre}${i}"></div></div>`).join('');
+ $(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  const key=b.dataset.k||b.dataset.s,pe=key[0],i=+key.slice(1),q=XQ[pe][i],out=$('r'+key);
+  if(b.dataset.s){out.innerHTML=`<div class="fb">${q.sol()}</div>`;return}
+  const v=parseFloat($('x'+key).value.replace(',','.'));
+  if(!Number.isFinite(v)){out.innerHTML='<div class="res ko">Entre un nombre.</div>';return}
+  const ok=Math.abs(v-q.ans)<=q.tol;
+  out.innerHTML=`<div class="res ${ok?'ok':'ko'}">${ok?'Correct.':'Pas tout à fait. Vérifie ton calcul ou ouvre la solution.'}</div>${ok?`<div class="fb">${q.sol()}</div>`:''}`;
+  if(ok&&!xdone.has(key)){xdone.add(key);addXP(8);if(xdone.size===XQ.A.length+XQ.B.length)badge('pi','Exercice PI réussi')}})}
+exBuild('exA',XQ.A,'A');exBuild('exB',XQ.B,'B');
+bind(['vK','vT'],'vOut',(K,T)=>{if(!(K>0&&T>0))return'Entre des valeurs positives.';const r=Xmphi(K,T);if(!r)return'Pas de pulsation de coupure à 0 dB dans la plage étudiée.';
+ const ok=Math.abs(r.M-XM)<=1;return`ω<sub>0dB</sub> = <b>${fmt(r.w,1)} rad/s</b> · M<sub>φ</sub> = <b>${fmt(r.M,1)}°</b> · K<sub>i</sub> = K<sub>p</sub>/T<sub>i</sub> = ${fmt(K/T,2)} s⁻¹<br>${ok?'La marge de 60° est respectée (à ±1°).':(r.M<XM?'Marge inférieure à 60° : le système est moins bien amorti que demandé.':'Marge supérieure à 60° : tu as de la réserve, mais le système est probablement plus lent.')}`});
+
+/* ---------- Fiche mémo ---------- */
+$('copyMemo').onclick=async()=>{const txt=$('memoTxt').innerText;let ok=false;
+ try{await navigator.clipboard.writeText(txt);ok=true}catch(e){try{const r=document.createRange();r.selectNodeContents($('memoTxt'));const s=getSelection();s.removeAllRanges();s.addRange(r)}catch(_){}}
+ $('copyMsg').textContent=ok?'Fiche copiée.':'Copie bloquée ici : le texte est sélectionné, utilise Ctrl+C.'};
+
+/* ---------- Init ---------- */
+buildSliders();update();showGal('p');qStart();exIntro();aNext();fcShow();
+function redraw(){update();drawGal()}
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(redraw,120)});
+if(window.matchMedia)window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',redraw);
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+</script>
+
+</body></html>
