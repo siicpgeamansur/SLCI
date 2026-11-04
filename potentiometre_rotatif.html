@@ -5,8 +5,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* Mise en page : colonne gauche = réglages + bouton rotatif ; colonne droite = mesures + pont diviseur + caractéristique ; formules en bas.
-   Couleurs : R1 et U1 bleus, R2 et U2 orange, source U vert. */
+/* Mise en page : colonne gauche = réglages + potentiomètre à trois pattes (A, W, B) ; colonne droite = mesures + schéma R1/R2 en série + caractéristique ; formules en bas.
+   Couleurs : R1 et U1 bleus (de A au curseur), R2 et Vs orange (du curseur à B), source Ve et courant I verts. */
 :root{
   --bg:#e8ecf0; --panel:#f6f8fa; --ink:#16202a; --muted:#5a6672; --line:#cbd3db; --grid:#dde3e9;
   --a:#1b66e0; --b:#e06a00; --k:#0b8a66;
@@ -45,10 +45,19 @@ header p{margin:0;color:var(--muted);max-width:65ch}
 h2{font-size:.76rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 4px;font-weight:600}
 .sub{margin:0 0 10px;font-size:.88rem;color:var(--muted);max-width:70ch}
 canvas{display:block;width:100%}
-#dial{aspect-ratio:1;max-width:460px;margin:0 auto;cursor:grab;touch-action:none}
+#dial{aspect-ratio:1/1.15;max-width:460px;margin:0 auto;cursor:grab;touch-action:none}
 #dial:active{cursor:grabbing}
-#schem{height:340px}
+#schem{height:380px}
 #char{height:250px}
+
+.wires{display:flex;align-items:center;gap:14px;margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.wires-pic{display:flex;align-items:flex-end;gap:6px;flex:none}
+.wires .w{display:block;width:7px;height:34px;border-radius:2px}
+.wires .wa{background:var(--a)}
+.wires .ww{background:var(--ink);height:42px}
+.wires .wb{background:var(--b)}
+.wires p{margin:0;font-size:.86rem;color:var(--muted);min-width:0}
+.wires strong{display:block;font-size:1.06rem;line-height:1.3;color:var(--ink);font-weight:600;margin-bottom:2px}
 
 .ctl{display:grid;gap:6px}
 .ctl+.ctl{margin-top:16px}
@@ -96,7 +105,7 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
   <header class="top">
     <div>
       <h1>Potentiomètre rotatif</h1>
-      <p>Un curseur glisse sur une piste résistive et la partage en deux résistances R1 et R2 : c'est un pont diviseur de tension. Tournez le bouton et observez les tensions, proportionnelles à l'angle α.</p>
+      <p>Un curseur glisse sur une piste résistive entre deux pattes A et B. Il la partage en deux résistances R1 et R2 en série : c'est un pont diviseur de tension. Tournez le bouton, R1 et R2 changent, leur somme reste constante et la tension de sortie Vs suit l'angle α.</p>
     </div>
     <div class="seg themes" role="radiogroup" aria-label="Thème d'affichage">
       <input type="radio" name="theme" id="thAuto" value="auto" checked><label for="thAuto">Auto</label>
@@ -116,12 +125,12 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
         </div>
         <div class="ctl">
           <div class="ctl-head"><label class="t" for="aMax">Plage angulaire <i>α</i><sub>max</sub></label><output id="aMaxOut" for="aMax">270°</output></div>
-          <input type="range" id="aMax" min="90" max="360" step="5" value="270">
+          <input type="range" id="aMax" min="90" max="330" step="5" value="270">
           <div class="hint">Course utile de la piste résistive.</div>
         </div>
         <div class="ctl">
-          <div class="ctl-head"><label class="t" for="U">Tension aux bornes du potentiomètre <i>U</i></label><output id="UOut" for="U">5,0 V</output></div>
-          <input type="range" id="U" min="1" max="24" step="0.5" value="5">
+          <div class="ctl-head"><label class="t" for="Ve">Tension d'entrée <i>V</i><sub>e</sub> (entre A et B)</label><output id="VeOut" for="Ve">5,0 V</output></div>
+          <input type="range" id="Ve" min="1" max="24" step="0.5" value="5">
         </div>
         <div class="ctl">
           <div class="ctl-head"><label class="t" for="R">Résistance totale <i>R</i> = R1 + R2</label><output id="ROut" for="R">10 kΩ</output></div>
@@ -133,10 +142,14 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
         </div>
       </section>
 
-      <section class="panel" aria-label="Bouton rotatif">
-        <h2>Bouton rotatif</h2>
-        <p class="sub">Faites tourner le bouton à la souris ou au doigt. Bleu : R1, de la borne 0 V jusqu'au curseur. Orange : R2, du curseur jusqu'à la borne +U.</p>
-        <canvas id="dial" role="img" aria-label="Potentiomètre rotatif : piste résistive partagée en R1 et R2 par le curseur"></canvas>
+      <section class="panel" aria-label="Potentiomètre rotatif à trois pattes">
+        <h2>Le composant et ses trois pattes</h2>
+        <p class="sub">Faites tourner le curseur à la souris ou au doigt. La piste résistive relie les pattes A et B. En bleu, R1 va de A au curseur. En orange, R2 va du curseur à B. L'angle α se compte depuis B.</p>
+        <canvas id="dial" role="img" aria-label="Potentiomètre rotatif vu de dessus avec ses trois pattes A, W et B : la piste résistive est partagée en R1 et R2 par le curseur"></canvas>
+        <div class="wires" role="note">
+          <div class="wires-pic" aria-hidden="true"><i class="w wa"></i><i class="w ww"></i><i class="w wb"></i></div>
+          <p><strong>Trois fils = potentiomètre rotatif</strong>A et B aux deux extrémités de la piste, W sur le curseur.</p>
+        </div>
       </section>
     </div>
 
@@ -145,71 +158,72 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
         <h2>Mesures en direct</h2>
         <div class="tiles">
           <div class="tile tk"><div class="l">Angle α</div><div class="v" id="rA">—</div></div>
-          <div class="tile ta"><div class="l">R1</div><div class="v" id="rR1">—</div></div>
-          <div class="tile tb"><div class="l">R2</div><div class="v" id="rR2">—</div></div>
+          <div class="tile ta"><div class="l">R1 (de A à C)</div><div class="v" id="rR1">—</div></div>
+          <div class="tile tb"><div class="l">R2 (de C à B)</div><div class="v" id="rR2">—</div></div>
           <div class="tile ta"><div class="l">U1 aux bornes de R1</div><div class="v" id="rU1">—</div></div>
-          <div class="tile tb"><div class="l">U2 aux bornes de R2</div><div class="v" id="rU2">—</div></div>
+          <div class="tile tb"><div class="l">Vs aux bornes de R2</div><div class="v" id="rVs">—</div></div>
           <div class="tile tk"><div class="l">Courant I</div><div class="v" id="rI">—</div></div>
         </div>
       </section>
 
       <section class="panel" aria-label="Pont diviseur de tension">
         <h2>Pont diviseur de tension</h2>
-        <p class="sub">Le curseur partage la résistance totale R en R1 et R2, en série et traversées par le même courant I. La colonne de droite montre comment U se répartit : U2 en haut, U1 en bas.</p>
-        <canvas id="schem" role="img" aria-label="Schéma du pont diviseur formé par R1 et R2 avec les tensions U1 et U2"></canvas>
+        <p class="sub">Le curseur partage la résistance totale R en deux résistances en série, R1 entre A et C, R2 entre C et B, traversées par le même courant I. Sur le schéma, leur hauteur suit leur valeur.</p>
+        <canvas id="schem" role="img" aria-label="Schéma de deux résistances R1 et R2 en série entre A et B, avec la tension d'entrée Ve, le courant I, la tension U1 aux bornes de R1 et la tension de sortie Vs aux bornes de R2"></canvas>
         <div class="legend">
-          <span><i class="dot k"></i>source U</span>
-          <span><i class="dot a"></i>R1 et U1 (curseur vers 0 V)</span>
-          <span><i class="dot b"></i>R2 et U2 (curseur vers +U)</span>
+          <span><i class="dot k"></i>entrée Ve et courant I</span>
+          <span><i class="dot a"></i>R1 et U1 (de A au curseur)</span>
+          <span><i class="dot b"></i>R2 et Vs (du curseur à B)</span>
+          <span>C : le curseur (fil W)</span>
         </div>
       </section>
 
       <section class="panel" aria-label="Tensions en fonction de l'angle">
         <h2>Tensions en fonction de l'angle</h2>
-        <p class="sub">U1 est une droite qui passe par l'origine : elle est proportionnelle à α. U2 en est le complément à U.</p>
-        <canvas id="char" role="img" aria-label="Courbes de U1 et U2 en fonction de l'angle alpha"></canvas>
-        <p class="note">Le montage est étudié à vide, sans charge en sortie. Le potentiomètre donne l'angle absolu α : aucune remise à zéro ni comptage, il suffit de mesurer U1.</p>
+        <p class="sub">Vs est une droite qui passe par l'origine : elle est proportionnelle à α. U1 en est le complément à Ve.</p>
+        <canvas id="char" role="img" aria-label="Courbes de Vs et U1 en fonction de l'angle alpha"></canvas>
+        <p class="note">Le montage est étudié à vide, sans charge sur la sortie, et la résistance de contact du curseur est négligée. Le potentiomètre donne l'angle absolu α : aucune remise à zéro ni comptage, il suffit de mesurer Vs.</p>
       </section>
     </div>
   </div>
 
   <section class="panel" style="margin-top:16px" aria-label="Formules">
     <h2>Formules</h2>
-    <p class="sub">Avec <i>R</i> la résistance totale, <i>α</i> l'angle du curseur depuis la borne 0 V et <i>α</i><sub>max</sub> la plage angulaire. Les lignes en dessous reprennent vos réglages.</p>
+    <p class="sub">Avec <i>R</i> la résistance totale, <i>α</i> l'angle du curseur depuis la patte B et <i>α</i><sub>max</sub> la plage angulaire. Les lignes en dessous reprennent vos réglages.</p>
     <div class="formulas">
       <div class="f">
         <h3>Résistances du potentiomètre</h3>
-        <div class="math">R<sub>1</sub> = R × <span class="frac"><span>α</span><span>α<sub>max</sub></span></span> &nbsp;;&nbsp; R<sub>2</sub> = R − R<sub>1</sub></div>
+        <div class="math">R<sub>2</sub> = R × <span class="frac"><span>α</span><span>α<sub>max</sub></span></span> &nbsp;;&nbsp; R<sub>1</sub> = R − R<sub>2</sub></div>
         <div class="num" id="f1"></div>
         <p>La résistance de la piste est proportionnelle à la longueur parcourue, donc à l'angle.</p>
       </div>
       <div class="f">
         <h3>Courant dans le pont</h3>
-        <div class="math">I = <span class="frac"><span>U</span><span>R<sub>1</sub> + R<sub>2</sub></span></span> = <span class="frac"><span>U</span><span>R</span></span></div>
+        <div class="math">I = <span class="frac"><span>V<sub>e</sub></span><span>R<sub>1</sub> + R<sub>2</sub></span></span> = <span class="frac"><span>V<sub>e</sub></span><span>R</span></span></div>
         <div class="num" id="f2"></div>
         <p>R1 + R2 reste égale à R, donc I ne dépend pas de la position du curseur.</p>
       </div>
       <div class="f">
-        <h3>Tension aux bornes de R1</h3>
-        <div class="math">U<sub>1</sub> = U × <span class="frac"><span>R<sub>1</sub></span><span>R<sub>1</sub> + R<sub>2</sub></span></span> = U × <span class="frac"><span>α</span><span>α<sub>max</sub></span></span></div>
+        <h3>Tension de sortie</h3>
+        <div class="math">V<sub>s</sub> = V<sub>e</sub> × <span class="frac"><span>R<sub>2</sub></span><span>R<sub>1</sub> + R<sub>2</sub></span></span> = V<sub>e</sub> × <span class="frac"><span>α</span><span>α<sub>max</sub></span></span></div>
         <div class="num" id="f3"></div>
-        <p>Formule du pont diviseur : U1 est proportionnelle à α et à U.</p>
+        <p>Formule du pont diviseur : Vs est proportionnelle à α et à Ve.</p>
       </div>
       <div class="f">
-        <h3>Tension aux bornes de R2</h3>
-        <div class="math">U<sub>2</sub> = U − U<sub>1</sub> = U × <span class="frac"><span>R<sub>2</sub></span><span>R</span></span></div>
+        <h3>Tension aux bornes de R1</h3>
+        <div class="math">U<sub>1</sub> = V<sub>e</sub> − V<sub>s</sub> = V<sub>e</sub> × <span class="frac"><span>R<sub>1</sub></span><span>R</span></span></div>
         <div class="num" id="f4"></div>
-        <p>La somme U1 + U2 vaut toujours U.</p>
+        <p>La somme U1 + Vs vaut toujours Ve.</p>
       </div>
       <div class="f">
         <h3>Mesure de l'angle</h3>
-        <div class="math">α = α<sub>max</sub> × <span class="frac"><span>U<sub>1</sub></span><span>U</span></span></div>
+        <div class="math">α = α<sub>max</sub> × <span class="frac"><span>V<sub>s</sub></span><span>V<sub>e</sub></span></span></div>
         <div class="num" id="f5"></div>
-        <p>On déduit l'angle d'une simple mesure de tension, rapportée à la tension d'alimentation.</p>
+        <p>On déduit l'angle d'une simple mesure de tension, rapportée à la tension d'entrée.</p>
       </div>
       <div class="f">
         <h3>Sensibilité du capteur</h3>
-        <div class="math">k = <span class="frac"><span>dU<sub>1</sub></span><span>dα</span></span> = <span class="frac"><span>U</span><span>α<sub>max</sub></span></span></div>
+        <div class="math">k = <span class="frac"><span>dV<sub>s</sub></span><span>dα</span></span> = <span class="frac"><span>V<sub>e</sub></span><span>α<sub>max</sub></span></span></div>
         <div class="num" id="f6"></div>
         <p>Une plage plus courte ou une tension plus grande donne plus de volts par degré.</p>
       </div>
@@ -222,13 +236,15 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 'use strict';
 var $=function(id){return document.getElementById(id);};
 var PI=Math.PI, RL=[1,2.2,4.7,10,22,47,100];
-var S={aMax:270,alpha:90,U:5,ri:3,sweep:false,ph:0,drag:false};
+var S={aMax:270,alpha:90,Ve:5,ri:3,sweep:false,ph:0,drag:false};
+var G={cx:0,cy:0};
 function mod(x,p){return ((x%p)+p)%p;}
 function fmt(x,d){return x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function fmtI(i){return i<0.1?fmt(i*1000,1)+' µA':fmt(i,2)+' mA';}
+/* α se compte depuis la patte B : R2 (curseur → B) est proportionnelle à α, R1 (A → curseur) est le reste. */
 function vals(){
-  var x=S.alpha/S.aMax,R=RL[S.ri],U=S.U;
-  return {x:x,R:R,R1:R*x,R2:R*(1-x),I:U/R,U1:U*x,U2:U*(1-x)};
+  var x=S.alpha/S.aMax,R=RL[S.ri],Ve=S.Ve;
+  return {x:x,R:R,R2:R*x,R1:R*(1-x),I:Ve/R,Vs:Ve*x,U1:Ve*(1-x)};
 }
 function niceStep(range,maxTicks){
   var st=[1,2,5,10,15,20,30,45,60,90],i;
@@ -238,7 +254,7 @@ function niceStep(range,maxTicks){
 function tok(){
   var cs=getComputedStyle(document.documentElement);
   var g=function(n){return cs.getPropertyValue(n).trim();};
-  return {panel:g('--panel'),ink:g('--ink'),muted:g('--muted'),line:g('--line'),grid:g('--grid'),a:g('--a'),b:g('--b'),k:g('--k'),mono:g('--mono')};
+  return {bg:g('--bg'),panel:g('--panel'),ink:g('--ink'),muted:g('--muted'),line:g('--line'),grid:g('--grid'),a:g('--a'),b:g('--b'),k:g('--k'),mono:g('--mono'),sans:g('--sans')};
 }
 function fit(c){
   var dpr=Math.min(window.devicePixelRatio||1,2);
@@ -252,111 +268,191 @@ function fit(c){
 }
 var dc=$('dial'),sch=$('schem'),ch=$('char');
 
-function tag(ctx,text,x,y,T){
-  ctx.font='600 11px '+T.mono;
-  var tw=ctx.measureText(text).width+10;
-  ctx.fillStyle=T.panel;ctx.strokeStyle=T.line;ctx.lineWidth=1;
-  ctx.beginPath();ctx.rect(x-tw/2,y-9,tw,18);ctx.fill();ctx.stroke();
-  ctx.fillStyle=T.ink;ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(text,x,y);
+function rr(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
+}
+function arrowUp(ctx,x,yTip,col,s){
+  ctx.fillStyle=col;ctx.beginPath();
+  ctx.moveTo(x,yTip);ctx.lineTo(x-s*0.55,yTip+s*1.5);ctx.lineTo(x+s*0.55,yTip+s*1.5);
+  ctx.closePath();ctx.fill();
 }
 
+/* Potentiomètre vu de dessus : boîtier, piste en arc, curseur, trois pattes A (gauche), W (centre), B (droite). */
 function drawDial(T){
-  var f=fit(dc),ctx=f.ctx,cx=f.w/2,cy=f.h/2,half=Math.min(f.w,f.h)/2;
-  var Rt=half*0.66,lw=Math.max(12,half*0.075),gap=360-S.aMax,s0=90+gap/2;
-  var A=function(a){return (s0+a)*PI/180;};
-  ctx.lineCap='butt';ctx.lineWidth=lw;
-  if(S.alpha>0){ctx.strokeStyle=T.a;ctx.beginPath();ctx.arc(cx,cy,Rt,A(0),A(S.alpha));ctx.stroke();}
-  if(S.alpha<S.aMax){ctx.strokeStyle=T.b;ctx.beginPath();ctx.arc(cx,cy,Rt,A(S.alpha),A(S.aMax));ctx.stroke();}
-  var maj=niceStep(S.aMax,10),minor=maj/5,a;
+  var f=fit(dc),ctx=f.ctx,w=f.w,h=f.h;
+  var hs=Math.min(w-8,h-74),hx=(w-hs)/2,hy=4,cx=hx+hs/2,cy=hy+hs/2;
+  G.cx=cx;G.cy=cy;
+  var Rt=hs*0.33,lw=Math.max(10,hs*0.07),kr=hs*0.095,gap=360-S.aMax;
+  /* angle écran (canvas) du curseur pour un angle α : α = aMax sur la patte A, α = 0 sur la patte B */
+  var A=function(al){return (90+gap/2+(S.aMax-al))*PI/180;};
+  var pinLen=Math.max(16,Math.min(26,h*0.05)),pw=Math.max(9,hs*0.03),sp=hs*0.233;
+  var xA=cx-sp,xW=cx,xB=cx+sp,yBot=hy+hs,yEnd=yBot+pinLen,yJ=cy+Rt+hs*0.03;
+  var PA={x:cx+Rt*Math.cos(A(S.aMax)),y:cy+Rt*Math.sin(A(S.aMax))};
+  var PB={x:cx+Rt*Math.cos(A(0)),y:cy+Rt*Math.sin(A(0))};
+  var i,a;
+
+  // boîtier
+  rr(ctx,hx,hy,hs,hs,12);ctx.fillStyle=T.bg;ctx.fill();
+  ctx.strokeStyle=T.ink;ctx.lineWidth=3;ctx.stroke();
+
+  // pistes de connexion des trois pattes
+  ctx.lineJoin='round';ctx.lineCap='butt';ctx.lineWidth=6;
+  var tr=function(col,pts){
+    ctx.strokeStyle=col;ctx.beginPath();ctx.moveTo(pts[0],pts[1]);
+    for(var k=2;k<pts.length;k+=2)ctx.lineTo(pts[k],pts[k+1]);
+    ctx.stroke();
+  };
+  tr(T.a,[PA.x,PA.y,xA,yJ,xA,yBot]);
+  tr(T.b,[PB.x,PB.y,xB,yJ,xB,yBot]);
+  tr(T.ink,[cx,cy,xW,yBot]);
+
+  // piste résistive : contour, puis R1 (bleu, de A au curseur) et R2 (orange, du curseur à B)
+  ctx.lineCap='butt';
+  ctx.strokeStyle=T.ink;ctx.lineWidth=lw+4;
+  ctx.beginPath();ctx.arc(cx,cy,Rt,A(S.aMax),A(0));ctx.stroke();
+  ctx.lineWidth=lw;
+  if(S.alpha<S.aMax){ctx.strokeStyle=T.a;ctx.beginPath();ctx.arc(cx,cy,Rt,A(S.aMax),A(S.alpha));ctx.stroke();}
+  if(S.alpha>0){ctx.strokeStyle=T.b;ctx.beginPath();ctx.arc(cx,cy,Rt,A(S.alpha),A(0));ctx.stroke();}
+
+  // graduations
+  var maj=niceStep(S.aMax,8),minor=maj/5;
   ctx.font='11px '+T.mono;ctx.textAlign='center';ctx.textBaseline='middle';
   for(a=0;a<=S.aMax+1e-6;a+=minor){
-    var isMaj=Math.abs(a/maj-Math.round(a/maj))<1e-6,r0=Rt+lw/2+3,r1=r0+(isMaj?9:5),ang=A(a);
+    var isMaj=Math.abs(a/maj-Math.round(a/maj))<1e-6,r0=Rt+lw/2+5,r1=r0+(isMaj?9:5),an=A(a);
     ctx.strokeStyle=T.muted;ctx.lineWidth=isMaj?1.6:1;
-    ctx.beginPath();ctx.moveTo(cx+r0*Math.cos(ang),cy+r0*Math.sin(ang));ctx.lineTo(cx+r1*Math.cos(ang),cy+r1*Math.sin(ang));ctx.stroke();
-    if(isMaj&&!(S.aMax===360&&a>=360)){
-      var rl=r1+14;ctx.fillStyle=T.muted;ctx.fillText(Math.round(a)+'°',cx+rl*Math.cos(ang),cy+rl*Math.sin(ang));
+    ctx.beginPath();ctx.moveTo(cx+r0*Math.cos(an),cy+r0*Math.sin(an));ctx.lineTo(cx+r1*Math.cos(an),cy+r1*Math.sin(an));ctx.stroke();
+    if(isMaj){
+      var rl=r1+13;ctx.fillStyle=T.muted;ctx.fillText(Math.round(a)+'°',cx+rl*Math.cos(an),cy+rl*Math.sin(an));
     }
   }
-  // bornes
-  var rt=Rt-lw-18;
-  tag(ctx,'0 V',cx+rt*Math.cos(A(0)),cy+rt*Math.sin(A(0)),T);
-  tag(ctx,'+U',cx+rt*Math.cos(A(S.aMax)),cy+rt*Math.sin(A(S.aMax)),T);
-  // bouton
-  var kr=half*0.34,ang2=A(S.alpha);
-  ctx.fillStyle=T.panel;ctx.strokeStyle=T.line;ctx.lineWidth=2;
-  ctx.beginPath();ctx.arc(cx,cy,kr,0,2*PI);ctx.fill();ctx.stroke();
-  ctx.strokeStyle=T.ink;ctx.lineWidth=4;ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(cx+kr*0.15*Math.cos(ang2),cy+kr*0.15*Math.sin(ang2));ctx.lineTo(cx+(Rt-lw/2)*Math.cos(ang2),cy+(Rt-lw/2)*Math.sin(ang2));ctx.stroke();
+
+  // repère de l'angle α : trait de référence sur B et arc jusqu'au curseur
+  var ra=Rt-lw/2-14;
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1.2;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(cx+kr*Math.cos(A(0)),cy+kr*Math.sin(A(0)));ctx.lineTo(cx+(Rt-lw/2-4)*Math.cos(A(0)),cy+(Rt-lw/2-4)*Math.sin(A(0)));ctx.stroke();
+  ctx.setLineDash([]);
+  if(S.alpha>0){
+    ctx.strokeStyle=T.ink;ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.arc(cx,cy,ra,A(S.alpha),A(0));ctx.stroke();
+    if(S.alpha>=22){
+      var am=(A(S.alpha)+A(0))/2;
+      ctx.fillStyle=T.ink;ctx.font='italic 600 15px '+T.sans;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('α',cx+(ra-13)*Math.cos(am),cy+(ra-13)*Math.sin(am));
+    }
+  }
+
+  // curseur : bras, contact sur la piste, anneau central relié à la patte W
+  var ang=A(S.alpha),ca=Math.cos(ang),sa=Math.sin(ang);
+  ctx.strokeStyle=T.ink;ctx.lineWidth=Math.max(5,lw*0.38);ctx.lineCap='butt';
+  ctx.beginPath();ctx.moveTo(cx+kr*ca,cy+kr*sa);ctx.lineTo(cx+Rt*ca,cy+Rt*sa);ctx.stroke();
   ctx.fillStyle=T.ink;ctx.strokeStyle=T.panel;ctx.lineWidth=2;
-  ctx.beginPath();ctx.arc(cx+Rt*Math.cos(ang2),cy+Rt*Math.sin(ang2),lw*0.7,0,2*PI);ctx.fill();ctx.stroke();
-  ctx.fillStyle=T.ink;ctx.beginPath();ctx.arc(cx,cy,5,0,2*PI);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+Rt*ca,cy+Rt*sa,lw*0.6,0,2*PI);ctx.fill();ctx.stroke();
+  ctx.fillStyle=T.panel;ctx.strokeStyle=T.ink;ctx.lineWidth=Math.max(4,hs*0.012);
+  ctx.beginPath();ctx.arc(cx,cy,kr,0,2*PI);ctx.fill();ctx.stroke();
+
+  // les trois pattes et leur rôle
+  var pins=[[xA,T.a,'A','+Ve'],[xW,T.ink,'W','Vs'],[xB,T.b,'B','0 V']];
+  for(i=0;i<pins.length;i++){
+    var p=pins[i];
+    ctx.fillStyle=p[1];ctx.strokeStyle=T.ink;ctx.lineWidth=1.5;
+    ctx.fillRect(p[0]-pw/2,yBot-2,pw,pinLen+2);ctx.strokeRect(p[0]-pw/2,yBot-2,pw,pinLen+2);
+    ctx.fillStyle=T.ink;ctx.font='600 15px '+T.sans;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(p[2],p[0],yEnd+14);
+    ctx.fillStyle=T.muted;ctx.font='11px '+T.mono;
+    ctx.fillText(p[3],p[0],yEnd+31);
+  }
 }
 
+/* Schéma : deux résistances en série, R1 entre A et C, R2 entre C et B, avec Ve, I, U1 et Vs. */
 function drawSchem(T,v){
   var f=fit(sch),ctx=f.ctx,w=f.w,h=f.h,x=v.x;
-  var mt=40,mb=54,L=h-mt-mb,yT=mt,yB=mt+L,yW=yT+L*(1-x),ym=(yT+yB)/2;
-  var xs=40,xr=96,rw=26,labW=88,barW=20;
-  var barX=Math.max(xr+rw/2+96,w-8-labW-barW-6);
-  ctx.lineCap='round';ctx.lineJoin='round';
+  var xe=62,xr=w<460?162:190,rw=34,xv=Math.min(w-70,xr+170);
+  var ox=Math.max(0,(w-(xv+62))/2);
+  var yT=30,yA=62,yB=h-62,yG=yB+28,L=yB-yA,yC=yA+L*(1-x);
+  var h1=yC-yA,h2=yB-yC;
+  ctx.translate(ox,0);
+  var tx=function(s,x0,y0,font,col,al){ctx.font=font;ctx.fillStyle=col;ctx.textAlign=al;ctx.textBaseline='middle';ctx.fillText(s,x0,y0);};
+
   // fils
-  ctx.strokeStyle=T.ink;ctx.lineWidth=2;
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=T.ink;ctx.lineWidth=2;
   ctx.beginPath();
-  ctx.moveTo(xr,yT);ctx.lineTo(xs,yT);ctx.lineTo(xs,ym-4);
-  ctx.moveTo(xs,ym+4);ctx.lineTo(xs,yB);ctx.lineTo(xr,yB);
+  ctx.moveTo(xe-12,yT);ctx.lineTo(xr,yT);ctx.lineTo(xr,yA);
+  ctx.moveTo(xr,yB);ctx.lineTo(xr,yG);
+  ctx.moveTo(xe-12,yG);ctx.lineTo(xv+24,yG);
   ctx.stroke();
-  // source
-  ctx.strokeStyle=T.k;ctx.lineWidth=3;
-  ctx.beginPath();ctx.moveTo(xs-12,ym-4);ctx.lineTo(xs+12,ym-4);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(xs-7,ym+4);ctx.lineTo(xs+7,ym+4);ctx.stroke();
-  ctx.fillStyle=T.k;ctx.font='600 12px '+T.mono;ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('+',xs-17,ym-10);
-  ctx.fillText('U = '+fmt(S.U,1)+' V',xs,ym+22);
-  // courant
-  var xa=(xs+xr)/2;
-  ctx.fillStyle=T.k;ctx.strokeStyle=T.k;ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(xa-6,yT-5);ctx.lineTo(xa+4,yT);ctx.lineTo(xa-6,yT+5);ctx.closePath();ctx.fill();
-  ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.font='600 11px '+T.mono;
-  ctx.fillText('I = '+fmtI(v.I),xa,yT-12);
-  // masse
+
+  // résistances en série
+  var box=function(y,hh,col){
+    if(hh<1.5){ctx.strokeStyle=col;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(xr-rw/2,y);ctx.lineTo(xr+rw/2,y);ctx.stroke();return;}
+    ctx.globalAlpha=0.25;ctx.fillStyle=col;ctx.fillRect(xr-rw/2,y,rw,hh);ctx.globalAlpha=1;
+    ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.strokeRect(xr-rw/2,y,rw,hh);
+  };
+  box(yA,h1,T.a);
+  box(yC,h2,T.b);
+
+  // niveaux de potentiel A, C, B
+  ctx.strokeStyle=T.muted;ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(xr+rw/2,yA);ctx.lineTo(xv+8,yA);ctx.stroke();
+  ctx.setLineDash([]);
   ctx.strokeStyle=T.ink;ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(xr,yB);ctx.lineTo(xr,yB+10);
-  ctx.moveTo(xr-14,yB+10);ctx.lineTo(xr+14,yB+10);
-  ctx.moveTo(xr-9,yB+16);ctx.lineTo(xr+9,yB+16);
-  ctx.moveTo(xr-4,yB+22);ctx.lineTo(xr+4,yB+22);ctx.stroke();
-  // résistances
-  var h2=yW-yT,h1=yB-yW;
-  ctx.lineWidth=2;
-  ctx.fillStyle=T.b;ctx.globalAlpha=0.22;ctx.fillRect(xr-rw/2,yT,rw,h2);ctx.globalAlpha=1;
-  ctx.strokeStyle=T.b;ctx.strokeRect(xr-rw/2,yT,rw,h2);
-  ctx.fillStyle=T.a;ctx.globalAlpha=0.22;ctx.fillRect(xr-rw/2,yW,rw,h1);ctx.globalAlpha=1;
-  ctx.strokeStyle=T.a;ctx.strokeRect(xr-rw/2,yW,rw,h1);
-  ctx.font='600 12px '+T.mono;ctx.textAlign='left';ctx.textBaseline='middle';
-  ctx.fillStyle=T.b;ctx.fillText('R2 = '+fmt(v.R2,2)+' kΩ',xr+rw/2+8,yT+h2/2);
-  ctx.fillStyle=T.a;ctx.fillText('R1 = '+fmt(v.R1,2)+' kΩ',xr+rw/2+8,yB-h1/2);
-  // curseur
-  ctx.strokeStyle=T.ink;ctx.fillStyle=T.ink;ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(xr+rw/2+16,yW);ctx.lineTo(barX,yW);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(xr+rw/2+1,yW);ctx.lineTo(xr+rw/2+13,yW-6);ctx.lineTo(xr+rw/2+13,yW+6);ctx.closePath();ctx.fill();
-  // colonne des potentiels
-  ctx.fillStyle=T.b;ctx.fillRect(barX,yT,barW,h2);
-  ctx.fillStyle=T.a;ctx.fillRect(barX,yW,barW,h1);
-  ctx.strokeStyle=T.ink;ctx.lineWidth=1.5;ctx.strokeRect(barX,yT,barW,L);
-  ctx.fillStyle=T.muted;ctx.font='11px '+T.mono;ctx.textAlign='center';ctx.textBaseline='alphabetic';
-  ctx.fillText('potentiels',barX+barW/2,yT-12);
-  ctx.textAlign='left';ctx.textBaseline='middle';ctx.font='600 12px '+T.mono;
-  ctx.fillStyle=T.b;ctx.fillText('U2 = '+fmt(v.U2,2)+' V',barX+barW+6,yT+h2/2);
-  ctx.fillStyle=T.a;ctx.fillText('U1 = '+fmt(v.U1,2)+' V',barX+barW+6,yB-h1/2);
-  ctx.fillStyle=T.muted;ctx.font='11px '+T.mono;
-  ctx.fillText(fmt(S.U,1)+' V',barX+barW+6,yT-2);
-  ctx.fillText('0 V',barX+barW+6,yB+9);
+  ctx.beginPath();ctx.moveTo(xr,yC);ctx.lineTo(xv+8,yC);ctx.stroke();
+  ctx.fillStyle=T.ink;ctx.beginPath();ctx.arc(xr,yC,4.5,0,2*PI);ctx.fill();
+
+  // tension d'entrée Ve
+  ctx.strokeStyle=T.k;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(xe,yG);ctx.lineTo(xe,yT+10);ctx.stroke();
+  arrowUp(ctx,xe,yT,T.k,8);
+  var ym=(yT+yG)/2;
+  tx('Ve',xe-10,ym-9,'600 15px '+T.sans,T.k,'right');
+  tx(fmt(S.Ve,1)+' V',xe-10,ym+9,'12px '+T.mono,T.k,'right');
+
+  // courant I
+  var xa=(xe+xr)/2;
+  ctx.fillStyle=T.k;ctx.beginPath();ctx.moveTo(xa+6,yT);ctx.lineTo(xa-5,yT-5);ctx.lineTo(xa-5,yT+5);ctx.closePath();ctx.fill();
+  tx('I = '+fmtI(v.I),xa,yT-15,'600 12px '+T.mono,T.k,'center');
+
+  // tensions U1 (aux bornes de R1) et Vs (aux bornes de R2)
+  if(yC-yA>16){
+    ctx.strokeStyle=T.a;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(xv,yC);ctx.lineTo(xv,yA+10);ctx.stroke();
+    arrowUp(ctx,xv,yA,T.a,8);
+  }
+  if(yG-yC>16){
+    ctx.strokeStyle=T.b;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(xv,yG);ctx.lineTo(xv,yC+10);ctx.stroke();
+    arrowUp(ctx,xv,yC,T.b,8);
+  }
+  var rx=xv+12;
+  var yu=Math.max(yA+18,Math.min((yA+yC)/2,yC-18));
+  var ys=Math.min(yG-18,Math.max((yC+yG)/2,yC+18));
+  tx('U1',rx,yu-8,'600 15px '+T.sans,T.a,'left');
+  tx(fmt(v.U1,2)+' V',rx,yu+9,'12px '+T.mono,T.a,'left');
+  tx('Vs',rx,ys-8,'600 15px '+T.sans,T.b,'left');
+  tx(fmt(v.Vs,2)+' V',rx,ys+9,'12px '+T.mono,T.b,'left');
+  tx('0 V',xv+24,yG+14,'11px '+T.mono,T.muted,'right');
+
+  // noms des nœuds
+  tx('A',xr-10,yA-12,'600 15px '+T.sans,T.ink,'right');
+  tx('C',xr+rw/2+8,yC-12,'600 15px '+T.sans,T.ink,'left');
+  tx('B',xr-10,yB+14,'600 15px '+T.sans,T.ink,'right');
+
+  // noms et valeurs de R1 et R2
+  var lx=xr-rw/2-10;
+  var y1=Math.max(yA+18,Math.min(yA+h1/2,yC-18));
+  var y2=Math.min(yB-18,Math.max(yC+h2/2,yC+18));
+  tx('R1',lx,y1-8,'600 15px '+T.sans,T.a,'right');
+  tx(fmt(v.R1,2)+' kΩ',lx,y1+9,'12px '+T.mono,T.a,'right');
+  tx('R2',lx,y2-8,'600 15px '+T.sans,T.b,'right');
+  tx(fmt(v.R2,2)+' kΩ',lx,y2+9,'12px '+T.mono,T.b,'right');
 }
 
 function drawChar(T,v){
   var f=fit(ch),ctx=f.ctx,w=f.w,h=f.h;
   var ml=48,mr=16,mt=16,mb=36,pw=w-ml-mr,ph=h-mt-mb;
   var X=function(a){return ml+a/S.aMax*pw;};
-  var Y=function(u){return mt+ph-u/S.U*ph;};
+  var Y=function(u){return mt+ph-u/S.Ve*ph;};
   var st=niceStep(S.aMax,Math.max(3,Math.floor(pw/48))),a,g;
   ctx.font='11px '+T.mono;ctx.textBaseline='alphabetic';
   for(a=0;a<=S.aMax+1e-6;a+=st){
@@ -366,50 +462,50 @@ function drawChar(T,v){
   }
   ctx.textBaseline='middle';
   for(g=0;g<=4;g++){
-    var u=g*S.U/4,yy=Y(u);
+    var u=g*S.Ve/4,yy=Y(u);
     ctx.strokeStyle=T.grid;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ml,yy);ctx.lineTo(ml+pw,yy);ctx.stroke();
     ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText(fmt(u,u%1?2:0).replace(/,00$/,''),ml-6,yy);
   }
   ctx.fillStyle=T.muted;ctx.textAlign='left';ctx.textBaseline='alphabetic';
   ctx.fillText('V',6,12);
   ctx.textAlign='right';ctx.fillText('α (°)',w-4,h-4);
-  // U
+  // Ve
   ctx.strokeStyle=T.k;ctx.lineWidth=1.4;ctx.setLineDash([5,4]);
-  ctx.beginPath();ctx.moveTo(ml,Y(S.U));ctx.lineTo(ml+pw,Y(S.U));ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle=T.k;ctx.font='600 11px '+T.mono;ctx.textAlign='left';ctx.fillText('U',ml+6,Y(S.U)-7);
-  // droites
+  ctx.beginPath();ctx.moveTo(ml,Y(S.Ve));ctx.lineTo(ml+pw,Y(S.Ve));ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=T.k;ctx.font='600 11px '+T.mono;ctx.textAlign='left';ctx.fillText('Ve',ml+6,Y(S.Ve)-7);
+  // droites : U1 décroît, Vs croît
   ctx.lineWidth=2.6;ctx.lineCap='round';
-  ctx.strokeStyle=T.a;ctx.beginPath();ctx.moveTo(X(0),Y(0));ctx.lineTo(X(S.aMax),Y(S.U));ctx.stroke();
-  ctx.strokeStyle=T.b;ctx.beginPath();ctx.moveTo(X(0),Y(S.U));ctx.lineTo(X(S.aMax),Y(0));ctx.stroke();
+  ctx.strokeStyle=T.a;ctx.beginPath();ctx.moveTo(X(0),Y(S.Ve));ctx.lineTo(X(S.aMax),Y(0));ctx.stroke();
+  ctx.strokeStyle=T.b;ctx.beginPath();ctx.moveTo(X(0),Y(0));ctx.lineTo(X(S.aMax),Y(S.Ve));ctx.stroke();
   ctx.font='600 12px '+T.mono;
-  ctx.fillStyle=T.a;ctx.textAlign='right';ctx.fillText('U1',X(S.aMax)-6,Y(S.U)+16);
-  ctx.fillStyle=T.b;ctx.textAlign='left';ctx.fillText('U2',X(0)+6,Y(S.U)+16);
+  ctx.fillStyle=T.b;ctx.textAlign='right';ctx.fillText('Vs',X(S.aMax)-6,Y(S.Ve)+16);
+  ctx.fillStyle=T.a;ctx.textAlign='left';ctx.fillText('U1',X(0)+6,Y(S.Ve)+16);
   // point courant
   var xc=X(S.alpha);
   ctx.strokeStyle=T.ink;ctx.lineWidth=1.3;ctx.setLineDash([3,3]);
   ctx.beginPath();ctx.moveTo(xc,mt+ph);ctx.lineTo(xc,mt);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(ml,Y(v.U1));ctx.lineTo(xc,Y(v.U1));ctx.moveTo(ml,Y(v.U2));ctx.lineTo(xc,Y(v.U2));ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(ml,Y(v.U1));ctx.lineTo(xc,Y(v.U1));ctx.moveTo(ml,Y(v.Vs));ctx.lineTo(xc,Y(v.Vs));ctx.stroke();ctx.setLineDash([]);
   ctx.strokeStyle=T.panel;ctx.lineWidth=2;
   ctx.fillStyle=T.a;ctx.beginPath();ctx.arc(xc,Y(v.U1),5.5,0,2*PI);ctx.fill();ctx.stroke();
-  ctx.fillStyle=T.b;ctx.beginPath();ctx.arc(xc,Y(v.U2),5.5,0,2*PI);ctx.fill();ctx.stroke();
+  ctx.fillStyle=T.b;ctx.beginPath();ctx.arc(xc,Y(v.Vs),5.5,0,2*PI);ctx.fill();ctx.stroke();
 }
 
 var cache={};
 function setT(id,s){if(cache[id]!==s){cache[id]=s;$(id).textContent=s;}}
 function info(v){
-  var U=S.U;
+  var Ve=S.Ve;
   setT('rA',fmt(S.alpha,1)+' °');
   setT('rR1',fmt(v.R1,2)+' kΩ');
   setT('rR2',fmt(v.R2,2)+' kΩ');
   setT('rU1',fmt(v.U1,2)+' V');
-  setT('rU2',fmt(v.U2,2)+' V');
+  setT('rVs',fmt(v.Vs,2)+' V');
   setT('rI',fmtI(v.I));
-  setT('f1','R1 = '+fmt(v.R,1)+' × '+fmt(S.alpha,1)+' / '+S.aMax+' = '+fmt(v.R1,2)+' kΩ · R2 = '+fmt(v.R,1)+' − '+fmt(v.R1,2)+' = '+fmt(v.R2,2)+' kΩ');
-  setT('f2','I = '+fmt(U,1)+' V / '+fmt(v.R,1)+' kΩ = '+fmtI(v.I));
-  setT('f3','U1 = '+fmt(U,1)+' × '+fmt(S.alpha,1)+' / '+S.aMax+' = '+fmt(v.U1,2)+' V');
-  setT('f4','U2 = '+fmt(U,1)+' − '+fmt(v.U1,2)+' = '+fmt(v.U2,2)+' V');
-  setT('f5','α = '+S.aMax+' × '+fmt(v.U1,2)+' / '+fmt(U,1)+' = '+fmt(S.aMax*v.U1/U,1)+' °');
-  setT('f6','k = '+fmt(U,1)+' / '+S.aMax+' = '+fmt(U/S.aMax,4)+' V/° (soit '+fmt(U/(S.aMax*PI/180),3)+' V/rad)');
+  setT('f1','R2 = '+fmt(v.R,1)+' × '+fmt(S.alpha,1)+' / '+S.aMax+' = '+fmt(v.R2,2)+' kΩ · R1 = '+fmt(v.R,1)+' − '+fmt(v.R2,2)+' = '+fmt(v.R1,2)+' kΩ');
+  setT('f2','I = '+fmt(Ve,1)+' V / '+fmt(v.R,1)+' kΩ = '+fmtI(v.I));
+  setT('f3','Vs = '+fmt(Ve,1)+' × '+fmt(S.alpha,1)+' / '+S.aMax+' = '+fmt(v.Vs,2)+' V');
+  setT('f4','U1 = '+fmt(Ve,1)+' − '+fmt(v.Vs,2)+' = '+fmt(v.U1,2)+' V');
+  setT('f5','α = '+S.aMax+' × '+fmt(v.Vs,2)+' / '+fmt(Ve,1)+' = '+fmt(S.aMax*v.Vs/Ve,1)+' °');
+  setT('f6','k = '+fmt(Ve,1)+' / '+S.aMax+' = '+fmt(Ve/S.aMax,4)+' V/° (soit '+fmt(Ve/(S.aMax*PI/180),3)+' V/rad)');
 }
 function sync(){
   var al=$('alpha');
@@ -417,9 +513,9 @@ function sync(){
   if(Number(al.value)!==S.alpha)al.value=S.alpha;
   setT('alphaOut',fmt(S.alpha,1)+'°');
   setT('aMaxOut',S.aMax+'°');
-  setT('UOut',fmt(S.U,1)+' V');
+  setT('VeOut',fmt(S.Ve,1)+' V');
   setT('ROut',fmt(RL[S.ri],RL[S.ri]%1?1:0)+' kΩ');
-  setT('alphaHint','α = 0 : borne 0 V · α = '+S.aMax+'° : borne +U · '+fmt(S.alpha/S.aMax*100,1)+' % de la course');
+  setT('alphaHint','α = 0 : curseur sur B (0 V) · α = '+S.aMax+'° : curseur sur A (+Ve) · '+fmt(S.alpha/S.aMax*100,1)+' % de la course');
 }
 
 function applyTheme(v){
@@ -441,7 +537,7 @@ function applyTheme(v){
 
 $('alpha').addEventListener('input',function(e){S.alpha=+e.target.value;S.sweep=false;$('sweep').setAttribute('aria-pressed','false');});
 $('aMax').addEventListener('input',function(e){S.aMax=+e.target.value;if(S.alpha>S.aMax)S.alpha=S.aMax;});
-$('U').addEventListener('input',function(e){S.U=+e.target.value;});
+$('Ve').addEventListener('input',function(e){S.Ve=+e.target.value;});
 $('R').addEventListener('input',function(e){S.ri=+e.target.value;});
 $('sweep').addEventListener('click',function(){
   S.sweep=!S.sweep;
@@ -449,11 +545,12 @@ $('sweep').addEventListener('click',function(){
   if(S.sweep)S.ph=S.alpha/S.aMax/2;
 });
 
+/* Le curseur suit le pointeur : α = angle écran de la patte B moins angle du pointeur (α croît dans le sens trigonométrique). */
 function fromPointer(e){
   var r=dc.getBoundingClientRect();
-  var x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;
-  var a=Math.atan2(y,x)*180/PI,gap=360-S.aMax,s0=90+gap/2;
-  var rel=mod(a-s0,360);
+  var x=e.clientX-r.left-G.cx,y=e.clientY-r.top-G.cy;
+  var a=Math.atan2(y,x)*180/PI,gap=360-S.aMax,s0=90-gap/2;
+  var rel=mod(s0-a,360);
   if(rel>S.aMax)rel=(rel<S.aMax+gap/2)?S.aMax:0;
   S.alpha=Math.round(rel*2)/2;
 }
