@@ -1,0 +1,1179 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Intelligence artificielle — ITC · CPGE PSI*</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
+  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;
+  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-ui)}
+button,input,select,textarea{font:inherit;color:inherit}
+.inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+.band{background:var(--bar);border-bottom:1px solid var(--line);flex:none}
+.row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:7px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.01em}
+.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.files{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.sm{padding:3px 8px;font-size:12px}
+:is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;padding:7px 14px;font-weight:500;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.work{flex:1;min-height:0;display:flex;gap:10px;padding-block:10px}
+#stage{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+#hint{flex:none;padding:6px 12px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
+#scroller{flex:1;min-height:0;overflow:auto}
+.phead{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex:none}
+.phead b{font-size:15px}
+.phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.pbody{overflow:auto;padding:12px;flex:1;min-height:0}
+.fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--fg)}
+input[type=range]{width:100%;padding:0;accent-color:var(--accent)}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.small{font-size:12px;color:var(--muted);margin:0 0 9px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:60;max-width:90vw}
+#dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(640px,100%);max-height:88%;display:flex;flex-direction:column}
+.dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlgbox header b{font-size:16px}
+.dlgbox .dbody{padding:14px 16px;overflow:auto}
+.dlgbox h3{margin:14px 0 4px;font-size:14px}.dlgbox p,.dlgbox li{margin:4px 0;font-size:13.5px}
+#act{flex:none;width:clamp(280px,24vw,340px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);min-height:0;max-height:100%}
+#act .pbody{font-size:13.5px}
+.goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:8px 10px;margin:0 0 10px}
+.steps{margin:0 0 10px;padding-left:20px}.steps li{margin-bottom:9px}
+.defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:0 0 12px}.defi p{margin:6px 0}
+.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+fieldset.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px 6px;margin:0 0 10px;min-width:0}
+fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
+.opt{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:6px;cursor:pointer}
+.opt input{margin-top:3px;width:auto;flex:none}
+.opt.good{background:rgba(30,122,46,.15)}.opt.bad{background:rgba(192,40,31,.15)}
+.why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
+.score{font-weight:600;font-size:15px;margin:4px 0 8px}
+#course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
+.ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
+.cwrap{flex:1;min-height:0;display:flex;gap:28px;padding-block:14px}
+.ctoc{flex:none;width:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px}
+.ctoc button:hover{background:var(--panel2)}
+.ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto}
+.cbody{flex:1;min-width:0;overflow:auto;max-width:860px;padding-right:6px}
+.ckick{color:var(--muted);font-size:12.5px;margin:0}
+.cbody h2{font-size:26px;margin:2px 0 12px;text-wrap:balance}
+.cbody h3{font-size:16.5px;margin:22px 0 6px}
+.cbody p,.cbody li{font-size:14.5px;line-height:1.6}
+.cbody ul,.cbody ol{padding-left:22px}.cbody li{margin-bottom:4px}
+.cbody table{display:block;overflow-x:auto;max-width:100%}
+.ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
+.ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.ctable th{background:var(--panel2);font-weight:600}
+.retain{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 12px;margin:16px 0 6px;font-size:14px}
+.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
+pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
+.cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
+#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:980px}
+#ws h2{font-size:24px;margin:0 0 8px;text-wrap:balance}
+#ws h3{font-size:16.5px;margin:24px 0 6px}
+#ws p,#ws li{font-size:14.5px;line-height:1.55}
+#ws .small{font-size:12.5px}
+.opts{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 10px}.opts .fld{margin:0}
+.opts input[type=range]{width:200px;max-width:100%}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.stat{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat span{font-size:12px;color:var(--muted)}.stat b{font-size:14px;font-family:var(--font-mono);overflow-wrap:anywhere}
+.verdict{border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14px;background:var(--panel2);border:1px solid var(--line)}
+.verdict.yes{background:rgba(30,122,46,.15);border-color:var(--ok)}.verdict.no{background:rgba(192,40,31,.13);border-color:var(--bad)}.verdict.warn{background:rgba(154,91,0,.13);border-color:var(--warn)}
+.dwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.dt{border-collapse:collapse;width:100%;font-size:13.5px}
+.dt th,.dt td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.dt thead th{background:var(--panel2);font-weight:600}
+.dt td.m{font-family:var(--font-mono);font-size:12.5px}
+.dt tr:last-child td{border-bottom:0}
+canvas.viz{width:100%;height:340px;display:block;border:1px solid var(--line);border-radius:8px;background:#fafbfc;cursor:crosshair}
+.cm{border-collapse:collapse;margin:10px 0;font-size:14px}
+.cm th,.cm td{border:1px solid var(--line);padding:8px 14px;text-align:center}
+.cm th{background:var(--panel2);font-weight:600}
+.cm .good{background:rgba(30,122,46,.15)}
+.cm .bad{background:rgba(192,40,31,.13)}
+.metric{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:6px;margin:4px 0;background:var(--panel2);font-size:13.5px}
+.metric b{font-family:var(--font-mono);font-size:13px}
+.metric.hl{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.task-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}
+.task-row:last-child{border-bottom:0}
+.task-row .chips{margin:0}
+.fb{font-size:12.5px;color:var(--muted);margin-top:2px}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--bad)}
+@media (max-width:820px){
+  .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
+  #act{position:fixed;left:0;right:0;bottom:0;width:auto;height:70%;max-height:none;border-radius:14px 14px 0 0;z-index:35;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .work{flex-direction:column;gap:8px}
+  .task-row{grid-template-columns:1fr}
+  canvas.viz{height:280px}
+}
+@media (prefers-reduced-motion:no-preference){.btn{transition:border-color .12s,background .12s}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="band"><div class="inner row">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 26 26" aria-hidden="true">
+        <circle cx="5" cy="6" r="2.6" fill="#2e6da4"/>
+        <circle cx="5" cy="13" r="2.6" fill="#2e6da4"/>
+        <circle cx="5" cy="20" r="2.6" fill="#2e6da4"/>
+        <circle cx="13" cy="9" r="2.6" fill="#1e7a2e"/>
+        <circle cx="13" cy="17" r="2.6" fill="#1e7a2e"/>
+        <circle cx="21" cy="13" r="2.6" fill="#9a5b00"/>
+        <g stroke="#8894a4" stroke-width="1.2">
+          <line x1="7.5" y1="6" x2="10.5" y2="9"/>
+          <line x1="7.5" y1="6" x2="10.5" y2="17"/>
+          <line x1="7.5" y1="13" x2="10.5" y2="9"/>
+          <line x1="7.5" y1="13" x2="10.5" y2="17"/>
+          <line x1="7.5" y1="20" x2="10.5" y2="9"/>
+          <line x1="7.5" y1="20" x2="10.5" y2="17"/>
+          <line x1="15.5" y1="9" x2="18.5" y2="13"/>
+          <line x1="15.5" y1="17" x2="18.5" y2="13"/>
+        </g>
+      </svg>
+      <span>Intelligence artificielle <small>ITC · CPGE PSI*</small></span>
+    </div>
+    <div class="files">
+      <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
+      <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
+      <button class="btn" id="bHelp" type="button">Aide</button>
+    </div>
+  </div></header>
+  <div class="band" id="modes"><div class="inner row"><div class="seg" id="wsSeg" role="tablist" aria-label="Ateliers"></div></div></div>
+  <main class="inner work" id="work">
+    <section id="stage"><div id="hint"></div><div id="scroller"><div id="ws"></div></div></section>
+    <aside id="act" hidden aria-label="Activité"></aside>
+  </main>
+  <section id="course" hidden aria-label="Cours"></section>
+</div>
+<div id="dlg" hidden></div>
+
+<script>
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
+  return el;
+}
+function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
+const KEYS = { act: 'atelier-ia-v1' };
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+const WORKSHOPS = [];
+
+/* ===================================================================
+   DONNÉES PARTAGÉES
+   =================================================================== */
+const TASKS = [
+  { t: "Détecter une transaction bancaire frauduleuse", ans: "sup", sub: "classification",
+    why: "On dispose d'exemples étiquetés « fraude / non fraude » : tâche de classification." },
+  { t: "Prédire le prix de vente d'un appartement", ans: "sup", sub: "régression",
+    why: "On connaît les prix passés (y) et les caractéristiques (X) : on prédit une valeur continue." },
+  { t: "Segmenter une clientèle en groupes homogènes", ans: "non", sub: "clustering",
+    why: "Aucune étiquette : la machine regroupe elle-même des clients similaires (marketing)." },
+  { t: "Recommander un film à un utilisateur", ans: "non", sub: "filtrage collaboratif",
+    why: "Le modèle s'appuie sur les comportements implicites d'utilisateurs similaires (Netflix)." },
+  { t: "Faire atterrir un drone autonome sur sa cible", ans: "renf", sub: "renforcement",
+    why: "L'agent apprend par essais-erreurs, récompensé quand il atteint son objectif." },
+  { t: "Classer automatiquement des emails en spam / non spam", ans: "sup", sub: "classification",
+    why: "On dispose d'emails étiquetés : classification binaire supervisée." },
+  { t: "Prédire la probabilité qu'une machine tombe en panne", ans: "sup", sub: "régression",
+    why: "On prédit un pourcentage (valeur continue) à partir d'historiques étiquetés." }
+];
+const ANS_LABEL = { sup: 'Supervisé', non: 'Non supervisé', renf: 'Renforcement' };
+const SUB_LABEL = { classification: 'classification', régression: 'régression', clustering: 'clustering', 'filtrage collaboratif': 'filtrage collaboratif', renforcement: 'renforcement' };
+
+const DATA_COLS = [
+  { name: 'Surface (m²)', vals: [124, 339, 179, 186, 180, 82, 125], ans: 'qc' },
+  { name: 'Chambres', vals: [3, 5, 3, 3, 3, 2, 2], ans: 'qd' },
+  { name: 'Qualité', vals: [3, 5, 4, 5, 5, 2, 4], ans: 'ql' },
+  { name: 'Prix (€)', vals: [313000, 238400, 342000, 420000, 550000, 490000, 335000], ans: 'qc', target: true }
+];
+const TYPE_LABEL = { qc: 'Quantitative continue', qd: 'Quantitative discrète', ql: 'Qualitative' };
+
+const KNN = {
+  pts: [
+    { x: 0.12, y: 0.82, c: 'A' }, { x: 0.20, y: 0.75, c: 'A' }, { x: 0.15, y: 0.68, c: 'A' },
+    { x: 0.28, y: 0.88, c: 'A' }, { x: 0.25, y: 0.62, c: 'A' }, { x: 0.32, y: 0.78, c: 'A' },
+    { x: 0.10, y: 0.72, c: 'A' }, { x: 0.22, y: 0.85, c: 'A' }, { x: 0.40, y: 0.65, c: 'A' },
+    { x: 0.72, y: 0.22, c: 'B' }, { x: 0.80, y: 0.30, c: 'B' }, { x: 0.68, y: 0.18, c: 'B' },
+    { x: 0.85, y: 0.35, c: 'B' }, { x: 0.75, y: 0.15, c: 'B' }, { x: 0.90, y: 0.28, c: 'B' },
+    { x: 0.70, y: 0.35, c: 'B' }, { x: 0.82, y: 0.20, c: 'B' }, { x: 0.60, y: 0.45, c: 'B' }
+  ],
+  q: { x: 0.45, y: 0.60 },
+  k: 3
+};
+const REG = {
+  pts: [
+    { x: 1, y: 2.1 }, { x: 2, y: 3.5 }, { x: 3, y: 4.2 }, { x: 4, y: 5.8 },
+    { x: 5, y: 6.2 }, { x: 6, y: 7.5 }, { x: 7, y: 7.8 }, { x: 8, y: 9.1 }, { x: 9, y: 10.5 }
+  ],
+  a: 0.5, b: 3.5, alpha: 0.04
+};
+const CM = { tn: 50, fp: 5, fn: 10, tp: 35, ctx: 'fraude' };
+const GT = { assign: { '0': null, '1': null, '2': null, '3': null, '4': null, '5': null, '6': null }, checked: false };
+const DT = { choices: ['qc', 'qd', 'ql', 'qc'], checked: false };
+
+/* ===================================================================
+   ATELIER 1 : TYPES D'APPRENTISSAGE
+   =================================================================== */
+function mountTypes(root) {
+  root.innerHTML = '<h2>1. Types d\'apprentissage</h2>'
+    + '<p>Le <b>machine learning</b> apprend seul à partir d\'un jeu de données. On distingue trois grandes familles : <b>supervisé</b> (les réponses attendues sont connues), <b>non supervisé</b> (aucune étiquette) et <b>par renforcement</b> (l\'agent apprend par essais-erreurs en maximisant une récompense).</p>'
+    + '<p>Attribuez à chaque tâche le type d\'apprentissage qui lui correspond, puis cliquez sur <b>Vérifier</b>.</p>'
+    + '<div id="gt-rows" class="dwrap" style="border:0"></div>'
+    + '<div class="files" style="margin-top:8px"><button class="btn pri" id="gt-check" type="button">Vérifier</button><button class="btn" id="gt-reset" type="button">Recommencer</button></div>'
+    + '<div class="verdict" id="gt-msg" aria-live="polite"></div>';
+  renderGT();
+  $('#gt-check').addEventListener('click', () => { GT.checked = true; renderGT(); });
+  $('#gt-reset').addEventListener('click', () => { for (const k in GT.assign) GT.assign[k] = null; GT.checked = false; renderGT(); });
+}
+function renderGT() {
+  const box = $('#gt-rows'); if (!box) return;
+  box.innerHTML = '';
+  TASKS.forEach((task, i) => {
+    const fb = h('div', { class: 'fb' });
+    if (GT.checked) {
+      const ok = GT.assign[i] === task.ans;
+      fb.className = 'fb ' + (ok ? 'ok' : 'no');
+      fb.innerHTML = (ok ? '✓ ' : '✗ Bonne réponse : <b>' + ANS_LABEL[task.ans] + '</b> (' + task.sub + '). ') + task.why;
+    }
+    const chips = h('div', { class: 'chips' });
+    ['sup', 'non', 'renf'].forEach(c => {
+      chips.append(h('button', {
+        type: 'button', class: 'chip' + (GT.assign[i] === c ? ' on' : ''),
+        'aria-pressed': GT.assign[i] === c ? 'true' : 'false',
+        onclick: () => { if (GT.checked) return; GT.assign[i] = GT.assign[i] === c ? null : c; renderGT(); }
+      }, ANS_LABEL[c]));
+    });
+    box.append(h('div', { class: 'task-row' }, h('div', null, h('span', null, (i + 1) + '. ' + task.t), fb), chips));
+  });
+  const done = Object.values(GT.assign).filter(v => v != null).length;
+  const msg = $('#gt-msg'); if (!msg) return;
+  if (GT.checked) {
+    let ok = 0;
+    TASKS.forEach((t, i) => { if (GT.assign[i] === t.ans) ok++; });
+    msg.className = 'verdict ' + (ok === TASKS.length ? 'yes' : ok >= TASKS.length - 1 ? 'warn' : '');
+    msg.textContent = 'Score : ' + ok + ' / ' + TASKS.length + '.';
+  } else {
+    msg.className = 'verdict';
+    msg.textContent = done + ' tâche(s) sur ' + TASKS.length + ' attribuée(s).';
+  }
+}
+WORKSHOPS.push({ id: 'types', title: 'Types d\'apprentissage', hint: 'Classer des tâches en supervisé, non supervisé ou renforcement.', mount: mountTypes, reset: () => { for (const k in GT.assign) GT.assign[k] = null; GT.checked = false; } });
+
+/* ===================================================================
+   ATELIER 2 : REPRÉSENTATION DES DONNÉES
+   =================================================================== */
+function mountData(root) {
+  root.innerHTML = '<h2>2. Représentation des données</h2>'
+    + '<p>Un algorithme de Machine Learning travaille sur des <b>nombres</b>. On rassemble les <i>m</i> caractéristiques (features) de <i>n</i> échantillons dans une matrice <b>X</b>, et les <i>n</i> sorties dans un vecteur <b>y</b>.</p>'
+    + '<p>Voici un jeu de données de transactions immobilières. Pour chaque colonne, choisissez le type de données, puis observez la matrice X et le vecteur y reconstruits.</p>'
+    + '<div id="dt-table" class="dwrap"></div>'
+    + '<div id="dt-choices"></div>'
+    + '<div class="files" style="margin-top:8px"><button class="btn pri" id="dt-check" type="button">Vérifier</button><button class="btn" id="dt-reset" type="button">Recommencer</button></div>'
+    + '<div class="verdict" id="dt-msg" aria-live="polite"></div>'
+    + '<h3>Matrice X et vecteur y</h3>'
+    + '<p>Une fois les données codées, on écrit :</p>'
+    + '<div class="formula">X ∈ M<sub>n,m</sub> &nbsp;·&nbsp; y ∈ ℝ<sup>n</sup> &nbsp;·&nbsp; on cherche f telle que y ≈ f(X).</div>'
+    + '<div id="dt-matrices"></div>';
+  renderDT();
+  $('#dt-check').addEventListener('click', () => { DT.checked = true; renderDT(); });
+  $('#dt-reset').addEventListener('click', () => { DT.choices = ['qc', 'qd', 'ql', 'qc']; DT.checked = false; renderDT(); });
+}
+function renderDT() {
+  const tb = $('#dt-table'); if (!tb) return;
+  tb.innerHTML = '';
+  const table = h('table', { class: 'dt' });
+  const thead = h('thead');
+  thead.append(h('tr', null, ...DATA_COLS.map(c => h('th', null, c.name))));
+  table.append(thead);
+  const tbody = h('tbody');
+  for (let i = 0; i < 7; i++) {
+    tbody.append(h('tr', null, ...DATA_COLS.map(c => h('td', { class: 'm' }, String(c.vals[i])))));
+  }
+  table.append(tbody);
+  tb.append(table);
+
+  const ch = $('#dt-choices'); ch.innerHTML = '';
+  DATA_COLS.forEach((c, j) => {
+    const row = h('div', { class: 'task-row' }, h('div', null, h('b', null, c.name)));
+    const chips = h('div', { class: 'chips' });
+    ['qc', 'qd', 'ql'].forEach(t => {
+      chips.append(h('button', {
+        type: 'button', class: 'chip' + (DT.choices[j] === t ? ' on' : ''),
+        'aria-pressed': DT.choices[j] === t ? 'true' : 'false',
+        onclick: () => { if (DT.checked) return; DT.choices[j] = t; renderDT(); }
+      }, TYPE_LABEL[t]));
+    });
+    row.append(chips);
+    ch.append(row);
+    const fb = h('div', { class: 'fb' });
+    if (DT.checked) {
+      const ok = DT.choices[j] === c.ans;
+      fb.className = 'fb ' + (ok ? 'ok' : 'no');
+      fb.textContent = (ok ? '✓ ' : '✗ Bonne réponse : ' + TYPE_LABEL[c.ans] + '. ') +
+        (c.ans === 'qc' ? 'Mesure continue (infinité de valeurs possibles).' :
+         c.ans === 'qd' ? 'Comptage : nombre entier fini.' :
+         'Modalité : le nombre n\'a pas de sens mathématique.');
+    }
+    ch.append(fb);
+  });
+
+  const msg = $('#dt-msg');
+  if (DT.checked) {
+    let ok = 0;
+    DATA_COLS.forEach((c, j) => { if (DT.choices[j] === c.ans) ok++; });
+    msg.className = 'verdict ' + (ok === DATA_COLS.length ? 'yes' : 'warn');
+    msg.textContent = 'Score : ' + ok + ' / ' + DATA_COLS.length + '. Remarque : le prix est la variable cible (y), les autres forment X.';
+  } else { msg.className = 'verdict'; msg.textContent = ''; }
+
+  const mx = $('#dt-matrices'); mx.innerHTML = '';
+  const xRows = [];
+  for (let i = 0; i < 7; i++) xRows.push([DATA_COLS[0].vals[i], DATA_COLS[1].vals[i], DATA_COLS[2].vals[i]]);
+  const xTxt = 'X = [\n' + xRows.map(r => '  [' + r.join(', ') + ']').join('\n') + '\n]';
+  const yTxt = 'y = [' + DATA_COLS[3].vals.join(', ') + ']';
+  mx.append(h('pre', { class: 'code' }, 'n = 7 échantillons, m = 3 caractéristiques\n\n' + xTxt + '\n\n' + yTxt));
+}
+WORKSHOPS.push({ id: 'data', title: 'Représentation des données', hint: 'Identifier les types de données et reconstruire X et y.', mount: mountData, reset: () => { DT.choices = ['qc', 'qd', 'ql', 'qc']; DT.checked = false; } });
+
+/* ===================================================================
+   ATELIER 3 : ÉVALUATION D'UN MODÈLE
+   =================================================================== */
+function mountEval(root) {
+  root.innerHTML = '<h2>3. Évaluation d\'un modèle</h2>'
+    + '<p>On mesure la qualité d\'un modèle de classification à l\'aide d\'une <b>matrice de confusion</b> et d\'indicateurs : sensibilité, spécificité, précision.</p>'
+    + '<p>Faites varier les effectifs et observez les indicateurs. Le <b>contexte</b> choisit l\'indicateur à privilégier.</p>'
+    + '<div class="grid2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:8px 0">'
+    + '<label class="fld"><span>Vrais négatifs (TN)</span><input type="number" id="cm-tn" min="0" max="999" value="50"></label>'
+    + '<label class="fld"><span>Faux positifs (FP)</span><input type="number" id="cm-fp" min="0" max="999" value="5"></label>'
+    + '<label class="fld"><span>Faux négatifs (FN)</span><input type="number" id="cm-fn" min="0" max="999" value="10"></label>'
+    + '<label class="fld"><span>Vrais positifs (TP)</span><input type="number" id="cm-tp" min="0" max="999" value="35"></label>'
+    + '</div>'
+    + '<div class="opts"><div class="fld"><span>Contexte</span><div id="cm-ctx"></div></div></div>'
+    + '<div id="cm-out"></div>';
+  ['tn', 'fp', 'fn', 'tp'].forEach(k => {
+    $('#cm-' + k).value = CM[k];
+    $('#cm-' + k).addEventListener('input', e => {
+      const v = Math.max(0, Math.min(999, parseInt(e.target.value) || 0));
+      CM[k] = v; renderCM();
+    });
+  });
+  renderCM();
+}
+function renderCM() {
+  $('#cm-tn').value = CM.tn; $('#cm-fp').value = CM.fp; $('#cm-fn').value = CM.fn; $('#cm-tp').value = CM.tp;
+  const ctxBox = $('#cm-ctx'); ctxBox.innerHTML = '';
+  ctxBox.append(h('div', { class: 'chips' }, [
+    ['fraude', 'Fraude bancaire'],
+    ['spam', 'Filtre anti-spam'],
+    ['medical', 'Dépistage médical']
+  ].map(([k, l]) => h('button', {
+    type: 'button', class: 'chip' + (CM.ctx === k ? ' on' : ''),
+    onclick: () => { CM.ctx = k; renderCM(); }
+  }, l))));
+
+  const tn = CM.tn, fp = CM.fp, fn = CM.fn, tp = CM.tp;
+  const sens = (tp + fn) ? tp / (tp + fn) : 0;
+  const spec = (tn + fp) ? tn / (tn + fp) : 0;
+  const acc = (tn + fp + fn + tp) ? (tp + tn) / (tn + fp + fn + tp) : 0;
+  const out = $('#cm-out'); out.innerHTML = '';
+
+  const table = h('table', { class: 'cm' },
+    h('thead', null, h('tr', null,
+      h('th', null, ''),
+      h('th', null, 'Réel 0'),
+      h('th', null, 'Réel 1'))),
+    h('tbody', null,
+      h('tr', null, h('th', null, 'Prédit 0'), h('td', { class: 'good' }, 'TN = ' + tn), h('td', { class: 'bad' }, 'FN = ' + fn)),
+      h('tr', null, h('th', null, 'Prédit 1'), h('td', { class: 'bad' }, 'FP = ' + fp), h('td', { class: 'good' }, 'TP = ' + tp))
+    ));
+  out.append(table);
+  out.append(h('div', { class: 'dwrap', style: 'border:0;padding:0' },
+    h('div', { class: 'metric' + (CM.ctx === 'fraude' || CM.ctx === 'medical' ? ' hl' : '') },
+      h('span', null, 'Sensibilité = TP / (TP+FN)'),
+      h('b', null, (sens * 100).toFixed(1) + ' %')),
+    h('div', { class: 'metric' + (CM.ctx === 'spam' ? ' hl' : '') },
+      h('span', null, 'Spécificité = TN / (TN+FP)'),
+      h('b', null, (spec * 100).toFixed(1) + ' %')),
+    h('div', { class: 'metric' },
+      h('span', null, 'Précision = (TP+TN) / total'),
+      h('b', null, (acc * 100).toFixed(1) + ' %'))
+  ));
+  const notes = {
+    fraude: 'Fraude bancaire : on veut <b>FN = 0</b> (ne laisser passer aucune fraude) quitte à avoir des faux positifs. On surveille la <b>sensibilité</b>.',
+    spam: 'Filtre anti-spam : on veut <b>FP = 0</b> (ne jamais classer un vrai message en spam). On surveille la <b>spécificité</b>.',
+    medical: 'Dépistage médical : on veut <b>FN = 0</b> (ne rater aucun malade) quitte à multiplier les faux positifs. On surveille la <b>sensibilité</b>.'
+  };
+  out.append(h('div', { class: 'verdict' }, notes[CM.ctx]));
+}
+WORKSHOPS.push({ id: 'eval', title: 'Évaluation d\'un modèle', hint: 'Matrice de confusion et indicateurs : sensibilité, spécificité, précision.', mount: mountEval, reset: () => { Object.assign(CM, { tn: 50, fp: 5, fn: 10, tp: 35, ctx: 'fraude' }); } });
+
+/* ===================================================================
+   ATELIER 4 : K PLUS PROCHES VOISINS
+   =================================================================== */
+function mountKNN(root) {
+  root.innerHTML = '<h2>4. Méthode des k plus proches voisins</h2>'
+    + '<p>Le k-NN est un algorithme <b>supervisé</b> et <b>non paramétrique</b> : pour classer un nouvel élément, on regarde ses <b>k</b> voisins les plus proches dans l\'échantillon d\'entraînement et on lui attribue la classe majoritaire.</p>'
+    + '<p>Cliquez sur le graphique pour placer le point à classer. Ajustez <b>k</b> avec le curseur.</p>'
+    + '<div class="opts"><label class="fld"><span>k = <b id="knn-k-out">3</b></span><input type="range" id="knn-k" min="1" max="9" step="2" value="3"></label></div>'
+    + '<canvas class="viz" id="knn-canvas"></canvas>'
+    + '<div class="leg" style="margin-top:8px"><span><span class="chip" style="background:rgba(192,40,31,.2);border-color:#c0281f;cursor:default">●</span> Classe A (étoiles rouges)</span><span><span class="chip" style="background:rgba(30,122,46,.2);border-color:#1e7a2e;cursor:default">▲</span> Classe B (triangles verts)</span><span><span class="chip" style="background:#f4c430;border-color:#9a5b00;cursor:default">?</span> Point à classer</span></div>'
+    + '<div class="verdict" id="knn-msg" aria-live="polite"></div>';
+  const canvas = $('#knn-canvas');
+  canvas.addEventListener('click', e => {
+    const r = canvas.getBoundingClientRect();
+    const pad = 20;
+    const x = (e.clientX - r.left - pad) / (r.width - 2 * pad);
+    const y = 1 - (e.clientY - r.top - pad) / (r.height - 2 * pad);
+    if (x < 0 || x > 1 || y < 0 || y > 1) return;
+    KNN.q = { x, y };
+    drawKNN();
+  });
+  $('#knn-k').addEventListener('input', e => {
+    KNN.k = +e.target.value;
+    $('#knn-k-out').textContent = KNN.k;
+    drawKNN();
+  });
+  $('#knn-k').value = KNN.k;
+  $('#knn-k-out').textContent = KNN.k;
+  drawKNN();
+}
+function drawKNN() {
+  const canvas = $('#knn-canvas'); if (!canvas) return;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = 20;
+  const px = x => pad + x * (W - 2 * pad);
+  const py = y => H - pad - y * (H - 2 * pad);
+
+  ctx.fillStyle = '#fafbfc'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#e6eaee'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    ctx.beginPath(); ctx.moveTo(pad + i / 10 * (W - 2 * pad), pad); ctx.lineTo(pad + i / 10 * (W - 2 * pad), H - pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, pad + i / 10 * (H - 2 * pad)); ctx.lineTo(W - pad, pad + i / 10 * (H - 2 * pad)); ctx.stroke();
+  }
+  ctx.strokeStyle = '#8a929c'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(W - pad, H - pad); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(pad, pad); ctx.stroke();
+
+  // calcul des distances en pixels (ce qu'on voit)
+  const qx = px(KNN.q.x), qy = py(KNN.q.y);
+  const ds = KNN.pts.map(p => ({ p, d: Math.hypot(px(p.x) - qx, py(p.y) - qy) }));
+  ds.sort((A, B) => A.d - B.d);
+  const neigh = ds.slice(0, KNN.k);
+
+  // cercle des k plus proches
+  if (neigh.length) {
+    const r = neigh[neigh.length - 1].d;
+    ctx.beginPath();
+    ctx.arc(qx, qy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#2e6da4'; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(46,109,164,.06)'; ctx.fill();
+  }
+
+  // points d'entraînement
+  KNN.pts.forEach(p => {
+    const x = px(p.x), y = py(p.y);
+    const isNeighbor = neigh.some(n => n.p === p);
+    if (p.c === 'A') {
+      // étoile simplifiée : cercle rouge
+      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = isNeighbor ? '#c0281f' : 'rgba(192,40,31,.55)';
+      ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    } else {
+      // triangle vert
+      ctx.beginPath();
+      ctx.moveTo(x, y - 7); ctx.lineTo(x + 6.5, y + 5); ctx.lineTo(x - 6.5, y + 5); ctx.closePath();
+      ctx.fillStyle = isNeighbor ? '#1e7a2e' : 'rgba(30,122,46,.55)';
+      ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  });
+
+  // point à classer
+  ctx.fillStyle = '#f4c430';
+  ctx.strokeStyle = '#9a5b00'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(qx, qy, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#111'; ctx.font = 'bold 13px "IBM Plex Sans", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('?', qx, qy + 1);
+
+  // décision
+  const aCount = neigh.filter(n => n.p.c === 'A').length;
+  const bCount = neigh.length - aCount;
+  let pred;
+  if (aCount > bCount) pred = 'A';
+  else if (bCount > aCount) pred = 'B';
+  else pred = neigh[0].p.c;
+  const msg = $('#knn-msg');
+  if (msg) {
+    msg.className = 'verdict';
+    msg.innerHTML = 'Parmi les <b>k = ' + KNN.k + '</b> plus proches voisins : <b>' + aCount + '</b> de classe A, <b>' + bCount + '</b> de classe B → classe prédite : <b>' +
+      (pred === 'A' ? 'A (rouge)' : 'B (vert)') + '</b>' + (aCount === bCount ? ' (égalité : on prend la classe du plus proche)' : '') + '.';
+  }
+}
+WORKSHOPS.push({ id: 'knn', title: 'k plus proches voisins', hint: 'Placer un point et observer la décision majoritaire des k voisins.', mount: mountKNN, reset: () => { KNN.q = { x: 0.45, y: 0.60 }; KNN.k = 3; } });
+
+/* ===================================================================
+   ATELIER 5 : RÉGRESSION LINÉAIRE
+   =================================================================== */
+function mountReg(root) {
+  root.innerHTML = '<h2>5. Régression linéaire univariée</h2>'
+    + '<p>On cherche la droite <b>f(x) = a·x + b</b> qui ajuste au mieux un nuage de points. La qualité de l\'ajustement est mesurée par l\'<b>erreur quadratique moyenne</b> :</p>'
+    + '<div class="formula">J(a, b) = (1 / 2n) · Σ (b + a·x<sub>i</sub> − y<sub>i</sub>)²</div>'
+    + '<p>Réglez <b>a</b> et <b>b</b> manuellement, puis lancez la <b>descente de gradient</b> : à chaque pas, a et b sont mis à jour en sens inverse du gradient de J.</p>'
+    + '<div class="opts">'
+    + '<label class="fld"><span>pente a = <b id="reg-a-out">0.50</b></span><input type="range" id="reg-a" min="-1" max="3" step="0.05" value="0.5"></label>'
+    + '<label class="fld"><span>ordonnée b = <b id="reg-b-out">3.50</b></span><input type="range" id="reg-b" min="-2" max="12" step="0.1" value="3.5"></label>'
+    + '<label class="fld"><span>pas α = <b id="reg-alpha-out">0.040</b></span><input type="range" id="reg-alpha" min="0.001" max="0.06" step="0.001" value="0.04"></label>'
+    + '</div>'
+    + '<canvas class="viz" id="reg-canvas"></canvas>'
+    + '<div class="gstats" id="reg-stats"></div>'
+    + '<div class="files" style="margin-top:6px">'
+    + '<button class="btn" id="reg-step1" type="button">1 pas</button>'
+    + '<button class="btn" id="reg-step50" type="button">50 pas</button>'
+    + '<button class="btn pri" id="reg-step200" type="button">200 pas</button>'
+    + '<button class="btn" id="reg-reset" type="button">Réinitialiser</button>'
+    + '</div>'
+    + '<div class="verdict" id="reg-msg" aria-live="polite"></div>';
+  $('#reg-a').addEventListener('input', e => { REG.a = +e.target.value; regUpdate(); });
+  $('#reg-b').addEventListener('input', e => { REG.b = +e.target.value; regUpdate(); });
+  $('#reg-alpha').addEventListener('input', e => { REG.alpha = +e.target.value; regUpdate(); });
+  $('#reg-step1').addEventListener('click', () => regStep(1));
+  $('#reg-step50').addEventListener('click', () => regStep(50));
+  $('#reg-step200').addEventListener('click', () => regStep(200));
+  $('#reg-reset').addEventListener('click', () => { REG.a = 0.5; REG.b = 3.5; regUpdate(); });
+  regUpdate();
+}
+function regUpdate() {
+  const aEl = $('#reg-a'), bEl = $('#reg-b'), alEl = $('#reg-alpha');
+  if (!aEl) return;
+  aEl.value = REG.a; bEl.value = REG.b; alEl.value = REG.alpha;
+  $('#reg-a-out').textContent = REG.a.toFixed(2);
+  $('#reg-b-out').textContent = REG.b.toFixed(2);
+  $('#reg-alpha-out').textContent = REG.alpha.toFixed(3);
+  const n = REG.pts.length;
+  let mse = 0;
+  REG.pts.forEach(p => { const e = REG.a * p.x + REG.b - p.y; mse += e * e; });
+  mse /= n;
+  $('#reg-stats').innerHTML = '';
+  $('#reg-stats').append(
+    h('div', { class: 'stat' }, h('span', null, 'pente a'), h('b', null, REG.a.toFixed(3))),
+    h('div', { class: 'stat' }, h('span', null, 'biais b'), h('b', null, REG.b.toFixed(3))),
+    h('div', { class: 'stat' }, h('span', null, 'MSE'), h('b', null, mse.toFixed(3)))
+  );
+  drawReg();
+}
+function regStep(steps) {
+  const n = REG.pts.length;
+  for (let s = 0; s < steps; s++) {
+    let ga = 0, gb = 0;
+    REG.pts.forEach(p => { const e = REG.a * p.x + REG.b - p.y; ga += e * p.x; gb += e; });
+    ga /= n; gb /= n;
+    REG.a -= REG.alpha * ga;
+    REG.b -= REG.alpha * gb;
+    if (!isFinite(REG.a) || !isFinite(REG.b) || Math.abs(REG.a) > 1000 || Math.abs(REG.b) > 1000) {
+      const m = $('#reg-msg'); if (m) { m.className = 'verdict no'; m.textContent = 'Divergence : α est trop grand. Réduisez le pas d\'apprentissage.'; }
+      return;
+    }
+  }
+  // clamp pour rester dans les bornes des sliders
+  REG.a = Math.max(-1, Math.min(3, REG.a));
+  REG.b = Math.max(-2, Math.min(12, REG.b));
+  regUpdate();
+  const m = $('#reg-msg');
+  if (m) {
+    const n2 = REG.pts.length;
+    let mse = 0;
+    REG.pts.forEach(p => { const e = REG.a * p.x + REG.b - p.y; mse += e * e; });
+    mse /= n2;
+    m.className = 'verdict' + (mse < 0.5 ? ' yes' : '');
+    m.textContent = steps + ' pas effectué(s). MSE = ' + mse.toFixed(3) + (mse < 0.5 ? '. Convergence atteinte.' : '. Continuez : la descente approche du minimum.');
+  }
+}
+function drawReg() {
+  const canvas = $('#reg-canvas'); if (!canvas) return;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  const pad = 36;
+  const xmin = 0, xmax = 10, ymin = 0, ymax = 12;
+  const px = x => pad + (x - xmin) / (xmax - xmin) * (W - 2 * pad);
+  const py = y => H - pad - (y - ymin) / (ymax - ymin) * (H - 2 * pad);
+
+  ctx.fillStyle = '#fafbfc'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#e6eaee'; ctx.lineWidth = 1;
+  for (let i = 1; i < 10; i++) { const x = px(i); ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, H - pad); ctx.stroke(); }
+  for (let j = 1; j < 12; j++) { const y = py(j); ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke(); }
+
+  ctx.strokeStyle = '#8a929c'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad, py(0)); ctx.lineTo(W - pad, py(0)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px(0), pad); ctx.lineTo(px(0), H - pad); ctx.stroke();
+
+  ctx.fillStyle = '#5a6068'; ctx.font = '11px "IBM Plex Sans", sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = 1; i <= 9; i++) ctx.fillText(String(i), px(i), H - pad + 15);
+  ctx.textAlign = 'right';
+  for (let j = 2; j <= 10; j += 2) ctx.fillText(String(j), pad - 5, py(j) + 4);
+
+  // points
+  REG.pts.forEach(p => {
+    ctx.beginPath(); ctx.arc(px(p.x), py(p.y), 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#2e6da4'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+
+  // droite
+  const x0 = xmin, x1 = xmax;
+  const y0 = REG.a * x0 + REG.b, y1 = REG.a * x1 + REG.b;
+  ctx.strokeStyle = '#c0281f'; ctx.lineWidth = 2.2; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(px(x0), py(y0)); ctx.lineTo(px(x1), py(y1)); ctx.stroke();
+
+  // équation
+  ctx.fillStyle = '#c0281f'; ctx.textAlign = 'left'; ctx.font = 'bold 13px "IBM Plex Mono", monospace';
+  ctx.fillText('f(x) = ' + REG.a.toFixed(2) + '·x + ' + REG.b.toFixed(2), pad + 6, pad + 14);
+}
+WORKSHOPS.push({ id: 'reg', title: 'Régression linéaire', hint: 'Ajuster manuellement a et b, puis observer la descente de gradient.', mount: mountReg, reset: () => { REG.a = 0.5; REG.b = 3.5; } });
+
+/* ===================================================================
+   ACTIVITÉS (CONSIGNES + QCM)
+   =================================================================== */
+const ACT = {
+  types: {
+    title: 'Types d\'apprentissage', level: 'Niveau 1 · Découvrir', time: '20 min', course: 'apprentissage',
+    goal: 'Distinguer apprentissage supervisé (classification / régression), non supervisé (clustering / filtrage) et par renforcement.',
+    steps: [
+      'Parcourez les sept tâches proposées. Pour chacune, demandez-vous : <b>dispose-t-on d\'un jeu de données étiqueté ?</b>',
+      'Si oui : est-ce une <b>classe</b> que l\'on prédit (classification) ou une <b>valeur numérique</b> (régression) ?',
+      'Si non : la machine doit-elle <b>regrouper</b> des données (clustering) ou s\'appuyer sur des comportements similaires (filtrage) ?',
+      'Si un <b>agent</b> apprend par essais-erreurs dans un environnement, on parle de renforcement.',
+      'Cliquez sur <b>Vérifier</b> pour valider vos choix.'
+    ],
+    defi: { q: 'Parmi ces tâches, lesquelles relèvent de l\'apprentissage supervisé ?', a: '<b>Détection de fraude</b> (classification), <b>prédiction de prix</b> (régression), <b>filtre anti-spam</b> (classification), <b>probabilité de panne</b> (régression). Le clustering, la recommandation et le pilotage d\'un drone ne sont pas supervisés.' },
+    qcm: [
+      { q: 'Qu\'est-ce qui distingue l\'apprentissage supervisé du non supervisé ?', o: ['La taille du jeu de données', 'La présence d\'étiquettes (réponses connues) dans le jeu d\'entraînement', 'Le nombre de variables', 'L\'usage d\'un réseau de neurones'], a: 1, w: 'En supervisé, chaque exemple d\'entraînement est associé à sa sortie attendue (y). En non supervisé, on ne dispose que de X.' },
+      { q: 'Prédire le prix d\'un appartement est une tâche de…', o: ['Classification', 'Régression', 'Clustering', 'Renforcement'], a: 1, w: 'On prédit une valeur numérique continue, pas une classe : c\'est une tâche de régression.' },
+      { q: 'Segmenter des clients en groupes homogènes relève de…', o: ['La classification supervisée', 'La régression', 'L\'apprentissage non supervisé (clustering)', 'Le renforcement'], a: 2, w: 'Les classes ne sont pas pré-remplies par un humain : c\'est la machine qui les découvre (k-moyennes, CAH…).' },
+      { q: 'Le filtrage collaboratif de Netflix ou Spotify est un exemple de…', o: ['Classification supervisée', 'Apprentissage non supervisé', 'Régression', 'Renforcement'], a: 1, w: 'Le modèle s\'appuie sur les comportements implicites (ce que l\'utilisateur a regardé) d\'utilisateurs similaires, sans étiquette fournie.' },
+      { q: 'Un drone qui apprend à livrer un colis par essais-erreurs relève de…', o: ['La classification', 'La régression', 'Le clustering', 'L\'apprentissage par renforcement'], a: 3, w: 'L\'agent réalise des actions dans un environnement et reçoit une récompense quand il atteint son objectif.' }
+    ]
+  },
+  data: {
+    title: 'Représentation des données', level: 'Niveau 1 · Découvrir', time: '20 min', course: 'donnees',
+    goal: 'Identifier les types de données (quantitative continue / discrète, qualitative) et construire X et y.',
+    steps: [
+      'Observez les quatre colonnes du jeu de données immobilier.',
+      'Pour chaque colonne, distinguez : <b>quantitative continue</b> (mesure), <b>quantitative discrète</b> (comptage) ou <b>qualitative</b> (modalité).',
+      'Remarquez que la colonne « Qualité » est codée par un entier mais reste <b>qualitative</b> : 5 n\'est pas « plus grand » que 3 au sens mathématique.',
+      'Identifiez la variable cible : c\'est le prix (vecteur y). Les trois autres forment la matrice X.',
+      'Cliquez sur <b>Vérifier</b> pour valider.'
+    ],
+    defi: { q: 'Pourquoi est-il indispensable de coder les données qualitatives par des nombres avant de les donner à un algorithme ?', a: 'Un algorithme de Machine Learning manipule des <b>vecteurs et des matrices de nombres</b> : sans encodage (par exemple en one-hot, ou en associant un entier à chaque modalité), il ne peut pas traiter la variable. Attention : l\'entier associé n\'a pas de sens mathématique, d\'où l\'importance de bien choisir l\'encodage.' },
+    qcm: [
+      { q: 'Parmi ces variables, laquelle est quantitative continue ?', o: ['Le nombre d\'enfants dans un foyer', 'La surface habitable d\'un appartement', 'La couleur d\'une voiture', 'Le pays de naissance'], a: 1, w: 'La surface prend une infinité de valeurs possibles (mesure) : quantitative continue. Le nombre d\'enfants est un comptage (discret).' },
+      { q: 'Le nombre de chambres d\'un logement est une variable…', o: ['Quantitative continue', 'Quantitative discrète', 'Qualitative nominale', 'Qualitative ordinale'], a: 1, w: 'C\'est un comptage : un entier fini. C\'est donc une variable quantitative discrète.' },
+      { q: 'Affecter 1 aux personnes nées en France et 2 à celles nées en Espagne…', o: ['Permet d\'écrire 2 > 1 au sens mathématique', 'Est un codage valide, mais l\'ordre n\'a pas de sens', 'Est interdit en Machine Learning', 'Nécessite obligatoirement un réseau de neurones'], a: 1, w: 'On peut coder par des nombres, mais ces nombres n\'ont pas de sémantique mathématique : 2 n\'est pas « plus grand » que 1.' },
+      { q: 'Dans le jeu de données immobilier, combien de lignes et de colonnes la matrice X a-t-elle ?', o: ['3 lignes et 7 colonnes', '7 lignes et 3 colonnes', '7 lignes et 4 colonnes', '4 lignes et 3 colonnes'], a: 1, w: 'n = 7 échantillons (lignes) et m = 3 caractéristiques (colonnes) : surface, chambres, qualité. Le prix forme y.' },
+      { q: 'Quelle est la taille du vecteur y ?', o: ['3', '7', '10', '4'], a: 1, w: 'Le vecteur de sortie a une valeur par échantillon : 7 lignes.' }
+    ]
+  },
+  eval: {
+    title: 'Évaluation d\'un modèle', level: 'Niveau 2 · Comprendre', time: '25 min', course: 'evaluation',
+    goal: 'Lire une matrice de confusion, calculer sensibilité, spécificité et précision, choisir l\'indicateur adapté au contexte.',
+    steps: [
+      'Partez des valeurs par défaut : TN = 50, FP = 5, FN = 10, TP = 35. Vérifiez les indicateurs.',
+      'Augmentez FN (10 → 40) en gardant les autres valeurs. Que devient la sensibilité ? Est-ce acceptable pour une banque ?',
+      'Passez en contexte « filtre anti-spam » et augmentez FP. Quel indicateur se dégrade ?',
+      'Cherchez une configuration où la précision est élevée mais la sensibilité faible. Est-ce utile en dépistage médical ?',
+      'Concluez : le bon indicateur dépend de <b>ce qui coûte le plus cher</b> (FN ou FP).'
+    ],
+    defi: { q: 'Un modèle A a une précision de 95 % et une sensibilité de 40 %. Un modèle B a une précision de 85 % et une sensibilité de 95 %. Lequel choisir pour dépister une maladie grave ?', a: 'Le modèle <b>B</b>. En dépistage médical, on veut <b>ne rater aucun malade</b> (FN = 0), donc privilégier la <b>sensibilité</b>, quitte à multiplier les faux positifs (précision plus faible).' },
+    qcm: [
+      { q: 'Dans la matrice de confusion, que représente FN ?', o: ['Un vrai négatif', 'Un positif prédit comme négatif (faux négatif)', 'Un négatif prédit comme positif (faux positif)', 'Un vrai positif'], a: 1, w: 'FN = False Negative : on a prédit 0 (négatif) alors que la vraie valeur est 1 (positif). C\'est un cas manqué.' },
+      { q: 'La sensibilité (rappel) se calcule par…', o: ['TN / (TN + FP)', 'TP / (TP + FN)', '(TP + TN) / total', 'FP / (FP + FN)'], a: 1, w: 'La sensibilité mesure la proportion de positifs réels correctement détectés : TP / (TP + FN).' },
+      { q: 'Pour une banque qui détecte les fraudes, on veut surtout…', o: ['Minimiser les FN', 'Minimiser les FP', 'Maximiser les FN', 'Minimiser la sensibilité'], a: 0, w: 'On veut ne laisser passer aucune fraude, quitte à contacter le client pour une fausse alerte : FN = 0, donc sensibilité maximale.' },
+      { q: 'Pour un filtre anti-spam, on veut surtout…', o: ['Minimiser les FN', 'Minimiser les FP', 'Minimiser la spécificité', 'Maximiser les FP'], a: 1, w: 'Il ne faut surtout pas classer un vrai message en spam : FP = 0, donc spécificité élevée.' },
+      { q: 'Que mesure la précision (accuracy) ?', o: ['TP / (TP + FN)', 'TN / (TN + FP)', '(TP + TN) / total', 'FN / (FN + FP)'], a: 2, w: 'La précision mesure la proportion de prédictions correctes sur l\'ensemble des prédictions.' }
+    ]
+  },
+  knn: {
+    title: 'Méthode des k plus proches voisins', level: 'Niveau 2 · Comprendre', time: '25 min', course: 'knn',
+    goal: 'Comprendre le principe du k-NN, le rôle du paramètre k et le choix de la distance.',
+    steps: [
+      'Placez le point à classer au centre, avec k = 3. Quelle classe est prédite ? Combien de voisins de chaque classe ?',
+      'Déplacez le point vers le groupe rouge. Que devient la prédiction ?',
+      'Faites varier k (1, 3, 5, 7, 9). Que remarquez-vous quand k augmente ?',
+      'Placez le point à la frontière entre les deux groupes : pour quelle valeur de k la décision bascule-t-elle ?',
+      'Dans le cours, relisez la règle k &lt; √n et les différentes distances (euclidienne, Manhattan, Tchebychev).'
+    ],
+    defi: { q: 'Avec k = 3, un point est entouré de 1 rouge et 2 verts. Que prédit le k-NN ? Et avec k = 1 ?', a: 'Avec <b>k = 3</b> : majorité verte (2 contre 1), donc <b>classe verte</b>. Avec <b>k = 1</b> : on prend uniquement le voisin le plus proche, donc la classe du point rouge si c\'est lui le plus proche.' },
+    qcm: [
+      { q: 'Le k-NN est un algorithme…', o: ['Non supervisé', 'Supervisé et non paramétrique', 'Supervisé et paramétrique', 'Par renforcement'], a: 1, w: 'Il utilise un échantillon étiqueté (supervisé) et ne stocke pas de paramètres : il garde les données (non paramétrique, memory-based).' },
+      { q: 'Quel est l\'inconvénient principal du k-NN ?', o: ['Il est trop rapide', 'Il faut parcourir toutes les données à chaque prédiction', 'Il ne gère pas les étiquettes', 'Il ne peut pas classer plus de 2 classes'], a: 1, w: 'À chaque nouvelle donnée, il faut calculer sa distance à tous les points d\'entraînement : le coût croît avec la taille du jeu de données.' },
+      { q: 'Une règle d\'usage pour choisir k est…', o: ['k &gt; n', 'k &lt; √n', 'k = n/2', 'k = 1 toujours'], a: 1, w: 'On prend souvent k &lt; √n (n = nombre de données étiquetées), en ajustant par validation croisée.' },
+      { q: 'Quelle distance est souvent adaptée à des variables quantitatives de même type ?', o: ['La distance de Manhattan', 'La distance euclidienne', 'La distance de Tchebychev', 'La distance de Hamming'], a: 1, w: 'Pour des variables quantitatives de même nature (poids, salaires…), la distance euclidienne est le choix par défaut.' },
+      { q: 'Que faut-il faire avant de calculer les distances si les attributs ont des échelles très différentes ?', o: ['Rien, c\'est inutile', 'Normaliser les attributs', 'Supprimer une variable au hasard', 'Utiliser un réseau de neurones'], a: 1, w: 'Sans normalisation, un attribut avec de grandes valeurs (salaire en €) domine les autres (âge en années).' }
+    ]
+  },
+  reg: {
+    title: 'Régression linéaire', level: 'Niveau 3 · Approfondir', time: '30 min', course: 'regression',
+    goal: 'Comprendre la fonction coût, la descente de gradient et le rôle de l\'hyperparamètre α.',
+    steps: [
+      'Réglez manuellement a = 0, b = 0 : le MSE est élevé. Déplacez b pour rapprocher la droite des points.',
+      'Ajustez ensuite a : trouvez le couple (a, b) qui minimise visuellement le MSE. Notez-le.',
+      'Revenez à a = 0,5 ; b = 3,5, puis lancez <b>1 pas</b> de descente de gradient. Que font a et b ?',
+      'Lancez <b>50 pas</b>, puis <b>200 pas</b>. Le MSE diminue-t-il ? Vers quelles valeurs convergent a et b ?',
+      'Modifiez α : avec α = 0,001 puis α = 0,06, observez la vitesse de convergence (ou la divergence).'
+    ],
+    defi: { q: 'Avec α = 0,06 et les données proposées, que se passe-t-il ? Et avec α = 0,001 ?', a: 'Avec <b>α = 0,06</b>, la descente peut osciller voire <b>diverger</b> (le pas dépasse 2/λ<sub>max</sub>). Avec <b>α = 0,001</b>, la convergence est <b>très lente</b> : il faudrait des milliers d\'itérations. Le bon α se situe entre les deux : ici environ 0,04.' },
+    qcm: [
+      { q: 'La fonction coût J(a, b) de la régression linéaire est…', o: ['Concave', 'Convexe', 'Constante', 'Périodique'], a: 1, w: 'J est une somme de carrés : elle est convexe, donc admet un unique minimum global.' },
+      { q: 'Que fait la descente de gradient ?', o: ['Elle augmente J', 'Elle déplace (a, b) dans la direction opposée au gradient', 'Elle supprime des données', 'Elle normalise les variables'], a: 1, w: 'On met à jour a ← a − α·∂J/∂a et b ← b − α·∂J/∂b, pour aller vers le minimum de J.' },
+      { q: 'Que se passe-t-il si α est trop grand ?', o: ['La convergence est plus rapide, sans risque', 'La descente peut diverger', 'La fonction J devient convexe', 'a et b ne changent pas'], a: 1, w: 'Un pas trop grand fait dépasser le minimum et peut faire osciller voire diverger l\'algorithme.' },
+      { q: 'Le biais b du modèle correspond à…', o: ['La pente de la droite', 'L\'ordonnée à l\'origine (valeur quand x = 0)', 'L\'erreur du modèle', 'La moyenne des y'], a: 1, w: 'Dans f(x) = a·x + b, b est la valeur de f quand x = 0. Il ne dépend pas des entrées.' },
+      { q: 'La régression linéaire est un algorithme…', o: ['Non paramétrique', 'Paramétrique (on stocke a et b)', 'Non supervisé', 'Par renforcement'], a: 1, w: 'Elle se résume aux paramètres (a, b) : c\'est un modèle paramétrique, qui ne nécessite pas de conserver les données d\'entraînement.' }
+    ]
+  }
+};
+
+/* ===================================================================
+   COURS
+   =================================================================== */
+const COURSE = [];
+COURSE.push({ id: 'intro', t: 'Introduction à l\'IA', h: `
+<p>Dans un monde où les données numériques jouent un rôle de premier plan, les technologies d'<b>intelligence artificielle</b> déterminent notre capacité à organiser, interpréter et exploiter les données. L'IA désigne l'ensemble des techniques permettant de « simuler l'intelligence humaine » : traitement du langage, des images, robotique, santé, transport, sécurité…</p>
+<h3>Un essor lié aux données</h3>
+<p>L'essor actuel de l'IA est lié à l'<b>explosion des données</b> accessibles et des capacités de traitement à partir des années 2000. Mais l'IA au sens moderne remonte aux travaux de <b>Turing</b> dans les années 1950 sur la formalisation du calcul.</p>
+<h3>Les grandes familles d'algorithmes</h3>
+<p>Le schéma général du <b>machine learning</b> distingue :</p>
+<ul>
+<li><b>l'apprentissage supervisé</b> : classification (k-NN, SVM, arbres, forêts, réseaux de neurones…) et régression (régression linéaire, GLM, SVR…) ;</li>
+<li><b>l'apprentissage non supervisé</b> : clustering (k-moyennes, CAH, mixtures gaussiennes…) et réduction de dimension (ACP, SVD…) ;</li>
+<li><b>l'apprentissage par renforcement</b> : processus de décision markovien, itération de valeur, Q-learning…</li>
+</ul>
+<div class="retain"><b>Au programme PSI*.</b> Seul l'apprentissage <b>supervisé</b> est étudié, avec trois algorithmes : k plus proches voisins, régression linéaire multiple et réseaux de neurones.</div>
+` });
+COURSE.push({ id: 'apprentissage', t: 'Apprentissage supervisé et non supervisé', h: `
+<p>Le <b>machine learning</b> est un modèle d'IA qui apprend seul à partir d'un jeu de données. Son intérêt : exploiter des volumes de données inenvisageables jusqu'alors (images médicales, segmentation client, prédiction de panne…).</p>
+<h3>Apprentissage supervisé</h3>
+<p>La machine connaît déjà les <b>réponses attendues</b> : elle travaille sur des <b>données étiquetées</b>. On distingue deux types de tâches :</p>
+<ul>
+<li><b>Classification</b> : attribuer une classe à un objet (fraude / non fraude, panne / pas de panne…).</li>
+<li><b>Régression</b> : prédire une valeur numérique (un prix, une probabilité…).</li>
+</ul>
+<h3>Apprentissage non supervisé</h3>
+<p>Les réponses ne sont pas disponibles dans le jeu de données : l'algorithme travaille sur des <b>données non étiquetées</b> et crée ses propres regroupements.</p>
+<ul>
+<li><b>Clustering</b> : grouper des objets en classes homogènes (segmentation marketing…).</li>
+<li><b>Filtrage collaboratif</b> : recommander des contenus à partir des comportements d'utilisateurs similaires (Netflix, Spotify…).</li>
+</ul>
+<h3>Apprentissage par renforcement</h3>
+<p>Un <b>agent autonome</b> réalise des actions dans un environnement. S'il atteint l'objectif fixé par le développeur, il reçoit une <b>récompense</b>. Il élabore lui-même une stratégie par essais-erreurs. Exemple : un drone qui apprend à livrer un colis en un temps limité.</p>
+<h3>Biais et surapprentissage</h3>
+<p>Un jeu d'entraînement <b>biaisé</b> conduit à des décisions biaisées : le logiciel de recrutement d'Amazon défavorisait les femmes parce que les données historiques l'étaient. Un modèle en <b>surapprentissage</b> (overfitting) apprend un modèle trop ajusté à l'échantillon et classifie mal les nouvelles données.</p>
+<div class="retain"><b>À retenir.</b> Supervisé = étiquettes ; non supervisé = regroupements ; renforcement = essais-erreurs récompensés.</div>
+` });
+COURSE.push({ id: 'donnees', t: 'Représentation des données', h: `
+<h3>Types de données</h3>
+<p><b>Données quantitatives</b> — elles représentent une mesure :</p>
+<ul>
+<li><b>continue</b> : une infinité de valeurs possibles (poids, distance, prix…) ;</li>
+<li><b>discrète</b> : un comptage (nombre d'enfants, de chambres…).</li>
+</ul>
+<p><b>Données qualitatives</b> — aussi appelées <b>modalités</b> : elles n'ont pas de sémantique mathématique (sexe, pays de naissance, race d'un chien…).</p>
+<p>On peut affecter un nombre à une modalité, mais l'ordre n'a pas de sens : si France = 1 et Espagne = 2, on ne peut pas dire que 2 > 1.</p>
+<p>Avant de donner des données qualitatives à un algorithme, il faut les <b>coder</b> par des nombres (one-hot encoding, ordinal encoding…).</p>
+<h3>Structuration</h3>
+<p>On regroupe les <b>m</b> caractéristiques de <b>n</b> échantillons dans une matrice <b>X</b> ∈ M<sub>n,m</sub>, et les sorties dans un vecteur <b>y</b> ∈ ℝ<sup>n</sup>. L'apprentissage cherche une fonction <b>f</b> telle que <b>y ≈ f(X)</b>.</p>
+<div class="formula">X = (x<sub>ij</sub>), i ∈ [1, n], j ∈ [1, m] &nbsp;&nbsp;·&nbsp;&nbsp; y = (y<sub>i</sub>)<sub>1 ≤ i ≤ n</sub></div>
+<p>Exemple (immobilier) :</p>
+<pre class="code">X = [[124, 3, 3],
+     [339, 5, 5],
+     [179, 3, 4],
+     [186, 3, 5],
+     [180, 3, 5],
+     [ 82, 2, 2],
+     [125, 2, 4]]
+
+y = [313000, 238400, 342000, 420000, 550000, 490000, 335000]</pre>
+<div class="retain"><b>À retenir.</b> Un algorithme manipule des nombres : la qualité du codage des données conditionne la qualité du modèle.</div>
+` });
+COURSE.push({ id: 'etapes', t: 'Étapes d\'un algorithme', h: `
+<p>Tous les algorithmes d'apprentissage automatique fonctionnent en plusieurs temps :</p>
+<ol>
+<li><b>Collecte et mise en forme</b> des données (nettoyage, codage, normalisation).</li>
+<li><b>Séparation</b> en deux jeux : un jeu d'<b>entraînement</b> (≈ 80 %) et un jeu de <b>test</b> (≈ 20 %). Dans le cas supervisé, on dispose de la sortie attendue pour les deux.</li>
+<li><b>Phase d'apprentissage</b> : la machine apprend un modèle prédictif sur le jeu d'entraînement.</li>
+<li><b>Phase d'évaluation</b> : on mesure la performance du modèle sur le jeu de test.</li>
+<li><b>Phase d'inférence</b> (ou déploiement) : le modèle entraîné est utilisé pour prédire sur de nouvelles données.</li>
+</ol>
+<div class="retain"><b>À retenir.</b> Le jeu de test ne doit <b>jamais</b> être utilisé pendant l'apprentissage : c'est ce qui garantit une évaluation honnête.</div>
+` });
+COURSE.push({ id: 'evaluation', t: 'Évaluation d\'un modèle', h: `
+<h3>Classification : la matrice de confusion</h3>
+<p>Elle comptabilise les occurrences des prédictions en fonction des vraies valeurs :</p>
+<table class="ctable"><thead><tr><th></th><th>Réel 0</th><th>Réel 1</th></tr></thead><tbody>
+<tr><td><b>Prédit 0</b></td><td>TN</td><td>FN</td></tr>
+<tr><td><b>Prédit 1</b></td><td>FP</td><td>TP</td></tr>
+</tbody></table>
+<p>La diagonale correspond aux bonnes prédictions, le hors-diagonale aux erreurs.</p>
+<h3>Indicateurs</h3>
+<table class="ctable"><thead><tr><th>Indicateur</th><th>Formule</th><th>Interprétation</th></tr></thead><tbody>
+<tr><td>Sensibilité (rappel)</td><td>TP / (TP + FN)</td><td>Proportion de positifs correctement détectés</td></tr>
+<tr><td>Spécificité</td><td>TN / (TN + FP)</td><td>Proportion de négatifs correctement détectés</td></tr>
+<tr><td>Précision (accuracy)</td><td>(TP + TN) / total</td><td>Proportion de prédictions correctes</td></tr>
+</tbody></table>
+<h3>Comment choisir ?</h3>
+<ul>
+<li><b>Banque / fraude</b> : on veut FN = 0 → privilégier la <b>sensibilité</b>.</li>
+<li><b>Filtre anti-spam</b> : on veut FP = 0 → privilégier la <b>spécificité</b>.</li>
+</ul>
+<h3>Régression : le RMSE</h3>
+<p>Pour un modèle de régression, compter les erreurs n'a pas de sens. On utilise la racine de l'erreur quadratique moyenne :</p>
+<div class="formula">RMSE = √( (1/n) · Σ<sub>i</sub> (y<sub>i</sub> − f(x<sub>i</sub>))² )</div>
+<div class="retain"><b>À retenir.</b> Le bon indicateur dépend de ce qui coûte le plus cher : laisser passer un positif (FN) ou déclencher une fausse alerte (FP).</div>
+` });
+COURSE.push({ id: 'knn', t: 'Méthode des k plus proches voisins', h: `
+<p>La méthode des <b>k plus proches voisins</b> (k-NN) est un algorithme <b>supervisé</b> qui classifie (ou prédit une valeur) en fonction de la classe majoritaire (ou de la moyenne) de ses k voisins les plus proches.</p>
+<h3>Principe</h3>
+<ol>
+<li>On considère une population dont on connaît la classe et les caractéristiques.</li>
+<li>On introduit un nouvel élément dont on ne connaît que les caractéristiques.</li>
+<li>Ayant choisi une distance, on identifie les k voisins les plus proches.</li>
+<li>On attribue la classe majoritaire parmi ces voisins.</li>
+</ol>
+<p>Le k-NN est <b>non paramétrique</b> : il ne construit pas de modèle statistique, il garde en mémoire l'échantillon d'entraînement (memory-based).</p>
+<h3>Choix de k</h3>
+<ul>
+<li>Règle d'usage : <b>k &lt; √n</b> où n est le nombre de données étiquetées.</li>
+<li>On peut aussi tracer la courbe du taux d'erreur en fonction de k (sur le jeu de test) et choisir le k qui le minimise.</li>
+</ul>
+<h3>Distances</h3>
+<p>Pour deux points M et N de coordonnées (x<sub>1M</sub>, x<sub>2M</sub>) et (x<sub>1N</sub>, x<sub>2N</sub>) :</p>
+<div class="formula">d<sub>euclidienne</sub>(M, N) = √( (x<sub>2N</sub> − x<sub>2M</sub>)² + (x<sub>1N</sub> − x<sub>1M</sub>)² )</div>
+<div class="formula">d<sub>Manhattan</sub>(M, N) = |x<sub>2N</sub> − x<sub>2M</sub>| + |x<sub>1N</sub> − x<sub>1M</sub>|</div>
+<div class="formula">d<sub>Tchebychev</sub>(M, N) = max( |x<sub>2N</sub> − x<sub>2M</sub>|, |x<sub>1N</sub> − x<sub>1M</sub>| )</div>
+<p>On choisit la distance selon les données : euclidienne pour des variables quantitatives de même type, Manhattan pour des types différents. Avant de calculer, il est souvent utile de <b>normaliser</b> les attributs.</p>
+<h3>Implémentation avec Scikit-learn</h3>
+<pre class="code">from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+
+model = KNeighborsClassifier(n_neighbors=5)
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+model.fit(X_train, y_train)
+model.score(X_test, y_test)
+
+predictions = model.predict(X_new)</pre>
+<div class="retain"><b>À retenir.</b> k-NN : simple, memory-based, lent à la prédiction (il faut parcourir toutes les données). Choisir k &lt; √n et une distance adaptée.</div>
+` });
+COURSE.push({ id: 'regression', t: 'Régression linéaire', h: `
+<h3>Modèle univarié</h3>
+<p>On cherche à prédire une valeur continue y à partir d'une variable x : c'est un problème de <b>régression</b>. Le modèle s'écrit :</p>
+<div class="formula">f(x) = a·x + b</div>
+<p>où <b>a</b> est le <b>poids</b> du modèle (il pondère les variations de x) et <b>b</b> le <b>biais</b> (il ne dépend pas des entrées).</p>
+<h3>Fonction coût</h3>
+<p>On mesure l'écart entre la prédiction et la valeur réelle par l'<b>erreur quadratique</b> :</p>
+<div class="formula">J(a, b) = (1 / 2n) · Σ<sub>i</sub> ( b + a·x<sup>(i)</sup> − y<sup>(i)</sup> )²</div>
+<p>Cette fonction est <b>convexe</b> : elle admet un unique minimum global. Trouver le meilleur couple (a, b) revient à minimiser J.</p>
+<h3>Descente de gradient</h3>
+<p>On met à jour les paramètres itérativement, dans la direction opposée au gradient :</p>
+<div class="formula">a ← a − α · ∂J/∂a &nbsp;&nbsp;&nbsp; b ← b − α · ∂J/∂b</div>
+<p>avec les dérivées partielles :</p>
+<div class="formula">∂J/∂a = (1/n) · Σ x<sup>(i)</sup> · (b + a·x<sup>(i)</sup> − y<sup>(i)</sup>)</div>
+<div class="formula">∂J/∂b = (1/n) · Σ (b + a·x<sup>(i)</sup> − y<sup>(i)</sup>)</div>
+<h3>Rôle de l'hyperparamètre α</h3>
+<ul>
+<li><b>α trop petit</b> : la convergence est très lente.</li>
+<li><b>α trop grand</b> : l'algorithme peut osciller voire diverger.</li>
+<li>Un bon α est souvent de l'ordre de 0,001 (dans les cas réels) ; il est déterminé par essais.</li>
+</ul>
+<h3>Écriture matricielle (multivarié)</h3>
+<p>Pour un problème à d variables, on pose X avec une colonne de 1 (pour le biais) et θ le vecteur des paramètres :</p>
+<div class="formula">F = X·θ &nbsp;&nbsp; J(θ) = (1/2n)·Σ (X·θ − y)² &nbsp;&nbsp; ∂J/∂θ = (1/n)·X<sup>T</sup>·(X·θ − y)</div>
+<div class="formula">θ ← θ − α · ∂J/∂θ</div>
+<h3>Implémentation avec Scikit-learn</h3>
+<pre class="code">from sklearn.linear_model import LinearRegression, SGDRegressor
+from sklearn.model_selection import train_test_split
+
+# méthode des moindres carrés
+model = LinearRegression()
+# ou méthode itérative (descente de gradient)
+model = SGDRegressor(max_iter=10000, eta0=0.001)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+model.fit(X_train, y_train)
+model.score(X_test, y_test)
+predictions = model.predict(X_new)</pre>
+<div class="retain"><b>À retenir.</b> Régression linéaire : modèle paramétrique (a, b), fonction coût convexe, minimisation par descente de gradient. α contrôle la vitesse et la stabilité.</div>
+` });
+COURSE.push({ id: 'reseau', t: 'Réseaux de neurones', h: `
+<p>Les <b>réseaux de neurones</b> sont des modèles plus complexes que les autres : ils représentent des fonctions mathématiques à plusieurs millions de coefficients. Ils permettent la reconnaissance d'objets, l'analyse de sentiments, le traitement du langage naturel, la création artistique… au prix d'un dataset beaucoup plus grand, d'un temps d'apprentissage plus long et d'une plus grande puissance de calcul.</p>
+<h3>Le perceptron</h3>
+<p>Un neurone artificiel (perceptron) calcule en deux étapes :</p>
+<ol>
+<li>une <b>somme pondérée</b> des entrées : z<sub>j</sub> = Σ w<sub>ji</sub> · x<sub>i</sub> + w<sub>j0</sub> (calcul linéaire) ;</li>
+<li>l'application d'une <b>fonction d'activation</b> non linéaire : y<sub>j</sub> = φ(z<sub>j</sub>).</li>
+</ol>
+<p>Le coefficient w<sub>j0</sub> est le <b>biais</b> du neurone.</p>
+<h3>Fonctions d'activation courantes</h3>
+<table class="ctable"><thead><tr><th>Nom</th><th>Formule</th><th>Propriété</th></tr></thead><tbody>
+<tr><td>Sigmoïde</td><td>g(z) = 1 / (1 + e<sup>−z</sup>)</td><td>Retourne une valeur entre 0 et 1 (probabilité) ; classification binaire</td></tr>
+<tr><td>Tangente hyperbolique</td><td>g(z) = (e<sup>z</sup> − e<sup>−z</sup>) / (e<sup>z</sup> + e<sup>−z</sup>)</td><td>Retourne une valeur entre −1 et 1</td></tr>
+<tr><td>ReLU</td><td>g(z) = max(0, z)</td><td>La plus simple ; à utiliser en couches intermédiaires</td></tr>
+</tbody></table>
+<h3>Réseau à plusieurs neurones</h3>
+<ul>
+<li>Les neurones sont regroupés en <b>couches</b> : les neurones d'une même couche ne sont pas connectés entre eux.</li>
+<li>Toutes les sorties d'une couche sont connectées aux entrées de la couche suivante.</li>
+</ul>
+<p>Pour chaque neurone, on calcule la somme pondérée des signaux arrivants, on ajoute le biais, puis on applique la fonction d'activation.</p>
+<h3>Apprentissage par rétro-propagation</h3>
+<p>On évalue l'erreur commise sur une propagation, on évalue l'impact de chaque poids sur cette erreur, puis on met à jour les poids un à un en partant de la fin. C'est la <b>rétro-propagation du gradient</b>, couplée à la descente de gradient.</p>
+<h3>Choix du réseau</h3>
+<p>Choisir le bon nombre de neurones et de couches demande de l'expérience. En général, <b>deux couches suffisent</b>, et dépasser 6 à 10 couches entraîne souvent du <b>surapprentissage</b>.</p>
+<h3>Scikit-learn</h3>
+<pre class="code">from sklearn.neural_network import MLPClassifier
+
+NN = MLPClassifier(activation='logistic', solver='sgd', max_iter=10)
+NN.fit(X_train, y_train)
+NN.score(X_test, y_test)
+predictions = NN.predict(X_new)</pre>
+<div class="retain"><b>À retenir.</b> Réseau = couches de perceptrons, fonction d'activation non linéaire, apprentissage par rétro-propagation. Puissant mais coûteux en données et en calcul.</div>
+` });
+COURSE.push({ id: 'gloss', t: 'Vocabulaire', h: `
+<dl class="gloss">
+<dt>Intelligence artificielle</dt><dd>Ensemble des techniques permettant de simuler l'intelligence humaine.</dd>
+<dt>Machine learning</dt><dd>Modèle d'IA qui apprend seul à partir d'un jeu de données.</dd>
+<dt>Apprentissage supervisé</dt><dd>Apprentissage à partir de données étiquetées (les réponses sont connues).</dd>
+<dt>Apprentissage non supervisé</dt><dd>Apprentissage à partir de données non étiquetées (la machine crée ses propres regroupements).</dd>
+<dt>Apprentissage par renforcement</dt><dd>Un agent apprend par essais-erreurs en maximisant une récompense.</dd>
+<dt>Classification</dt><dd>Prédire une classe (catégorie).</dd>
+<dt>Régression</dt><dd>Prédire une valeur numérique continue.</dd>
+<dt>Clustering</dt><dd>Regrouper des objets en classes homogènes sans étiquettes.</dd>
+<dt>Biais</dt><dd>Paramètre qui ne dépend pas des entrées (b dans f(x) = a·x + b) ; ou biais d'un jeu de données.</dd>
+<dt>Surapprentissage (overfitting)</dt><dd>Modèle trop ajusté à l'échantillon d'entraînement, qui classifie mal les nouvelles données.</dd>
+<dt>Matrice de confusion</dt><dd>Tableau comptant les prédictions correctes et erronées (TN, FP, FN, TP).</dd>
+<dt>Sensibilité (rappel)</dt><dd>TP / (TP + FN) : proportion de positifs correctement détectés.</dd>
+<dt>Spécificité</dt><dd>TN / (TN + FP) : proportion de négatifs correctement détectés.</dd>
+<dt>Précision (accuracy)</dt><dd>(TP + TN) / total : proportion de prédictions correctes.</dd>
+<dt>RMSE</dt><dd>Racine de l'erreur quadratique moyenne, pour évaluer un modèle de régression.</dd>
+<dt>Fonction coût</dt><dd>Mesure de l'erreur globale d'un modèle ; on cherche à la minimiser.</dd>
+<dt>Descente de gradient</dt><dd>Algorithme itératif de minimisation de la fonction coût.</dd>
+<dt>Hyperparamètre</dt><dd>Paramètre fixé avant l'apprentissage (α, k, nombre de couches…).</dd>
+<dt>Perceptron</dt><dd>Neurone artificiel : somme pondérée des entrées + fonction d'activation.</dd>
+<dt>Rétro-propagation</dt><dd>Algorithme de mise à jour des poids d'un réseau de neurones en remontant depuis la sortie.</dd>
+<dt>Non paramétrique</dt><dd>Qui ne se résume pas à un nombre fixe de paramètres (k-NN par exemple).</dd>
+</dl>
+` });
+
+/* ===================================================================
+   UI / RENDU
+   =================================================================== */
+const UI = { cur: 'types' };
+const AS = { key: 'types', tab: 'steps', open: false, st: lsGet(KEYS.act, {}), arm: null };
+const CS = { open: false, id: 'intro' };
+function actSave() { lsSet(KEYS.act, AS.st); }
+function actState() { return AS.st[AS.key] || (AS.st[AS.key] = { a: {}, checked: false, shown: false }); }
+function actScore(a) { const s = actState(); return a.qcm.filter((q, i) => s.a[i] === q.a).length; }
+function wsById(id) { return WORKSHOPS.find(w => w.id === id) || WORKSHOPS[0]; }
+function renderSeg() {
+  const seg = $('#wsSeg'); seg.innerHTML = '';
+  WORKSHOPS.forEach((w, i) => seg.append(h('button', {
+    type: 'button', role: 'tab',
+    'aria-pressed': w.id === UI.cur ? 'true' : 'false',
+    'aria-selected': w.id === UI.cur ? 'true' : 'false',
+    onclick: () => gotoWs(w.id)
+  }, (i + 1) + '. ' + w.title)));
+}
+function mountWs() {
+  const w = wsById(UI.cur), root = $('#ws');
+  $('#hint').textContent = w.hint; root.innerHTML = '';
+  w.mount(root);
+  const sc = $('#scroller'); if (sc) sc.scrollTop = 0;
+}
+function gotoWs(id) {
+  const old = wsById(UI.cur); if (old.leave) old.leave();
+  if (CS.open) { CS.open = false; renderCourse(); }
+  UI.cur = id; AS.key = id; AS.tab = 'steps';
+  renderSeg(); mountWs(); renderAct();
+}
+function renderAct() {
+  const box = $('#act'), btn = $('#bAct');
+  btn.setAttribute('aria-pressed', AS.open ? 'true' : 'false'); btn.classList.toggle('pri', AS.open);
+  box.hidden = !AS.open;
+  if (!AS.open) { box.innerHTML = ''; return; }
+  const oldB = box.querySelector('.pbody'), tag = AS.key + '|' + AS.tab, keep = oldB && box.dataset.k === tag ? oldB.scrollTop : 0;
+  box.dataset.k = tag;
+  box.innerHTML = '';
+  const a = ACT[AS.key];
+  const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
+  box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
+  const nq = a.qcm.length;
+  box.append(h('div', { class: 'tabs', role: 'tablist' },
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'steps' ? 'true' : 'false', onclick: () => { AS.tab = 'steps'; renderAct(); } }, 'Consignes'),
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'qcm' ? 'true' : 'false', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'QCM (' + nq + ')')));
+  const body = h('div', { class: 'pbody' });
+  if (AS.tab === 'steps') {
+    body.append(h('p', { class: 'small' }, a.level + ' · environ ' + a.time), h('div', { class: 'goal' }, h('b', null, 'Objectif. '), a.goal));
+    body.append(h('ol', { class: 'steps' }, a.steps.map(s => h('li', { html: s }))));
+    body.append(h('div', { class: 'defi' }, h('b', null, 'Défi'), h('p', { html: a.defi.q }), h('details', null, h('summary', null, 'Voir la réponse'), h('p', { html: a.defi.a }))));
+    if (a.course) body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: () => openCourse(a.course) }, 'Voir le cours : ' + courseSection(a.course).t)));
+    body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: ev => {
+      const b = ev.currentTarget;
+      if (!AS.arm) {
+        b.textContent = 'Confirmer ? Votre travail sera effacé';
+        AS.arm = setTimeout(() => { b.textContent = 'Recommencer l\'atelier'; AS.arm = null; }, 3500);
+        return;
+      }
+      clearTimeout(AS.arm); AS.arm = null;
+      wsById(UI.cur).reset(); mountWs(); renderAct();
+    } }, 'Recommencer l\'atelier')));
+    body.append(h('p', null, h('button', { class: 'btn pri', type: 'button', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Passer aux questions')));
+  } else {
+    const s = actState(), show = s.checked || s.shown;
+    a.qcm.forEach((q, i) => {
+      const fs = h('fieldset', { class: 'q' }, h('legend', null, (i + 1) + '. ' + q.q));
+      q.o.forEach((o, j) => {
+        const good = show && j === q.a;
+        const bad = s.checked && !s.shown && s.a[i] === j && j !== q.a;
+        const inp = h('input', { type: 'radio', name: 'q' + i, checked: (show && s.shown ? j === q.a : s.a[i] === j), disabled: show });
+        inp.addEventListener('change', () => { s.a[i] = j; actSave(); renderAct(); });
+        fs.append(h('label', { class: 'opt' + (good ? ' good' : '') + (bad ? ' bad' : '') }, inp, h('span', null, o + (good ? '  ✓' : '') + (bad ? '  ✗' : ''))));
+      });
+      if (show) {
+        const miss = s.a[i] == null && !s.shown;
+        fs.append(h('p', { class: 'why' }, (miss ? 'Sans réponse. ' : '') + q.w));
+      }
+      body.append(fs);
+    });
+    const done = Object.keys(s.a).length;
+    body.append(h('p', { class: 'small' }, s.shown ? 'Réponses affichées.' : s.checked ? '' : done + ' réponse(s) sur ' + nq + '.'));
+    if (s.checked && !s.shown) body.append(h('p', { class: 'score' }, 'Score : ' + actScore(a) + ' / ' + nq));
+    const row = h('div', { class: 'files' });
+    if (!show) row.append(h('button', { class: 'btn pri', type: 'button', onclick: () => { s.checked = true; actSave(); renderAct(); } }, 'Corriger'));
+    row.append(h('button', { class: 'btn', type: 'button', onclick: () => { s.shown = true; actSave(); renderAct(); } }, 'Afficher les réponses'));
+    if (show) row.append(h('button', { class: 'btn', type: 'button', onclick: () => { AS.st[AS.key] = { a: {}, checked: false, shown: false }; actSave(); renderAct(); } }, 'Recommencer'));
+    body.append(row);
+  }
+  box.append(body); body.scrollTop = keep;
+}
+function actToggle() { if (CS.open) { CS.open = false; renderCourse(); } AS.open = !AS.open; renderAct(); }
+$('#bAct').addEventListener('click', actToggle);
+
+function courseSection(id) { return COURSE.find(s => s.id === id) || COURSE[0]; }
+function renderCourse() {
+  const box = $('#course'), btn = $('#bCourse'), work = $('#work');
+  btn.setAttribute('aria-pressed', CS.open ? 'true' : 'false'); btn.classList.toggle('pri', CS.open);
+  box.hidden = !CS.open; work.hidden = CS.open; $('#modes').hidden = CS.open;
+  if (!CS.open) { box.innerHTML = ''; return; }
+  box.innerHTML = '';
+  const cur = courseSection(CS.id), idx = COURSE.indexOf(cur);
+  const go = id => { CS.id = id; renderCourse(); };
+  const nav = h('nav', { class: 'ctoc', 'aria-label': 'Sommaire du cours' }, COURSE.map((s, i) => h('button', {
+    type: 'button', class: s.id === cur.id ? 'on' : '',
+    'aria-current': s.id === cur.id ? 'true' : 'false',
+    onclick: () => go(s.id)
+  }, (i + 1) + '. ' + s.t)));
+  const sel = h('select', { class: 'ctoc-sel', 'aria-label': 'Choisir une section', onchange: e => go(e.target.value) }, COURSE.map((s, i) => h('option', { value: s.id, selected: s.id === cur.id }, (i + 1) + '. ' + s.t)));
+  const art = h('article', { class: 'cbody' });
+  art.append(h('p', { class: 'ckick' }, 'Cours · section ' + (idx + 1) + ' sur ' + COURSE.length), h('h2', null, cur.t), h('div', { html: cur.h }));
+  art.append(h('div', { class: 'cpn' },
+    idx > 0 ? h('button', { class: 'btn', type: 'button', onclick: () => go(COURSE[idx - 1].id) }, '← ' + COURSE[idx - 1].t) : h('span'),
+    idx < COURSE.length - 1 ? h('button', { class: 'btn pri', type: 'button', onclick: () => go(COURSE[idx + 1].id) }, COURSE[idx + 1].t + ' →') : h('span')));
+  const top = h('div', { class: 'ctop' }, h('b', null, 'Cours : intelligence artificielle'), h('button', { class: 'btn pri sm', type: 'button', onclick: () => { CS.open = false; renderCourse(); } }, 'Retour à l\'atelier'));
+  box.append(top, sel, h('div', { class: 'cwrap' }, nav, art));
+  const sc = box.querySelector('.cwrap'); if (sc) sc.scrollTop = 0; box.scrollTop = 0;
+}
+function openCourse(id) { if (id) CS.id = id; CS.open = true; renderCourse(); }
+$('#bCourse').addEventListener('click', () => { CS.open = !CS.open; renderCourse(); });
+
+function closeDlg() { $('#dlg').hidden = true; $('#dlg').innerHTML = ''; }
+function openDlg(title, body) {
+  const d = $('#dlg'); d.innerHTML = ''; d.hidden = false;
+  d.append(h('div', { class: 'dlgbox', role: 'dialog', 'aria-label': title },
+    h('header', null, h('b', null, title), h('button', { class: 'btn sm', type: 'button', onclick: closeDlg }, 'Fermer')),
+    h('div', { class: 'dbody' }, body)));
+  d.onclick = ev => { if (ev.target === d) closeDlg(); };
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
+$('#bHelp').addEventListener('click', () => {
+  openDlg('Aide', h('div', { html: '<p>Cinq ateliers sur l\'intelligence artificielle (ITC, CPGE PSI*) : types d\'apprentissage, représentation des données, évaluation d\'un modèle, k plus proches voisins et régression linéaire.</p>' +
+    '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut.</li><li>Le bouton <b>Activité</b> affiche les consignes, un défi et un QCM corrigé.</li><li>Le bouton <b>Cours</b> propose une synthèse rédigée de chaque notion.</li></ul>' +
+    '<h3>Vos données</h3><p>Les réponses au QCM sont mémorisées dans ce navigateur uniquement.</p>' }));
+});
+
+// redessiner les canvas quand la fenêtre change de taille
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (UI.cur === 'knn') drawKNN();
+    else if (UI.cur === 'reg') drawReg();
+  }, 120);
+});
+
+(function init() {
+  AS.open = !isSmall();
+  renderSeg();
+  mountWs();
+  renderAct();
+  renderCourse();
+})();
+</script>
+</body>
+</html>
