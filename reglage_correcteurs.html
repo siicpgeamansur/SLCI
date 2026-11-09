@@ -1,0 +1,984 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Atelier Réglage de correcteurs</title><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : barre d'outils en haut, onglets d'ateliers, zone de travail blanche, panneau Activité à droite (feuille basse sur téléphone), vue Cours avec sommaire. */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
+  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;--run:#2e8b3a;
+  --node-stroke:#33475b;
+  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-ui)}
+button,input,select,textarea{font:inherit;color:inherit}
+.inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+.band{background:var(--bar);border-bottom:1px solid var(--line);flex:none}
+.row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:7px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.01em}
+.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.files{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.sm{padding:3px 8px;font-size:12px}
+:is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;padding:7px 14px;font-weight:500;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.work{flex:1;min-height:0;display:flex;gap:10px;padding-block:10px}
+#stage{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+#hint{flex:none;padding:6px 12px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
+#scroller{flex:1;min-height:0;overflow:auto}
+.phead{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex:none}
+.phead b{font-size:15px}
+.phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.pbody{overflow:auto;padding:12px;flex:1;min-height:0}
+.fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--fg)}
+input[type=range]{width:100%;padding:0;accent-color:var(--accent)}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.small{font-size:12px;color:var(--muted);margin:0 0 9px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:60;max-width:90vw}
+#dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(640px,100%);max-height:88%;display:flex;flex-direction:column}
+.dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlgbox header b{font-size:16px}
+.dlgbox .dbody{padding:14px 16px;overflow:auto}
+.dlgbox h3{margin:14px 0 4px;font-size:14px}.dlgbox p,.dlgbox li{margin:4px 0;font-size:13.5px}
+#act{flex:none;width:clamp(280px,24vw,340px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);min-height:0;max-height:100%}
+#act .pbody{font-size:13.5px}
+.goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:8px 10px;margin:0 0 10px}
+.steps{margin:0 0 10px;padding-left:20px}.steps li{margin-bottom:9px}
+.defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:0 0 12px}.defi p{margin:6px 0}
+.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+fieldset.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px 6px;margin:0 0 10px;min-width:0}
+fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
+.opt{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:6px;cursor:pointer}
+.opt input{margin-top:3px;width:auto;flex:none}
+.opt.good{background:rgba(30,122,46,.15)}.opt.bad{background:rgba(192,40,31,.15)}
+.why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
+.score{font-weight:600;font-size:15px;margin:4px 0 8px}
+/* cours */
+#course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
+.ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
+.cwrap{flex:1;min-height:0;display:flex;gap:28px;padding-block:14px}
+.ctoc{flex:none;width:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px}
+.ctoc button:hover{background:var(--panel2)}
+.ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto}
+.cbody{flex:1;min-width:0;overflow:auto;max-width:860px;padding-right:6px}
+.ckick{color:var(--muted);font-size:12.5px;margin:0}
+.cbody h2{font-size:26px;margin:2px 0 12px;text-wrap:balance}
+.cbody h3{font-size:16.5px;margin:22px 0 6px}
+.cbody p,.cbody li{font-size:14.5px;line-height:1.6}
+.cbody ul,.cbody ol{padding-left:22px}.cbody li{margin-bottom:4px}
+.cbody table{display:block;overflow-x:auto;max-width:100%}
+.ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
+.ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.ctable th{background:var(--panel2);font-weight:600}
+.retain{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 12px;margin:16px 0 6px;font-size:14px}
+.analogy{background:#fff6e0;border-left:3px solid #e08a00;border-radius:0 8px 8px 0;padding:8px 12px;margin:10px 0;font-size:14px}
+.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
+pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
+.cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
+/* ateliers */
+#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:980px}
+#ws h2{font-size:24px;margin:0 0 8px;text-wrap:balance}
+#ws h3{font-size:16.5px;margin:24px 0 6px}
+#ws p,#ws li{font-size:14.5px;line-height:1.55}
+#ws .small{font-size:12.5px}
+.opts{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 10px}.opts .fld{margin:0}
+.opts input[type=range]{width:200px;max-width:100%}
+.opts input[type=text]{font-family:var(--font-mono)}
+.opts .fld input[type=text]{width:150px;max-width:100%}
+.opts .fld input.wide{width:260px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.stat{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat span{font-size:12px;color:var(--muted)}.stat b{font-size:14px;font-family:var(--font-mono);overflow-wrap:anywhere}
+.verdict{border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14px;background:var(--panel2);border:1px solid var(--line)}
+.verdict.yes{background:rgba(30,122,46,.15);border-color:var(--ok)}.verdict.no{background:rgba(192,40,31,.13);border-color:var(--bad)}.verdict.warn{background:rgba(154,91,0,.13);border-color:var(--warn)}
+.verdict.goal{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+.dwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.dt{border-collapse:collapse;width:100%;font-size:13.5px}
+.dt th,.dt td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.dt thead th{background:var(--panel2);font-weight:600}
+.dt td.m{font-family:var(--font-mono);font-size:12.5px}
+.dt tr:last-child td{border-bottom:0}
+/* cellules de table de hachage */
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:8px 0}
+.bucket{border:1px solid var(--line);border-radius:8px;background:#fff;min-height:64px;padding:4px 6px}
+button.bucket{font:inherit;text-align:left;cursor:pointer;display:block;width:100%}
+button.bucket:hover{border-color:var(--accent);background:var(--accent-soft)}
+.bucket.target{outline:3px solid var(--warn);outline-offset:1px}
+.bucket .bi{font:11px var(--font-mono);color:var(--muted);border-bottom:1px dashed var(--line);padding-bottom:2px;margin-bottom:4px}
+.bucket .pkt{display:block;font:12px var(--font-mono);padding:2px 4px;border-radius:4px;margin:2px 0;background:var(--accent-soft);color:var(--accent-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bucket .pkt.coll{background:rgba(192,40,31,.15);color:var(--bad)}
+.bucket .pkt.hit{background:rgba(30,122,46,.18);color:var(--ok)}
+.bucket.empty .bi{color:#9aa3ad}
+.bucket.onpath{border-color:var(--warn);box-shadow:0 0 0 2px rgba(154,91,0,.25)}
+.bar{display:flex;align-items:center;gap:8px;font-size:13px;margin:3px 0}
+.bar .lab{width:120px;color:var(--muted);font-size:12.5px}
+.bar .track{flex:1;background:var(--panel2);border-radius:4px;height:14px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent)}
+.bar .fill.ok{background:var(--ok)}.bar .fill.bad{background:var(--bad)}.bar .fill.warn{background:#e08a00}
+.bar .val{width:80px;text-align:right;font-family:var(--font-mono);font-size:12.5px}
+.hashout{font-family:var(--font-mono);font-size:12.5px;word-break:break-all;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:4px 0}
+.st{display:flex;gap:10px;align-items:flex-start;margin:7px 0}
+.st .n{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;margin-top:1px}
+.st .big{display:block;font-family:var(--font-mono);font-size:12.5px;word-break:break-all}
+.probes{margin:6px 0;padding-left:22px}.probes li{margin:3px 0;font-size:13.5px}
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:10px 0;font-size:13px}
+.flow .bx{border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:5px 10px;font-weight:500}
+.flow .ar{color:var(--muted);font-size:16px}
+.pred{border:1px dashed var(--accent);border-radius:8px;padding:8px 12px;margin:8px 0}
+.pred .chips{margin:6px 0 2px}
+@media (max-width:820px){
+  .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
+  #act{position:fixed;left:0;right:0;bottom:0;width:auto;height:62%;max-height:none;border-radius:14px 14px 0 0;z-index:35;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
+  body.act-open #ws{padding-bottom:calc(62vh + 20px)}
+  .work{flex-direction:column;gap:8px}
+  .grid2{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}
+  .bar .lab{width:86px}
+  .bar .val{width:64px}
+}
+@media (prefers-reduced-motion:no-preference){.btn{transition:border-color .12s,background .12s}.bucket{transition:background .15s}}
+</style>
+<div id="app">
+  <header class="band"><div class="inner row">
+    <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="6" width="20" height="5" rx="1" fill="var(--accent)"/><rect x="3" y="13" width="20" height="5" rx="1" fill="var(--ok)"/><rect x="3" y="20" width="20" height="3" rx="1" fill="var(--warn)"/><circle cx="7" cy="8.5" r="1.4" fill="#fff"/><circle cx="12" cy="15.5" r="1.4" fill="#fff"/></svg><span>Atelier Réglage de correcteurs <small>SII · CPGE</small></span></div>
+    <div class="files">
+      <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
+      <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
+      <button class="btn" id="bHelp" type="button">Aide</button>
+    </div>
+  </div></header>
+  <div class="band" id="modes"><div class="inner row"><div class="seg" id="wsSeg" role="tablist" aria-label="Ateliers"></div></div></div>
+  <main class="inner work" id="work">
+    <section id="stage"><div id="hint"></div><div id="scroller"><div id="ws"></div></div></section>
+    <aside id="act" hidden aria-label="Activité"></aside>
+  </main>
+  <section id="course" hidden aria-label="Cours"></section>
+</div>
+<div id="dlg" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
+  return el;
+}
+function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
+const KEYS = { act: 'atelier-correcteurs-v1' };
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
+const WORKSHOPS = [];
+
+
+/*LOGIC-START*/
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+const fmt = (x, d = 2) => { if (!isFinite(x)) return x > 0 ? '∞' : '−∞'; const r = Math.round(x * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', ','); };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+const PLANT0 = { K0: 1, t1: 1, t2: 0.1 };
+const PLANT = Object.assign({}, PLANT0);
+const GRID = (() => { const g = [], n = 3000, a = -3, b = 5; for (let i = 0; i <= n; i++) g.push(Math.pow(10, a + (b - a) * i / n)); return g; })();
+const dB = m => 20 * Math.log10(Math.max(m, 1e-12));
+
+/* ---------- modèles fréquentiels : système H, correcteur C, boucle ouverte L = C·H ---------- */
+function plantFR(w, P) { return [P.K0 / Math.sqrt((1 + w * w * P.t1 * P.t1) * (1 + w * w * P.t2 * P.t2)), -(Math.atan(w * P.t1) + Math.atan(w * P.t2)) * R2D]; }
+function ctrlFR(w, c) {
+  if (!c || c.type === 'none') return [1, 0];
+  if (c.type === 'P') return [c.Kp, 0];
+  if (c.type === 'PI') { const x = w * c.Ti; return [c.Kp * Math.sqrt(1 + x * x) / x, Math.atan(x) * R2D - 90]; }
+  const x = c.a * c.T * w, y = c.T * w;
+  return [c.K * Math.sqrt((1 + x * x) / (1 + y * y)), (Math.atan(x) - Math.atan(y)) * R2D];
+}
+function loopFR(w, P, c) { const a = plantFR(w, P), b = ctrlFR(w, c); return [a[0] * b[0], a[1] + b[1]]; }
+const unitCtrl = type => type === 'P' ? { type: 'P', Kp: 1 } : type === 'PI' ? { type: 'PI', Kp: 1, Ti: 1 } : { type: 'AV', K: 1, a: 1, T: 1 };
+const dcGain = (P, c) => { if (c.type === 'PI') return 1; const k = c.type === 'P' ? c.Kp : c.K; const l0 = k * P.K0; return l0 / (1 + l0); };
+
+/* ---------- analyse : pulsation de coupure, marges, bande passante ---------- */
+function analyzeFreq(P, c) {
+  const G = GRID; let wc = null, M = null;
+  let prev = loopFR(G[0], P, c);
+  for (let i = 1; i < G.length; i++) {
+    const cur = loopFR(G[i], P, c);
+    if (prev[0] >= 1 && cur[0] < 1) {
+      let lo = G[i - 1], hi = G[i];
+      for (let k = 0; k < 50; k++) { const m = Math.sqrt(lo * hi); if (loopFR(m, P, c)[0] >= 1) lo = m; else hi = m; }
+      wc = Math.sqrt(lo * hi); M = 180 + loopFR(wc, P, c)[1]; break;
+    }
+    prev = cur;
+  }
+  let w180 = null, Mg = Infinity;
+  let pp = loopFR(G[0], P, c)[1];
+  for (let i = 1; i < G.length; i++) {
+    const ph = loopFR(G[i], P, c)[1];
+    if (pp > -180 && ph <= -180) {
+      let lo = G[i - 1], hi = G[i];
+      for (let k = 0; k < 50; k++) { const m = Math.sqrt(lo * hi); if (loopFR(m, P, c)[1] > -180) lo = m; else hi = m; }
+      w180 = Math.sqrt(lo * hi); Mg = -dB(loopFR(w180, P, c)[0]); break;
+    }
+    pp = ph;
+  }
+  const T = w => { const [m, ph] = loopFR(w, P, c); const re = m * Math.cos(ph * D2R), im = m * Math.sin(ph * D2R); return m / Math.hypot(1 + re, im); };
+  const T0 = T(G[0]); let bp = null;
+  for (let i = 1; i < G.length; i++) {
+    if (T(G[i]) < T0 / Math.SQRT2) {
+      let lo = G[i - 1], hi = G[i];
+      for (let k = 0; k < 40; k++) { const m = Math.sqrt(lo * hi); if (T(m) >= T0 / Math.SQRT2) lo = m; else hi = m; }
+      bp = Math.sqrt(lo * hi); break;
+    }
+  }
+  return { wc, M, w180, Mg, bp };
+}
+
+/* ---------- simulation temporelle (RK4) de la réponse à un échelon unitaire ---------- */
+function simulate(P, c, tmax, N) {
+  N = N || 500;
+  const minTau = Math.min(P.t1, P.t2, c && c.type === 'AV' ? c.T : 1e9);
+  const n = clamp(Math.ceil(tmax / (minTau / 6)), 3000, 150000), dt = tmax / n, every = Math.max(1, Math.floor(n / N));
+  const f = x => {
+    const y = P.K0 * x[1], e = 1 - y; let u, dxc = 0;
+    if (c.type === 'PI') { u = c.Kp * (e + x[2] / c.Ti); dxc = e; }
+    else if (c.type === 'AV') { u = c.K * (c.a * e - (c.a - 1) * x[2]); dxc = (e - x[2]) / c.T; }
+    else u = (c.type === 'P' ? c.Kp : 1) * e;
+    return [(u - x[0]) / P.t1, (x[0] - x[1]) / P.t2, dxc];
+  };
+  let x = [0, 0, 0]; const t = [0], y = [0]; let blown = false;
+  for (let i = 1; i <= n; i++) {
+    const k1 = f(x), k2 = f(x.map((v, j) => v + dt / 2 * k1[j])), k3 = f(x.map((v, j) => v + dt / 2 * k2[j])), k4 = f(x.map((v, j) => v + dt * k3[j]));
+    x = x.map((v, j) => v + dt / 6 * (k1[j] + 2 * k2[j] + 2 * k3[j] + k4[j]));
+    if (!isFinite(x[1]) || Math.abs(x[1]) > 1e6) { blown = true; break; }
+    if (i % every === 0) { t.push(i * dt); y.push(P.K0 * x[1]); }
+  }
+  return { t, y, blown };
+}
+function analyze(P, c, tmax) {
+  const F = analyzeFreq(P, c), wc = F.wc || 1;
+  const dc = dcGain(P, c);
+  tmax = tmax || clamp(Math.max(15 / wc, 4 * P.t1 / (1 + (c.type === 'PI' ? 1e3 : dc / (1 - dc + 1e-9))), c.type === 'PI' ? 3 * c.Ti : 0), 0.3, 120);
+  const S = simulate(P, c, tmax), yf = dc;
+  const unstable = (F.M !== null && F.M <= 0) || (isFinite(F.Mg) && F.Mg <= 0) || S.blown;
+  let D = 0, tr = Infinity;
+  if (!unstable) {
+    const ymax = Math.max(...S.y); D = Math.max(0, (ymax - yf) / yf * 100);
+    let idx = -1; for (let i = S.y.length - 1; i >= 0; i--) if (Math.abs(S.y[i] - yf) > 0.05 * yf) { idx = i; break; }
+    tr = idx < 0 ? 0 : (idx >= S.y.length - 1 ? Infinity : S.t[idx + 1]);
+  }
+  return Object.assign(F, { S, tmax, yf, D, tr, eStat: (1 - yf) * 100, unstable });
+}
+
+/* ---------- méthodes de réglage ---------- */
+/* gain pour obtenir la marge de phase Mt : on cherche ω tel que arg L = −180 + Mt (gain unité), puis gain = 1/|L(jω)| */
+function gainForMargin(P, c0, Mt) {
+  const G = GRID, target = -180 + Mt;
+  let prev = loopFR(G[0], P, c0)[1];
+  if (prev <= target) return null;
+  for (let i = 1; i < G.length; i++) {
+    const ph = loopFR(G[i], P, c0)[1];
+    if (prev > target && ph <= target) {
+      let lo = G[i - 1], hi = G[i];
+      for (let k = 0; k < 50; k++) { const m = Math.sqrt(lo * hi); if (loopFR(m, P, c0)[1] > target) lo = m; else hi = m; }
+      const w = Math.sqrt(lo * hi); return { w, gain: 1 / loopFR(w, P, c0)[0] };
+    }
+    prev = ph;
+  }
+  return null;
+}
+function designP(P, Mt) { const r = gainForMargin(P, unitCtrl('P'), Mt); return r ? { c: { type: 'P', Kp: r.gain }, w: r.w } : null; }
+function designPI(P, Mt) {
+  const M = clamp(Mt, 5, 85), Ti = P.t1, wc = 1 / (P.t2 * Math.tan(M * D2R));
+  const Kp = Ti * wc * Math.sqrt(1 + wc * wc * P.t2 * P.t2) / P.K0;
+  return { c: { type: 'PI', Kp, Ti }, w: wc };
+}
+function designAV(P, wc, Mt, margin) {
+  margin = margin === undefined ? 5 : margin;
+  const [mh, ph] = plantFR(wc, P), M0 = 180 + ph, need = Mt - M0 + margin;
+  let a = 1, warn = '';
+  if (need > 0) {
+    const phi = Math.min(need, 65);
+    if (need > 65) warn = 'Avance nécessaire de ' + fmt(need, 1) + ' ° : trop pour une seule cellule (limitée ici à 65 °). Diminuez ω₀dB visée ou utilisez deux cellules.';
+    a = (1 + Math.sin(phi * D2R)) / (1 - Math.sin(phi * D2R));
+  }
+  const T = 1 / (wc * Math.sqrt(a)), K = 1 / (Math.sqrt(a) * mh);
+  return { c: { type: 'AV', K, a, T }, mh, ph, M0, need, warn };
+}
+
+/* ---------- second ordre : liens amortissement, marge de phase, rapidité ---------- */
+const so = {
+  D: z => z >= 1 ? 0 : 100 * Math.exp(-Math.PI * z / Math.sqrt(1 - z * z)),
+  wc: z => Math.sqrt(Math.sqrt(1 + 4 * z ** 4) - 2 * z * z),
+  M: z => Math.atan(2 * z / Math.sqrt(Math.sqrt(1 + 4 * z ** 4) - 2 * z * z)) * R2D,
+  bp: z => { const q = 4 * z ** 4 - 4 * z * z + 2; return Math.sqrt(Math.max(0, 1 - 2 * z * z + Math.sqrt(q))); },
+  step: (z, t) => {
+    if (z < 0.9999) { const wd = Math.sqrt(1 - z * z); return 1 - Math.exp(-z * t) / wd * Math.sin(wd * t + Math.acos(z)); }
+    if (z < 1.0001) return 1 - (1 + t) * Math.exp(-t);
+    const s = Math.sqrt(z * z - 1), p1 = -z + s, p2 = -z - s;
+    return 1 + (p2 * Math.exp(p1 * t) - p1 * Math.exp(p2 * t)) / (p1 - p2);
+  },
+  tr5: z => { let last = 0; for (let t = 0; t < 200; t += 0.01) if (Math.abs(so.step(z, t) - 1) > 0.05) last = t; return last + 0.01; },
+  zOfD: D => { const l = Math.log(D / 100); return -l / Math.sqrt(Math.PI * Math.PI + l * l); }
+};
+/*LOGIC-END*/
+
+
+/* ---------- aides d'interface ---------- */
+function stats(list, id) { return h('div', { class: 'gstats', id: id || null }, list.map(k => h('div', { class: 'stat' }, h('span', null, k[0]), h('b', null, k[1])))); }
+function statsHtml(list, id) { return '<div class="gstats"' + (id ? ' id="' + id + '"' : '') + '>' + list.map(k => '<div class="stat"><span>' + k[0] + '</span><b>' + k[1] + '</b></div>').join('') + '</div>'; }
+function chipsRow(items, cur, cb, label) {
+  return h('div', { class: 'chips', role: 'group', 'aria-label': label || '' }, items.map(it => h('button', { type: 'button', class: 'chip' + (cur === it[0] ? ' on' : ''), 'aria-pressed': cur === it[0] ? 'true' : 'false', onclick: () => cb(it[0]) }, it[1])));
+}
+/* remplace le contenu d'un conteneur par une rangée de pastilles à jour */
+function setChips(sel, items, cur, cb, label) { const el = $(sel); if (!el) return; el.innerHTML = ''; el.append(chipsRow(items, cur, cb, label)); }
+function barRow(label, frac, val, cls) { return '<div class="bar"><span class="lab">' + label + '</span><span class="track"><span class="fill ' + (cls || '') + '" style="display:block;width:' + clamp(frac * 100, 1.5, 100).toFixed(1) + '%"></span></span><span class="val">' + val + '</span></div>'; }
+
+/* ---------- dessins : Bode et réponse indicielle ---------- */
+function bodeSvg(svg, o) {
+  const W = 640, H = 400, L = 52, R = 12, gT = 12, gB = 196, pT = 214, pB = 366;
+  const wmin = o.wmin || 0.01, wmax = o.wmax || 1000, gmin = o.gmin === undefined ? -60 : o.gmin, gmax = o.gmax === undefined ? 60 : o.gmax;
+  const lw0 = Math.log10(wmin), lw1 = Math.log10(wmax);
+  const X = w => L + (Math.log10(w) - lw0) / (lw1 - lw0) * (W - L - R);
+  const Yg = d => gB - (clamp(d, gmin, gmax) - gmin) / (gmax - gmin) * (gB - gT);
+  const Yp = d => pB - (clamp(d, -270, 0) + 270) / 270 * (pB - pT);
+  let s = '';
+  for (let e = Math.ceil(lw0); e <= Math.floor(lw1); e++) {
+    const w = Math.pow(10, e), x = X(w);
+    s += '<line x1="' + x + '" y1="' + gT + '" x2="' + x + '" y2="' + gB + '" stroke="#eceef2"/><line x1="' + x + '" y1="' + pT + '" x2="' + x + '" y2="' + pB + '" stroke="#eceef2"/>';
+    s += '<text x="' + x + '" y="' + (pB + 14) + '" text-anchor="middle" font-size="10.5" fill="#6a6a78">' + (e >= 0 ? fmtN(w) : fmt(w, -e)) + '</text>';
+  }
+  for (let g = Math.ceil(gmin / 20) * 20; g <= gmax; g += 20) { const y = Yg(g); s += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="' + (g === 0 ? '#55555f' : '#e8e8ee') + '"/><text x="' + (L - 5) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + g + '</text>'; }
+  [0, -90, -180, -270].forEach(p => { const y = Yp(p); s += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="' + (p === -180 ? '#d93a2b' : '#e8e8ee') + '"' + (p === -180 ? ' stroke-dasharray="5 4"' : '') + '/><text x="' + (L - 5) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + p + '</text>'; });
+  s += '<rect x="' + L + '" y="' + gT + '" width="' + (W - L - R) + '" height="' + (gB - gT) + '" fill="none" stroke="#55555f"/><rect x="' + L + '" y="' + pT + '" width="' + (W - L - R) + '" height="' + (pB - pT) + '" fill="none" stroke="#55555f"/>';
+  s += '<text transform="translate(12 ' + ((gT + gB) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11.5" fill="#1f1f28">gain (dB)</text><text transform="translate(12 ' + ((pT + pB) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11.5" fill="#1f1f28">phase (°)</text><text x="' + ((L + W - R) / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11.5" fill="#1f1f28">pulsation ω (rad/s)</text>';
+  const N = 240;
+  o.curves.forEach(cv => {
+    const gp = [], pp = [];
+    for (let i = 0; i <= N; i++) { const w = Math.pow(10, lw0 + (lw1 - lw0) * i / N), r = cv.fn(w); gp.push(X(w).toFixed(1) + ',' + Yg(r[0]).toFixed(1)); if (!cv.gainOnly) pp.push(X(w).toFixed(1) + ',' + Yp(r[1]).toFixed(1)); }
+    const st = ' fill="none" stroke="' + cv.color + '" stroke-width="' + (cv.width || 2) + '"' + (cv.dash ? ' stroke-dasharray="' + cv.dash + '"' : '');
+    s += '<polyline' + st + ' points="' + gp.join(' ') + '"/>';
+    if (!cv.gainOnly) s += '<polyline' + st + ' points="' + pp.join(' ') + '"/>';
+  });
+  const mk = o.marks;
+  if (mk && mk.wc && mk.wc >= wmin && mk.wc <= wmax) {
+    const x = X(mk.wc);
+    s += '<line x1="' + x + '" y1="' + gT + '" x2="' + x + '" y2="' + pB + '" stroke="#e08a00" stroke-dasharray="3 3"/><circle cx="' + x + '" cy="' + Yg(0) + '" r="4.5" fill="#e08a00" stroke="#fff"/>';
+    s += '<text x="' + (x + 5) + '" y="' + (gT + 11) + '" font-size="11" fill="#9a5b00">ω₀dB = ' + fmt(mk.wc, 2) + '</text>';
+    if (mk.phWc !== undefined) {
+      const y1 = Yp(mk.phWc), y2 = Yp(-180);
+      s += '<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '" stroke="#1e7a2e" stroke-width="4"/><circle cx="' + x + '" cy="' + y1 + '" r="4.5" fill="#1e7a2e" stroke="#fff"/>';
+      s += '<text x="' + (x + 7) + '" y="' + ((y1 + y2) / 2 + 4) + '" font-size="11.5" font-weight="600" fill="#1e7a2e" paint-order="stroke" stroke="#fff" stroke-width="3">Mφ = ' + fmt(mk.M, 1) + '°</text>';
+    }
+  }
+  if (mk && mk.w180 && isFinite(mk.Mg) && mk.w180 >= wmin && mk.w180 <= wmax) {
+    const x = X(mk.w180);
+    s += '<line x1="' + x + '" y1="' + Yg(0) + '" x2="' + x + '" y2="' + Yg(-mk.Mg) + '" stroke="#7b4fc2" stroke-width="4"/><circle cx="' + x + '" cy="' + Yp(-180) + '" r="4.5" fill="#7b4fc2" stroke="#fff"/>';
+    s += '<text x="' + (x + 7) + '" y="' + (Yg(-mk.Mg / 2) + 4) + '" font-size="11.5" font-weight="600" fill="#7b4fc2" paint-order="stroke" stroke="#fff" stroke-width="3">Mg = ' + fmt(mk.Mg, 1) + ' dB</text>';
+  }
+  o.curves.forEach((cv, i) => { const x = L + 10, y = gT + 12 + i * 15; s += '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 18) + '" y2="' + y + '" stroke="' + cv.color + '" stroke-width="2"' + (cv.dash ? ' stroke-dasharray="' + cv.dash + '"' : '') + '/><text x="' + (x + 24) + '" y="' + (y + 3.5) + '" font-size="11" fill="#1f1f28">' + cv.name + '</text>'; });
+  svg.innerHTML = s;
+}
+function stepSvg(svg, o) {
+  const W = 640, H = 250, L = 46, R = 12, T = 14, B = 36, tmax = o.tmax;
+  let ym = 1.3; o.curves.forEach(c => c.y.forEach(v => { if (isFinite(v) && v > ym) ym = v; }));
+  const ymax = Math.min(4, ym * 1.06), ymin = 0;
+  const X = t => L + t / tmax * (W - L - R), Y = y => H - B - (clamp(y, ymin, ymax) - ymin) / (ymax - ymin) * (H - B - T);
+  let s = '';
+  const dy = ymax > 2.5 ? 0.5 : 0.25;
+  for (let v = 0; v <= ymax + 1e-9; v += dy) s += '<line x1="' + L + '" y1="' + Y(v) + '" x2="' + (W - R) + '" y2="' + Y(v) + '" stroke="#e8e8ee"/><text x="' + (L - 5) + '" y="' + (Y(v) + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + fmt(v, 2) + '</text>';
+  for (let i = 0; i <= 5; i++) { const t = tmax * i / 5; s += '<line x1="' + X(t) + '" y1="' + T + '" x2="' + X(t) + '" y2="' + (H - B) + '" stroke="#f0f0f4"/><text x="' + X(t) + '" y="' + (H - B + 14) + '" text-anchor="middle" font-size="10.5" fill="#6a6a78">' + fmt(t, tmax < 5 ? 2 : 1) + '</text>'; }
+  s += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - B - T) + '" fill="none" stroke="#55555f"/>';
+  s += '<line x1="' + L + '" y1="' + Y(1) + '" x2="' + (W - R) + '" y2="' + Y(1) + '" stroke="#1e7a2e" stroke-dasharray="6 4"/><text x="' + (W - R - 4) + '" y="' + (Y(1) - 4) + '" text-anchor="end" font-size="10.5" fill="#1e7a2e">consigne = 1</text>';
+  o.curves.forEach(c => {
+    if (c.yf) s += '<line x1="' + L + '" y1="' + Y(c.yf * 1.05) + '" x2="' + (W - R) + '" y2="' + Y(c.yf * 1.05) + '" stroke="' + c.color + '" stroke-opacity=".35" stroke-dasharray="2 3"/><line x1="' + L + '" y1="' + Y(c.yf * 0.95) + '" x2="' + (W - R) + '" y2="' + Y(c.yf * 0.95) + '" stroke="' + c.color + '" stroke-opacity=".35" stroke-dasharray="2 3"/>';
+    s += '<polyline fill="none" stroke="' + c.color + '" stroke-width="2.2" points="' + c.t.map((t, i) => X(t).toFixed(1) + ',' + Y(c.y[i]).toFixed(1)).join(' ') + '"/>';
+  });
+  s += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 5) + '" text-anchor="middle" font-size="11.5" fill="#1f1f28">temps (s)</text>';
+  o.curves.forEach((c, i) => { const x = L + 12, y = T + 14 + i * 15; s += '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 18) + '" y2="' + y + '" stroke="' + c.color + '" stroke-width="2.2"/><text x="' + (x + 24) + '" y="' + (y + 3.5) + '" font-size="11" fill="#1f1f28">' + c.name + '</text>'; });
+  svg.innerHTML = s;
+}
+
+/* ---------- éléments d'interface communs ---------- */
+function slider(host, o) {
+  const wrap = h('div', { class: 'bar' }), lab = h('span', { class: 'lab', style: 'width:170px' });
+  const rng = h('input', { type: 'range', min: o.min, max: o.max, step: o.step, 'aria-label': o.name, style: 'flex:1;width:auto' });
+  rng.value = o.get();
+  const upd = () => { lab.innerHTML = o.name + ' = <b>' + fmt(o.get(), o.dec === undefined ? 2 : o.dec) + '</b>' + (o.unit ? ' ' + o.unit : ''); };
+  rng.addEventListener('input', () => { o.set(parseFloat(rng.value)); upd(); if (o.onchange) o.onchange(); });
+  wrap.append(lab, rng); host.append(wrap); upd();
+  return { sync: () => { rng.value = o.get(); upd(); } };
+}
+function plantEditor(host, onchange) {
+  host.innerHTML = '';
+  host.append(h('div', { class: 'verdict goal', html: 'Système à corriger : <b>H(p) = K₀ / ((1 + τ₁ p)(1 + τ₂ p))</b> en boucle fermée à retour unitaire, avec C(p) le correcteur.' }));
+  const sl = [
+    slider(host, { name: 'K₀ (gain statique)', min: 0.2, max: 10, step: 0.1, dec: 1, get: () => PLANT.K0, set: v => { PLANT.K0 = v; }, onchange }),
+    slider(host, { name: 'τ₁ (pôle dominant)', min: 0.2, max: 5, step: 0.1, dec: 1, unit: 's', get: () => PLANT.t1, set: v => { PLANT.t1 = v; }, onchange }),
+    slider(host, { name: 'τ₂ (pôle rapide)', min: 0.01, max: 1, step: 0.01, dec: 2, unit: 's', get: () => PLANT.t2, set: v => { PLANT.t2 = v; }, onchange })];
+  host.append(h('div', { class: 'files', style: 'margin:4px 0 8px' }, h('button', { class: 'btn sm', type: 'button', onclick: () => { Object.assign(PLANT, PLANT0); sl.forEach(x => x.sync()); onchange(); } }, 'Valeurs par défaut (K₀ = 1, τ₁ = 1 s, τ₂ = 0,1 s)')));
+}
+function analysisHtml(px) {
+  return '<h3>Diagramme de Bode de la boucle ouverte</h3><svg id="' + px + '-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg>' +
+    '<h3>Réponse indicielle en boucle fermée</h3><svg id="' + px + '-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg>' +
+    '<h3>Résultats</h3>' + statsHtml([['Pulsation de coupure ω₀dB', ''], ['Marge de phase Mφ', ''], ['Marge de gain Mg', ''], ['Bande passante ωBP (−3 dB)', ''], ['Dépassement D', ''], ['Temps de réponse à 5 %', ''], ['Erreur statique εs', '']], px + '-stats') +
+    '<p class="verdict" id="' + px + '-msg" aria-live="polite"></p>';
+}
+function verdictFor(A) {
+  if (A.unstable) return ['no', '<b>Boucle fermée instable</b> : une marge est négative. Diminuez le gain ou ajoutez de la phase.'];
+  if (A.M === null) return ['warn', 'Le gain de boucle reste sous 0 dB : il n\'y a pas de pulsation de coupure, la boucle est très lente. Augmentez le gain.'];
+  let cls = 'yes', t;
+  if (A.M < 30) { cls = 'warn'; t = '<b>Marge de phase très faible</b> (' + fmt(A.M, 1) + ' °) : réponse très oscillante.'; }
+  else if (A.M < 45) { cls = 'warn'; t = '<b>Marge de phase faible</b> (' + fmt(A.M, 1) + ' °) : dépassement important.'; }
+  else if (A.M <= 75) t = '<b>Bon amortissement</b> : marge de phase de ' + fmt(A.M, 1) + ' °.';
+  else { cls = 'warn'; t = '<b>Marge de phase élevée</b> (' + fmt(A.M, 1) + ' °) : très amortie, donc sans doute inutilement lente.'; }
+  t += Math.abs(A.eStat) > 0.5 ? ' Erreur statique de ' + fmt(A.eStat, 1) + ' % (non nulle).' : ' Erreur statique nulle.';
+  return [cls, t];
+}
+function renderAnalysis(px, c, opt) {
+  const P = PLANT, A = analyze(P, c, opt && opt.tmax);
+  const curves = [{ name: 'H (système seul)', color: '#8a8f98', dash: '6 4', fn: w => { const r = plantFR(w, P); return [dB(r[0]), r[1]]; } }];
+  if (c.type === 'AV') curves.push({ name: 'C (correcteur)', color: '#e08a00', dash: '2 3', fn: w => { const r = ctrlFR(w, c); return [dB(r[0]), r[1]]; } });
+  curves.push({ name: 'C·H (boucle ouverte)', color: '#2e6da4', width: 2.4, fn: w => { const r = loopFR(w, P, c); return [dB(r[0]), r[1]]; } });
+  bodeSvg($('#' + px + '-bode'), { curves, marks: A.wc ? { wc: A.wc, phWc: loopFR(A.wc, P, c)[1], M: A.M, w180: A.w180, Mg: A.Mg } : { w180: A.w180, Mg: A.Mg } });
+  stepSvg($('#' + px + '-step'), { tmax: A.tmax, curves: [{ name: 'sortie y(t)', color: '#2e6da4', t: A.S.t, y: A.S.y, yf: A.unstable ? null : A.yf }] });
+  const b = $('#' + px + '-stats').querySelectorAll('.stat b');
+  b[0].textContent = A.wc ? fmt(A.wc, 2) + ' rad/s' : '—';
+  b[1].textContent = A.M !== null ? fmt(A.M, 1) + ' °' : '—';
+  b[2].textContent = isFinite(A.Mg) ? fmt(A.Mg, 1) + ' dB' : '∞';
+  b[3].textContent = A.bp ? fmt(A.bp, 2) + ' rad/s' : '—';
+  b[4].textContent = A.unstable ? '—' : fmt(A.D, 1) + ' %';
+  b[5].textContent = A.unstable ? '—' : (isFinite(A.tr) ? fmt(A.tr, 3) + ' s' : '> ' + fmt(A.tmax, 1) + ' s');
+  b[6].textContent = A.unstable ? '—' : fmt(A.eStat, 2) + ' %';
+  const v = verdictFor(A), m = $('#' + px + '-msg'); m.className = 'verdict ' + v[0]; m.innerHTML = v[1];
+  return A;
+}
+
+/* ================= Atelier 1 : Démarche et cahier des charges ================= */
+const Q1 = { z: 0.6, D: 20, tr: 0.5 };
+function mountQ1(root) {
+  root.innerHTML = '<h2>Proposer une démarche de réglage</h2><p>Régler un correcteur, c\'est choisir ses paramètres pour que le système asservi respecte un <b>cahier des charges</b> : stabilité et amortissement, rapidité, précision. La difficulté est que le cahier des charges est donné en <b>temporel</b> (dépassement, temps de réponse, erreur) alors que le correcteur se règle en <b>fréquentiel</b> (marges, pulsation de coupure). Cet atelier construit le pont entre les deux.</p>' +
+    '<div class="flow" aria-label="Démarche en six étapes"><span class="bx">1. Cahier des charges</span><span class="ar">→</span><span class="bx">2. Critères fréquentiels</span><span class="ar">→</span><span class="bx">3. Choix du correcteur</span><span class="ar">→</span><span class="bx">4. Calcul des paramètres</span><span class="ar">→</span><span class="bx">5. Vérification</span><span class="ar">→</span><span class="bx">6. Ajustement</span></div>' +
+    '<div class="analogy"><b>Image :</b> régler un correcteur ressemble à régler la suspension d\'une voiture. Trop raide (gain élevé, marge faible) : elle rebondit. Trop souple : elle est lente à revenir. On cherche l\'amortissement qui donne la réponse la plus rapide sans rebond excessif.</div>' +
+    '<h3>1. Du temporel au fréquentiel</h3><p>Pour un système du second ordre en boucle fermée (pulsation propre ωₙ, amortissement ζ), tout se calcule. Déplacez le curseur : un petit ζ donne un grand dépassement <b>et</b> une petite marge de phase.</p>' +
+    '<div id="q1-z"></div>' + statsHtml([['Amortissement ζ', ''], ['Dépassement D', ''], ['Marge de phase Mφ', ''], ['ω₀dB / ωₙ', ''], ['ωBP / ωₙ', ''], ['ωₙ · tr5 %', '']], 'q1-stats') +
+    '<svg id="q1-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg><svg id="q1-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg><p class="verdict" id="q1-msg"></p>' +
+    '<h3>Correspondances à connaître</h3><div id="q1-tab"></div>' +
+    '<h3>2. De votre cahier des charges aux critères</h3><p>Entrez les exigences temporelles : l\'atelier en déduit la marge de phase minimale et les pulsations à viser (second ordre dominant).</p>' +
+    '<div class="opts"><label class="fld"><span>Dépassement maximal D (%)</span><input type="text" id="q1-D" class="mono" autocomplete="off"></label><label class="fld"><span>Temps de réponse à 5 % (s)</span><input type="text" id="q1-tr" class="mono" autocomplete="off"></label></div><div class="verdict goal" id="q1-spec" aria-live="polite"></div>' +
+    '<h3>3. Quel correcteur pour quel besoin ?</h3><div class="dwrap"><table class="dt"><thead><tr><th>Défaut constaté</th><th>Cause en fréquentiel</th><th>Correcteur adapté</th></tr></thead><tbody>' +
+    '<tr><td>Erreur statique non nulle</td><td>Pas d\'intégrateur dans la boucle ouverte</td><td>PI (action intégrale)</td></tr>' +
+    '<tr><td>Trop oscillant</td><td>Marge de phase insuffisante en ω₀dB</td><td>P (baisser le gain) ou avance de phase</td></tr>' +
+    '<tr><td>Trop lent</td><td>ω₀dB trop basse</td><td>Augmenter le gain, avec avance de phase pour garder la marge</td></tr>' +
+    '<tr><td>Pôle dominant gênant</td><td>Phase perdue dès les basses pulsations</td><td>PI avec compensation de pôle (Tᵢ = τ₁)</td></tr></tbody></table></div>';
+  const S = Q1;
+  const z = slider($('#q1-z'), { name: 'Amortissement ζ', min: 0.1, max: 1.5, step: 0.01, get: () => S.z, set: v => { S.z = v; }, onchange: () => upd() });
+  const upd = () => {
+    const zz = S.z, wc = so.wc(zz), M = so.M(zz), tn = so.tr5(zz), D = so.D(zz);
+    const b = $('#q1-stats').querySelectorAll('.stat b');
+    b[0].textContent = fmt(zz, 2); b[1].textContent = fmt(D, 1) + ' %'; b[2].textContent = fmt(M, 1) + ' °'; b[3].textContent = fmt(wc, 3); b[4].textContent = fmt(so.bp(zz), 3); b[5].textContent = fmt(tn, 2);
+    const ts = [], ys = []; const tmax = Math.max(8, Math.min(40, tn * 1.4));
+    for (let i = 0; i <= 400; i++) { const t = tmax * i / 400; ts.push(t); ys.push(so.step(zz, t)); }
+    stepSvg($('#q1-step'), { tmax, curves: [{ name: 'y(t) pour ωₙ = 1 rad/s', color: '#2e6da4', t: ts, y: ys, yf: 1 }] });
+    bodeSvg($('#q1-bode'), { wmin: 0.01, wmax: 100, curves: [{ name: 'L(p) = ωₙ² / (p (p + 2ζωₙ))', color: '#2e6da4', fn: w => [dB(1 / (w * Math.sqrt(w * w + 4 * zz * zz))), -90 - Math.atan(w / (2 * zz)) * R2D] }], marks: { wc, phWc: -90 - Math.atan(wc / (2 * zz)) * R2D, M } });
+    const m = $('#q1-msg'); m.className = 'verdict ' + (zz < 0.4 ? 'warn' : 'yes');
+    m.innerHTML = 'Pour ζ = ' + fmt(zz, 2) + ' : Mφ = <b>' + fmt(M, 1) + ' °</b> et D = <b>' + fmt(D, 1) + ' %</b>. Règle pratique : <b>Mφ ≈ 100 · ζ</b> (en degrés) tant que ζ ≤ 0,7.' + (zz >= 0.65 && zz <= 0.75 ? ' C\'est la zone où la réponse est la plus rapide sans dépassement excessif (ωₙ·tr5 % ≈ 3).' : '');
+  };
+  // tableau Mφ -> ζ
+  const zOfM = M => { let lo = 0.05, hi = 1.5; for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (so.M(m) < M) lo = m; else hi = m; } return (lo + hi) / 2; };
+  $('#q1-tab').innerHTML = '<div class="dwrap"><table class="dt"><thead><tr><th>Marge de phase</th><th>Amortissement ζ</th><th>Dépassement D</th><th>ωₙ · tr5 %</th></tr></thead><tbody>' + [30, 45, 60, 70].map(M => { const zz = zOfM(M); return '<tr><td>' + M + ' °</td><td class="m">' + fmt(zz, 2) + '</td><td class="m">' + fmt(so.D(zz), 1) + ' %</td><td class="m">' + fmt(so.tr5(zz), 1) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  const spec = () => {
+    const D = parseFloat($('#q1-D').value.replace(',', '.')), tr = parseFloat($('#q1-tr').value.replace(',', '.')), el = $('#q1-spec');
+    if (!(D > 0.1 && D < 100) || !(tr > 0)) { el.innerHTML = 'Saisissez D entre 0,1 et 100 % et un temps de réponse positif.'; return; }
+    S.D = D; S.tr = tr;
+    const zz = so.zOfD(D), M = so.M(zz), tn = so.tr5(zz), wn = tn / tr;
+    el.innerHTML = '<b>Amortissement :</b> D ≤ ' + fmt(D, 1) + ' % impose ζ ≥ <b>' + fmt(zz, 2) + '</b>, soit une marge de phase <b>Mφ ≥ ' + fmt(M, 0) + ' °</b>.<br><b>Rapidité :</b> avec ce ζ, ωₙ·tr5 % = ' + fmt(tn, 2) + ', donc ωₙ ≥ ' + fmt(wn, 2) + ' rad/s. On vise une <b>pulsation de coupure ω₀dB ≈ ' + fmt(wn * so.wc(zz), 2) + ' rad/s</b> (bande passante ωBP ≈ ' + fmt(wn * so.bp(zz), 2) + ' rad/s).<br><b>Précision :</b> une erreur statique nulle impose au moins un intégrateur dans la boucle ouverte (classe 1).';
+  };
+  $('#q1-D').value = fmt(S.D, 1).replace(',', '.'); $('#q1-tr').value = String(S.tr);
+  $('#q1-D').addEventListener('input', spec); $('#q1-tr').addEventListener('input', spec);
+  upd(); spec();
+}
+WORKSHOPS.push({ id: 'q1', title: 'Démarche', hint: 'Faites le lien entre cahier des charges temporel (dépassement, temps de réponse) et critères fréquentiels (marge de phase, pulsation de coupure).',
+  mount: mountQ1, reset: () => { Object.assign(Q1, { z: 0.6, D: 20, tr: 0.5 }); } });
+
+/* ================= Atelier 2 : Correcteur proportionnel ================= */
+const Q2 = { Kp: 5, Mt: 60 };
+function mountQ2(root) {
+  root.innerHTML = '<h2>Correcteur proportionnel</h2><p>Le correcteur P multiplie l\'erreur par un gain : <b>C(p) = Kp</b>. Il ne change pas la phase, il ne fait que <b>monter ou descendre la courbe de gain</b>. Régler Kp revient donc à choisir la pulsation où la courbe coupe 0 dB, c\'est-à-dire la marge de phase obtenue.</p>' +
+    '<div id="q2-plant"></div><h3>Réglage</h3><div id="q2-sl"></div><div id="q2-sl2"></div><div class="files" style="margin:6px 0"><button class="btn pri" id="q2-apply" type="button">Kp pour la marge de phase visée</button></div><p class="verdict goal" id="q2-calc" aria-live="polite"></p>' + analysisHtml('q2') +
+    '<div class="analogy"><b>À retenir :</b> avec un système de classe 0, le correcteur P laisse une erreur statique <b>εs = 1 / (1 + Kp·K₀)</b>. Pour la réduire il faut augmenter Kp, mais cela fait monter ω₀dB et diminuer la marge de phase : P impose un compromis précision / amortissement.</div>';
+  const S = Q2;
+  const s1 = slider($('#q2-sl'), { name: 'Kp', min: 0.1, max: 200, step: 0.1, dec: 1, get: () => S.Kp, set: v => { S.Kp = v; }, onchange: () => upd() });
+  const s2 = slider($('#q2-sl2'), { name: 'Marge de phase visée Mφ', min: 20, max: 85, step: 1, dec: 0, unit: '°', get: () => S.Mt, set: v => { S.Mt = v; }, onchange: () => upd() });
+  plantEditor($('#q2-plant'), () => upd());
+  const calc = () => {
+    const r = designP(PLANT, S.Mt), el = $('#q2-calc');
+    if (!r) { el.innerHTML = 'Aucune pulsation ne donne cette marge de phase.'; return null; }
+    el.innerHTML = '<b>Démarche :</b> (1) on cherche ω tel que arg H(jω) = −(180 − Mφ) = <b>' + fmt(-(180 - S.Mt), 0) + ' °</b> : ω = <b>' + fmt(r.w, 2) + ' rad/s</b>. (2) À cette pulsation la boucle doit valoir 0 dB : Kp = 1 / |H(jω)| = <b>' + fmt(r.c.Kp, 2) + '</b>. (3) Conséquence : εs = 1 / (1 + Kp K₀) = ' + fmt(100 / (1 + r.c.Kp * PLANT.K0), 1) + ' %.';
+    return r;
+  };
+  const upd = () => { calc(); renderAnalysis('q2', { type: 'P', Kp: S.Kp }); };
+  $('#q2-apply').addEventListener('click', () => { const r = calc(); if (r) { S.Kp = r.c.Kp; s1.sync(); upd(); } });
+  upd();
+}
+WORKSHOPS.push({ id: 'q2', title: 'Correcteur P', hint: 'Faites varier Kp : la courbe de gain monte ou descend, ω₀dB et la marge de phase changent, mais la phase ne bouge pas.',
+  mount: mountQ2, reset: () => { Object.assign(Q2, { Kp: 5, Mt: 60 }); Object.assign(PLANT, PLANT0); } });
+
+/* ================= Atelier 3 : Correcteur PI ================= */
+const Q3 = { Kp: 6.7, Ti: 1, Mt: 60 };
+function mountQ3(root) {
+  root.innerHTML = '<h2>Correcteur proportionnel intégral</h2><p>Le correcteur PI s\'écrit <b>C(p) = Kp (1 + Tᵢ p) / (Tᵢ p)</b>. Il ajoute un intégrateur : l\'erreur statique devient nulle. En contrepartie il retire de la phase aux basses pulsations (−90° à très basse pulsation). Astuce classique : choisir <b>Tᵢ = τ₁</b> pour <b>compenser le pôle dominant</b> du système.</p>' +
+    '<div id="q3-plant"></div><h3>Réglage</h3><div id="q3-sl"></div><div id="q3-sl2"></div><div id="q3-sl3"></div><div class="files" style="margin:6px 0"><button class="btn" id="q3-ti" type="button">Tᵢ = τ₁ (compenser le pôle)</button><button class="btn pri" id="q3-apply" type="button">Kp pour la marge de phase visée</button></div><p class="verdict goal" id="q3-calc" aria-live="polite"></p>' + analysisHtml('q3') +
+    '<div class="analogy"><b>Pourquoi ça marche :</b> avec Tᵢ = τ₁, le numérateur (1 + Tᵢ p) du correcteur annule le facteur (1 + τ₁ p) du système. Il reste L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)) : un intégrateur et un seul pôle, soit un système du second ordre en boucle fermée, facile à régler par la marge de phase.</div>';
+  const S = Q3;
+  const sl = [slider($('#q3-sl'), { name: 'Kp', min: 0.1, max: 200, step: 0.1, dec: 1, get: () => S.Kp, set: v => { S.Kp = v; }, onchange: () => upd() }),
+    slider($('#q3-sl2'), { name: 'Tᵢ', min: 0.05, max: 10, step: 0.05, dec: 2, unit: 's', get: () => S.Ti, set: v => { S.Ti = v; }, onchange: () => upd() }),
+    slider($('#q3-sl3'), { name: 'Marge de phase visée Mφ', min: 20, max: 85, step: 1, dec: 0, unit: '°', get: () => S.Mt, set: v => { S.Mt = v; }, onchange: () => upd() })];
+  plantEditor($('#q3-plant'), () => upd());
+  const calc = A => {
+    const el = $('#q3-calc'), exact = Math.abs(S.Ti - PLANT.t1) / PLANT.t1 < 0.02;
+    let t;
+    if (exact) {
+      const d = designPI(PLANT, S.Mt);
+      t = '<b>Pôle compensé</b> (Tᵢ ≈ τ₁ = ' + fmt(PLANT.t1, 2) + ' s). La boucle ouverte devient Kp·K₀ / (Tᵢ p (1 + τ₂ p)), donc Mφ = 90° − arctan(ω₀dB·τ₂). Pour Mφ = ' + fmt(S.Mt, 0) + ' ° : ω₀dB = 1 / (τ₂ tan Mφ) = <b>' + fmt(d.w, 2) + ' rad/s</b> et Kp = Tᵢ ω₀dB √(1 + (ω₀dB τ₂)²) / K₀ = <b>' + fmt(d.c.Kp, 2) + '</b>.';
+    } else if (S.Ti > PLANT.t1) t = 'Tᵢ > τ₁ : le pôle dominant n\'est pas compensé, il reste une <b>queue lente</b> dans la réponse (constante de temps de l\'ordre de Tᵢ).';
+    else t = 'Tᵢ < τ₁ : le zéro du correcteur est plus rapide que le pôle à compenser. La phase est moins dégradée en basse pulsation, mais le gain augmente et le dépassement croît.';
+    if (A && A.wc) t += '<br>Contrôle : Tᵢ·ω₀dB = ' + fmt(S.Ti * A.wc, 1) + ' (la phase perdue par l\'intégrateur à ω₀dB vaut arctan(1 / (Tᵢ ω₀dB)) = ' + fmt(Math.atan(1 / (S.Ti * A.wc)) * R2D, 1) + ' °).';
+    el.innerHTML = t;
+  };
+  const upd = () => { const A = renderAnalysis('q3', { type: 'PI', Kp: S.Kp, Ti: S.Ti }); calc(A); };
+  $('#q3-ti').addEventListener('click', () => { S.Ti = PLANT.t1; sl.forEach(x => x.sync()); upd(); });
+  $('#q3-apply').addEventListener('click', () => {
+    const r = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti: S.Ti }, S.Mt);
+    if (!r) { $('#q3-calc').innerHTML = 'Aucune pulsation ne donne cette marge avec ce Tᵢ : augmentez Tᵢ ou visez une marge plus faible.'; return; }
+    S.Kp = r.gain; sl.forEach(x => x.sync()); upd();
+  });
+  upd();
+}
+WORKSHOPS.push({ id: 'q3', title: 'Correcteur PI', hint: 'Compensez le pôle dominant (Tᵢ = τ₁), réglez Kp par la marge de phase, et observez l\'erreur statique qui disparaît.',
+  mount: mountQ3, reset: () => { Object.assign(Q3, { Kp: 6.7, Ti: 1, Mt: 60 }); Object.assign(PLANT, PLANT0); } });
+
+/* ================= Atelier 4 : Avance de phase ================= */
+const Q4 = { K: 16, a: 2.7, T: 0.04, wt: 15, Mt: 60, ok: false };
+function mountQ4(root) {
+  root.innerHTML = '<h2>Correcteur à avance de phase</h2><p>Le correcteur à avance de phase s\'écrit <b>C(p) = K (1 + a T p) / (1 + T p)</b> avec a &gt; 1. Il ajoute de la <b>phase positive</b> autour de la pulsation ωₘ = 1 / (T√a), sans intégrateur. Il permet de <b>monter ω₀dB</b> (réponse plus rapide) tout en gardant une bonne marge de phase.</p>' +
+    '<div id="q4-plant"></div><h3>Démarche pas à pas</h3><div class="opts"></div><div id="q4-t"></div><p class="verdict goal" id="q4-calc" aria-live="polite"></p><div class="files" style="margin:6px 0"><button class="btn pri" id="q4-apply" type="button">Appliquer ce réglage</button></div>' +
+    '<h3>Réglage manuel</h3><div id="q4-sl"></div><p class="verdict" id="q4-facts"></p>' + analysisHtml('q4') +
+    '<div class="analogy"><b>Limites :</b> le gain en hautes pulsations vaut K·a : une grande avance amplifie les bruits. On limite en pratique a à 10 environ (avance de 55° au plus par cellule). Le correcteur à avance de phase ne corrige pas l\'erreur statique : pour la supprimer, on lui associe un intégrateur.</div>';
+  const S = Q4;
+  const sl = [];
+  const calc = () => designAV(PLANT, S.wt, S.Mt);
+  const fill = () => {
+    const d = calc(), el = $('#q4-calc');
+    let t = '<b>1.</b> À ω₀dB visée = ' + fmt(S.wt, 1) + ' rad/s : |H| = ' + fmt(d.mh, 4) + ' et arg H = ' + fmt(d.ph, 1) + ' °, donc sans correcteur Mφ = 180° + arg H = <b>' + fmt(d.M0, 1) + ' °</b>.<br><b>2.</b> Avance nécessaire : φ = Mφ visée − Mφ actuelle + 5° de sécurité = <b>' + fmt(d.need, 1) + ' °</b>.<br>';
+    if (d.need <= 0) t += '<b>3.</b> Aucune avance n\'est nécessaire (a = 1) : il suffit d\'ajuster le gain K = 1 / |H| = ' + fmt(d.c.K, 2) + '.';
+    else t += '<b>3.</b> a = (1 + sin φ) / (1 − sin φ) = <b>' + fmt(d.c.a, 2) + '</b>.<br><b>4.</b> On place le maximum de phase en ω₀dB : T = 1 / (ω₀dB √a) = <b>' + fmt(d.c.T, 4) + ' s</b>.<br><b>5.</b> En ωₘ le correcteur apporte un gain K√a : pour que L vaille 0 dB, K = 1 / (√a |H|) = <b>' + fmt(d.c.K, 2) + '</b>.';
+    if (d.warn) t += '<br><b>Attention :</b> ' + d.warn;
+    el.innerHTML = t; return d;
+  };
+  const upd = () => {
+    fill();
+    const A = renderAnalysis('q4', { type: 'AV', K: S.K, a: S.a, T: S.T });
+    const phim = Math.asin((S.a - 1) / (S.a + 1)) * R2D, wm = 1 / (S.T * Math.sqrt(S.a));
+    const f = $('#q4-facts'); f.className = 'verdict';
+    f.innerHTML = 'φmax = arcsin((a − 1) / (a + 1)) = <b>' + fmt(phim, 1) + ' °</b> à ωₘ = 1 / (T√a) = <b>' + fmt(wm, 2) + ' rad/s</b>, où le gain du correcteur vaut K√a = <b>' + fmt(dB(S.K * Math.sqrt(S.a)), 1) + ' dB</b>.' + (A.wc ? ' Écart entre ωₘ et ω₀dB : ' + fmt(Math.abs(Math.log10(wm / A.wc)) * 100 / 1, 0) + ' % d\'une décade.' : '');
+  };
+  const apply = () => { const d = calc(); Object.assign(S, { K: d.c.K, a: d.c.a, T: d.c.T }); sl.forEach(x => x.sync()); upd(); };
+  plantEditor($('#q4-plant'), () => { upd(); });
+  const host = $('#q4-t');
+  slider(host, { name: 'ω₀dB visée', min: 1, max: 100, step: 1, dec: 0, unit: 'rad/s', get: () => S.wt, set: v => { S.wt = v; }, onchange: () => fill() });
+  slider(host, { name: 'Marge de phase visée Mφ', min: 20, max: 85, step: 1, dec: 0, unit: '°', get: () => S.Mt, set: v => { S.Mt = v; }, onchange: () => fill() });
+  const mh = $('#q4-sl');
+  sl.push(slider(mh, { name: 'K', min: 0.5, max: 300, step: 0.5, dec: 1, get: () => S.K, set: v => { S.K = v; }, onchange: () => upd() }));
+  sl.push(slider(mh, { name: 'a', min: 1, max: 20, step: 0.1, dec: 1, get: () => S.a, set: v => { S.a = v; }, onchange: () => upd() }));
+  sl.push(slider(mh, { name: 'T', min: 0.002, max: 1, step: 0.002, dec: 3, unit: 's', get: () => S.T, set: v => { S.T = v; }, onchange: () => upd() }));
+  $('#q4-apply').addEventListener('click', apply);
+  if (!S.ok) { const d = calc(); Object.assign(S, { K: d.c.K, a: d.c.a, T: d.c.T, ok: true }); sl.forEach(x => x.sync()); }
+  upd();
+}
+WORKSHOPS.push({ id: 'q4', title: 'Avance de phase', hint: 'Appliquez la démarche (ω₀dB visée, marge visée, a, T, K), puis comparez avec un réglage manuel de K, a et T.',
+  mount: mountQ4, reset: () => { Object.assign(Q4, { wt: 15, Mt: 60, ok: false }); Object.assign(PLANT, PLANT0); } });
+
+/* ================= Atelier 5 : Mise en œuvre et comparaison ================= */
+const Q5 = { Mt: 60, wt: 15, D: 20, tr: 0.5, es: 5 };
+function mountQ5(root) {
+  root.innerHTML = '<h2>Mettre en œuvre la démarche : P, PI ou avance de phase ?</h2><p>Le même système, le même cahier des charges, trois correcteurs réglés avec la démarche des ateliers précédents. À vous de choisir celui qui convient, ou de justifier pourquoi aucun ne suffit seul.</p>' +
+    '<div id="q5-plant"></div><h3>Cahier des charges</h3><div class="opts"><label class="fld"><span>Dépassement max D (%)</span><input type="text" id="q5-D" class="mono"></label><label class="fld"><span>Temps de réponse à 5 % max (s)</span><input type="text" id="q5-tr" class="mono"></label><label class="fld"><span>Erreur statique max (%)</span><input type="text" id="q5-es" class="mono"></label></div>' +
+    '<h3>Choix des critères de réglage</h3><div id="q5-sl"></div><p class="small">La marge de phase visée règle P, PI et avance de phase. La pulsation ω₀dB visée ne concerne que l\'avance de phase (pour P et PI, ω₀dB est une conséquence du réglage).</p>' +
+    '<h3>Résultats</h3><div id="q5-tab"></div><p class="verdict" id="q5-msg" aria-live="polite"></p>' +
+    '<h3>Boucles ouvertes</h3><svg id="q5-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg><h3>Réponses indicielles</h3><svg id="q5-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg>' +
+    '<div class="dwrap"><table class="dt"><thead><tr><th>Correcteur</th><th>Ce qu\'il apporte</th><th>Ce qu\'il coûte</th></tr></thead><tbody><tr><td>P</td><td>Simplicité, réglage direct par la marge</td><td>Erreur statique non nulle, compromis précision / amortissement</td></tr><tr><td>PI (Tᵢ = τ₁)</td><td>Erreur statique nulle, second ordre simple</td><td>Rapidité limitée par la marge visée</td></tr><tr><td>Avance de phase</td><td>Réponse plus rapide à marge égale</td><td>Pas d\'intégrateur, amplification des bruits</td></tr></tbody></table></div>';
+  const S = Q5;
+  const sl = [];
+  const rd = id => parseFloat($(id).value.replace(',', '.'));
+  const upd = () => {
+    const D = rd('#q5-D'), tr = rd('#q5-tr'), es = rd('#q5-es');
+    if (isFinite(D)) S.D = D; if (isFinite(tr)) S.tr = tr; if (isFinite(es)) S.es = es;
+    const P = PLANT;
+    const dP = designP(P, S.Mt), dPI = designPI(P, S.Mt), dAV = designAV(P, S.wt, S.Mt);
+    const ctrls = [{ name: 'P', color: '#2e6da4', c: dP ? dP.c : { type: 'P', Kp: 1 }, txt: dP ? 'Kp = ' + fmt(dP.c.Kp, 2) : 'impossible' },
+      { name: 'PI', color: '#1e7a2e', c: dPI.c, txt: 'Kp = ' + fmt(dPI.c.Kp, 2) + ', Tᵢ = ' + fmt(dPI.c.Ti, 2) + ' s' },
+      { name: 'Avance de phase', color: '#e08a00', c: dAV.c, txt: 'K = ' + fmt(dAV.c.K, 2) + ', a = ' + fmt(dAV.c.a, 2) + ', T = ' + fmt(dAV.c.T, 4) + ' s' }];
+    const As = ctrls.map(x => analyze(P, x.c)), tmax = Math.max(...As.map(a => a.tmax));
+    const A2 = ctrls.map((x, i) => analyze(P, x.c, tmax));
+    const ok = (v, lim) => v <= lim + 1e-9;
+    let rows = '', good = [];
+    ctrls.forEach((x, i) => {
+      const A = A2[i], okD = !A.unstable && ok(A.D, S.D), okT = !A.unstable && ok(A.tr, S.tr), okE = !A.unstable && ok(Math.abs(A.eStat), S.es);
+      const cell = (txt, k) => '<td class="m" style="' + (k ? 'background:rgba(30,122,46,.13)' : 'background:rgba(192,40,31,.12)') + '">' + txt + (k ? ' ✓' : ' ✗') + '</td>';
+      rows += '<tr><td><b style="color:' + x.color + '">' + x.name + '</b><br><span class="small">' + x.txt + '</span></td><td class="m">' + (A.wc ? fmt(A.wc, 2) : '—') + '</td><td class="m">' + (A.M !== null ? fmt(A.M, 1) + ' °' : '—') + '</td>' + cell(fmt(A.D, 1) + ' %', okD) + cell(isFinite(A.tr) ? fmt(A.tr, 3) + ' s' : '> ' + fmt(tmax, 1) + ' s', okT) + cell(fmt(A.eStat, 2) + ' %', okE) + '</tr>';
+      if (okD && okT && okE) good.push(x.name);
+    });
+    $('#q5-tab').innerHTML = '<div class="dwrap"><table class="dt"><thead><tr><th>Correcteur</th><th>ω₀dB (rad/s)</th><th>Mφ</th><th>Dépassement (≤ ' + fmt(S.D, 1) + ' %)</th><th>Temps 5 % (≤ ' + fmt(S.tr, 2) + ' s)</th><th>Erreur statique (≤ ' + fmt(S.es, 1) + ' %)</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    const m = $('#q5-msg');
+    if (good.length) { m.className = 'verdict yes'; m.innerHTML = '<b>Cahier des charges respecté par : ' + good.join(', ') + '.</b> Choisissez le plus simple qui convient, puis vérifiez la robustesse (marges de gain et de phase).'; }
+    else { m.className = 'verdict warn'; m.innerHTML = '<b>Aucun correcteur ne respecte tout le cahier des charges.</b> ' + (A2[1].tr > S.tr && A2[2].eStat > S.es ? 'Le PI est précis mais trop lent, l\'avance de phase est rapide mais laisse une erreur statique : il faut les associer (PI + avance de phase) ou relâcher une exigence.' : 'Modifiez la marge visée, la pulsation visée ou le cahier des charges.') + (dAV.warn ? '<br>' + dAV.warn : ''); }
+    bodeSvg($('#q5-bode'), { curves: ctrls.map((x, i) => ({ name: 'C·H avec ' + x.name, color: x.color, fn: w => { const r = loopFR(w, P, x.c); return [dB(r[0]), r[1]]; } })) });
+    stepSvg($('#q5-step'), { tmax, curves: ctrls.map((x, i) => ({ name: x.name, color: x.color, t: A2[i].S.t, y: A2[i].S.y })) });
+  };
+  plantEditor($('#q5-plant'), upd);
+  $('#q5-D').value = String(S.D); $('#q5-tr').value = String(S.tr); $('#q5-es').value = String(S.es);
+  ['#q5-D', '#q5-tr', '#q5-es'].forEach(id => $(id).addEventListener('input', upd));
+  slider($('#q5-sl'), { name: 'Marge de phase visée Mφ', min: 20, max: 85, step: 1, dec: 0, unit: '°', get: () => S.Mt, set: v => { S.Mt = v; }, onchange: upd });
+  slider($('#q5-sl'), { name: 'ω₀dB visée (avance)', min: 1, max: 100, step: 1, dec: 0, unit: 'rad/s', get: () => S.wt, set: v => { S.wt = v; }, onchange: upd });
+  upd();
+}
+WORKSHOPS.push({ id: 'q5', title: 'Mise en œuvre', hint: 'Réglez P, PI et avance de phase pour le même cahier des charges et identifiez celui (ou ceux) qui le respectent.',
+  mount: mountQ5, reset: () => { Object.assign(Q5, { Mt: 60, wt: 15, D: 20, tr: 0.5, es: 5 }); Object.assign(PLANT, PLANT0); } });
+
+/* ---------- activités ---------- */
+const ACT = {
+  q1: {
+    title: 'Démarche', level: 'Niveau 1 · Découvrir', time: '25 min', course: 'demarche',
+    goal: 'Traduire un cahier des charges temporel (dépassement, temps de réponse, erreur) en critères fréquentiels (marge de phase, pulsation de coupure).',
+    steps: [
+      'Déplacez le curseur ζ. Notez la marge de phase Mφ et le dépassement D pour ζ = 0,3 ; 0,6 ; 1. Vérifiez la règle Mφ ≈ 100·ζ.',
+      'Repérez sur le diagramme de Bode la marge de phase (segment vert) : c\'est la distance entre la courbe de phase et −180° à la pulsation où le gain vaut 0 dB.',
+      'Entrez un cahier des charges (D = 10 %, tr5 % = 0,2 s). Quelle marge de phase minimale et quelle pulsation de coupure en déduisez-vous ?',
+      'Recommencez avec D = 30 %. Quelle exigence est la plus coûteuse : l\'amortissement ou la rapidité ?',
+      'Lisez le tableau « Quel correcteur pour quel besoin ? » et associez chaque défaut à une cause fréquentielle.'
+    ],
+    defi: { q: 'On exige D ≤ 15 % et un temps de réponse à 5 % de 0,4 s. Déterminez ζ, la marge de phase minimale et ω₀dB visée (second ordre dominant).',
+      a: 'D = 15 % donne ζ ≈ 0,52 donc Mφ ≈ 53°. Avec ζ = 0,52, ωₙ·tr5 % ≈ 5,2 d\'où ωₙ ≈ 13 rad/s et ω₀dB ≈ 0,7·ωₙ ≈ 9 rad/s. Lisez-les dans l\'atelier pour vérifier.' },
+    qcm: [
+      { q: 'Quelle relation approchée lie la marge de phase (en degrés) et l\'amortissement ζ ?', o: ['Mφ ≈ 10·ζ', 'Mφ ≈ 100·ζ', 'Mφ ≈ ζ / 100', 'Mφ ≈ 180·ζ'], a: 1, w: 'Pour un second ordre et ζ ≤ 0,7, Mφ ≈ 100·ζ : ζ = 0,6 donne environ 60°.' },
+      { q: 'La marge de phase se mesure :', o: ['à la pulsation où la phase vaut −180°', 'à la pulsation où le gain vaut 0 dB', 'à la pulsation de la bande passante', 'à ω = 1 rad/s'], a: 1, w: 'Mφ = 180° + arg L(jω₀dB), où ω₀dB est la pulsation de coupure à 0 dB de la boucle ouverte.' },
+      { q: 'Une erreur statique nulle vis-à-vis d\'une consigne en échelon exige :', o: ['un gain élevé', 'un intégrateur dans la boucle ouverte', 'une grande marge de phase', 'une avance de phase'], a: 1, w: 'L\'intégrateur rend le gain statique infini et annule l\'erreur de position.' },
+      { q: 'Un dépassement plus faible correspond à :', o: ['une marge de phase plus petite', 'une marge de phase plus grande', 'une pulsation de coupure plus grande', 'un gain statique plus grand'], a: 1, w: 'Plus la marge de phase est grande, plus l\'amortissement ζ est grand et plus D est faible.' }
+    ]
+  },
+  q2: {
+    title: 'Correcteur P', level: 'Niveau 1 · Découvrir', time: '25 min', course: 'proportionnel',
+    goal: 'Régler un correcteur proportionnel pour obtenir une marge de phase donnée, et constater le compromis précision / stabilité.',
+    steps: [
+      'Avec K₀ = 1, τ₁ = 1 s, τ₂ = 0,1 s, faites varier Kp. Que devient ω₀dB ? Et la phase de la boucle ouverte ?',
+      'Cherchez le Kp qui rend la boucle fermée instable. Que vaut alors la marge de gain ?',
+      'Réglez la marge de phase visée à 60° puis cliquez sur « Kp pour la marge de phase visée ». Relisez la démarche en 3 étapes.',
+      'Notez l\'erreur statique obtenue. Peut-on la réduire en gardant 60° de marge ?',
+      'Modifiez τ₂ : le Kp obtenu pour 60° augmente-t-il quand le système est plus rapide ?'
+    ],
+    defi: { q: 'Pour H(p) = 1/((1 + p)(1 + 0,1p)), on veut Mφ = 45°. Quelle pulsation ω₀dB doit-on viser, puis quel Kp ?',
+      a: 'On cherche arg H = −135° : arctan ω + arctan 0,1ω = 135°, soit ω ≈ 11,8 rad/s. Kp = 1/|H(jω)| = √(1 + ω²)·√(1 + 0,01ω²) ≈ 18,4. L\'erreur statique est alors 1/(1 + 18,4) ≈ 5,2 %.' },
+    qcm: [
+      { q: 'Le correcteur proportionnel modifie :', o: ['uniquement le gain de la boucle ouverte', 'uniquement la phase', 'le gain et la phase', 'ni le gain ni la phase'], a: 0, w: 'C(p) = Kp est un réel : il translate la courbe de gain, sans toucher à la phase.' },
+      { q: 'Quand on augmente Kp, la marge de phase :', o: ['augmente', 'diminue en général', 'reste constante', 'devient égale à la marge de gain'], a: 1, w: 'ω₀dB monte, là où la phase du système est plus proche de −180°.' },
+      { q: 'L\'erreur statique d\'un système de classe 0 avec correcteur P vaut :', o: ['0', '1 / (1 + Kp·K₀)', 'Kp·K₀', '1 / (Kp·K₀)'], a: 1, w: 'Avec un gain de boucle statique Kp·K₀, ε = 1 / (1 + Kp·K₀).' },
+      { q: 'Pour régler Kp à partir d\'une marge de phase visée, on calcule Kp = 1/|H(jω)| où ω est tel que :', o: ['arg H = −180°', 'arg H = −180° + Mφ', 'arg H = −Mφ', '|H| = 1'], a: 1, w: 'À la pulsation de coupure, on veut arg L = −180° + Mφ ; le gain de L doit y valoir 1.' }
+    ]
+  },
+  q3: {
+    title: 'Correcteur PI', level: 'Niveau 2 · Comprendre', time: '30 min', course: 'pi',
+    goal: 'Régler un correcteur PI par compensation de pôle, et comprendre ce que l\'intégrateur apporte et coûte.',
+    steps: [
+      'Laissez Tᵢ très grand (10 s) puis diminuez-le. Observez la phase aux basses pulsations et l\'erreur statique.',
+      'Cliquez sur « Tᵢ = τ₁ ». Comparez la courbe C·H avec la courbe H : quel facteur a disparu ?',
+      'Visez 60° et cliquez sur « Kp pour la marge de phase visée ». Vérifiez que Mφ mesurée est bien 60°.',
+      'Choisissez Tᵢ = 3·τ₁ puis 0,3·τ₁ sans compenser le pôle. Que devient la réponse indicielle ?',
+      'Comparez avec le correcteur P de l\'atelier précédent : même marge, quelles différences (erreur statique, ω₀dB, temps de réponse) ?'
+    ],
+    defi: { q: 'Avec Tᵢ = τ₁, établissez la boucle ouverte, puis exprimez Kp pour obtenir une marge Mφ donnée.',
+      a: 'L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)). Mφ = 90° − arctan(ω₀dB τ₂) donc ω₀dB = 1 / (τ₂ tan Mφ). |L(jω₀dB)| = 1 donne Kp = Tᵢ ω₀dB √(1 + ω₀²τ₂²) / K₀.' },
+    qcm: [
+      { q: 'Un correcteur PI apporte :', o: ['une erreur statique nulle', 'une avance de phase', 'une réduction du bruit en haute fréquence', 'un gain constant'], a: 0, w: 'L\'action intégrale annule l\'erreur de position, au prix d\'un retard de phase.' },
+      { q: 'La compensation de pôle consiste à choisir :', o: ['Kp = 1', 'Tᵢ = τ₁', 'Tᵢ = τ₂', 'Tᵢ = 0'], a: 1, w: 'Le zéro (1 + Tᵢ p) du correcteur annule le pôle dominant (1 + τ₁ p) du système.' },
+      { q: 'Aux très basses pulsations, la phase d\'un PI vaut :', o: ['0°', '+90°', '−90°', '−180°'], a: 2, w: 'C(jω) ≈ Kp / (jTᵢ ω) : un intégrateur pur, de phase −90°.' },
+      { q: 'Après compensation du pôle dominant, la boucle fermée se comporte comme :', o: ['un premier ordre', 'un second ordre', 'un système instable', 'un système sans erreur de traînage'], a: 1, w: 'Il reste un intégrateur et un pôle 1/(1 + τ₂ p) : L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)).' },
+      { q: 'Si Tᵢ est beaucoup plus grand que τ₁ :', o: ['la réponse est très rapide', 'une queue lente apparaît dans la réponse', 'le système devient instable', 'l\'erreur statique est non nulle'], a: 1, w: 'Le pôle lent n\'est pas compensé : la sortie rejoint la consigne avec une constante de temps de l\'ordre de Tᵢ.' }
+    ]
+  },
+  q4: {
+    title: 'Avance de phase', level: 'Niveau 2 · Comprendre', time: '30 min', course: 'avance',
+    goal: 'Concevoir un correcteur à avance de phase (a, T, K) pour atteindre une pulsation de coupure et une marge de phase imposées.',
+    steps: [
+      'Avec ω₀dB visée = 15 rad/s et Mφ = 60°, lisez les 5 étapes de calcul. Quelle avance φ est nécessaire ?',
+      'Cliquez sur « Appliquer ce réglage » et vérifiez que ω₀dB et Mφ mesurées sont proches des valeurs visées.',
+      'Dans le réglage manuel, modifiez a : que devient la bosse de phase du correcteur ? Et le gain en haute fréquence ?',
+      'Modifiez T sans toucher à a : la bosse de phase se déplace. Où doit-elle se situer par rapport à ω₀dB ?',
+      'Augmentez la pulsation visée jusqu\'à 60 rad/s. Que dit l\'avertissement ?'
+    ],
+    defi: { q: 'On veut une avance de 45° en ωm = 20 rad/s. Calculez a puis T.',
+      a: 'a = (1 + sin 45°)/(1 − sin 45°) ≈ 5,83. T = 1/(ωm √a) = 1/(20 × 2,41) ≈ 0,0207 s.' },
+    qcm: [
+      { q: 'La phase maximale apportée par un correcteur (1 + aTp)/(1 + Tp) vaut :', o: ['arcsin((a−1)/(a+1))', 'arctan a', 'arcsin(1/a)', '90°'], a: 0, w: 'φmax = arcsin((a − 1)/(a + 1)), obtenue à ωm = 1 / (T√a).' },
+      { q: 'À ωm, le gain du correcteur (avec le gain K) vaut :', o: ['K', 'K√a', 'K·a', 'K/a'], a: 1, w: '|C(jωm)| = K√a : on en tient compte pour que la boucle vaille 0 dB à ωm.' },
+      { q: 'Pour que l\'avance serve au mieux, on place ωm :', o: ['très au-dessus de ω₀dB', 'très en dessous de ω₀dB', 'à ω₀dB', 'à la pulsation de la marge de gain'], a: 2, w: 'On veut le maximum de phase là où se mesure la marge de phase.' },
+      { q: 'Quel est l\'inconvénient d\'un grand a ?', o: ['une marge de phase plus faible', 'une amplification des bruits en haute fréquence', 'une erreur statique plus grande', 'l\'instabilité systématique'], a: 1, w: 'Le gain en haute fréquence vaut K·a : les bruits de mesure sont amplifiés.' }
+    ]
+  },
+  q5: {
+    title: 'Mise en œuvre', level: 'Niveau 3 · Appliquer', time: '30 min', course: 'bilan',
+    goal: 'Choisir et régler le correcteur adapté à un cahier des charges complet, en justifiant avec les marges et les réponses temporelles.',
+    steps: [
+      'Avec le cahier des charges par défaut (D ≤ 20 %, tr5 % ≤ 0,5 s, εs ≤ 5 %), quels correcteurs conviennent ?',
+      'Passez la marge visée à 45° puis 75°. Comment évoluent dépassement et temps de réponse pour chaque correcteur ?',
+      'Passez l\'erreur statique maximale à 0,1 %. Quel correcteur disparaît ?',
+      'Passez le temps de réponse à 0,1 s. Aucun correcteur ne suffit-il ? Que proposez-vous ?',
+      'Modifiez le système (τ₁, τ₂, K₀) et recommencez : la conclusion change-t-elle ?'
+    ],
+    defi: { q: 'Proposez une structure qui respecte D ≤ 15 %, εs = 0 et un temps de réponse très court pour ce système.',
+      a: 'Associer un intégrateur et de l\'avance de phase : PI pour la précision, avance de phase pour monter ω₀dB sans perdre de marge. On règle d\'abord l\'avance pour la rapidité et la marge, puis on place l\'action intégrale avec Tᵢ grand devant 1/ω₀dB.' },
+    qcm: [
+      { q: 'Quel correcteur annule l\'erreur statique parmi P, PI et avance de phase seul ?', o: ['P', 'PI', 'Avance de phase', 'Aucun'], a: 1, w: 'Seul le PI introduit un intégrateur.' },
+      { q: 'Le correcteur le plus adapté pour rendre un système plus rapide à marge égale est :', o: ['le PI', 'le P avec un gain faible', 'l\'avance de phase', 'le retard de phase'], a: 2, w: 'L\'avance de phase permet de monter ω₀dB en conservant la marge de phase.' },
+      { q: 'Un temps de réponse trop grand avec un PI bien amorti vient surtout de :', o: ['une marge de phase trop élevée donc ω₀dB trop basse', 'l\'instabilité', 'l\'erreur statique', 'une avance de phase excessive'], a: 0, w: 'Pour un second ordre, tr5 % ≈ 3 / ω₀dB environ : une marge élevée impose une ω₀dB plus basse à Kp donné.' },
+      { q: 'Après avoir réglé un correcteur par le calcul, il faut :', o: ['livrer directement', 'vérifier marges et réponse temporelle puis ajuster', 'doubler le gain', 'supprimer l\'intégrateur'], a: 1, w: 'Le calcul repose sur des approximations : on vérifie toujours en boucle fermée.' }
+    ]
+  }
+};
+
+/* ---------- cours ---------- */
+const COURSE = [];
+COURSE.push({ id: 'demarche', t: 'Démarche générale de réglage', h: `
+<p>Un <b>asservissement</b> compare la sortie y à la consigne et applique à l'entrée du système une commande calculée par le <b>correcteur</b> C(p). La boucle ouverte est <b>L(p) = C(p)·H(p)</b>, la boucle fermée (retour unitaire) est <b>L / (1 + L)</b>.</p>
+<h3>Les six étapes</h3>
+<ol><li><b>Cahier des charges</b> : stabilité (marges), amortissement (dépassement D), rapidité (temps de réponse tr5 %, bande passante), précision (erreur statique).</li>
+<li><b>Critères fréquentiels</b> : on traduit D en marge de phase Mφ, et le temps de réponse en pulsation de coupure ω₀dB.</li>
+<li><b>Choix du correcteur</b> : P, PI ou avance de phase, selon l'écart entre le système et les exigences.</li>
+<li><b>Calcul des paramètres</b> à partir du Bode de H.</li>
+<li><b>Vérification</b> : marges, réponse indicielle, erreur statique.</li>
+<li><b>Ajustement</b> si une exigence n'est pas tenue.</li></ol>
+<h3>Définitions fréquentielles</h3>
+<table class="ctable"><thead><tr><th>Grandeur</th><th>Définition</th></tr></thead><tbody>
+<tr><td>Pulsation de coupure ω₀dB</td><td>|L(jω₀dB)| = 1 (0 dB)</td></tr>
+<tr><td>Marge de phase Mφ</td><td>Mφ = 180° + arg L(jω₀dB)</td></tr>
+<tr><td>Marge de gain Mg</td><td>Mg = −20 log |L(jω₁₈₀)| où arg L(jω₁₈₀) = −180°</td></tr>
+<tr><td>Bande passante ωBP</td><td>pulsation où le gain de la boucle fermée a perdu 3 dB</td></tr>
+</tbody></table>
+<p>Critère de Bode : la boucle fermée est stable si Mφ &gt; 0 et Mg &gt; 0. En pratique on vise Mφ ≥ 45° (souvent 60°) et Mg ≥ 10 dB.</p>` });
+COURSE.push({ id: 'criteres', t: 'Critères temporels et fréquentiels', h: `
+<p>Pour un système du second ordre en boucle fermée (gain statique 1, amortissement ζ, pulsation propre ωₙ) :</p>
+<ul><li>Dépassement : <b>D = 100 · exp(−πζ / √(1 − ζ²))</b> (en %).</li>
+<li>Marge de phase : <b>Mφ ≈ 100·ζ</b> (en °), valable pour ζ ≤ 0,7.</li>
+<li>Pulsation de coupure de la boucle ouverte : ω₀dB ≈ 0,7·ωₙ pour ζ ≈ 0,7. De façon exacte, ω₀dB/ωₙ = √(√(1 + 4ζ⁴) − 2ζ²).</li>
+<li>Temps de réponse à 5 % : <b>ωₙ · tr5 % ≈ 3</b> pour ζ ≈ 0,7 (plus grand si ζ est petit ou grand).</li>
+<li>Bande passante : ωBP est de l'ordre de 1,2 à 1,5 fois ω₀dB.</li></ul>
+<table class="ctable"><thead><tr><th>Mφ</th><th>ζ</th><th>D</th></tr></thead><tbody><tr><td>30°</td><td>0,29</td><td>38 %</td></tr><tr><td>45°</td><td>0,42</td><td>23 %</td></tr><tr><td>60°</td><td>0,60</td><td>9,5 %</td></tr></tbody></table>
+<div class="analogy"><b>Rapidité :</b> à marge de phase fixée, un système est d'autant plus rapide que ω₀dB est grande. Régler la rapidité, c'est donc choisir ω₀dB ; régler l'amortissement, c'est choisir la phase en ω₀dB.</div>
+<h3>Précision</h3>
+<p>Classe 0 (pas d'intégrateur) : ε = 1/(1 + L(0)). Classe 1 (un intégrateur) : erreur de position nulle, erreur de vitesse finie.</p>` });
+COURSE.push({ id: 'proportionnel', t: 'Correcteur proportionnel', h: `
+<p><b>C(p) = Kp.</b> Ne change que le gain : la courbe de gain de la boucle ouverte est translatée de 20 log Kp, la phase est inchangée.</p>
+<h3>Méthode de réglage par la marge de phase</h3>
+<ol><li>Tracer arg H(jω).</li><li>Trouver ω₁ tel que <b>arg H(jω₁) = −180° + Mφ</b>.</li><li>Calculer <b>Kp = 1 / |H(jω₁)|</b> : ω₁ devient la pulsation de coupure.</li></ol>
+<p>Pour H = K₀/((1 + τ₁p)(1 + τ₂p)), la phase tend vers −180° : un gain trop grand rend le système instable.</p>
+<h3>Limites</h3>
+<ul><li>Erreur statique non nulle : ε = 1/(1 + Kp K₀).</li><li>Augmenter Kp réduit ε mais diminue la marge de phase.</li><li>Seul Kp est ajustable : on ne peut pas régler indépendamment précision, rapidité et amortissement.</li></ul>` });
+COURSE.push({ id: 'pi', t: 'Correcteur PI et compensation de pôle', h: `
+<p><b>C(p) = Kp (1 + Tᵢ p) / (Tᵢ p)</b> = Kp + Kp/(Tᵢ p). Gain en basse fréquence infini (intégrateur), gain Kp au-delà de 1/Tᵢ. Phase : −90° très en dessous de 1/Tᵢ, 0° très au-dessus.</p>
+<h3>Compensation du pôle dominant</h3>
+<p>Pour H = K₀/((1 + τ₁p)(1 + τ₂p)) avec τ₁ &gt; τ₂, on choisit <b>Tᵢ = τ₁</b>. La boucle ouverte devient :</p>
+<p><b>L(p) = Kp K₀ / (τ₁ p (1 + τ₂ p))</b></p>
+<p>C'est un système de classe 1 et d'ordre 2 : l'erreur statique est nulle, et le réglage se fait par la marge de phase.</p>
+<h3>Calcul de Kp</h3>
+<ul><li>Mφ = 90° − arctan(ω₀dB τ₂), donc <b>ω₀dB = 1 / (τ₂ tan Mφ)</b>.</li>
+<li>|L(jω₀dB)| = 1 donne <b>Kp = τ₁ ω₀dB √(1 + ω₀dB² τ₂²) / K₀</b>.</li></ul>
+<div class="analogy"><b>Remarque :</b> si Tᵢ ≠ τ₁, il reste un pôle non compensé. Avec Tᵢ &gt; τ₁, une queue lente de constante de temps proche de Tᵢ apparaît dans la réponse.</div>
+<p>Règle pratique sans modèle : Tᵢ ≥ 5 à 10 fois 1/ω₀dB pour que l'intégrateur coûte moins de 10° de marge de phase.</p>` });
+COURSE.push({ id: 'avance', t: 'Correcteur à avance de phase', h: `
+<p><b>C(p) = K (1 + aTp) / (1 + Tp)</b>, avec a &gt; 1. Gain K en basse fréquence, K·a en haute fréquence. La phase est positive, maximale en <b>ωm = 1/(T√a)</b> :</p>
+<p><b>φmax = arcsin((a − 1)/(a + 1))</b>, et <b>|C(jωm)| = K√a</b>.</p>
+<table class="ctable"><thead><tr><th>a</th><th>2</th><th>4</th><th>10</th><th>20</th></tr></thead><tbody><tr><td>φmax</td><td>19,5°</td><td>37°</td><td>55°</td><td>65°</td></tr></tbody></table>
+<h3>Méthode de réglage</h3>
+<ol><li>Fixer la pulsation de coupure visée ω₀dB (rapidité).</li>
+<li>Lire |H| et arg H à cette pulsation : marge actuelle M₀ = 180° + arg H(jω₀dB).</li>
+<li>Avance nécessaire : <b>φ = Mφ visée − M₀ + (5° à 10°)</b>.</li>
+<li><b>a = (1 + sin φ)/(1 − sin φ)</b>.</li>
+<li>Placer ωm = ω₀dB : <b>T = 1/(ω₀dB √a)</b>.</li>
+<li>Ajuster le gain pour que |L| = 1 en ω₀dB : <b>K = 1/(√a |H(jω₀dB)|)</b>.</li></ol>
+<h3>Limites</h3>
+<ul><li>Au-delà de 60° d'avance, il faut deux cellules en série (a est trop grand).</li><li>Le gain en haute fréquence K·a amplifie les bruits.</li><li>Pas d'intégrateur : l'erreur statique n'est pas annulée.</li></ul>` });
+COURSE.push({ id: 'bilan', t: 'Choix et mise en œuvre', h: `
+<table class="ctable"><thead><tr><th>Correcteur</th><th>Apporte</th><th>Coûte</th></tr></thead><tbody>
+<tr><td>P</td><td>Simplicité</td><td>Erreur statique, compromis précision / marge</td></tr>
+<tr><td>PI</td><td>Erreur statique nulle</td><td>Retard de phase, rapidité limitée</td></tr>
+<tr><td>Avance de phase</td><td>Rapidité et marge de phase</td><td>Pas d'intégrateur, amplification des bruits</td></tr>
+</tbody></table>
+<h3>Démarche de mise en œuvre</h3>
+<ol><li>Traduire le cahier des charges : Mφ minimale, ω₀dB minimale, classe du système.</li>
+<li>Si une erreur statique nulle est exigée : PI (compenser le pôle dominant).</li>
+<li>Si la phase est insuffisante en ω₀dB visée : avance de phase.</li>
+<li>Régler, puis vérifier marges, dépassement, temps de réponse et erreur statique.</li>
+<li>Si aucun correcteur seul ne convient : les associer (PI + avance de phase) ou relâcher une exigence, en le justifiant.</li></ol>
+<div class="analogy"><b>Piège classique :</b> une marge de phase élevée est bonne pour la stabilité mais ralentit la réponse. Visez la marge strictement nécessaire (45° à 60°), pas davantage.</div>` });
+COURSE.push({ id: 'vocabulaire', t: 'Vocabulaire', h: `
+<dl>
+<dt>Boucle ouverte</dt><dd>L(p) = C(p)·H(p).</dd>
+<dt>Pulsation de coupure ω₀dB</dt><dd>Pulsation où le gain de la boucle ouverte vaut 0 dB.</dd>
+<dt>Marge de phase</dt><dd>Distance à −180° de la phase en ω₀dB ; mesure l'amortissement.</dd>
+<dt>Marge de gain</dt><dd>Gain qu'on peut ajouter avant l'instabilité, mesuré à la pulsation où la phase vaut −180°.</dd>
+<dt>Bande passante</dt><dd>Pulsation à −3 dB de la boucle fermée ; mesure la rapidité.</dd>
+<dt>Compensation de pôle</dt><dd>Annulation d'un pôle du système par un zéro du correcteur.</dd>
+<dt>Avance de phase</dt><dd>Correcteur qui ajoute de la phase positive autour d'une pulsation choisie.</dd>
+<dt>Erreur statique</dt><dd>Écart consigne − sortie en régime permanent.</dd>
+<dt>Classe</dt><dd>Nombre d'intégrateurs dans la boucle ouverte.</dd>
+</dl>` });
+/* ---------- interface ---------- */
+const UI = { cur: 'q1' };
+const AS = { key: 'q1', tab: 'steps', open: false, st: lsGet(KEYS.act, {}), arm: null };
+const CS = { open: false, id: 'demarche' };
+function actSave() { lsSet(KEYS.act, AS.st); }
+function actState() { return AS.st[AS.key] || (AS.st[AS.key] = { a: {}, checked: false, shown: false }); }
+function actScore(a) { const s = actState(); return a.qcm.filter((q, i) => s.a[i] === q.a).length; }
+function wsById(id) { return WORKSHOPS.find(w => w.id === id) || WORKSHOPS[0]; }
+function renderSeg() {
+  const seg = $('#wsSeg'); seg.innerHTML = '';
+  WORKSHOPS.forEach((w, i) => seg.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': w.id === UI.cur ? 'true' : 'false', 'aria-selected': w.id === UI.cur ? 'true' : 'false', onclick: () => gotoWs(w.id) }, (i + 1) + '. ' + w.title)));
+}
+function mountWs() {
+  const w = wsById(UI.cur), root = $('#ws');
+  $('#hint').textContent = w.hint; root.innerHTML = '';
+  try { w.mount(root); }
+  catch (err) { root.innerHTML = '<p class="verdict no"><b>Erreur d\'affichage.</b> ' + esc(err && err.message || err) + '</p>'; if (window.console) console.error(err); }
+  const sc = $('#scroller'); if (sc) sc.scrollTop = 0;
+}
+function gotoWs(id) {
+  const old = wsById(UI.cur); if (old.leave) old.leave();
+  if (CS.open) { CS.open = false; renderCourse(); }
+  UI.cur = id; AS.key = id; AS.tab = 'steps';
+  renderSeg(); mountWs(); renderAct();
+}
+function renderAct() {
+  const box = $('#act'), btn = $('#bAct');
+  btn.setAttribute('aria-pressed', AS.open ? 'true' : 'false'); btn.classList.toggle('pri', AS.open);
+  document.body.classList.toggle('act-open', AS.open && !CS.open);
+  box.hidden = !AS.open;
+  if (!AS.open) { box.innerHTML = ''; return; }
+  const oldB = box.querySelector('.pbody'), tag = AS.key + '|' + AS.tab, keep = oldB && box.dataset.k === tag ? oldB.scrollTop : 0;
+  box.dataset.k = tag;
+  box.innerHTML = '';
+  const a = ACT[AS.key];
+  const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
+  box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
+  const nq = a.qcm.length;
+  box.append(h('div', { class: 'tabs', role: 'tablist' },
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'steps' ? 'true' : 'false', onclick: () => { AS.tab = 'steps'; renderAct(); } }, 'Consignes'),
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'qcm' ? 'true' : 'false', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Quiz (' + nq + ')')));
+  const body = h('div', { class: 'pbody' });
+  if (AS.tab === 'steps') {
+    body.append(h('p', { class: 'small' }, a.level + ' · environ ' + a.time), h('div', { class: 'goal' }, h('b', null, 'Objectif. '), a.goal));
+    body.append(h('ol', { class: 'steps' }, a.steps.map(s => h('li', { html: s }))));
+    body.append(h('div', { class: 'defi' }, h('b', null, 'Défi'), h('p', { html: a.defi.q }), h('details', null, h('summary', null, 'Voir la réponse'), h('p', { html: a.defi.a }))));
+    if (a.course) body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: () => openCourse(a.course) }, 'Voir le cours : ' + courseSection(a.course).t)));
+    body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: ev => {
+      const b = ev.currentTarget;
+      if (!AS.arm) { b.textContent = 'Confirmer ? Votre travail sera effacé'; AS.arm = setTimeout(() => { b.textContent = 'Recommencer l’atelier'; AS.arm = null; }, 3500); return; }
+      clearTimeout(AS.arm); AS.arm = null; wsById(UI.cur).reset(); mountWs(); renderAct(); } }, 'Recommencer l’atelier')));
+    body.append(h('p', null, h('button', { class: 'btn pri', type: 'button', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Passer au quiz')));
+  } else {
+    const s = actState(), show = s.checked || s.shown;
+    a.qcm.forEach((q, i) => {
+      const fs = h('fieldset', { class: 'q' }, h('legend', { html: (i + 1) + '. ' + q.q }));
+      q.o.forEach((o, j) => {
+        const good = show && j === q.a, bad = s.checked && !s.shown && s.a[i] === j && j !== q.a;
+        const inp = h('input', { type: 'radio', name: 'q' + i, checked: show && s.shown ? j === q.a : s.a[i] === j, disabled: show });
+        inp.addEventListener('change', () => { s.a[i] = j; actSave(); renderAct(); });
+        fs.append(h('label', { class: 'opt' + (good ? ' good' : '') + (bad ? ' bad' : '') }, inp, h('span', { html: o + (good ? '  ✓' : '') + (bad ? '  ✗' : '') })));
+      });
+      if (show) { const miss = s.a[i] == null && !s.shown; fs.append(h('p', { class: 'why', html: (miss ? 'Sans réponse. ' : '') + q.w })); }
+      body.append(fs);
+    });
+    const done = Object.keys(s.a).length;
+    body.append(h('p', { class: 'small' }, s.shown ? 'Réponses affichées.' : s.checked ? '' : done + ' réponse(s) sur ' + nq + '.'));
+    if (s.checked && !s.shown) body.append(h('p', { class: 'score' }, 'Score : ' + actScore(a) + ' / ' + nq));
+    const row = h('div', { class: 'files' });
+    if (!show) row.append(h('button', { class: 'btn pri', type: 'button', onclick: () => { s.checked = true; actSave(); renderAct(); } }, 'Corriger'));
+    if (!s.shown) row.append(h('button', { class: 'btn', type: 'button', onclick: () => { s.shown = true; actSave(); renderAct(); } }, 'Afficher les réponses'));
+    if (show) row.append(h('button', { class: 'btn', type: 'button', onclick: () => { AS.st[AS.key] = { a: {}, checked: false, shown: false }; actSave(); renderAct(); } }, 'Recommencer'));
+    body.append(row);
+  }
+  box.append(body); body.scrollTop = keep;
+}
+function actToggle() { if (CS.open) { CS.open = false; renderCourse(); } AS.open = !AS.open; renderAct(); }
+$('#bAct').addEventListener('click', actToggle);
+
+function courseSection(id) { return COURSE.find(s => s.id === id) || COURSE[0]; }
+function renderCourse() {
+  const box = $('#course'), btn = $('#bCourse'), work = $('#work');
+  btn.setAttribute('aria-pressed', CS.open ? 'true' : 'false'); btn.classList.toggle('pri', CS.open);
+  box.hidden = !CS.open; work.hidden = CS.open; $('#modes').hidden = CS.open;
+  document.body.classList.toggle('act-open', AS.open && !CS.open);
+  if (!CS.open) { box.innerHTML = ''; return; }
+  box.innerHTML = '';
+  const cur = courseSection(CS.id), idx = COURSE.indexOf(cur);
+  const go = id => { CS.id = id; renderCourse(); };
+  const nav = h('nav', { class: 'ctoc', 'aria-label': 'Sommaire du cours' }, COURSE.map((s, i) => h('button', { type: 'button', class: s.id === cur.id ? 'on' : '', 'aria-current': s.id === cur.id ? 'true' : 'false', onclick: () => go(s.id) }, (i + 1) + '. ' + s.t)));
+  const sel = h('select', { class: 'ctoc-sel', 'aria-label': 'Choisir une section', onchange: e => go(e.target.value) }, COURSE.map((s, i) => h('option', { value: s.id, selected: s.id === cur.id }, (i + 1) + '. ' + s.t)));
+  const art = h('article', { class: 'cbody' });
+  art.append(h('p', { class: 'ckick' }, 'Cours · section ' + (idx + 1) + ' sur ' + COURSE.length), h('h2', null, cur.t), h('div', { html: cur.h }));
+  art.append(h('div', { class: 'cpn' },
+    idx > 0 ? h('button', { class: 'btn', type: 'button', onclick: () => go(COURSE[idx - 1].id) }, '← ' + COURSE[idx - 1].t) : h('span'),
+    idx < COURSE.length - 1 ? h('button', { class: 'btn pri', type: 'button', onclick: () => go(COURSE[idx + 1].id) }, COURSE[idx + 1].t + ' →') : h('span')));
+  const top = h('div', { class: 'ctop' }, h('b', null, 'Cours : réglage de correcteurs'), h('button', { class: 'btn pri sm', type: 'button', onclick: () => { CS.open = false; renderCourse(); } }, 'Retour à l’atelier'));
+  box.append(top, sel, h('div', { class: 'cwrap' }, nav, art));
+  box.scrollTop = 0;
+}
+function openCourse(id) { if (id) CS.id = id; CS.open = true; renderCourse(); }
+$('#bCourse').addEventListener('click', () => { CS.open = !CS.open; renderCourse(); });
+
+function closeDlg() { $('#dlg').hidden = true; $('#dlg').innerHTML = ''; }
+function openDlg(title, body) {
+  const d = $('#dlg'); d.innerHTML = ''; d.hidden = false;
+  d.append(h('div', { class: 'dlgbox', role: 'dialog', 'aria-label': title }, h('header', null, h('b', null, title), h('button', { class: 'btn sm', type: 'button', onclick: closeDlg }, 'Fermer')), h('div', { class: 'dbody' }, body)));
+  d.onclick = ev => { if (ev.target === d) closeDlg(); };
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
+$('#bHelp').addEventListener('click', () => {
+  openDlg('Aide', h('div', { html: '<p>Cinq ateliers sur le réglage des correcteurs P, PI et à avance de phase : démarche et cahier des charges, correcteur P, correcteur PI, avance de phase, mise en œuvre et comparaison.</p>' +
+    '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut, puis déplacez les curseurs : le diagramme de Bode, la réponse indicielle et les marges se mettent à jour.</li><li>Les boutons de réglage automatique appliquent la méthode du cours ; relisez le calcul affiché au-dessus.</li><li>Le bouton <b>Activité</b> affiche les consignes, un défi et un quiz avec correction. Sur téléphone, il s\'ouvre en bas de l\'écran : fermez-le pour manipuler l\'atelier.</li><li>Le bouton <b>Cours</b> détaille chaque partie.</li></ul>' +
+    '<h3>Modèle utilisé</h3><p>Le système est H(p) = K₀ / ((1 + τ₁p)(1 + τ₂p)) en boucle fermée à retour unitaire. La simulation temporelle est calculée numériquement (Runge-Kutta d\'ordre 4).</p><h3>Vos données</h3><p>Les réponses au quiz sont mémorisées dans ce navigateur uniquement.</p>' }));
+});
+(function init() { AS.open = !isSmall(); renderSeg(); mountWs(); renderAct(); renderCourse(); })();
+</script>
+
+</body></html>
