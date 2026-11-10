@@ -133,6 +133,35 @@ details.mason ul{padding-left:18px;margin:4px 0}
   .tool{min-width:78px}
   #panel,#panel.wide{position:fixed;left:0;right:0;bottom:0;width:auto;height:66%;max-height:none;border-radius:14px 14px 0 0;z-index:30;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
 }
+/* ---- cours ---- */
+#course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
+.ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
+.cwrap{flex:1;min-height:0;display:flex;gap:28px;padding-block:14px}
+.ctoc{flex:none;width:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px}
+.ctoc button:hover{background:var(--panel2)}
+.ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto}
+.cbody{flex:1;min-width:0;overflow:auto;max-width:860px;padding-right:6px}
+.ckick{color:var(--muted);font-size:12.5px;margin:0}
+.cbody h2{font-size:26px;margin:2px 0 12px;text-wrap:balance}
+.cbody h3{font-size:16.5px;margin:22px 0 6px}
+.cbody p,.cbody li{font-size:14.5px;line-height:1.6}
+.cbody ul,.cbody ol{padding-left:22px}.cbody li{margin-bottom:4px}
+.cbody table{display:block;overflow-x:auto;max-width:100%}
+.ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
+.ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.ctable th{background:var(--panel2);font-weight:600}
+.retain{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 12px;margin:16px 0 6px;font-size:14px}
+.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 14px;margin:10px 0;font-size:16px;overflow-x:auto;line-height:2}
+.cwarn{border:1px solid #d9a21b;background:rgba(224,160,40,.14);border-radius:8px;padding:8px 12px;margin:10px 0;font-size:14px}
+.cbody details{border:1px dashed var(--accent);border-radius:8px;padding:6px 10px;margin:8px 0 12px}
+.cbody details summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+.cbody .ex{border:1px solid var(--line);border-radius:8px;padding:4px 14px 8px;margin:10px 0}
+.gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
+.cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
+@media (max-width:820px){.ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}}
 @media (prefers-reduced-motion:no-preference){.tool,.btn{transition:border-color .12s,background .12s}}
 </style></head>
 <body>
@@ -141,6 +170,7 @@ details.mason ul{padding-left:18px;margin:4px 0}
     <div class="brand"><svg width="28" height="26" viewBox="0 0 28 26" aria-hidden="true"><rect x="2" y="7" width="9" height="12" rx="2" fill="none" stroke="var(--fg)" stroke-width="1.6"/><rect x="17" y="7" width="9" height="12" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/><path d="M11 13h6m-3-3l3 3-3 3" fill="none" stroke="var(--fg)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Atelier Schémas-blocs <small>FTBF</small></span></div>
     <div class="files">
       <button class="btn run" id="bCalc" type="button">Calculer la FTBF</button>
+      <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
       <button class="btn" id="bEx" type="button">Exemples</button>
       <button class="btn" id="bClear" type="button">Effacer</button>
       <button class="btn" id="bPanel" type="button" aria-pressed="true">Panneau</button>
@@ -152,6 +182,7 @@ details.mason ul{padding-left:18px;margin:4px 0}
     <section id="stage"><div id="hint"></div><div id="scroller"><svg id="svg" width="1400" height="900" role="application" aria-label="Zone de travail du schéma-blocs"></svg></div></section>
     <aside id="panel" aria-label="Propriétés et résultat"></aside>
   </main>
+  <section id="course" hidden aria-label="Cours"></section>
 </div>
 <div id="dlg" hidden></div>
 <div id="toast" hidden></div>
@@ -622,7 +653,7 @@ const EXAMPLES = [
     const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), h1 = mkBlock('ord1', 260, 100, [2, 1]), s2 = mkBlock('sum', 430, 108), h2 = mkBlock('int', 520, 100, [1]), o = mkBlock('out', 700, 110), h3 = mkBlock('der', 430, 250, [0.5]);
     lk(e, s1, 0); lk(s1, h1); lk(h1, s2, 0); lk(s2, h2); lk(h2, o); lk(h2, s1, 1); lk(h2, h3); lk(h3, s2, 1); } }
 ];
-function loadExample(i) { S.blocks = []; S.links = []; S.nid = 1; S.nl = 1; S.sel = null; S.linkFrom = null; S.calc = false; S.tab = 'props'; EXAMPLES[i].f(); save(); draw(); renderPanel(); updHint(); }
+function loadExample(i) { if (CS.open) { CS.open = false; renderCourse(); } S.blocks = []; S.links = []; S.nid = 1; S.nl = 1; S.sel = null; S.linkFrom = null; S.calc = false; S.tab = 'props'; EXAMPLES[i].f(); save(); draw(); renderPanel(); updHint(); }
 
 /* ---------- palette ---------- */
 const bi = (t, fs) => `<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-body" x="1.5" y="7" width="31" height="20" rx="4"/><text x="17" y="21" text-anchor="middle" font-size="${fs || 10}" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">${t}</text></svg>`;
@@ -747,13 +778,227 @@ function resultView(body) {
       h('p', null, h('b', null, 'Chaînes directes')), h('ul', null, R.paths.map((p, i) => h('li', null, h('span', { class: 'mono-s' }, `P${i + 1} = ${p.gain}`), ` (${p.text}) ; Δ${i + 1} = ${p.delta}`))),
       h('p', null, h('b', null, 'Boucles')), R.loops.length ? h('ul', null, R.loops.map(l => h('li', null, h('span', { class: 'mono-s' }, `${l.name} = ${l.gain}`), ` (${l.text})`))) : h('p', null, 'Aucune boucle : schéma en chaîne ouverte.'),
       h('p', null, h('span', { class: 'mono-s' }, 'Δ = ' + R.deltaTxt)),
-      h('p', { class: 'small' }, 'Le résultat est mis sur dénominateur commun (produit des dénominateurs des blocs), puis simplifié des facteurs monômes communs.')));
+      h('p', { class: 'small' }, 'Le résultat est mis sur dénominateur commun (produit des dénominateurs des blocs), puis simplifié des facteurs monômes communs.'),
+      h('p', null, h('button', { class: 'btn sm', type: 'button', onclick: () => openCourse('mason') }, 'Voir le cours : Mason'), ' ', h('button', { class: 'btn sm', type: 'button', onclick: () => openCourse('black') }, 'Voir le cours : Black'))));
   }
 }
 function doCalc() {
+  if (CS.open) { CS.open = false; renderCourse(); }
   S.calc = true; S.tab = 'res'; S.panel = true; renderPanel();
   const pb = $('#panel .pbody'); if (pb) pb.scrollTop = 0;
 }
+
+/* ---------- cours ---------- */
+const F = (n, d) => `<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+const COURSE = [];
+COURSE.push({ id: 'vocab', t: 'Vocabulaire des schémas-blocs', h: `
+<p>Un système asservi se représente par un <b>schéma-blocs</b> : chaque bloc contient une fonction de transfert H(p) = ${F('S(p)', 'E(p)')} (transformée de Laplace, conditions initiales nulles), et les flèches portent les signaux.</p>
+<table class="ctable"><thead><tr><th>Élément</th><th>Rôle</th></tr></thead><tbody>
+<tr><td>Bloc</td><td>Multiplie le signal entrant par sa fonction de transfert.</td></tr>
+<tr><td>Comparateur (sommateur)</td><td>Additionne ou soustrait des signaux : ε = E − B pour un retour négatif.</td></tr>
+<tr><td>Point de prélèvement</td><td>Copie un signal vers plusieurs destinations, sans le modifier.</td></tr>
+<tr><td>Chaîne directe</td><td>Chemin de l’entrée E vers la sortie S. Sa fonction de transfert est notée G(p).</td></tr>
+<tr><td>Chaîne de retour</td><td>Chemin qui ramène la sortie vers le comparateur. Sa fonction de transfert est notée H(p).</td></tr>
+<tr><td>FTBO</td><td>Fonction de transfert en boucle ouverte : on ouvre la boucle au niveau du comparateur. Pour une boucle simple, T<sub>BO</sub> = G·H.</td></tr>
+<tr><td>FTBF</td><td>Fonction de transfert en boucle fermée : T(p) = ${F('S(p)', 'E(p)')}, avec la boucle refermée.</td></tr>
+</tbody></table>
+<div class="retain"><b>À retenir.</b> FTBO = produit des gains de toute la boucle (comparateur ouvert). FTBF = rapport S/E avec la boucle fermée. Ne pas confondre les deux.</div>` });
+
+COURSE.push({ id: 'algebre', t: 'Algèbre des blocs', h: `
+<p>Avant d’utiliser une formule globale, on sait déjà réduire des associations simples.</p>
+<table class="ctable"><thead><tr><th>Association</th><th>Schéma</th><th>Fonction de transfert équivalente</th></tr></thead><tbody>
+<tr><td>Série</td><td>H₁ puis H₂</td><td>H₁·H₂</td></tr>
+<tr><td>Parallèle (somme)</td><td>H₁ et H₂ en parallèle, sorties additionnées</td><td>H₁ + H₂ (ou H₁ − H₂ si le comparateur soustrait)</td></tr>
+<tr><td>Boucle fermée</td><td>G en chaîne directe, H en retour</td><td>Formule de Black (section suivante)</td></tr>
+</tbody></table>
+<h3>Déplacer un élément</h3>
+<ul>
+<li><b>Point de prélèvement</b> déplacé <i>en aval</i> d’un bloc G : on ajoute un bloc ${F('1', 'G')} sur la branche prélevée. <i>En amont</i> : on ajoute un bloc G.</li>
+<li><b>Comparateur</b> déplacé <i>en amont</i> d’un bloc G : on ajoute un bloc ${F('1', 'G')} sur l’entrée qui n’a pas traversé G. <i>En aval</i> : on ajoute un bloc G.</li>
+</ul>
+<div class="cwarn"><b>Attention.</b> Ces déplacements deviennent vite lourds quand les boucles s’imbriquent. La méthode de Mason évite ces manipulations.</div>
+<div class="retain"><b>À retenir.</b> Série : on multiplie. Parallèle : on additionne. Boucle : on applique Black.</div>` });
+
+COURSE.push({ id: 'black', t: 'La formule de Black', h: `
+<p>La formule de Black donne la FTBF d’une <b>boucle unique</b> : une chaîne directe G(p), une chaîne de retour H(p), un comparateur.</p>
+<h3>Démonstration</h3>
+<p>Soit ε la sortie du comparateur. Avec un retour négatif :</p>
+<div class="formula">ε = E − H·S &nbsp;et&nbsp; S = G·ε &nbsp;⟹&nbsp; S = G·(E − H·S) &nbsp;⟹&nbsp; S·(1 + G·H) = G·E</div>
+<h3>Formule de Black</h3>
+<div class="formula">T(p) = ${F('S(p)', 'E(p)')} = ${F('G(p)', '1 + G(p)·H(p)')} = ${F('G', '1 + T<sub>BO</sub>')}</div>
+<ul>
+<li><b>Retour négatif</b> (comparateur « E − retour ») : dénominateur 1 + GH.</li>
+<li><b>Retour positif</b> (comparateur « E + retour ») : dénominateur 1 − GH. Dans l’atelier, on obtient ce cas en mettant le signe « + » à l’entrée de retour du comparateur.</li>
+<li><b>Retour unitaire</b> (H = 1) : T = ${F('G', '1 + G')}.</li>
+</ul>
+<h3>Exemple 1 : 1er ordre à retour unitaire</h3>
+<p>G(p) = ${F('K', '1 + τp')} et H = 1.</p>
+<div class="formula">T(p) = ${F('K/(1 + τp)', '1 + K/(1 + τp)')} = ${F('K', '1 + K + τp')} = ${F('K/(1+K)', '1 + (τ/(1+K))·p')}</div>
+<p>C’est encore un 1er ordre : le gain devient ${F('K', '1 + K')} (inférieur à 1) et la constante de temps est divisée par 1 + K : la boucle fermée est plus rapide. Avec K = 4 et τ = 0,5 s : T(p) = ${F('0,8', '1 + 0,1·p')}.</p>
+<h3>Exemple 2 : retour non unitaire</h3>
+<p>G(p) = ${F('K', 'p·(1 + τp)')} et H(p) = a (gain de capteur).</p>
+<div class="formula">T(p) = ${F('K', 'p(1 + τp) + aK')} = ${F('1/a', '1 + p/(aK) + (τ/(aK))·p²')}</div>
+<p>Par identification avec ${F('K<sub>BF</sub>', '1 + 2ξp/ω₀ + p²/ω₀²')} : K<sub>BF</sub> = ${F('1', 'a')}, ω₀ = √(${F('aK', 'τ')}) et ξ = ${F('1', '2√(aKτ)')}.</p>
+<div class="cwarn"><b>Limite.</b> Black suppose une seule boucle. Dès qu’il y a une boucle à l’intérieur d’une autre, on réduit la boucle interne, puis on applique Black à la boucle externe… ou on passe directement par la méthode de Mason.</div>
+<div class="retain"><b>À retenir.</b> T = ${F('G', '1 + G·H')} pour un retour négatif, ${F('G', '1 − G·H')} pour un retour positif. Le dénominateur « 1 + FTBO » est l’équation caractéristique : ses racines sont les pôles de la FTBF.</div>` });
+
+COURSE.push({ id: 'mason', t: 'La méthode de Mason', h: `
+<p>La formule de Mason donne directement la FTBF de <b>n’importe quel schéma-blocs</b>, quel que soit le nombre de boucles et de chaînes directes. On la voit comme un graphe : les signaux sont des nœuds, les blocs des gains portés par les branches.</p>
+<h3>Vocabulaire</h3>
+<ul>
+<li><b>Chemin direct</b> P<sub>k</sub> : chemin de E vers S qui ne passe qu’une fois par chaque nœud. Son gain est le produit des gains rencontrés (avec le signe − si on traverse une entrée soustractive d’un comparateur).</li>
+<li><b>Boucle</b> L<sub>i</sub> : chemin fermé qui ne passe qu’une fois par chaque nœud. Son gain est le produit des gains de la boucle, y compris le signe. Un retour négatif donne L = −G·H.</li>
+<li>Deux boucles (ou une boucle et un chemin) sont <b>disjointes</b> (ou « ne se touchent pas ») si elles n’ont <b>aucun nœud commun</b>.</li>
+</ul>
+<h3>La formule</h3>
+<div class="formula">T(p) = ${F('Σ<sub>k</sub> P<sub>k</sub>·Δ<sub>k</sub>', 'Δ')}</div>
+<div class="formula">Δ = 1 − ΣL<sub>i</sub> + ΣL<sub>i</sub>L<sub>j</sub> − ΣL<sub>i</sub>L<sub>j</sub>L<sub>k</sub> + …</div>
+<ul>
+<li>ΣL<sub>i</sub> : somme des gains de <b>toutes</b> les boucles.</li>
+<li>ΣL<sub>i</sub>L<sub>j</sub> : somme des produits des boucles <b>deux à deux disjointes</b> ; puis trois à trois, avec des signes alternés.</li>
+<li>Δ<sub>k</sub> : le même calcul que Δ, mais en ne gardant que les boucles qui <b>ne touchent pas</b> le chemin P<sub>k</sub>. Si toutes les boucles touchent P<sub>k</sub>, alors Δ<sub>k</sub> = 1.</li>
+</ul>
+<h3>Méthode en 5 étapes</h3>
+<ol>
+<li>Repérer et numéroter les chemins directs P₁, P₂, … et calculer leurs gains.</li>
+<li>Repérer toutes les boucles L₁, L₂, … avec leurs gains (signes compris).</li>
+<li>Pour chaque paire (ou triplet) de boucles, indiquer si elles sont disjointes.</li>
+<li>Calculer Δ, puis chaque Δ<sub>k</sub>.</li>
+<li>Assembler T = ${F('ΣP<sub>k</sub>Δ<sub>k</sub>', 'Δ')} et mettre sous forme canonique.</li>
+</ol>
+<h3>Exemple A : boucles imbriquées</h3>
+<p>E → Σ₁ → H₁ → Σ₂ → H₂ → S. Retour unitaire de S vers Σ₁ (boucle externe), et retour H₃ de la sortie de H₂ vers Σ₂ (boucle interne).</p>
+<ul>
+<li>Chemin direct : P₁ = H₁·H₂.</li>
+<li>Boucles : L₁ = −H₁H₂ (externe) et L₂ = −H₂H₃ (interne). Elles passent toutes deux par H₂ : elles se touchent.</li>
+<li>Δ = 1 − L₁ − L₂ = 1 + H₁H₂ + H₂H₃. Les deux boucles touchent P₁ : Δ₁ = 1.</li>
+</ul>
+<div class="formula">T(p) = ${F('H₁H₂', '1 + H₁H₂ + H₂H₃')}</div>
+<p>C’est exactement l’exemple « Deux boucles imbriquées » du menu Exemples de l’atelier.</p>
+<h3>Exemple B : boucles disjointes</h3>
+<p>Chaîne G₁, G₂, G₃. Une boucle de retour H₁ autour de G₁ seul, une autre H₂ autour de G₃ seul. Elles n’ont aucun nœud commun.</p>
+<ul>
+<li>P₁ = G₁G₂G₃ ; L₁ = −G₁H₁ ; L₂ = −G₃H₂ ; L₁ et L₂ sont disjointes.</li>
+<li>Δ = 1 − (L₁ + L₂) + L₁L₂ = 1 + G₁H₁ + G₃H₂ + G₁H₁G₃H₂ = (1 + G₁H₁)(1 + G₃H₂). Δ₁ = 1.</li>
+</ul>
+<div class="formula">T(p) = ${F('G₁G₂G₃', '(1 + G₁H₁)(1 + G₃H₂)')}</div>
+<p>On retrouve le produit de deux boucles fermées indépendantes, comme attendu.</p>
+<h3>Exemple C : pourquoi Δ<sub>k</sub> ?</h3>
+<p>Deux chemins directs : P₁ = G₁G₂ (avec une boucle de retour H autour de G₂ seul) et P₂ = G₃ (chemin parallèle sans boucle), les deux sorties s’additionnant.</p>
+<ul>
+<li>Une seule boucle L₁ = −G₂H. Elle touche P₁ (passe par G₂) mais ne touche pas P₂.</li>
+<li>Δ = 1 + G₂H ; Δ₁ = 1 (la boucle touche P₁) ; Δ₂ = 1 − L₁ = 1 + G₂H (la boucle ne touche pas P₂).</li>
+</ul>
+<div class="formula">T(p) = ${F('G₁G₂·1 + G₃·(1 + G₂H)', '1 + G₂H')} = ${F('G₁G₂', '1 + G₂H')} + G₃</div>
+<p>Le résultat est bien la somme des deux contributions : le chemin avec boucle, et le chemin parallèle.</p>
+<div class="cwarn"><b>Erreurs fréquentes.</b> Oublier le signe de la boucle (retour négatif : L = −GH). Oublier une boucle qui passe par un point de prélèvement. Compter comme « disjointes » deux boucles qui partagent un comparateur.</div>
+<div class="retain"><b>À retenir.</b> T = ${F('ΣP<sub>k</sub>Δ<sub>k</sub>', 'Δ')} avec Δ = 1 − ΣL + ΣLL − … Les boucles qui se touchent ne se multiplient pas ; Δ<sub>k</sub> ignore les boucles qui touchent P<sub>k</sub>.</div>` });
+
+COURSE.push({ id: 'lien', t: 'Black et Mason : le lien', h: `
+<p>La formule de Black est le cas particulier de Mason avec <b>un seul chemin direct</b> et <b>une seule boucle</b>.</p>
+<ul>
+<li>Un chemin : P₁ = G.</li>
+<li>Une boucle (retour négatif) : L₁ = −G·H.</li>
+<li>Δ = 1 − L₁ = 1 + G·H ; Δ₁ = 1 (la boucle touche le chemin).</li>
+</ul>
+<div class="formula">T = ${F('P₁Δ₁', 'Δ')} = ${F('G', '1 + GH')}</div>
+<table class="ctable"><thead><tr><th></th><th>Black</th><th>Mason</th></tr></thead><tbody>
+<tr><td>Schémas visés</td><td>Une seule boucle</td><td>Tout schéma</td></tr>
+<tr><td>Principe</td><td>Réduire la boucle en un bloc équivalent</td><td>Énumérer chemins et boucles</td></tr>
+<tr><td>Intérêt</td><td>Rapide et intuitif</td><td>Systématique, sans déplacer de points de prélèvement</td></tr>
+<tr><td>Risque</td><td>Erreurs lors des déplacements de blocs</td><td>Oubli d’une boucle ou d’un signe</td></tr>
+</tbody></table>
+<h3>Ce que fait l’atelier</h3>
+<p>L’atelier applique Mason. Chaque bloc est écrit sous la forme N(p)/D(p). Chaque terme de la formule est multiplié par le produit des dénominateurs D des blocs : le résultat sort ainsi directement sous forme d’un quotient de polynômes, mis sur dénominateur commun. L’encadré « Méthode : formule de Mason » du panneau Résultat liste les chemins P<sub>k</sub>, les boucles L<sub>i</sub> et les Δ trouvés.</p>
+<div class="retain"><b>À retenir.</b> Une seule boucle : Black. Plusieurs boucles ou plusieurs chemins : Mason (et Black en est un cas particulier).</div>` });
+
+COURSE.push({ id: 'canonique', t: 'Forme canonique de la FTBF', h: `
+<p>Une fois T(p) = ${F('N(p)', 'D(p)')} obtenue, on la met sous <b>forme canonique</b> : on factorise pour que les termes de plus bas degré valent 1.</p>
+<div class="formula">T(p) = ${F('K·(1 + b₁p + b₂p² + …)', 'p<sup>α</sup>·(1 + a₁p + a₂p² + …)')}</div>
+<ul>
+<li><b>K</b> : gain (gain statique si α = 0).</li>
+<li><b>α</b> : classe, nombre d’intégrateurs de la FTBF.</li>
+<li><b>n</b> : ordre, degré du dénominateur.</li>
+</ul>
+<table class="ctable"><thead><tr><th>Système</th><th>Forme canonique</th><th>Paramètres</th></tr></thead><tbody>
+<tr><td>1er ordre</td><td>${F('K', '1 + τp')}</td><td>K : gain, τ : constante de temps (réponse à 63 % à t = τ)</td></tr>
+<tr><td>2nd ordre</td><td>${F('K', '1 + 2ξp/ω₀ + p²/ω₀²')}</td><td>ω₀ : pulsation propre, ξ : amortissement</td></tr>
+<tr><td>Intégrateur</td><td>${F('K', 'p')}</td><td>Classe α = 1</td></tr>
+</tbody></table>
+<h3>Lire un 2nd ordre</h3>
+<p>Si D(p) normalisé vaut 1 + a₁p + a₂p², alors ω₀ = ${F('1', '√a₂')} et ξ = ${F('a₁·ω₀', '2')}.</p>
+<ul>
+<li>ξ &lt; 1 : pôles complexes conjugués, réponse oscillatoire amortie.</li>
+<li>ξ = 1 : amortissement critique (pôle double réel).</li>
+<li>ξ &gt; 1 : deux pôles réels, réponse apériodique.</li>
+</ul>
+<h3>Stabilité</h3>
+<p>Le système est stable si tous les pôles (racines de D) ont une partie réelle strictement négative. Un retour positif peut rendre la boucle fermée instable même si les blocs sont stables.</p>
+<div class="retain"><b>À retenir.</b> Forme canonique = constantes de plus bas degré égales à 1. On lit alors directement gain, classe, constante de temps ou (ω₀, ξ).</div>` });
+
+COURSE.push({ id: 'atelier', t: 'Utiliser l’atelier', h: `
+<ol>
+<li>Ajoutez une Entrée, une Sortie, un Comparateur et les blocs voulus depuis la palette.</li>
+<li>Reliez avec l’outil « Relier ». Un retour négatif est le réglage par défaut du comparateur (entrée 1 : +, entrée 2 : −).</li>
+<li>Cliquez sur « Calculer la FTBF ».</li>
+<li>Comparez avec votre calcul à la main : activez « Non canonique » (N/D) puis « Canonique ».</li>
+<li>Passez en « Valeurs numériques » pour lire K, τ ou ω₀ et ξ, les pôles et la stabilité.</li>
+</ol>
+<h3>Vérifier un exercice</h3>
+<p>Construisez le schéma de l’énoncé, remplacez les valeurs numériques par les vôtres, puis comparez la forme canonique obtenue avec la vôtre. Le panneau « Méthode : formule de Mason » liste les chemins et les boucles : confrontez-les aux vôtres.</p>
+<div class="cwarn"><b>Limite.</b> L’atelier ne simplifie pas les pôles et zéros qui se compensent exactement : si votre calcul à la main simplifie un facteur commun, il peut rester dans le résultat de l’atelier.</div>` });
+
+COURSE.push({ id: 'exos', t: 'Exercices', h: `
+<div class="ex"><h3>Exercice 1 : Black, retour unitaire</h3>
+<p>G(p) = ${F('K', 'p·(1 + τp)')}, retour unitaire. Donner T(p) sous forme canonique, puis ω₀ et ξ pour K = 2 et τ = 0,5 s.</p>
+<details><summary>Voir la réponse</summary><p>T = ${F('K', 'p(1 + τp) + K')} = ${F('1', '1 + p/K + (τ/K)p²')}. Pour K = 2 et τ = 0,5 : T = ${F('1', '1 + 0,5p + 0,25p²')}. Donc ω₀ = ${F('1', '√0,25')} = 2 rad/s et ξ = ${F('0,5 × 2', '2')} = 0,5 : oscillatoire amorti.</p></details></div>
+<div class="ex"><h3>Exercice 2 : Mason, boucles disjointes</h3>
+<p>Chaîne G₁, G₂, G₃ avec un retour H₁ autour de G₁ seul et un retour H₂ autour de G₃ seul. Donner T(p).</p>
+<details><summary>Voir la réponse</summary><p>P₁ = G₁G₂G₃ ; L₁ = −G₁H₁, L₂ = −G₃H₂, disjointes ; Δ = (1 + G₁H₁)(1 + G₃H₂) ; Δ₁ = 1. T = ${F('G₁G₂G₃', '(1 + G₁H₁)(1 + G₃H₂)')}.</p></details></div>
+<div class="ex"><h3>Exercice 3 : retour positif</h3>
+<p>G(p) = ${F('K', '1 + τp')} avec un retour positif unitaire. Donner T(p), puis la condition de stabilité.</p>
+<details><summary>Voir la réponse</summary><p>T = ${F('G', '1 − G')} = ${F('K', '1 + τp − K')} = ${F('K/(1 − K)', '1 + (τ/(1 − K))p')}. Le pôle vaut −${F('1 − K', 'τ')} : le système est stable si K &lt; 1 (avec τ &gt; 0).</p></details></div>
+<div class="ex"><h3>Exercice 4 : sur l’atelier</h3>
+<p>Chargez l’exemple « Deux boucles imbriquées », calculez T(p) à la main avec Mason, puis comparez avec la forme non canonique de l’atelier.</p>
+<details><summary>Voir la réponse</summary><p>T = ${F('H₁H₂', '1 + H₁H₂ + H₂H₃')} avec H₁ = ${F('K₁', '1 + τ₁p')}, H₂ = ${F('K₂', 'p')}, H₃ = K₃p. On obtient T = ${F('K₁K₂', 'K₁K₂ + (1 + K₂K₃)p + τ₁(1 + K₂K₃)p²')}.</p></details></div>` });
+
+COURSE.push({ id: 'glossaire', t: 'Glossaire', h: `
+<dl class="gloss">
+<dt>Boucle (Mason)</dt><dd>Chemin fermé passant une seule fois par chaque nœud ; son gain inclut le signe.</dd>
+<dt>Chaîne directe</dt><dd>Chemin de l’entrée vers la sortie.</dd>
+<dt>Chaîne de retour</dt><dd>Chemin ramenant la sortie vers le comparateur.</dd>
+<dt>Classe α</dt><dd>Nombre d’intégrateurs (puissance de p au dénominateur canonique).</dd>
+<dt>Comparateur</dt><dd>Élément qui additionne ou soustrait des signaux.</dd>
+<dt>Forme canonique</dt><dd>Écriture avec les termes de plus bas degré égaux à 1 : K, α et les coefficients se lisent directement.</dd>
+<dt>FTBF</dt><dd>Fonction de transfert en boucle fermée S/E.</dd>
+<dt>FTBO</dt><dd>Fonction de transfert en boucle ouverte (produit des gains de la boucle).</dd>
+<dt>Formule de Black</dt><dd>T = G/(1 + GH) pour une boucle à retour négatif.</dd>
+<dt>Formule de Mason</dt><dd>T = ΣP<sub>k</sub>Δ<sub>k</sub> / Δ pour un schéma quelconque.</dd>
+<dt>Pôle</dt><dd>Racine du dénominateur de T(p).</dd>
+<dt>Retour unitaire</dt><dd>Chaîne de retour de gain 1.</dd>
+<dt>Zéro</dt><dd>Racine du numérateur de T(p).</dd>
+</dl>` });
+
+const CS = { open: false, id: 'vocab' };
+function courseSection(id) { return COURSE.find(s => s.id === id) || COURSE[0]; }
+function renderCourse() {
+  const box = $('#course'), btn = $('#bCourse'), work = $('#work');
+  btn.setAttribute('aria-pressed', CS.open ? 'true' : 'false'); btn.classList.toggle('pri', CS.open);
+  box.hidden = !CS.open; work.hidden = CS.open;
+  if (!CS.open) { box.replaceChildren(); return; }
+  box.replaceChildren();
+  const cur = courseSection(CS.id), idx = COURSE.indexOf(cur), go = id => { CS.id = id; renderCourse(); };
+  const nav = h('nav', { class: 'ctoc', 'aria-label': 'Sommaire du cours' }, COURSE.map((s, i) => h('button', { type: 'button', class: s.id === cur.id ? 'on' : '', 'aria-current': s.id === cur.id ? 'true' : 'false', onclick: () => go(s.id) }, (i + 1) + '. ' + s.t)));
+  const sel = h('select', { class: 'ctoc-sel', 'aria-label': 'Choisir une section', onchange: e => go(e.target.value) }, COURSE.map((s, i) => h('option', { value: s.id, selected: s.id === cur.id }, (i + 1) + '. ' + s.t)));
+  const art = h('article', { class: 'cbody' }, h('p', { class: 'ckick' }, 'Cours · section ' + (idx + 1) + ' sur ' + COURSE.length), h('h2', null, cur.t), h('div', { html: cur.h }),
+    h('div', { class: 'cpn' },
+      idx > 0 ? h('button', { class: 'btn', type: 'button', onclick: () => go(COURSE[idx - 1].id) }, '← ' + COURSE[idx - 1].t) : h('span'),
+      idx < COURSE.length - 1 ? h('button', { class: 'btn pri', type: 'button', onclick: () => go(COURSE[idx + 1].id) }, COURSE[idx + 1].t + ' →') : h('span')));
+  const top = h('div', { class: 'ctop' }, h('b', null, 'Cours : Mason et Black'), h('button', { class: 'btn pri sm', type: 'button', onclick: () => { CS.open = false; renderCourse(); } }, 'Retour à l’atelier'));
+  box.append(top, sel, h('div', { class: 'cwrap' }, nav, art));
+}
+function openCourse(id) { if (id) CS.id = id; CS.open = true; renderCourse(); }
+$('#bCourse').addEventListener('click', () => { CS.open = !CS.open; renderCourse(); });
 
 /* ---------- boîtes de dialogue ---------- */
 function closeDlg() { $('#dlg').hidden = true; $('#dlg').replaceChildren(); }
