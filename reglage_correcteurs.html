@@ -737,7 +737,7 @@ function mountQ5(root) {
 }
 WORKSHOPS.push({ id: 'q5', title: 'Mise en œuvre', hint: 'Réglez P, PI et avance de phase pour le même cahier des charges et identifiez celui (ou ceux) qui le respectent.',
   mount: mountQ5, reset: () => { Object.assign(Q5, { Mt: 60, wt: 15, D: 20, tr: 0.5, es: 5 }); Object.assign(PLANT, PLANT0); } });
-/* ================= compléments de logique (cours O8) ================= */
+/* ================= compléments de logique  ================= */
 so.Q = z => 1 / (2 * z * Math.sqrt(1 - z * z));
 /* réglage P pour une bande passante à −3 dB imposée (boucle fermée) */
 function designPBW(P, wt) {
@@ -1087,7 +1087,7 @@ const ACT = {
   }
 };
 
-/* ---------- cours (d'après le cours O8 : régler la commande des SLCI) ---------- */
+/* ---------- cours (régler la commande des SLCI) ---------- */
 const COURSE = [];
 COURSE.push({ id: 'demarche', t: 'Performances et démarche générale', h: `
 <p>Un système asservi doit satisfaire plusieurs exigences, <b>non indépendantes</b> : un comportement suffisamment <b>stable</b> (notion de marges), un régime transitoire <b>court</b> et <b>bien amorti</b>, une bonne <b>précision</b> en régime permanent, et une faible sensibilité aux <b>perturbations</b>.</p>
@@ -1330,7 +1330,7 @@ function openDlg(title, body) {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
 $('#bHelp').addEventListener('click', () => {
-  openDlg('Aide', h('div', { html: '<p>Huit ateliers sur le réglage des correcteurs, d\'après le cours O8 : démarche, actions P / I / D, correcteur P, PI, avance de phase, mise en œuvre, boucles complémentaires et filtre réjecteur, rédaction type.</p>' +
+  openDlg('Aide', h('div', { html: '<p>Huit ateliers sur le réglage des correcteurs : démarche, actions P / I / D, correcteur P, PI, avance de phase, mise en œuvre, boucles complémentaires et filtre réjecteur, rédaction type.</p>' +
     '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut (elle défile sur petit écran), puis déplacez les curseurs.</li><li>Les diagrammes de Bode montrent trois courbes : <b>H non corrigée</b> (gris pointillé), <b>le correcteur C</b> (orange) et <b>la boucle corrigée C·H</b> (bleu). En dB et en degrés, bleu = gris + orange.</li><li>Les boutons de réglage automatique appliquent la méthode du cours ; relisez le calcul affiché.</li><li>Le bouton <b>Activité</b> affiche les consignes, un défi et un quiz avec correction. Sur téléphone, il s\'ouvre en bas de l\'écran.</li><li>Le bouton <b>Cours</b> reprend le cours.</li></ul>' +
     '<h3>Modèle utilisé</h3><p>H(p) = K₀ / ((1 + τ₁p)(1 + τ₂p)) en retour unitaire ; simulation numérique (Runge-Kutta d\'ordre 4).</p><h3>Vos données</h3><p>Les réponses au quiz sont mémorisées dans ce navigateur uniquement.</p>' }));
 });
