@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Atelier Schémas-blocs : FTBF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
+  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;--run:#2e8b3a;
+  --canvas:#ffffff;--cable:#000000;--node-fill:#dfe7f0;--node-stroke:#33475b;--screen:#8ec1e6;
+  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-ui);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+button,input,select,textarea{font:inherit;color:inherit}
+.inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+.band{background:var(--bar);border-bottom:1px solid var(--line);flex:none}
+.row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:7px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.01em}
+.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.files{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.run{background:var(--run);color:#fff;border-color:var(--run)}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn.del{color:var(--bad)}
+:is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel);max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;padding:6px 12px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.work{flex:1;min-height:0;display:flex;gap:10px;padding-block:10px}
+#palette{flex:none;width:106px;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.tool{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer;font-weight:500;font-size:11.5px;min-width:90px;text-align:center;line-height:1.2}
+.tool svg{width:34px;height:34px;overflow:visible;flex:none}
+.tool:hover{border-color:var(--accent)}
+.tool.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+.sep{height:1px;background:var(--line);flex:none;margin:2px 0}
+.ic-body{fill:var(--node-fill);stroke:var(--node-stroke);stroke-width:1.6;stroke-linejoin:round}
+.ic-screen{fill:var(--screen);stroke:var(--node-stroke);stroke-width:1.4}
+.ic-acc{stroke:var(--accent);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#stage{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:10px;background:var(--canvas);display:flex;flex-direction:column;overflow:hidden}
+#hint{flex:none;padding:6px 12px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
+#scroller{flex:1;min-height:0;overflow:auto}
+#svg{display:block;width:1400px;height:900px;touch-action:none;user-select:none;-webkit-user-select:none}
+.node{cursor:grab}
+.mode-link .node{cursor:crosshair}
+.blk{fill:var(--node-fill);stroke:var(--node-stroke);stroke-width:2;stroke-linejoin:round}
+.blk.io{fill:var(--screen)}
+.blk.src{stroke:var(--accent);stroke-width:4}
+.nlabel{font:600 12.5px var(--font-ui);fill:var(--fg)}
+.tlabel{font:500 10.5px var(--font-ui);fill:var(--muted)}
+.bexpr{font:500 12px var(--font-mono);fill:var(--fg)}
+.selbox{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3}
+.cab{stroke:var(--cable);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.cab.on{stroke:var(--accent);stroke-width:3.6}
+.arr{fill:var(--cable)}.arr.on{fill:var(--accent)}
+.hit{stroke:transparent;stroke-width:14;fill:none;cursor:pointer}
+.port{fill:#fff;stroke:var(--node-stroke);stroke-width:1.6}
+.mode-link .port{stroke:var(--accent);stroke-width:2.2}
+.ph{fill:transparent;stroke:none}
+.sgn{font:700 15px var(--font-ui);fill:var(--fg)}
+.dot{fill:var(--cable)}
+#panel{flex:none;width:360px;max-height:100%;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);min-height:0}
+#panel.wide{width:clamp(400px,42vw,640px)}
+.phead{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex:none}
+.phead b{font-size:15px}
+.phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.pbody{overflow:auto;padding:12px;flex:1;min-height:0}
+.fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
+input[type=text],select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--fg)}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.bad{border-color:var(--bad)!important;background:rgba(192,40,31,.07)!important}
+.grp{border:1px solid var(--line);border-radius:8px;padding:10px 10px 2px;margin-bottom:10px}
+.grp>h3{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.prm{display:grid;grid-template-columns:1.1fr 1fr;gap:6px;margin-bottom:8px}
+.prm .pl{grid-column:1/-1;font-size:12.5px;color:var(--muted)}
+.small{font-size:12.5px;color:var(--muted);margin:0 0 9px}
+.goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:8px 10px;margin:0 0 10px}
+.steps{margin:0 0 10px;padding-left:20px}.steps li{margin-bottom:7px}
+.hform{font:500 13px var(--font-mono);background:var(--panel2);border-radius:6px;padding:6px 9px;margin:0 0 10px;word-break:break-word}
+.errbox{border:1px solid var(--bad);background:rgba(192,40,31,.08);border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.errbox ul{margin:6px 0 0;padding-left:20px}
+.warnbox{border:1px solid #d9a21b;background:rgba(224,160,40,.14);border-radius:8px;padding:6px 12px;margin:8px 0;font-size:13px}
+.fbox{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:14px 14px;margin:6px 0 10px;font:16px/2.1 var(--font-ui);overflow-x:auto;background:var(--panel)}
+.fbox .lhs{white-space:nowrap}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .25em;line-height:1.5}
+.fr>span{white-space:nowrap;padding:0 .3em}
+.fr>span:first-child{border-bottom:1.5px solid currentColor;padding-bottom:.12em}
+.fr>span:last-child{padding-top:.12em}
+.fr .fr{font-size:.88em}
+.seg2{display:flex;gap:14px;flex-wrap:wrap}
+.card{border:1px solid var(--line);border-radius:8px;margin:0 0 10px;overflow:hidden}
+.card h4{margin:0;padding:5px 10px;font-size:12px;background:var(--panel2);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;padding:8px 10px;font-size:13px;margin:0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-family:var(--font-mono);font-size:12.5px;word-break:break-word}
+.badge{display:inline-block;padding:1px 9px;border-radius:10px;font:600 12.5px var(--font-ui)}
+.badge.stable{background:rgba(30,122,46,.15);color:var(--ok)}.badge.marginal{background:rgba(224,160,40,.2);color:var(--warn)}.badge.unstable{background:rgba(192,40,31,.14);color:var(--bad)}
+details.mason{border:1px dashed var(--accent);border-radius:8px;padding:6px 10px;margin:0 0 10px}
+details.mason summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+details.mason p,details.mason li{font-size:13px;margin:4px 0}
+details.mason ul{padding-left:18px;margin:4px 0}
+.mono-s{font-family:var(--font-mono);font-size:12.5px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:60;max-width:90vw}
+#dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(680px,100%);max-height:88%;display:flex;flex-direction:column}
+.dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlgbox header b{font-size:16px}
+.dlgbox .dbody{padding:14px 16px;overflow:auto}
+.dlgbox h3{margin:14px 0 4px;font-size:14px}.dlgbox p,.dlgbox li{margin:4px 0;font-size:13.5px}
+.dlgbox code{font-family:var(--font-mono);background:var(--panel2);padding:0 4px;border-radius:4px;font-size:12.5px}
+.dlgbox table{border-collapse:collapse;font-size:13px;margin:6px 0;width:100%}
+.dlgbox td,.dlgbox th{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+.dlgbox th{background:var(--panel2)}
+.exrow{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0}
+.exrow p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+@media (max-width:820px){
+  .work{flex-direction:column;gap:8px}
+  #palette{flex-direction:row;width:auto;overflow-x:auto;overflow-y:hidden;flex:none}
+  .sep{width:1px;height:auto;margin:0 2px}
+  .tool{min-width:78px}
+  #panel,#panel.wide{position:fixed;left:0;right:0;bottom:0;width:auto;height:66%;max-height:none;border-radius:14px 14px 0 0;z-index:30;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
+}
+@media (prefers-reduced-motion:no-preference){.tool,.btn{transition:border-color .12s,background .12s}}
+</style></head>
+<body>
+<div id="app">
+  <header class="band"><div class="inner row">
+    <div class="brand"><svg width="28" height="26" viewBox="0 0 28 26" aria-hidden="true"><rect x="2" y="7" width="9" height="12" rx="2" fill="none" stroke="var(--fg)" stroke-width="1.6"/><rect x="17" y="7" width="9" height="12" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/><path d="M11 13h6m-3-3l3 3-3 3" fill="none" stroke="var(--fg)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Atelier Schémas-blocs <small>FTBF</small></span></div>
+    <div class="files">
+      <button class="btn run" id="bCalc" type="button">Calculer la FTBF</button>
+      <button class="btn" id="bEx" type="button">Exemples</button>
+      <button class="btn" id="bClear" type="button">Effacer</button>
+      <button class="btn" id="bPanel" type="button" aria-pressed="true">Panneau</button>
+      <button class="btn" id="bHelp" type="button">Aide</button>
+    </div>
+  </div></header>
+  <main class="inner work" id="work">
+    <nav id="palette" aria-label="Palette de blocs"></nav>
+    <section id="stage"><div id="hint"></div><div id="scroller"><svg id="svg" width="1400" height="900" role="application" aria-label="Zone de travail du schéma-blocs"></svg></div></section>
+    <aside id="panel" aria-label="Propriétés et résultat"></aside>
+  </main>
+</div>
+<div id="dlg" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+'use strict';
+/*MATH-START*/
+/* ====== Polynômes multivariés (variables : p et les symboles des paramètres) ====== */
+const SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻', '+': '' };
+const sup = n => String(n).split('').map(c => SUP[c] != null ? SUP[c] : c).join('');
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+function kparse(k) { const o = Object.create(null); if (k) for (const t of k.split('*')) { const i = t.lastIndexOf('^'); o[t.slice(0, i)] = +t.slice(i + 1); } return o; }
+function kstr(o) { return Object.keys(o).filter(n => o[n] > 0).sort().map(n => n + '^' + o[n]).join('*'); }
+function mulKey(a, b) { if (!a) return b; if (!b) return a; const o = kparse(a), q = kparse(b); for (const n in q) o[n] = (o[n] || 0) + q[n]; return kstr(o); }
+const PLY = {
+  c: n => n ? new Map([['', n]]) : new Map(),
+  v: n => new Map([[n + '^1', 1]]),
+  add(a, b) { const r = new Map(a); for (const [k, c] of b) { const n = (r.get(k) || 0) + c; if (n) r.set(k, n); else r.delete(k); } return r; },
+  neg(a) { const r = new Map(); for (const [k, c] of a) r.set(k, -c); return r; },
+  mul(a, b) { const r = new Map(); for (const [ka, ca] of a) for (const [kb, cb] of b) { const k = mulKey(ka, kb), n = (r.get(k) || 0) + ca * cb; if (n) r.set(k, n); else r.delete(k); } return r; }
+};
+const V = n => PLY.v(n), C = n => PLY.c(n), PP = PLY.v('p');
+const A = (...x) => x.reduce((a, b) => PLY.add(a, b));
+const M = (...x) => x.reduce((a, b) => PLY.mul(a, b));
+
+/* Simplification : facteur monomial et entier communs au numérateur et au dénominateur */
+function cancelCommon(Aa, Bb) {
+  if (!Aa.size || !Bb.size) return { n: Aa, d: Bb };
+  let g = null, ig = 0, intOk = true;
+  for (const m of [Aa, Bb]) for (const [k, c] of m) {
+    const o = kparse(k);
+    if (g === null) g = o; else for (const n in g) g[n] = Math.min(g[n], o[n] || 0);
+    if (Number.isInteger(c)) ig = gcd(ig, Math.abs(c)); else intOk = false;
+  }
+  if (!intOk || ig === 0) ig = 1;
+  const div = m => { const r = new Map(); for (const [k, c] of m) { const o = kparse(k); for (const n in g) o[n] -= g[n]; r.set(kstr(o), c / ig); } return r; };
+  let n = div(Aa), d = div(Bb);
+  if (d.size === 1 && [...d.values()][0] < 0) { n = PLY.neg(n); d = PLY.neg(d); }
+  return { n, d };
+}
+function toArr(P) {
+  const arr = [];
+  for (const [k, c] of P) { const o = kparse(k), e = o.p || 0; delete o.p; if (!arr[e]) arr[e] = new Map(); arr[e].set(kstr(o), c); }
+  for (let i = 0; i < arr.length; i++) if (!arr[i]) arr[i] = new Map();
+  return arr;
+}
+function evalPoly(P, vals) { let s = 0; for (const [k, c] of P) { const o = kparse(k); let v = c; for (const n in o) v *= Math.pow(vals.get(n), o[n]); s += v; } return s; }
+
+/* ====== Types de blocs ====== */
+/* params : [base du symbole, libellé, valeur par défaut] */
+const TYPES = {
+  in: { label: 'Entrée', pre: 'E', nin: 0, params: [] },
+  out: { label: 'Sortie', pre: 'S', nin: 1, params: [] },
+  sum: { label: 'Comparateur', pre: 'Σ', nin: 2, params: [] },
+  prop: { label: 'Proportionnel', pre: 'H', nin: 1, params: [['K', 'Gain K', 2]], poly: s => ({ N: V(s[0]), D: C(1) }), expr: s => `${s[0]}` },
+  int: { label: 'Intégrateur', pre: 'H', nin: 1, params: [['K', 'Gain K', 1]], poly: s => ({ N: V(s[0]), D: PP }), expr: s => `${s[0]}/p` },
+  der: { label: 'Dérivateur', pre: 'H', nin: 1, params: [['K', 'Gain K', 1]], poly: s => ({ N: M(V(s[0]), PP), D: C(1) }), expr: s => `${s[0]}·p` },
+  ord1: { label: '1er ordre', pre: 'H', nin: 1, params: [['K', 'Gain statique K', 1], ['τ', 'Constante de temps τ (s)', 1]],
+    poly: s => ({ N: V(s[0]), D: A(C(1), M(V(s[1]), PP)) }), expr: s => `${s[0]}/(1+${s[1]}·p)` },
+  ord2: { label: '2nd ordre', pre: 'H', nin: 1, params: [['K', 'Gain statique K', 1], ['ξ', 'Amortissement ξ', 0.7], ['ω', 'Pulsation propre ω₀ (rad/s)', 2]],
+    poly: s => ({ N: M(V(s[0]), V(s[2]), V(s[2])), D: A(M(V(s[2]), V(s[2])), M(C(2), V(s[1]), V(s[2]), PP), M(PP, PP)) }),
+    expr: s => `${s[0]}/(1+2·${s[1]}·p/${s[2]}+p²/${s[2]}²)` },
+  ord1inv: { label: '1er ordre inversé', pre: 'H', nin: 1, params: [['K', 'Gain statique K', 1], ['τ', 'Constante de temps τ (s)', 1]],
+    poly: s => ({ N: A(C(1), M(V(s[1]), PP)), D: V(s[0]) }), expr: s => `(1+${s[1]}·p)/${s[0]}` },
+  ord2inv: { label: '2nd ordre inversé', pre: 'H', nin: 1, params: [['K', 'Gain statique K', 1], ['ξ', 'Amortissement ξ', 0.7], ['ω', 'Pulsation propre ω₀ (rad/s)', 2]],
+    poly: s => ({ N: A(M(V(s[2]), V(s[2])), M(C(2), V(s[1]), V(s[2]), PP), M(PP, PP)), D: M(V(s[0]), V(s[2]), V(s[2])) }),
+    expr: s => `(1+2·${s[1]}·p/${s[2]}+p²/${s[2]}²)/${s[0]}` },
+  corP: { label: 'Correcteur P', pre: 'C', nin: 1, params: [['Kp', 'Gain proportionnel Kp', 2]], poly: s => ({ N: V(s[0]), D: C(1) }), expr: s => `${s[0]}` },
+  corPI: { label: 'Correcteur PI', pre: 'C', nin: 1, params: [['Kp', 'Gain proportionnel Kp', 2], ['Ti', 'Temps d’intégration Ti (s)', 1]],
+    poly: s => ({ N: A(V(s[0]), M(V(s[0]), V(s[1]), PP)), D: M(V(s[1]), PP) }), expr: s => `${s[0]}·(1+1/(${s[1]}·p))` },
+  corAv: { label: 'Avance de phase', pre: 'C', nin: 1, params: [['Kc', 'Gain Kc', 2], ['a', 'Rapport a (> 1)', 3], ['T', 'Constante T (s)', 0.5]],
+    poly: s => ({ N: M(V(s[0]), A(C(1), M(V(s[1]), V(s[2]), PP))), D: A(C(1), M(V(s[2]), PP)) }), expr: s => `${s[0]}·(1+${s[1]}·${s[2]}·p)/(1+${s[2]}·p)` }
+};
+const validSym = s => /^\p{L}[\p{L}\p{N}_]*$/u.test(s) && s !== 'p';
+const portName = (b, i) => b.type === 'sum' ? (i === 0 ? 'entrée 1 (gauche)' : 'entrée 2 (bas)') : 'entrée';
+
+/* ====== Formule de Mason ====== */
+function bfs(start, edges, rev) {
+  const seen = new Set([start]), q = [start];
+  while (q.length) { const u = q.shift(); for (const e of edges) { const a = rev ? e.to : e.from, b = rev ? e.from : e.to; if (a === u && !seen.has(b)) { seen.add(b); q.push(b); } } }
+  return seen;
+}
+function mason(kept, edges, E, S, nd, nm) {
+  const adj = new Map(kept.map(id => [id, []])); edges.forEach(e => adj.get(e.from).push(e));
+  const idx = new Map(kept.map((id, i) => [id, i]));
+  const paths = [], loops = [];
+  (function dfs(u, nodes, es) {
+    if (u === S) { paths.push({ nodes: nodes.slice(), set: new Set(nodes), sgn: es.reduce((a, e) => a * e.sgn, 1) }); return; }
+    for (const e of adj.get(u)) if (!nodes.includes(e.to)) { nodes.push(e.to); es.push(e); dfs(e.to, nodes, es); es.pop(); nodes.pop(); }
+    if (paths.length > 60) throw new Error('Schéma trop complexe : trop de chaînes directes.');
+  })(E, [E], []);
+  for (const s of kept) {
+    const nodes = [s], es = [], on = new Set([s]);
+    (function dfs(u) {
+      for (const e of adj.get(u)) {
+        const v = e.to; if (idx.get(v) < idx.get(s)) continue;
+        if (v === s) { es.push(e); loops.push({ nodes: nodes.slice(), set: new Set(nodes), sgn: es.reduce((a, x) => a * x.sgn, 1) }); es.pop(); }
+        else if (!on.has(v)) { on.add(v); nodes.push(v); es.push(e); dfs(v); es.pop(); nodes.pop(); on.delete(v); }
+      }
+      if (loops.length > 60) throw new Error('Schéma trop complexe : trop de boucles.');
+    })(s);
+  }
+  function subsets(avoid) {
+    const out = [];
+    (function rec(start, used, idxs) {
+      out.push({ used: new Set(used), idxs: idxs.slice() });
+      if (out.length > 20000) throw new Error('Schéma trop complexe.');
+      for (let i = start; i < loops.length; i++) {
+        const L = loops[i]; let ok = true;
+        for (const n of L.set) if (used.has(n) || avoid.has(n)) { ok = false; break; }
+        if (!ok) continue;
+        for (const n of L.set) used.add(n); idxs.push(i);
+        rec(i + 1, used, idxs);
+        idxs.pop(); for (const n of L.set) used.delete(n);
+      }
+    })(0, new Set(), []);
+    return out;
+  }
+  const hs = kept.filter(id => nd.get(id).h);
+  const term = (set, sign) => { let r = C(sign); for (const id of hs) { const f = nd.get(id); r = PLY.mul(r, set.has(id) ? f.N : f.D); } return r; };
+  const sgnOf = sub => sub.idxs.reduce((a, i) => a * loops[i].sgn * -1, 1);
+  let Nn = new Map(), Dd = new Map();
+  const dsub = subsets(new Set());
+  for (const sub of dsub) Dd = PLY.add(Dd, term(sub.used, sgnOf(sub)));
+  const dk = [];
+  paths.forEach((P, k) => {
+    const subs = subsets(P.set); dk.push(subs);
+    for (const sub of subs) { const set = new Set([...P.set, ...sub.used]); Nn = PLY.add(Nn, term(set, P.sgn * sgnOf(sub))); }
+  });
+  /* textes pédagogiques */
+  const gain = (nodes, sgn) => { const t = nodes.filter(id => nd.get(id).h).map(nm); return (sgn < 0 ? '−' : '') + (t.length ? t.join('·') : '1'); };
+  const lab = i => 'L' + (i + 1);
+  const dtxt = subs => { const by = {}; subs.forEach(s => { (by[s.idxs.length] = by[s.idxs.length] || []).push(s.idxs.map(lab).join('·')); }); let t = '1'; Object.keys(by).map(Number).filter(n => n > 0).sort().forEach(n => { t += (n % 2 ? ' − ' : ' + ') + by[n].map(x => x).join((n % 2 ? ' − ' : ' + ')); }); return t; };
+  return {
+    N: Nn, D: Dd,
+    paths: paths.map((P, k) => ({ text: P.nodes.map(nm).join(' → '), gain: gain(P.nodes, P.sgn), delta: dtxt(dk[k]) })),
+    loops: loops.map((L, i) => ({ text: L.nodes.map(nm).concat(nm(L.nodes[0])).join(' → '), gain: gain(L.nodes, L.sgn), name: lab(i) })),
+    deltaTxt: dtxt(dsub)
+  };
+}
+
+/* ====== Mise en forme (balisage {{num//den}} pour les fractions) ====== */
+function fmtNum(x) {
+  if (!isFinite(x)) return String(x);
+  if (Math.abs(x) < 1e-12) return '0';
+  const s = String(+x.toPrecision(5)), m = /^(-?[\d.]+)e([+-]\d+)$/.exec(s);
+  const r = m ? m[1].replace('.', ',') + '×10' + sup(+m[2]) : s.replace('.', ',');
+  return r.replace('-', '−');
+}
+const degK = k => { const o = kparse(k); return Object.keys(o).reduce((a, n) => a + o[n], 0); };
+function monoStr(key, c) { const o = kparse(key), parts = []; if (c !== 1 || !key) parts.push(String(c)); for (const n of Object.keys(o).sort()) parts.push(n + (o[n] > 1 ? sup(o[n]) : '')); return parts.join('·'); }
+function flat(poly) {
+  const ts = [...poly].sort((a, b) => degK(a[0]) - degK(b[0]) || (a[0] < b[0] ? -1 : 1));
+  if (!ts.length) return '0';
+  return ts.map(([k, c], i) => { const s = monoStr(k, Math.abs(c)); return i ? (c < 0 ? ' − ' : ' + ') + s : (c < 0 ? '−' : '') + s; }).join('');
+}
+function assemble(items) {
+  if (!items.length) return '0';
+  return items.map((it, i) => {
+    const pS = it.k === 0 ? '' : it.k === 1 ? 'p' : 'p' + sup(it.k);
+    const wrap = it.multi && (items.length > 1 || it.k > 0), body = wrap ? '(' + it.body + ')' : it.body;
+    const t = it.k === 0 ? body : (it.body === '1' && !it.multi ? pS : body + '·' + pS);
+    return (i ? (it.neg ? ' − ' : ' + ') : (it.neg ? '−' : '')) + t;
+  }).join('');
+}
+const itemsSym = arr => arr.map((c, k) => c.size ? (c.size === 1 ? (([key, co]) => ({ k, neg: co < 0, body: monoStr(key, Math.abs(co)), multi: false }))([...c][0]) : { k, neg: false, body: flat(c), multi: true }) : null).filter(Boolean);
+const itemsNum = arr => arr.map((c, k) => c !== 0 ? { k, neg: c < 0, body: fmtNum(Math.abs(c)), multi: false } : null).filter(Boolean);
+const fracOf = (n, d) => d === '1' ? n : `{{${n}//${d}}}`;
+const isOne = P => P.size === 1 && P.has('') && P.get('') === 1;
+function fracMk(fr) {
+  const { n, d } = fr, dOne = isOne(d);
+  if (n.size === 1) { const [[k, c]] = [...n], m = monoStr(k, Math.abs(c)); return { neg: c < 0, body: dOne ? m : `{{${m}//${flat(d)}}}`, multi: false }; }
+  return dOne ? { neg: false, body: flat(n), multi: true } : { neg: false, body: `{{${flat(n)}//${flat(d)}}}`, multi: false };
+}
+const withP = (s, k) => k === 0 ? s : (k === 1 ? 'p' : 'p' + sup(k)) + (s === '1' ? '' : '·(' + s + ')');
+const lowSym = a => { for (let i = 0; i < a.length; i++) if (a[i].size) return i; return -1; };
+const lowNum = a => { for (let i = 0; i < a.length; i++) if (a[i] !== 0) return i; return -1; };
+function joinK(kStr, frac) { if (!kStr) return frac; return kStr === '−' ? '−' + frac : kStr + '·' + frac; }
+function canonSymMk(Na, Da) {
+  const n0 = lowSym(Na), a0 = lowSym(Da), K = cancelCommon(Na[n0], Da[a0]), kf = fracMk(K);
+  const seq = (arr, i0) => { const items = [{ k: 0, neg: false, body: '1', multi: false }]; for (let j = i0 + 1; j < arr.length; j++) if (arr[j].size) { const f = fracMk(cancelCommon(arr[j], arr[i0])); items.push({ k: j - i0, neg: f.neg, body: f.body, multi: f.multi }); } return assemble(items); };
+  const np = withP(seq(Na, n0), n0), dp = withP(seq(Da, a0), a0);
+  const kStr = isOne(K.n) && isOne(K.d) ? '' : (kf.neg ? '−' : '') + (kf.body === '1' && kf.neg ? '' : (kf.multi ? '(' + kf.body + ')' : kf.body));
+  if (np === '1' && dp === '1') return kStr || '1';
+  return joinK(kStr, `{{${np}//${dp}}}`);
+}
+function canonNumMk(Nv, Dv) {
+  const n0 = lowNum(Nv), a0 = lowNum(Dv), K = Nv[n0] / Dv[a0];
+  const seq = (arr, i0) => { const items = [{ k: 0, neg: false, body: '1', multi: false }]; for (let j = i0 + 1; j < arr.length; j++) if (arr[j] !== 0) { const r = arr[j] / arr[i0]; items.push({ k: j - i0, neg: r < 0, body: fmtNum(Math.abs(r)), multi: false }); } return assemble(items); };
+  const np = withP(seq(Nv, n0), n0), dp = withP(seq(Dv, a0), a0);
+  const kStr = Math.abs(K - 1) < 1e-12 ? '' : Math.abs(K + 1) < 1e-12 ? '−' : (K < 0 ? '−' : '') + fmtNum(Math.abs(K));
+  if (np === '1' && dp === '1') return kStr === '−' ? '−1' : (kStr || '1');
+  return joinK(kStr, `{{${np}//${dp}}}`);
+}
+function markupToText(s) {
+  const re = /\{\{([^{}]*?)\/\/([^{}]*?)\}\}/;
+  const par = x => /^[^\s+−·]*$/.test(x) ? x : '(' + x + ')';
+  while (re.test(s)) s = s.replace(re, (m, a, b) => par(a) + '/' + par(b));
+  return s;
+}
+
+/* ====== Racines (Durand-Kerner) et caractéristiques ====== */
+function polyRoots(c) {
+  c = c.slice(); while (c.length && c[c.length - 1] === 0) c.pop();
+  const n = c.length - 1; if (n < 1) return [];
+  const a = c.map(x => x / c[n]);
+  const R = 1 + Math.max(...a.slice(0, n).map(Math.abs));
+  let z = []; for (let i = 0; i < n; i++) { const t = 2 * Math.PI * i / n + 0.5; z.push([R * 0.6 * Math.cos(t), R * 0.6 * Math.sin(t)]); }
+  const mul = (x, y) => [x[0] * y[0] - x[1] * y[1], x[0] * y[1] + x[1] * y[0]];
+  const div = (x, y) => { const d = y[0] * y[0] + y[1] * y[1]; return [(x[0] * y[0] + x[1] * y[1]) / d, (x[1] * y[0] - x[0] * y[1]) / d]; };
+  for (let it = 0; it < 2000; it++) {
+    let mx = 0;
+    for (let i = 0; i < n; i++) {
+      let f = [1, 0]; for (let k = n - 1; k >= 0; k--) { f = mul(f, z[i]); f[0] += a[k]; }
+      let d = [1, 0]; for (let j = 0; j < n; j++) if (j !== i) d = mul(d, [z[i][0] - z[j][0], z[i][1] - z[j][1]]);
+      if (d[0] === 0 && d[1] === 0) d = [1e-12, 0];
+      const dz = div(f, d); z[i] = [z[i][0] - dz[0], z[i][1] - dz[1]]; mx = Math.max(mx, Math.hypot(dz[0], dz[1]));
+    }
+    if (mx < 1e-14 * R) break;
+  }
+  return z.map(w => { const s = Math.max(1, Math.hypot(w[0], w[1])); return [Math.abs(w[0]) < 1e-9 * s ? 0 : w[0], Math.abs(w[1]) < 1e-6 * s ? 0 : w[1]]; }).sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+}
+function chars(N, D) {
+  const n0 = lowNum(N), a0 = lowNum(D), o = { n0, a0, order: D.length - 1, K: N[n0] / D[a0] };
+  const Dc = D.slice(a0).map(x => x / D[a0]);
+  o.poles = []; for (let i = 0; i < a0; i++) o.poles.push([0, 0]); polyRoots(D.slice(a0)).forEach(z => o.poles.push(z));
+  o.zeros = []; for (let i = 0; i < n0; i++) o.zeros.push([0, 0]); polyRoots(N.slice(n0)).forEach(z => o.zeros.push(z));
+  if (Dc.length === 2) o.tau = Dc[1];
+  if (Dc.length === 3 && Dc[2] > 0) { o.w0 = 1 / Math.sqrt(Dc[2]); o.xi = Dc[1] * o.w0 / 2; }
+  let pos = false, zero = false;
+  for (const z of o.poles) { const tol = 1e-7 * (1 + Math.hypot(z[0], z[1])); if (z[0] > tol) pos = true; else if (z[0] >= -tol) zero = true; }
+  o.stab = pos || a0 >= 2 ? 'unstable' : zero ? 'marginal' : 'stable';
+  return o;
+}
+const fmtC = z => { if (z[1] === 0) return fmtNum(z[0]); return fmtNum(z[0]) + (z[1] < 0 ? ' − ' : ' + ') + fmtNum(Math.abs(z[1])) + ' j'; };
+
+/* ====== Résolution complète d'un schéma ====== */
+function solveDiagram(model) {
+  const res = { errors: [], warnings: [] };
+  const B = new Map(model.blocks.map(b => [b.id, b]));
+  const E = model.blocks.find(b => b.type === 'in'), S = model.blocks.find(b => b.type === 'out');
+  if (!E) res.errors.push('Ajoutez un bloc Entrée E(p).');
+  if (!S) res.errors.push('Ajoutez un bloc Sortie S(p).');
+  if (res.errors.length) return res;
+  const edges = model.links.filter(l => B.has(l.from) && B.has(l.to)).map(l => { const t = B.get(l.to); return { from: l.from, to: l.to, port: l.port, sgn: t.type === 'sum' ? ((t.signs || [1, -1])[l.port] || 1) : 1 }; });
+  const reach = bfs(E.id, edges, false), co = bfs(S.id, edges, true);
+  if (!reach.has(S.id)) {
+    res.errors.push('Aucun chemin de E(p) vers S(p) : reliez les blocs.');
+    for (const b of model.blocks) for (let i = 0; i < TYPES[b.type].nin; i++) if (!edges.some(e => e.to === b.id && e.port === i)) res.errors.push(`${b.name} : ${portName(b, i)} non reliée.`);
+    return res;
+  }
+  const kept = model.blocks.filter(b => reach.has(b.id) && co.has(b.id)), keptIds = new Set(kept.map(b => b.id));
+  for (const b of kept) for (let i = 0; i < TYPES[b.type].nin; i++) {
+    const e = edges.find(x => x.to === b.id && x.port === i);
+    if (!e) res.errors.push(`${b.name} : ${portName(b, i)} non reliée.`);
+    else if (!reach.has(e.from)) res.errors.push(`${B.get(e.from).name} alimente ${b.name} mais ne reçoit rien depuis E(p).`);
+  }
+  if (res.errors.length) return res;
+  const unused = model.blocks.filter(b => !keptIds.has(b.id) && b.type !== 'in' && b.type !== 'out');
+  if (unused.length) res.warnings.push('Blocs non utilisés dans le calcul : ' + unused.map(b => b.name).join(', ') + '.');
+  const vals = new Map(), owner = new Map();
+  for (const b of kept) b.p.forEach((q, i) => {
+    if (!validSym(q.sym)) res.errors.push(`${b.name} : symbole « ${q.sym} » invalide (lettres, chiffres et _ ; différent de p).`);
+    else if (!Number.isFinite(q.val)) res.errors.push(`${b.name} : valeur numérique de ${q.sym} invalide.`);
+    else if (vals.has(q.sym) && vals.get(q.sym) !== q.val) res.errors.push(`Le symbole ${q.sym} a deux valeurs différentes (${owner.get(q.sym)} et ${b.name}).`);
+    else { vals.set(q.sym, q.val); owner.set(q.sym, b.name); }
+  });
+  if (res.errors.length) return res;
+  const nd = new Map();
+  for (const b of kept) { const sp = TYPES[b.type]; if (sp.poly) { const f = sp.poly(b.p.map(q => q.sym)); nd.set(b.id, { N: f.N, D: f.D, h: true }); } else nd.set(b.id, { N: C(1), D: C(1), h: false }); }
+  const kedges = edges.filter(e => keptIds.has(e.from) && keptIds.has(e.to));
+  let m;
+  try { m = mason(kept.map(b => b.id), kedges, E.id, S.id, nd, id => B.get(id).name); } catch (err) { res.errors.push(err.message); return res; }
+  res.paths = m.paths; res.loops = m.loops; res.deltaTxt = m.deltaTxt; res.vals = vals;
+  if (m.D.size === 0) { res.errors.push('Dénominateur nul : schéma dégénéré (deux termes qui s’annulent exactement).'); return res; }
+  if (m.N.size === 0) { res.zero = true; res.mk = { ncSym: '0', cSym: '0', ncNum: '0', cNum: '0' }; res.numOk = true; return res; }
+  const cc = cancelCommon(m.N, m.D), Na = toArr(cc.n), Da = toArr(cc.d);
+  const clean = a => { const mx = Math.max(0, ...a.map(Math.abs)); a = a.map(x => Math.abs(x) <= 1e-12 * mx ? 0 : x); while (a.length && a[a.length - 1] === 0) a.pop(); return a; };
+  const mk = {
+    ncSym: fracOf(assemble(itemsSym(Na)), assemble(itemsSym(Da))),
+    cSym: canonSymMk(Na, Da)
+  };
+  let Nv = clean(Na.map(c => c.size ? evalPoly(c, vals) : 0)), Dv = clean(Da.map(c => c.size ? evalPoly(c, vals) : 0));
+  res.numOk = true;
+  if (!Dv.length) { res.numOk = false; res.numMsg = 'Le dénominateur est nul pour ces valeurs numériques.'; }
+  else if (!Nv.length) { res.numZero = true; mk.ncNum = mk.cNum = '0'; }
+  else {
+    const sh = Math.min(lowNum(Nv), lowNum(Dv)); Nv = Nv.slice(sh); Dv = Dv.slice(sh);
+    mk.ncNum = fracOf(assemble(itemsNum(Nv)), assemble(itemsNum(Dv)));
+    mk.cNum = canonNumMk(Nv, Dv);
+    res.num = { N: Nv, D: Dv }; res.chars = chars(Nv, Dv);
+  }
+  res.mk = mk;
+  return res;
+}
+/*MATH-END*/
+
+/* ====================== Interface ====================== */
+const $ = (s, r) => (r || document).querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v; else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, ''); else el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
+  return el;
+}
+function sv(tag, attrs, ...kids) { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in (attrs || {})) e.setAttribute(k, attrs[k]); kids.forEach(c => c != null && e.append(c)); return e; }
+let toastT = null;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3200); }
+function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
+const KEY = 'atelier-ftbf-v1';
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
+
+const S = { blocks: [], links: [], nid: 1, nl: 1, sel: null, tool: 'sel', linkFrom: null, tab: 'props', panel: !isSmall(), calc: false, form: 'nc', vals: 'sym' };
+let drag = null, mouse = null;
+const blk = id => S.blocks.find(b => b.id === id);
+function save() { lsSet(KEY, { blocks: S.blocks, links: S.links, nid: S.nid, nl: S.nl, form: S.form, vals: S.vals }); }
+
+/* ---------- géométrie ---------- */
+const exprText = b => TYPES[b.type].expr ? TYPES[b.type].expr(b.p.map(q => q.sym)) : '';
+function geo(b) {
+  if (b.type === 'sum') return { w: 48, h: 48, ins: [{ x: 0, y: 24, side: 'l' }, { x: 24, y: 48, side: 'b' }], out: { x: 48, y: 24 } };
+  if (b.type === 'in') return { w: 84, h: 44, ins: [], out: { x: 84, y: 22 } };
+  if (b.type === 'out') return { w: 84, h: 44, ins: [{ x: 0, y: 22, side: 'l' }], out: null };
+  const w = Math.max(124, Math.round(exprText(b).length * 7.3 + 26));
+  return { w, h: 64, ins: [{ x: 0, y: 32, side: 'l' }], out: { x: w, y: 32 } };
+}
+function linkPts(l, cnt) {
+  const a = blk(l.from), b = blk(l.to); if (!a || !b) return null;
+  const ga = geo(a), gb = geo(b), pin = gb.ins[l.port]; if (!ga.out || !pin) return null;
+  const p1 = { x: a.x + ga.out.x, y: a.y + ga.out.y }, p2 = { x: b.x + pin.x, y: b.y + pin.y }, pts = [[p1.x, p1.y]];
+  const low = () => Math.max(a.y + ga.h, b.y + gb.h) + 26 + 11 * (cnt.n++);
+  if (pin.side === 'b') { const yb = low(); pts.push([p1.x + 16, p1.y], [p1.x + 16, yb], [p2.x, yb]); }
+  else if (p2.x - p1.x >= 36) { if (p1.y !== p2.y) { const mx = Math.round((p1.x + p2.x) / 2); pts.push([mx, p1.y], [mx, p2.y]); } }
+  else { const yb = low(); pts.push([p1.x + 16, p1.y], [p1.x + 16, yb], [p2.x - 16, yb], [p2.x - 16, p2.y]); }
+  pts.push([p2.x, p2.y]); return pts;
+}
+
+/* ---------- dessin ---------- */
+function draw() {
+  const svg = $('#svg'); svg.replaceChildren();
+  svg.classList.toggle('mode-link', S.tool === 'link');
+  svg.append(sv('defs', null, sv('pattern', { id: 'dots', width: 20, height: 20, patternUnits: 'userSpaceOnUse' }, sv('circle', { cx: 1, cy: 1, r: 1, fill: '#d5dae0' }))));
+  svg.append(sv('rect', { width: 1400, height: 900, fill: 'url(#dots)' }));
+  const cnt = { n: 0 }, fan = {};
+  S.links.forEach(l => { fan[l.from] = (fan[l.from] || 0) + 1; });
+  S.links.forEach(l => {
+    const pts = linkPts(l, cnt); if (!pts) return;
+    const on = S.sel && S.sel.t === 'l' && S.sel.id === l.id, ps = pts.map(p => p.join(',')).join(' ');
+    const g = sv('g', { 'data-l': l.id }); g.append(sv('polyline', { class: 'hit', points: ps }), sv('polyline', { class: 'cab' + (on ? ' on' : ''), points: ps }));
+    const [x0, y0] = pts[pts.length - 2], [x1, y1] = pts[pts.length - 1], dx = Math.sign(x1 - x0), dy = Math.sign(y1 - y0), px = -dy, py = dx;
+    g.append(sv('polygon', { class: 'arr' + (on ? ' on' : ''), points: `${x1},${y1} ${x1 - 10 * dx + 5 * px},${y1 - 10 * dy + 5 * py} ${x1 - 10 * dx - 5 * px},${y1 - 10 * dy - 5 * py}` }));
+    if (fan[l.from] > 1) g.append(sv('circle', { class: 'dot', cx: pts[0][0], cy: pts[0][1], r: 4.5 }));
+    svg.append(g);
+  });
+  S.blocks.forEach(b => {
+    const g = geo(b), n = sv('g', { class: 'node', 'data-b': b.id, transform: `translate(${b.x},${b.y})` });
+    const src = S.linkFrom === b.id;
+    if (b.type === 'sum') {
+      n.append(sv('circle', { class: 'blk' + (src ? ' src' : ''), cx: 24, cy: 24, r: 22 }), sv('text', { class: 'nlabel', x: 24, y: 29, 'text-anchor': 'middle', style: 'font-size:16px' }, 'Σ'));
+      n.append(sv('text', { class: 'sgn', x: -12, y: 18 }, (b.signs[0] < 0 ? '−' : '+')), sv('text', { class: 'sgn', x: 31, y: 63 }, (b.signs[1] < 0 ? '−' : '+')));
+      n.append(sv('text', { class: 'nlabel', x: 24, y: -6, 'text-anchor': 'middle' }, b.name));
+    } else if (b.type === 'in' || b.type === 'out') {
+      n.append(sv('rect', { class: 'blk io' + (src ? ' src' : ''), width: g.w, height: g.h, rx: 22 }), sv('text', { class: 'nlabel', x: g.w / 2, y: g.h / 2 + 5, 'text-anchor': 'middle', style: 'font-size:14px' }, b.type === 'in' ? 'E(p)' : 'S(p)'));
+    } else {
+      n.append(sv('rect', { class: 'blk' + (src ? ' src' : ''), width: g.w, height: g.h, rx: 8 }),
+        sv('text', { class: 'tlabel', x: g.w / 2, y: 20, 'text-anchor': 'middle' }, TYPES[b.type].label),
+        sv('text', { class: 'bexpr', x: g.w / 2, y: 45, 'text-anchor': 'middle' }, exprText(b)),
+        sv('text', { class: 'nlabel', x: 0, y: -6 }, b.name));
+    }
+    g.ins.forEach((p, i) => { n.append(sv('circle', { class: 'port', cx: p.x, cy: p.y, r: 4 }), sv('circle', { class: 'ph', cx: p.x, cy: p.y, r: 11, 'data-port': i })); });
+    if (g.out) n.append(sv('circle', { class: 'port', cx: g.out.x, cy: g.out.y, r: 4 }));
+    if (S.sel && S.sel.t === 'b' && S.sel.id === b.id) n.append(sv('rect', { class: 'selbox', x: -6, y: -6, width: g.w + 12, height: g.h + 12, rx: 10 }));
+    svg.append(n);
+  });
+  if (S.linkFrom) { const b = blk(S.linkFrom), g = b && geo(b); if (g && g.out) { const m = mouse || { x: b.x + g.out.x + 40, y: b.y + g.out.y }; svg.append(sv('line', { id: 'rb', x1: b.x + g.out.x, y1: b.y + g.out.y, x2: m.x, y2: m.y, stroke: 'var(--accent)', 'stroke-width': 2.4, 'stroke-dasharray': '6 4', 'pointer-events': 'none' })); } }
+}
+function svgPt(e) { const r = $('#svg').getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+const snap = v => Math.round(v / 10) * 10;
+
+/* ---------- interactions ---------- */
+function select(sel) { S.sel = sel; if (sel) S.tab = 'props'; draw(); renderPanel(); }
+function updHint() {
+  let t;
+  if (S.tool === 'link') t = S.linkFrom ? `Source : ${blk(S.linkFrom) ? blk(S.linkFrom).name : ''}. Cliquez maintenant le bloc destinataire (Échap pour annuler). Sur un comparateur, cliquez sur le petit cercle d’une entrée pour la choisir.` : 'Relier : cliquez d’abord le bloc source, puis le bloc destinataire. Une sortie peut alimenter plusieurs blocs.';
+  else t = 'Cliquez sur un bloc de la palette pour l’ajouter, puis glissez-le. Outil « Relier » pour tracer les liaisons. Suppr pour effacer la sélection.';
+  $('#hint').textContent = t;
+}
+function linkClick(b, portHit) {
+  if (!S.linkFrom) { if (!geo(b).out) { toast('S(p) n’a pas de sortie à relier.'); return; } S.linkFrom = b.id; updHint(); draw(); return; }
+  const src = blk(S.linkFrom);
+  if (b.id === src.id) { S.linkFrom = null; updHint(); draw(); return; }
+  const g = geo(b); if (!g.ins.length) { toast('E(p) ne reçoit aucun signal : choisissez un autre destinataire.'); return; }
+  let port = portHit != null ? portHit : g.ins.findIndex((_, i) => !S.links.some(l => l.to === b.id && l.port === i));
+  if (port < 0) port = 0;
+  S.links = S.links.filter(l => !(l.to === b.id && l.port === port));
+  S.links.push({ id: S.nl++, from: src.id, to: b.id, port });
+  if (b.type === 'sum') toast(`${src.name} → ${b.name} : ${portName(b, port)} (signe ${b.signs[port] < 0 ? '−' : '+'}).`);
+  S.linkFrom = null; save(); updHint(); draw(); renderPanel();
+}
+$('#svg').addEventListener('pointerdown', e => {
+  const t = e.target, bl = t.closest('[data-b]'), lk = t.closest('[data-l]'), pt = svgPt(e);
+  if (S.tool === 'link') {
+    if (bl) { const ph = t.getAttribute && t.getAttribute('data-port'); linkClick(blk(+bl.getAttribute('data-b')), ph != null ? +ph : null); }
+    else { S.linkFrom = null; updHint(); draw(); }
+    e.preventDefault(); return;
+  }
+  if (bl) { const b = blk(+bl.getAttribute('data-b')); drag = { id: b.id, dx: pt.x - b.x, dy: pt.y - b.y }; select({ t: 'b', id: b.id }); e.preventDefault(); }
+  else if (lk) select({ t: 'l', id: +lk.getAttribute('data-l') });
+  else select(null);
+});
+window.addEventListener('pointermove', e => {
+  if (drag) { const b = blk(drag.id), pt = svgPt(e), g = geo(b); if (!b) return; b.x = Math.max(10, Math.min(1400 - g.w - 10, snap(pt.x - drag.dx))); b.y = Math.max(20, Math.min(900 - g.h - 10, snap(pt.y - drag.dy))); draw(); }
+  else if (S.linkFrom) { mouse = svgPt(e); const rb = $('#rb'); if (rb) { rb.setAttribute('x2', mouse.x); rb.setAttribute('y2', mouse.y); } }
+});
+window.addEventListener('pointerup', () => { if (drag) { drag = null; save(); } });
+document.addEventListener('keydown', e => {
+  const tg = e.target && e.target.tagName;
+  if (e.key === 'Escape') { if (!$('#dlg').hidden) closeDlg(); else if (S.linkFrom) { S.linkFrom = null; updHint(); draw(); } else if (S.tool === 'link') setTool('sel'); return; }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && tg !== 'INPUT' && tg !== 'TEXTAREA' && tg !== 'SELECT') { e.preventDefault(); delSel(); }
+});
+function delSel() {
+  if (!S.sel) return;
+  if (S.sel.t === 'b') { const id = S.sel.id; S.blocks = S.blocks.filter(b => b.id !== id); S.links = S.links.filter(l => l.from !== id && l.to !== id); if (S.linkFrom === id) S.linkFrom = null; }
+  else S.links = S.links.filter(l => l.id !== S.sel.id);
+  S.sel = null; save(); draw(); renderPanel(); updHint();
+}
+
+/* ---------- blocs ---------- */
+function nextNum(pre) { let m = 0; S.blocks.forEach(b => { if (b.name.startsWith(pre)) { const n = +b.name.slice(pre.length); if (Number.isInteger(n)) m = Math.max(m, n); } }); return m + 1; }
+function mkBlock(type, x, y, vals) {
+  const sp = TYPES[type], io = type === 'in' || type === 'out', n = io ? 0 : nextNum(sp.pre);
+  const b = { id: S.nid++, type, x, y, name: io ? sp.pre : sp.pre + n, signs: [1, -1], p: sp.params.map((q, i) => ({ sym: q[0] + n, val: vals && vals[i] != null ? vals[i] : q[2] })) };
+  S.blocks.push(b); return b;
+}
+function freeSpot(type) {
+  const probe = { type, p: TYPES[type].params.map(q => ({ sym: q[0] + '9' })) }, g = geo(probe);
+  for (let y = 60; y < 800; y += 100) for (let x = 40; x < 1200; x += 190) {
+    if (!S.blocks.some(b => { const gb = geo(b); return x < b.x + gb.w + 30 && b.x < x + g.w + 30 && y < b.y + gb.h + 30 && b.y < y + g.h + 30; })) return { x, y };
+  }
+  return { x: 40, y: 60 };
+}
+function addBlock(type) {
+  if ((type === 'in' || type === 'out') && S.blocks.some(b => b.type === type)) { const b = S.blocks.find(x => x.type === type); toast(type === 'in' ? 'Il n’y a qu’une seule entrée E(p).' : 'Il n’y a qu’une seule sortie S(p).'); select({ t: 'b', id: b.id }); return; }
+  const pos = freeSpot(type), b = mkBlock(type, pos.x, pos.y);
+  S.calc && false; save(); select({ t: 'b', id: b.id });
+  if (isSmall()) toast(b.name + ' ajouté : glissez-le pour le placer.');
+}
+function lk(a, b, port) { S.links.push({ id: S.nl++, from: a.id, to: b.id, port: port || 0 }); }
+
+/* ---------- exemples ---------- */
+const EXAMPLES = [
+  { t: 'Asservissement du 1er ordre, retour unitaire', d: 'T = H / (1 + H) : le cas le plus simple.', f() {
+    const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), h1 = mkBlock('ord1', 270, 100, [4, 0.5]), o = mkBlock('out', 480, 110);
+    lk(e, s1, 0); lk(s1, h1); lk(h1, o); lk(h1, s1, 1); } },
+  { t: 'Correcteur PI et système du 2nd ordre', d: 'Boucle avec correcteur PI : forme canonique d’ordre 3.', f() {
+    const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), c1 = mkBlock('corPI', 260, 100, [1.5, 2]), h1 = mkBlock('ord2', 450, 100, [1, 0.5, 3]), o = mkBlock('out', 710, 110);
+    lk(e, s1, 0); lk(s1, c1); lk(c1, h1); lk(h1, o); lk(h1, s1, 1); } },
+  { t: 'Retour non unitaire', d: 'Correcteur P, 1er ordre, intégrateur, capteur H3 dans la chaîne de retour.', f() {
+    const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), c1 = mkBlock('corP', 260, 100, [5]), h1 = mkBlock('ord1', 420, 100, [1, 1]), h2 = mkBlock('int', 600, 100, [1]), o = mkBlock('out', 800, 110), h3 = mkBlock('prop', 400, 250, [0.5]);
+    lk(e, s1, 0); lk(s1, c1); lk(c1, h1); lk(h1, h2); lk(h2, o); lk(h2, h3); lk(h3, s1, 1); } },
+  { t: 'Deux boucles imbriquées', d: 'Retour tachymétrique (boucle interne) et retour unitaire (boucle externe).', f() {
+    const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), h1 = mkBlock('ord1', 260, 100, [2, 1]), s2 = mkBlock('sum', 430, 108), h2 = mkBlock('int', 520, 100, [1]), o = mkBlock('out', 700, 110), h3 = mkBlock('der', 430, 250, [0.5]);
+    lk(e, s1, 0); lk(s1, h1); lk(h1, s2, 0); lk(s2, h2); lk(h2, o); lk(h2, s1, 1); lk(h2, h3); lk(h3, s2, 1); } }
+];
+function loadExample(i) { S.blocks = []; S.links = []; S.nid = 1; S.nl = 1; S.sel = null; S.linkFrom = null; S.calc = false; S.tab = 'props'; EXAMPLES[i].f(); save(); draw(); renderPanel(); updHint(); }
+
+/* ---------- palette ---------- */
+const bi = (t, fs) => `<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-body" x="1.5" y="7" width="31" height="20" rx="4"/><text x="17" y="21" text-anchor="middle" font-size="${fs || 10}" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">${t}</text></svg>`;
+const ICON = {
+  sel: '<svg viewBox="0 0 34 34" aria-hidden="true"><path class="ic-acc" d="M10 5v20l5-4 4 8 3-1-4-8h7z"/></svg>',
+  link: '<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-body" x="1.5" y="10" width="9" height="14" rx="2"/><rect class="ic-body" x="23.5" y="10" width="9" height="14" rx="2"/><path class="ic-acc" d="M10.5 17h11m-4-4l4 4-4 4"/></svg>',
+  in: '<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-screen" x="1.5" y="9" width="31" height="16" rx="8"/><text x="17" y="21" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">E(p)</text></svg>',
+  out: '<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-screen" x="1.5" y="9" width="31" height="16" rx="8"/><text x="17" y="21" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">S(p)</text></svg>',
+  sum: '<svg viewBox="0 0 34 34" aria-hidden="true"><circle class="ic-body" cx="17" cy="17" r="11"/><text x="17" y="22" text-anchor="middle" font-size="14" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">Σ</text></svg>',
+  prop: bi('K', 12), int: bi('1/p', 10), der: bi('p', 12), ord1: bi('1er', 10), ord2: bi('2nd', 10), ord1inv: bi('1er⁻¹', 8.5), ord2inv: bi('2nd⁻¹', 8.5), corP: bi('P', 12), corPI: bi('PI', 11), corAv: bi('AV', 10)
+};
+const PAL = [['sel', 'Déplacer', 1], ['link', 'Relier', 1], 0, ['in', 'Entrée E(p)'], ['out', 'Sortie S(p)'], ['sum', 'Comparateur'], 0, ['prop', 'Proportionnel'], ['int', 'Intégrateur'], ['der', 'Dérivateur'], ['ord1', '1er ordre'], ['ord2', '2nd ordre'], ['ord1inv', '1er ordre inversé'], ['ord2inv', '2nd ordre inversé'], 0, ['corP', 'Correcteur P'], ['corPI', 'Correcteur PI'], ['corAv', 'Avance de phase']];
+function setTool(t) { S.tool = t; S.linkFrom = null; renderPalette(); updHint(); draw(); }
+function renderPalette() {
+  const box = $('#palette'); box.replaceChildren();
+  PAL.forEach(p => {
+    if (!p) { box.append(h('div', { class: 'sep' })); return; }
+    const mode = p[2], on = mode && S.tool === p[0];
+    box.append(h('button', { type: 'button', class: 'tool' + (on ? ' on' : ''), 'aria-pressed': mode ? (on ? 'true' : 'false') : false, title: p[1], onclick: () => mode ? setTool(p[0]) : addBlock(p[0]) }, h('span', { html: ICON[p[0]], style: 'display:flex' }), p[1]));
+  });
+}
+
+/* ---------- balisage -> DOM ---------- */
+function parseMarkup(s) {
+  const frag = document.createDocumentFragment(); let i = 0, buf = '';
+  while (i < s.length) {
+    if (s.startsWith('{{', i)) {
+      let d = 1, j = i + 2;
+      while (j < s.length && d > 0) { if (s.startsWith('{{', j)) { d++; j += 2; } else if (s.startsWith('}}', j)) { d--; j += 2; } else j++; }
+      const inner = s.slice(i + 2, j - 2); let dd = 0, sep = -1;
+      for (let k = 0; k < inner.length; k++) { if (inner.startsWith('{{', k)) { dd++; k++; } else if (inner.startsWith('}}', k)) { dd--; k++; } else if (dd === 0 && inner.startsWith('//', k)) { sep = k; break; } }
+      if (buf) { frag.append(buf); buf = ''; }
+      frag.append(h('span', { class: 'fr' }, h('span', null, parseMarkup(inner.slice(0, sep))), h('span', null, parseMarkup(inner.slice(sep + 2)))));
+      i = j;
+    } else buf += s[i++];
+  }
+  if (buf) frag.append(buf); return frag;
+}
+
+/* ---------- panneau ---------- */
+function renderPanel() {
+  const box = $('#panel'); box.hidden = !S.panel; $('#bPanel').setAttribute('aria-pressed', S.panel ? 'true' : 'false'); $('#bPanel').classList.toggle('pri', S.panel);
+  box.classList.toggle('wide', S.tab === 'res');
+  if (!S.panel) { box.replaceChildren(); return; }
+  box.replaceChildren();
+  box.append(h('div', { class: 'phead' }, h('b', null, S.tab === 'res' ? 'Résultat' : 'Propriétés'), h('span', { class: 'sub' }, S.tab === 'res' ? 'FTBF du schéma' : (S.sel ? (S.sel.t === 'b' ? (blk(S.sel.id) || {}).name : 'Liaison') : '')), h('button', { class: 'btn sm', type: 'button', onclick: () => { S.panel = false; renderPanel(); } }, 'Fermer')));
+  box.append(h('div', { class: 'tabs', role: 'tablist' },
+    h('button', { type: 'button', role: 'tab', 'aria-selected': S.tab === 'props' ? 'true' : 'false', onclick: () => { S.tab = 'props'; renderPanel(); } }, 'Propriétés'),
+    h('button', { type: 'button', role: 'tab', 'aria-selected': S.tab === 'res' ? 'true' : 'false', onclick: () => { S.tab = 'res'; renderPanel(); } }, 'Résultat')));
+  const body = h('div', { class: 'pbody' });
+  (S.tab === 'res' ? resultView : propsView)(body); box.append(body);
+}
+function propsView(body) {
+  if (!S.sel) {
+    body.append(h('div', { class: 'goal' }, h('b', null, 'Objectif. '), 'Dessiner un schéma-blocs et obtenir la fonction de transfert en boucle fermée T(p) = S(p) / E(p).'),
+      h('ol', { class: 'steps' },
+        h('li', null, 'Ajoutez une ', h('b', null, 'Entrée'), ', une ', h('b', null, 'Sortie'), ', un ', h('b', null, 'Comparateur'), ' et les blocs de la chaîne directe et du retour.'),
+        h('li', null, 'Choisissez l’outil ', h('b', null, 'Relier'), ' : cliquez le bloc source puis le bloc destinataire. Pour un comparateur, cliquez sur le petit cercle de l’entrée voulue (la 1re liaison va à gauche, la 2e en bas).'),
+        h('li', null, 'Cliquez un bloc pour régler ses paramètres, et un comparateur pour choisir les signes + ou −.'),
+        h('li', null, 'Cliquez sur ', h('b', null, 'Calculer la FTBF'), ' : choisissez ensuite la forme canonique ou non canonique, avec les symboles ou les valeurs numériques.')),
+      h('p', { class: 'small' }, 'Astuce : le menu « Exemples » charge des schémas prêts à l’emploi.'));
+    return;
+  }
+  if (S.sel.t === 'l') {
+    const l = S.links.find(x => x.id === S.sel.id), a = l && blk(l.from), b = l && blk(l.to); if (!l) return;
+    body.append(h('p', null, h('b', null, a.name + ' → ' + b.name), b.type === 'sum' ? ' (' + portName(b, l.port) + ')' : ''), h('button', { class: 'btn del', type: 'button', onclick: delSel }, 'Supprimer la liaison')); return;
+  }
+  const b = blk(S.sel.id); if (!b) return; const sp = TYPES[b.type];
+  const nameI = h('input', { type: 'text', value: b.name, 'aria-label': 'Nom du bloc', autocomplete: 'off' });
+  nameI.addEventListener('input', () => { b.name = nameI.value || b.name; save(); draw(); });
+  body.append(h('label', { class: 'fld' }, h('span', null, 'Nom'), nameI), h('p', { class: 'small' }, sp.label));
+  if (sp.poly) {
+    const ex = h('div', { class: 'hform' }, 'H(p) = ' + exprText(b)); body.append(ex);
+    const grp = h('div', { class: 'grp' }, h('h3', null, 'Paramètres : symbole et valeur'));
+    b.p.forEach((q, i) => {
+      const si = h('input', { type: 'text', class: 'mono' + (validSym(q.sym) ? '' : ' bad'), value: q.sym, 'aria-label': 'Symbole : ' + sp.params[i][1], autocomplete: 'off', spellcheck: 'false' });
+      const vi = h('input', { type: 'text', class: 'mono', inputmode: 'decimal', value: String(q.val).replace('.', ','), 'aria-label': 'Valeur : ' + sp.params[i][1], autocomplete: 'off' });
+      si.addEventListener('input', () => { q.sym = si.value.trim(); si.classList.toggle('bad', !validSym(q.sym)); ex.textContent = 'H(p) = ' + exprText(b); save(); draw(); });
+      vi.addEventListener('input', () => { const v = parseFloat(vi.value.replace(',', '.').replace('−', '-')); const ok = vi.value.trim() !== '' && isFinite(v) && /^[-+]?[\d.,]+(e[-+]?\d+)?$/i.test(vi.value.trim()); vi.classList.toggle('bad', !ok); if (ok) { q.val = v; save(); } });
+      grp.append(h('div', { class: 'prm' }, h('span', { class: 'pl' }, sp.params[i][1]), si, vi));
+    });
+    body.append(grp, h('p', { class: 'small' }, 'Deux paramètres de même symbole sont considérés comme identiques : ils doivent avoir la même valeur.'));
+  } else if (b.type === 'sum') {
+    const grp = h('div', { class: 'grp' }, h('h3', null, 'Signes des entrées'));
+    [0, 1].forEach(i => { const sel = h('select', { 'aria-label': 'Signe de l’' + portName(b, i) }, h('option', { value: '1', selected: b.signs[i] > 0 }, '+  (somme)'), h('option', { value: '-1', selected: b.signs[i] < 0 }, '−  (différence)')); sel.addEventListener('change', () => { b.signs[i] = +sel.value; save(); draw(); }); grp.append(h('label', { class: 'fld' }, h('span', null, portName(b, i)[0].toUpperCase() + portName(b, i).slice(1)), sel)); });
+    body.append(grp, h('p', { class: 'small' }, 'Par défaut : entrée 1 (consigne) en +, entrée 2 (retour) en −.'));
+  } else body.append(h('p', { class: 'small' }, b.type === 'in' ? 'Signal d’entrée E(p), un seul par schéma.' : 'Signal de sortie S(p), un seul par schéma.'));
+  body.append(h('p', null, h('button', { class: 'btn del', type: 'button', onclick: delSel }, 'Supprimer le bloc')));
+}
+function resultView(body) {
+  if (!S.calc) { body.append(h('p', { class: 'small' }, 'Construisez le schéma, puis lancez le calcul.'), h('p', null, h('button', { class: 'btn run', type: 'button', onclick: doCalc }, 'Calculer la FTBF'))); return; }
+  const R = solveDiagram(S);
+  if (R.errors.length) { body.append(h('div', { class: 'errbox' }, h('b', null, 'Le schéma n’est pas calculable'), h('ul', null, R.errors.map(e => h('li', null, e))))); return; }
+  const seg = (label, key, opts) => h('div', { class: 'fld' }, h('span', null, label), h('div', { class: 'seg', role: 'group', 'aria-label': label }, opts.map(o => h('button', { type: 'button', 'aria-pressed': S[key] === o[0] ? 'true' : 'false', onclick: () => { S[key] = o[0]; save(); renderPanel(); } }, o[1]))));
+  body.append(h('div', { class: 'seg2' }, seg('Forme', 'form', [['nc', 'Non canonique'], ['c', 'Canonique']]), seg('Valeurs', 'vals', [['sym', 'Symboliques'], ['num', 'Numériques']])));
+  R.warnings.forEach(w => body.append(h('div', { class: 'warnbox' }, w)));
+  const key = (S.form === 'c' ? 'c' : 'nc') + (S.vals === 'num' ? 'Num' : 'Sym');
+  if (S.vals === 'num' && !R.numOk) body.append(h('div', { class: 'errbox' }, R.numMsg));
+  else {
+    const mk = R.mk[key];
+    body.append(h('div', { class: 'fbox', 'aria-label': 'Fonction de transfert en boucle fermée' }, h('span', { class: 'lhs' }, 'T(p) = '), parseMarkup(mk)));
+    body.append(h('p', null, h('button', { class: 'btn sm', type: 'button', onclick: () => { const tx = 'T(p) = ' + markupToText(mk); (navigator.clipboard ? navigator.clipboard.writeText(tx) : Promise.reject()).then(() => toast('Expression copiée.'), () => toast(tx)); } }, 'Copier en texte'), ' ', h('span', { class: 'small' }, S.form === 'c' ? 'Forme canonique : K·(1 + b₁p + …) / (pᵅ·(1 + a₁p + …)).' : 'Forme non canonique : polynômes en p développés.')));
+  }
+  if (R.zero) body.append(h('p', { class: 'small' }, 'Les chaînes directes se compensent : la FTBF est nulle.'));
+  /* caractéristiques */
+  if (R.chars) {
+    const c = R.chars, kv = h('dl', { class: 'kv' });
+    const row = (k, v) => { kv.append(h('dt', null, k), h('dd', null, v)); };
+    row('Ordre n', String(c.order)); row('Classe α', String(c.a0));
+    row('Gain K (canonique)', fmtNum(c.K)); if (c.a0 === 0 && c.n0 === 0) row('Gain statique T(0)', fmtNum(c.K));
+    if (c.tau != null) row('Constante de temps τ', fmtNum(c.tau) + ' s');
+    if (c.w0 != null) { row('Pulsation propre ω₀', fmtNum(c.w0) + ' rad/s'); row('Amortissement ξ', fmtNum(c.xi) + (c.xi <= -1e-9 ? ' (instable)' : c.xi < 1 - 1e-9 ? ' : oscillatoire amorti' : c.xi < 1 + 1e-9 ? ' : amortissement critique' : ' : apériodique')); }
+    row('Pôles', c.poles.length ? c.poles.map(fmtC).join(' ; ') : 'aucun'); row('Zéros', c.zeros.length ? c.zeros.map(fmtC).join(' ; ') : 'aucun');
+    row('Stabilité', h('span', { class: 'badge ' + c.stab }, c.stab === 'stable' ? 'Stable' : c.stab === 'marginal' ? 'Limite de stabilité' : 'Instable'));
+    body.append(h('div', { class: 'card' }, h('h4', null, 'Caractéristiques (valeurs numériques)'), kv),
+      h('p', { class: 'small' }, 'Les simplifications pôle / zéro éventuelles ne sont pas effectuées. Les pôles proviennent du dénominateur de la forme réduite ci-dessus.'));
+  }
+  /* Mason */
+  if (R.paths) {
+    body.append(h('details', { class: 'mason' }, h('summary', null, 'Méthode : formule de Mason'),
+      h('p', null, 'T = Σ(Pₖ·Δₖ) / Δ, avec Δ = 1 − Σ gains des boucles + Σ produits de boucles disjointes − …'),
+      h('p', null, h('b', null, 'Chaînes directes')), h('ul', null, R.paths.map((p, i) => h('li', null, h('span', { class: 'mono-s' }, `P${i + 1} = ${p.gain}`), ` (${p.text}) ; Δ${i + 1} = ${p.delta}`))),
+      h('p', null, h('b', null, 'Boucles')), R.loops.length ? h('ul', null, R.loops.map(l => h('li', null, h('span', { class: 'mono-s' }, `${l.name} = ${l.gain}`), ` (${l.text})`))) : h('p', null, 'Aucune boucle : schéma en chaîne ouverte.'),
+      h('p', null, h('span', { class: 'mono-s' }, 'Δ = ' + R.deltaTxt)),
+      h('p', { class: 'small' }, 'Le résultat est mis sur dénominateur commun (produit des dénominateurs des blocs), puis simplifié des facteurs monômes communs.')));
+  }
+}
+function doCalc() {
+  S.calc = true; S.tab = 'res'; S.panel = true; renderPanel();
+  const pb = $('#panel .pbody'); if (pb) pb.scrollTop = 0;
+}
+
+/* ---------- boîtes de dialogue ---------- */
+function closeDlg() { $('#dlg').hidden = true; $('#dlg').replaceChildren(); }
+function openDlg(title, body) {
+  const d = $('#dlg'); d.replaceChildren(); d.hidden = false;
+  d.append(h('div', { class: 'dlgbox', role: 'dialog', 'aria-label': title }, h('header', null, h('b', null, title), h('button', { class: 'btn sm', type: 'button', onclick: closeDlg }, 'Fermer')), h('div', { class: 'dbody' }, body)));
+  d.onclick = ev => { if (ev.target === d) closeDlg(); };
+}
+$('#bEx').addEventListener('click', () => openDlg('Exemples', h('div', null, h('p', { class: 'small' }, 'Charger un exemple remplace le schéma actuel.'), EXAMPLES.map((x, i) => h('div', { class: 'exrow' }, h('div', null, h('b', null, x.t), h('p', null, x.d)), h('button', { class: 'btn pri sm', type: 'button', onclick: () => { loadExample(i); closeDlg(); } }, 'Charger'))))));
+$('#bHelp').addEventListener('click', () => {
+  const rows = ['prop', 'int', 'der', 'ord1', 'ord2', 'ord1inv', 'ord2inv', 'corP', 'corPI', 'corAv'].map(t => h('tr', null, h('td', null, TYPES[t].label), h('td', { class: 'mono-s' }, TYPES[t].expr(TYPES[t].params.map(q => q[0])).replace(/ω/g, 'ω₀')), h('td', null, TYPES[t].params.map(q => q[0]).join(', '))));
+  openDlg('Aide', h('div', null,
+    h('p', null, 'Cet atelier calcule la fonction de transfert en boucle fermée T(p) = S(p)/E(p) d’un schéma-blocs, avec la formule de Mason et un calcul symbolique exact.'),
+    h('h3', null, 'Utilisation'),
+    h('ul', null, h('li', null, 'Cliquez sur un bloc de la palette pour l’ajouter, glissez-le pour le placer.'), h('li', null, 'Outil « Relier » : source puis destinataire. Un comparateur a deux entrées : la 1re liaison va à gauche, la 2e en bas ; cliquez un petit cercle pour imposer l’entrée. Une nouvelle liaison remplace celle de la même entrée.'), h('li', null, 'Suppr efface le bloc ou la liaison sélectionné. Échap annule une liaison en cours.'), h('li', null, 'Les symboles des paramètres sont modifiables (ex. renommer K2 en K1 pour partager un gain).')),
+    h('h3', null, 'Blocs disponibles'),
+    h('table', null, h('thead', null, h('tr', null, h('th', null, 'Bloc'), h('th', null, 'H(p)'), h('th', null, 'Paramètres'))), h('tbody', null, rows)),
+    h('p', { class: 'small' }, '« 1er ordre inversé » : inverse d’un 1er ordre. « 2nd ordre inversé » : inverse d’un 2nd ordre. ω₀ est noté ω dans les symboles.'),
+    h('h3', null, 'Forme canonique et non canonique'),
+    h('ul', null, h('li', null, h('b', null, 'Non canonique'), ' : T(p) = N(p) / D(p), polynômes développés en p.'), h('li', null, h('b', null, 'Canonique'), ' : on normalise les termes de plus bas degré à 1 : T(p) = K·(1 + b₁p + …) / (pᵅ·(1 + a₁p + …)), où K est le gain et α la classe.')),
+    h('h3', null, 'Limites'),
+    h('p', null, 'Les facteurs polynomiaux communs (pôles et zéros qui se compensent) ne sont pas simplifiés automatiquement. Un schéma doit avoir toutes ses entrées reliées pour être calculable. Les données sont mémorisées dans ce navigateur uniquement.')));
+});
+let armT = null;
+$('#bClear').addEventListener('click', ev => {
+  const b = ev.currentTarget;
+  if (!armT) { b.textContent = 'Confirmer ?'; armT = setTimeout(() => { b.textContent = 'Effacer'; armT = null; }, 3000); return; }
+  clearTimeout(armT); armT = null; b.textContent = 'Effacer';
+  S.blocks = []; S.links = []; S.nid = 1; S.nl = 1; S.sel = null; S.linkFrom = null; S.calc = false; save(); draw(); renderPanel(); updHint();
+});
+$('#bCalc').addEventListener('click', doCalc);
+$('#bPanel').addEventListener('click', () => { S.panel = !S.panel; renderPanel(); });
+
+/* ---------- démarrage ---------- */
+(function init() {
+  const saved = lsGet(KEY, null); let ok = false;
+  try {
+    if (saved && Array.isArray(saved.blocks) && saved.blocks.length && Array.isArray(saved.links)) {
+      S.blocks = saved.blocks.filter(b => TYPES[b.type] && Array.isArray(b.p) && b.p.length === TYPES[b.type].params.length).map(b => ({ id: +b.id, type: b.type, x: +b.x || 40, y: +b.y || 60, name: String(b.name || '?'), signs: Array.isArray(b.signs) ? b.signs : [1, -1], p: b.p.map(q => ({ sym: String(q.sym), val: Number.isFinite(+q.val) ? +q.val : 1 })) }));
+      S.links = saved.links.map(l => ({ id: +l.id, from: +l.from, to: +l.to, port: +l.port || 0 }));
+      S.nid = Math.max(+saved.nid || 1, ...S.blocks.map(b => b.id + 1)); S.nl = Math.max(+saved.nl || 1, ...S.links.map(l => l.id + 1));
+      if (saved.form === 'c') S.form = 'c'; if (saved.vals === 'num') S.vals = 'num'; ok = S.blocks.length > 0;
+    }
+  } catch (e) { ok = false; }
+  renderPalette(); updHint();
+  if (!ok) loadExample(0); else { draw(); renderPanel(); }
+})();
+</script>
+</body></html>
