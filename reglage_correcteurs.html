@@ -199,7 +199,7 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
-const KEYS = { act: 'atelier-correcteurs-v1' };
+const KEYS = { act: 'atelier-correcteurs-v2' };
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
 const WORKSHOPS = [];
@@ -450,7 +450,7 @@ function plantEditor(host, onchange) {
   host.append(h('div', { class: 'files', style: 'margin:4px 0 8px' }, h('button', { class: 'btn sm', type: 'button', onclick: () => { Object.assign(PLANT, PLANT0); sl.forEach(x => x.sync()); onchange(); } }, 'Valeurs par défaut (K₀ = 1, τ₁ = 1 s, τ₂ = 0,1 s)')));
 }
 function analysisHtml(px) {
-  return '<h3>Diagramme de Bode de la boucle ouverte</h3><svg id="' + px + '-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg>' +
+  return '<h3>Diagramme de Bode : non corrigée, correcteur, corrigée</h3><p class="small">Gris pointillé : H (non corrigée) · orange : C (le correcteur seul) · bleu : C·H (corrigée). En dB, les courbes <b>s\'additionnent</b> : bleu = gris + orange ; les phases aussi.</p><svg id="' + px + '-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg>' +
     '<h3>Réponse indicielle en boucle fermée</h3><svg id="' + px + '-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg>' +
     '<h3>Résultats</h3>' + statsHtml([['Pulsation de coupure ω₀dB', ''], ['Marge de phase Mφ', ''], ['Marge de gain Mg', ''], ['Bande passante ωBP (−3 dB)', ''], ['Dépassement D', ''], ['Temps de réponse à 5 %', ''], ['Erreur statique εs', '']], px + '-stats') +
     '<p class="verdict" id="' + px + '-msg" aria-live="polite"></p>';
@@ -468,9 +468,9 @@ function verdictFor(A) {
 }
 function renderAnalysis(px, c, opt) {
   const P = PLANT, A = analyze(P, c, opt && opt.tmax);
-  const curves = [{ name: 'H (système seul)', color: '#8a8f98', dash: '6 4', fn: w => { const r = plantFR(w, P); return [dB(r[0]), r[1]]; } }];
-  if (c.type === 'AV') curves.push({ name: 'C (correcteur)', color: '#e08a00', dash: '2 3', fn: w => { const r = ctrlFR(w, c); return [dB(r[0]), r[1]]; } });
-  curves.push({ name: 'C·H (boucle ouverte)', color: '#2e6da4', width: 2.4, fn: w => { const r = loopFR(w, P, c); return [dB(r[0]), r[1]]; } });
+  const curves = [{ name: 'H (non corrigée)', color: '#8a8f98', dash: '6 4', fn: w => { const r = plantFR(w, P); return [dB(r[0]), r[1]]; } }];
+  curves.push({ name: 'C (correcteur)', color: '#e08a00', width: 2.2, fn: w => { const r = ctrlFR(w, c); return [dB(r[0]), r[1]]; } });
+  curves.push({ name: 'C·H (corrigée)', color: '#2e6da4', width: 2.4, fn: w => { const r = loopFR(w, P, c); return [dB(r[0]), r[1]]; } });
   bodeSvg($('#' + px + '-bode'), { curves, marks: A.wc ? { wc: A.wc, phWc: loopFR(A.wc, P, c)[1], M: A.M, w180: A.w180, Mg: A.Mg } : { w180: A.w180, Mg: A.Mg } });
   stepSvg($('#' + px + '-step'), { tmax: A.tmax, curves: [{ name: 'sortie y(t)', color: '#2e6da4', t: A.S.t, y: A.S.y, yf: A.unstable ? null : A.yf }] });
   const b = $('#' + px + '-stats').querySelectorAll('.stat b');
@@ -492,12 +492,17 @@ function mountQ1(root) {
     '<div class="flow" aria-label="Démarche en six étapes"><span class="bx">1. Cahier des charges</span><span class="ar">→</span><span class="bx">2. Critères fréquentiels</span><span class="ar">→</span><span class="bx">3. Choix du correcteur</span><span class="ar">→</span><span class="bx">4. Calcul des paramètres</span><span class="ar">→</span><span class="bx">5. Vérification</span><span class="ar">→</span><span class="bx">6. Ajustement</span></div>' +
     '<div class="analogy"><b>Image :</b> régler un correcteur ressemble à régler la suspension d\'une voiture. Trop raide (gain élevé, marge faible) : elle rebondit. Trop souple : elle est lente à revenir. On cherche l\'amortissement qui donne la réponse la plus rapide sans rebond excessif.</div>' +
     '<h3>1. Du temporel au fréquentiel</h3><p>Pour un système du second ordre en boucle fermée (pulsation propre ωₙ, amortissement ζ), tout se calcule. Déplacez le curseur : un petit ζ donne un grand dépassement <b>et</b> une petite marge de phase.</p>' +
-    '<div id="q1-z"></div>' + statsHtml([['Amortissement ζ', ''], ['Dépassement D', ''], ['Marge de phase Mφ', ''], ['ω₀dB / ωₙ', ''], ['ωBP / ωₙ', ''], ['ωₙ · tr5 %', '']], 'q1-stats') +
+    '<div id="q1-z"></div>' + statsHtml([['Amortissement ζ', ''], ['Dépassement D', ''], ['Marge de phase Mφ', ''], ['ω₀dB / ωₙ', ''], ['ωBP / ωₙ', ''], ['ωₙ · tr5 %', ''], ['Facteur de résonance Q', '']], 'q1-stats') +
     '<svg id="q1-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg><svg id="q1-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg><p class="verdict" id="q1-msg"></p>' +
     '<h3>Correspondances à connaître</h3><div id="q1-tab"></div>' +
     '<h3>2. De votre cahier des charges aux critères</h3><p>Entrez les exigences temporelles : l\'atelier en déduit la marge de phase minimale et les pulsations à viser (second ordre dominant).</p>' +
     '<div class="opts"><label class="fld"><span>Dépassement maximal D (%)</span><input type="text" id="q1-D" class="mono" autocomplete="off"></label><label class="fld"><span>Temps de réponse à 5 % (s)</span><input type="text" id="q1-tr" class="mono" autocomplete="off"></label></div><div class="verdict goal" id="q1-spec" aria-live="polite"></div>' +
-    '<h3>3. Quel correcteur pour quel besoin ?</h3><div class="dwrap"><table class="dt"><thead><tr><th>Défaut constaté</th><th>Cause en fréquentiel</th><th>Correcteur adapté</th></tr></thead><tbody>' +
+    '<h3>3. Critères du cahier des charges et liens avec la boucle ouverte</h3><div class="dwrap"><table class="dt"><thead><tr><th>Performance</th><th>Critère en boucle fermée</th><th>Lien avec la FTBO</th></tr></thead><tbody>' +
+    '<tr><td><b>Stabilité</b></td><td>Premier dépassement D₁ % = 10 à 20 % maxi ; facteur de résonance Q ≤ 2,3 dB (Q ≈ 1,3)</td><td>Marges imposées : en général Mg ≥ 12 dB et Mφ ≥ 45°</td></tr>' +
+    '<tr><td><b>Précision</b></td><td>Erreur permanente nulle ou limitée (échelon, rampe) ; sensibilité aux perturbations</td><td>Gain statique K<sub>BO</sub> et classe α de la FTBO (en amont de la perturbation)</td></tr>' +
+    '<tr><td><b>Rapidité</b></td><td>Temps de réponse à 5 % limité ; temps de montée ; bande passante à −3 dB</td><td>Pulsation de coupure à 0 dB de la FTBO</td></tr></tbody></table></div>' +
+    '<div class="analogy"><b>Trois règles pour agir :</b> pour la <b>précision</b>, augmenter le gain statique de la FTBO ; pour la <b>rapidité</b>, choisir une pulsation de coupure à 0 dB plus élevée ; pour la <b>stabilité</b>, corriger la courbe de <b>phase</b> au voisinage de la pulsation de coupure. Ces actions sont localisées en fréquence alors que celle d\'un correcteur est globale : il y a donc des <b>compromis</b>.</div>' +
+    '<h3>4. Quel correcteur pour quel besoin ?</h3><div class="dwrap"><table class="dt"><thead><tr><th>Défaut constaté</th><th>Cause en fréquentiel</th><th>Correcteur adapté</th></tr></thead><tbody>' +
     '<tr><td>Erreur statique non nulle</td><td>Pas d\'intégrateur dans la boucle ouverte</td><td>PI (action intégrale)</td></tr>' +
     '<tr><td>Trop oscillant</td><td>Marge de phase insuffisante en ω₀dB</td><td>P (baisser le gain) ou avance de phase</td></tr>' +
     '<tr><td>Trop lent</td><td>ω₀dB trop basse</td><td>Augmenter le gain, avec avance de phase pour garder la marge</td></tr>' +
@@ -507,7 +512,7 @@ function mountQ1(root) {
   const upd = () => {
     const zz = S.z, wc = so.wc(zz), M = so.M(zz), tn = so.tr5(zz), D = so.D(zz);
     const b = $('#q1-stats').querySelectorAll('.stat b');
-    b[0].textContent = fmt(zz, 2); b[1].textContent = fmt(D, 1) + ' %'; b[2].textContent = fmt(M, 1) + ' °'; b[3].textContent = fmt(wc, 3); b[4].textContent = fmt(so.bp(zz), 3); b[5].textContent = fmt(tn, 2);
+    b[0].textContent = fmt(zz, 2); b[1].textContent = fmt(D, 1) + ' %'; b[2].textContent = fmt(M, 1) + ' °'; b[3].textContent = fmt(wc, 3); b[4].textContent = fmt(so.bp(zz), 3); b[5].textContent = fmt(tn, 2); b[6].textContent = zz < 0.7071 ? fmt(dB(so.Q(zz)), 1) + ' dB' : 'pas de résonance';
     const ts = [], ys = []; const tmax = Math.max(8, Math.min(40, tn * 1.4));
     for (let i = 0; i <= 400; i++) { const t = tmax * i / 400; ts.push(t); ys.push(so.step(zz, t)); }
     stepSvg($('#q1-step'), { tmax, curves: [{ name: 'y(t) pour ωₙ = 1 rad/s', color: '#2e6da4', t: ts, y: ys, yf: 1 }] });
@@ -536,7 +541,9 @@ WORKSHOPS.push({ id: 'q1', title: 'Démarche', hint: 'Faites le lien entre cahie
 const Q2 = { Kp: 5, Mt: 60 };
 function mountQ2(root) {
   root.innerHTML = '<h2>Correcteur proportionnel</h2><p>Le correcteur P multiplie l\'erreur par un gain : <b>C(p) = Kp</b>. Il ne change pas la phase, il ne fait que <b>monter ou descendre la courbe de gain</b>. Régler Kp revient donc à choisir la pulsation où la courbe coupe 0 dB, c\'est-à-dire la marge de phase obtenue.</p>' +
-    '<div id="q2-plant"></div><h3>Réglage</h3><div id="q2-sl"></div><div id="q2-sl2"></div><div class="files" style="margin:6px 0"><button class="btn pri" id="q2-apply" type="button">Kp pour la marge de phase visée</button></div><p class="verdict goal" id="q2-calc" aria-live="polite"></p>' + analysisHtml('q2') +
+    '<div id="q2-plant"></div><h3>Réglage</h3><div id="q2-sl"></div><div id="q2-sl2"></div><div class="files" style="margin:6px 0"><button class="btn pri" id="q2-apply" type="button">Kp pour la marge de phase visée</button></div><p class="verdict goal" id="q2-calc" aria-live="polite"></p>' +
+    '<h3>Autres critères de réglage du cours</h3><div class="opts"><label class="fld"><span>Erreur statique maximale (%)</span><input type="text" id="q2-eps" class="mono" value="2"></label><button class="btn" id="q2-beps" type="button">Kp minimal pour cette erreur</button><label class="fld"><span>Bande passante ωBP visée (rad/s)</span><input type="text" id="q2-bw" class="mono" value="20"></label><button class="btn" id="q2-bbw" type="button">Kp pour cette bande passante</button></div><p class="verdict goal" id="q2-calc2" aria-live="polite">Choisissez un critère : l\'erreur imposée donne un Kp <b>minimal</b> (précision), la bande passante donne un Kp par calcul de ωBP.</p>' + analysisHtml('q2') +
+    '<h3>Influence de Kp sur les performances</h3><div id="q2-tab"></div><p class="small">Kp ↗ : la précision et la rapidité (ωBP) augmentent, la stabilité diminue. Pour Kp très grand, le dépassement devient important et le temps de réponse à 5 % finit par augmenter à nouveau.</p>' +
     '<div class="analogy"><b>À retenir :</b> avec un système de classe 0, le correcteur P laisse une erreur statique <b>εs = 1 / (1 + Kp·K₀)</b>. Pour la réduire il faut augmenter Kp, mais cela fait monter ω₀dB et diminuer la marge de phase : P impose un compromis précision / amortissement.</div>';
   const S = Q2;
   const s1 = slider($('#q2-sl'), { name: 'Kp', min: 0.1, max: 200, step: 0.1, dec: 1, get: () => S.Kp, set: v => { S.Kp = v; }, onchange: () => upd() });
@@ -548,7 +555,25 @@ function mountQ2(root) {
     el.innerHTML = '<b>Démarche :</b> (1) on cherche ω tel que arg H(jω) = −(180 − Mφ) = <b>' + fmt(-(180 - S.Mt), 0) + ' °</b> : ω = <b>' + fmt(r.w, 2) + ' rad/s</b>. (2) À cette pulsation la boucle doit valoir 0 dB : Kp = 1 / |H(jω)| = <b>' + fmt(r.c.Kp, 2) + '</b>. (3) Conséquence : εs = 1 / (1 + Kp K₀) = ' + fmt(100 / (1 + r.c.Kp * PLANT.K0), 1) + ' %.';
     return r;
   };
-  const upd = () => { calc(); renderAnalysis('q2', { type: 'P', Kp: S.Kp }); };
+  const tab = () => {
+    const rows = [0.5, 1, 2, 5, 10, 20, 50, 100].map(k => { const A = analyze(PLANT, { type: 'P', Kp: k }); return '<tr><td class="m">' + fmt(k, 1) + '</td><td class="m">' + (A.M !== null ? fmt(A.M, 0) + ' °' : '—') + '</td><td class="m">' + (A.unstable ? 'instable' : fmt(A.D, 0) + ' %') + '</td><td class="m">' + (A.unstable ? '—' : isFinite(A.tr) ? fmt(A.tr, 2) + ' s' : '> ' + fmt(A.tmax, 1) + ' s') + '</td><td class="m">' + fmt(A.eStat, 1) + ' %</td><td class="m">' + (A.bp ? fmt(A.bp, 1) : '—') + '</td></tr>'; }).join('');
+    $('#q2-tab').innerHTML = '<div class="dwrap"><table class="dt"><thead><tr><th>Kp</th><th>Mφ</th><th>D</th><th>tr5 %</th><th>εs</th><th>ωBP</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  };
+  const upd = () => { calc(); renderAnalysis('q2', { type: 'P', Kp: S.Kp }); tab(); };
+  const rd = id => parseFloat($(id).value.replace(',', '.'));
+  $('#q2-beps').addEventListener('click', () => {
+    const e = rd('#q2-eps'), el = $('#q2-calc2'); if (!(e > 0 && e < 100)) { el.innerHTML = 'Saisissez une erreur entre 0 et 100 %.'; return; }
+    const kmin = (100 / e - 1) / PLANT.K0; S.Kp = clamp(kmin, 0.1, 200); s1.sync(); upd();
+    const A = analyze(PLANT, { type: 'P', Kp: S.Kp });
+    el.innerHTML = '<b>Précision :</b> ε = 1 / (1 + Kp·K₀) ≤ ' + fmt(e, 1) + ' % donne Kp·K₀ ≥ ' + fmt(100 / e - 1, 1) + ', soit <b>Kp ≥ ' + fmt(kmin, 2) + '</b>. Avec ce Kp, la marge de phase vaut ' + (A.M !== null ? fmt(A.M, 1) + ' °' : '—') + (A.M !== null && A.M < 45 ? ' : <b>insuffisante</b>, le correcteur P ne tient pas à la fois la précision et la stabilité.' : '.');
+  });
+  $('#q2-bbw').addEventListener('click', () => {
+    const w = rd('#q2-bw'), el = $('#q2-calc2'); if (!(w > 0)) { el.innerHTML = 'Saisissez une pulsation positive.'; return; }
+    const r = designPBW(PLANT, w);
+    if (!r) { el.innerHTML = 'Cette bande passante n\'est pas atteignable avec un correcteur P sur ce système (ou exige un Kp supérieur à 1000).'; return; }
+    S.Kp = clamp(r, 0.1, 200); s1.sync(); upd();
+    el.innerHTML = '<b>Rapidité :</b> la bande passante se mesure sur la <b>boucle fermée</b> : on cherche Kp tel que le gain en boucle fermée ait perdu 3 dB à ωBP = ' + fmt(w, 1) + ' rad/s. Résultat : <b>Kp ≈ ' + fmt(r, 2) + '</b>' + (r > 200 ? ' (hors curseur, plafonné à 200)' : '') + '.';
+  });
   $('#q2-apply').addEventListener('click', () => { const r = calc(); if (r) { S.Kp = r.c.Kp; s1.sync(); upd(); } });
   upd();
 }
@@ -559,7 +584,7 @@ WORKSHOPS.push({ id: 'q2', title: 'Correcteur P', hint: 'Faites varier Kp : la c
 const Q3 = { Kp: 6.7, Ti: 1, Mt: 60 };
 function mountQ3(root) {
   root.innerHTML = '<h2>Correcteur proportionnel intégral</h2><p>Le correcteur PI s\'écrit <b>C(p) = Kp (1 + Tᵢ p) / (Tᵢ p)</b>. Il ajoute un intégrateur : l\'erreur statique devient nulle. En contrepartie il retire de la phase aux basses pulsations (−90° à très basse pulsation). Astuce classique : choisir <b>Tᵢ = τ₁</b> pour <b>compenser le pôle dominant</b> du système.</p>' +
-    '<div id="q3-plant"></div><h3>Réglage</h3><div id="q3-sl"></div><div id="q3-sl2"></div><div id="q3-sl3"></div><div class="files" style="margin:6px 0"><button class="btn" id="q3-ti" type="button">Tᵢ = τ₁ (compenser le pôle)</button><button class="btn pri" id="q3-apply" type="button">Kp pour la marge de phase visée</button></div><p class="verdict goal" id="q3-calc" aria-live="polite"></p>' + analysisHtml('q3') +
+    '<div id="q3-plant"></div><h3>Réglage</h3><div id="q3-sl"></div><div id="q3-sl2"></div><div id="q3-sl3"></div><div class="files" style="margin:6px 0"><button class="btn" id="q3-ti" type="button">Tᵢ = τ₁ (compenser le pôle)</button><button class="btn pri" id="q3-apply" type="button">Kp pour la marge de phase visée</button><button class="btn" id="q3-m3" type="button">Méthode en 3 étapes (placement fréquentiel)</button></div><p class="verdict goal" id="q3-calc" aria-live="polite"></p><div class="verdict" id="q3-m3t" hidden></div>' + analysisHtml('q3') +
     '<div class="analogy"><b>Pourquoi ça marche :</b> avec Tᵢ = τ₁, le numérateur (1 + Tᵢ p) du correcteur annule le facteur (1 + τ₁ p) du système. Il reste L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)) : un intégrateur et un seul pôle, soit un système du second ordre en boucle fermée, facile à régler par la marge de phase.</div>';
   const S = Q3;
   const sl = [slider($('#q3-sl'), { name: 'Kp', min: 0.1, max: 200, step: 0.1, dec: 1, get: () => S.Kp, set: v => { S.Kp = v; }, onchange: () => upd() }),
@@ -574,10 +599,17 @@ function mountQ3(root) {
       t = '<b>Pôle compensé</b> (Tᵢ ≈ τ₁ = ' + fmt(PLANT.t1, 2) + ' s). La boucle ouverte devient Kp·K₀ / (Tᵢ p (1 + τ₂ p)), donc Mφ = 90° − arctan(ω₀dB·τ₂). Pour Mφ = ' + fmt(S.Mt, 0) + ' ° : ω₀dB = 1 / (τ₂ tan Mφ) = <b>' + fmt(d.w, 2) + ' rad/s</b> et Kp = Tᵢ ω₀dB √(1 + (ω₀dB τ₂)²) / K₀ = <b>' + fmt(d.c.Kp, 2) + '</b>.';
     } else if (S.Ti > PLANT.t1) t = 'Tᵢ > τ₁ : le pôle dominant n\'est pas compensé, il reste une <b>queue lente</b> dans la réponse (constante de temps de l\'ordre de Tᵢ).';
     else t = 'Tᵢ < τ₁ : le zéro du correcteur est plus rapide que le pôle à compenser. La phase est moins dégradée en basse pulsation, mais le gain augmente et le dépassement croît.';
+    t += '<br>Kᵢ = Kp / Tᵢ = <b>' + fmt(S.Kp / S.Ti, 2) + '</b> s⁻¹ (forme C = Kp + Kᵢ/p).';
     if (A && A.wc) t += '<br>Contrôle : Tᵢ·ω₀dB = ' + fmt(S.Ti * A.wc, 1) + ' (la phase perdue par l\'intégrateur à ω₀dB vaut arctan(1 / (Tᵢ ω₀dB)) = ' + fmt(Math.atan(1 / (S.Ti * A.wc)) * R2D, 1) + ' °).';
     el.innerHTML = t;
   };
   const upd = () => { const A = renderAnalysis('q3', { type: 'PI', Kp: S.Kp, Ti: S.Ti }); calc(A); };
+  $('#q3-m3').addEventListener('click', () => {
+    const d = designPI3(PLANT, S.Mt), el = $('#q3-m3t');
+    if (!d) { el.hidden = false; el.innerHTML = 'Cette marge de phase n\'est pas atteignable : choisissez une valeur plus faible.'; return; }
+    S.Kp = clamp(d.c.Kp, 0.1, 200); S.Ti = clamp(d.c.Ti, 0.05, 10); sl.forEach(x => x.sync()); upd();
+    el.hidden = false; el.innerHTML = '<b>Méthode du cours en trois étapes.</b><br><b>1. Kp\' (P seul)</b> : on règle Kp\' pour la marge visée : Kp\' = ' + fmt(d.kp1, 2) + ', d\'où ω₀dB\' = ' + fmt(d.w1, 2) + ' rad/s.<br><b>2. Tᵢ</b> : on place la cassure une décade sous ω₀dB\' : 1/Tᵢ = ω₀dB\'/10, soit Tᵢ = ' + fmt(d.c.Ti, 2) + ' s (Kᵢ = Kp/Tᵢ). L\'intégrateur coûte environ 5° de marge.<br><b>3. Kp</b> : on réajuste Kp pour retrouver la marge visée : <b>Kp = ' + fmt(d.c.Kp, 2) + '</b> (variante graphique : viser dès l\'étape 1 la marge + 5°).';
+  });
   $('#q3-ti').addEventListener('click', () => { S.Ti = PLANT.t1; sl.forEach(x => x.sync()); upd(); });
   $('#q3-apply').addEventListener('click', () => {
     const r = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti: S.Ti }, S.Mt);
@@ -612,7 +644,8 @@ function mountQ4(root) {
     const A = renderAnalysis('q4', { type: 'AV', K: S.K, a: S.a, T: S.T });
     const phim = Math.asin((S.a - 1) / (S.a + 1)) * R2D, wm = 1 / (S.T * Math.sqrt(S.a));
     const f = $('#q4-facts'); f.className = 'verdict';
-    f.innerHTML = 'φmax = arcsin((a − 1) / (a + 1)) = <b>' + fmt(phim, 1) + ' °</b> à ωₘ = 1 / (T√a) = <b>' + fmt(wm, 2) + ' rad/s</b>, où le gain du correcteur vaut K√a = <b>' + fmt(dB(S.K * Math.sqrt(S.a)), 1) + ' dB</b>.' + (A.wc ? ' Écart entre ωₘ et ω₀dB : ' + fmt(Math.abs(Math.log10(wm / A.wc)) * 100 / 1, 0) + ' % d\'une décade.' : '');
+    const bf = ' <br>Forme équivalente C = Kp (1 + T<sub>d</sub> p) / (1 + b T<sub>d</sub> p) : b = 1/a = <b>' + fmt(1 / S.a, 3) + '</b>, T<sub>d</sub> = aT = <b>' + fmt(S.a * S.T, 3) + ' s</b>, Kp = K. Avec cette forme : b = (1 − sin φ)/(1 + sin φ) et K = √b quand |H(ω₀dB)| = 1.';
+    f.innerHTML = 'φmax = arcsin((a − 1) / (a + 1)) = <b>' + fmt(phim, 1) + ' °</b> à ωₘ = 1 / (T√a) = <b>' + fmt(wm, 2) + ' rad/s</b>, où le gain du correcteur vaut K√a = <b>' + fmt(dB(S.K * Math.sqrt(S.a)), 1) + ' dB</b>.' + (A.wc ? ' Écart entre ωₘ et ω₀dB : ' + fmt(Math.abs(Math.log10(wm / A.wc)) * 100 / 1, 0) + ' % d\'une décade.' : '') + bf;
   };
   const apply = () => { const d = calc(); Object.assign(S, { K: d.c.K, a: d.c.a, T: d.c.T }); sl.forEach(x => x.sync()); upd(); };
   plantEditor($('#q4-plant'), () => { upd(); });
@@ -677,6 +710,197 @@ function mountQ5(root) {
 WORKSHOPS.push({ id: 'q5', title: 'Mise en œuvre', hint: 'Réglez P, PI et avance de phase pour le même cahier des charges et identifiez celui (ou ceux) qui le respectent.',
   mount: mountQ5, reset: () => { Object.assign(Q5, { Mt: 60, wt: 15, D: 20, tr: 0.5, es: 5 }); Object.assign(PLANT, PLANT0); } });
 
+/* ================= compléments de logique (cours O8) ================= */
+so.Q = z => 1 / (2 * z * Math.sqrt(1 - z * z));
+/* réglage P pour une bande passante à −3 dB imposée (boucle fermée) */
+function designPBW(P, wt) {
+  const bw = k => analyzeFreq(P, { type: 'P', Kp: k }).bp;
+  let lo = 0.01, hi = 1000;
+  if (!(bw(hi) >= wt) || (bw(lo) || 0) > wt) return null;
+  for (let i = 0; i < 40; i++) { const m = Math.sqrt(lo * hi); if ((bw(m) || 0) < wt) lo = m; else hi = m; }
+  return Math.sqrt(lo * hi);
+}
+/* PI : méthode du cours en trois étapes */
+function designPI3(P, Mt) {
+  const r1 = gainForMargin(P, unitCtrl('P'), Mt); if (!r1) return null;
+  const Ti = 10 / r1.w, r3 = gainForMargin(P, { type: 'PI', Kp: 1, Ti }, Mt); if (!r3) return null;
+  return { kp1: r1.gain, w1: r1.w, c: { type: 'PI', Kp: r3.gain, Ti } };
+}
+/* filtre réjecteur (Notch) */
+function notchFR(w, wr, z1, z2) {
+  const nr = wr * wr - w * w, ni = 2 * z1 * wr * w, dr = nr, di = 2 * z2 * wr * w;
+  return [Math.hypot(nr, ni) / Math.hypot(dr, di), (Math.atan2(ni, nr) - Math.atan2(di, dr)) * R2D];
+}
+/* PID idéal (dérivée sur la mesure) avec perturbation d'échelon sur la commande ; retourne y, e, u et ses trois parts */
+function simPID(P, kp, ki, kd, dist, td, tmax) {
+  const n = clamp(Math.ceil(tmax / (Math.min(P.t1, P.t2) / 8)), 4000, 80000), dt = tmax / n, every = Math.max(1, Math.floor(n / 500));
+  const out = { t: [], y: [], e: [], u: [], up: [], ui: [], ud: [], blown: false };
+  let x = [0, 0, 0];
+  const comp = (x, t) => { const y = P.K0 * x[1], e = 1 - y, dy = P.K0 * (x[0] - x[1]) / P.t2, up = kp * e, ui = ki * x[2], ud = -kd * dy; return { y, e, up, ui, ud, u: up + ui + ud }; };
+  const f = (x, t) => { const c = comp(x, t); const uu = c.u - (t >= td ? dist : 0); return [(uu - x[0]) / P.t1, (x[0] - x[1]) / P.t2, c.e]; };
+  const push = (x, t) => { const c = comp(x, t); out.t.push(t); out.y.push(c.y); out.e.push(c.e); out.u.push(c.u); out.up.push(c.up); out.ui.push(c.ui); out.ud.push(c.ud); };
+  push(x, 0);
+  for (let i = 1; i <= n; i++) {
+    const t = (i - 1) * dt;
+    const k1 = f(x, t), k2 = f(x.map((v, j) => v + dt / 2 * k1[j]), t + dt / 2), k3 = f(x.map((v, j) => v + dt / 2 * k2[j]), t + dt / 2), k4 = f(x.map((v, j) => v + dt * k3[j]), t + dt);
+    x = x.map((v, j) => v + dt / 6 * (k1[j] + 2 * k2[j] + 2 * k3[j] + k4[j]));
+    if (!isFinite(x[1]) || Math.abs(x[1]) > 1e4) { out.blown = true; break; }
+    if (i % every === 0) push(x, i * dt);
+  }
+  return out;
+}
+/* trace à échelle automatique (erreur, commande, …) */
+function traceSvg(svg, o) {
+  const W = 640, H = o.h || 190, L = 50, R = 12, T = 12, B = 30, tmax = o.tmax;
+  let lo = Infinity, hi = -Infinity;
+  o.curves.forEach(c => c.y.forEach(v => { if (isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } }));
+  if (o.include) o.include.forEach(v => { lo = Math.min(lo, v); hi = Math.max(hi, v); });
+  if (!(hi > lo)) { lo -= 1; hi += 1; }
+  const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+  const lim = o.clip || 50; hi = Math.min(hi, lim); lo = Math.max(lo, -lim);
+  const X = t => L + t / tmax * (W - L - R), Y = v => H - B - (clamp(v, lo, hi) - lo) / (hi - lo) * (H - B - T);
+  const step = (() => { const raw = (hi - lo) / 4, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; })();
+  let s = '';
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) s += '<line x1="' + L + '" y1="' + Y(v) + '" x2="' + (W - R) + '" y2="' + Y(v) + '" stroke="' + (Math.abs(v) < 1e-9 ? '#55555f' : '#e8e8ee') + '"/><text x="' + (L - 5) + '" y="' + (Y(v) + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + fmt(v, 2) + '</text>';
+  for (let i = 0; i <= 5; i++) { const t = tmax * i / 5; s += '<text x="' + X(t) + '" y="' + (H - B + 14) + '" text-anchor="middle" font-size="10.5" fill="#6a6a78">' + fmt(t, 1) + '</text>'; }
+  s += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - B - T) + '" fill="none" stroke="#55555f"/>';
+  if (o.vline !== undefined) s += '<line x1="' + X(o.vline) + '" y1="' + T + '" x2="' + X(o.vline) + '" y2="' + (H - B) + '" stroke="#7b4fc2" stroke-dasharray="4 3"/><text x="' + (X(o.vline) + 4) + '" y="' + (T + 11) + '" font-size="10.5" fill="#7b4fc2">perturbation</text>';
+  if (o.ref !== undefined) s += '<line x1="' + L + '" y1="' + Y(o.ref) + '" x2="' + (W - R) + '" y2="' + Y(o.ref) + '" stroke="#1e7a2e" stroke-dasharray="6 4"/>';
+  o.curves.forEach(c => { s += '<polyline fill="none" stroke="' + c.color + '" stroke-width="' + (c.width || 2) + '"' + (c.dash ? ' stroke-dasharray="' + c.dash + '"' : '') + ' points="' + c.t.map((t, i) => X(t).toFixed(1) + ',' + Y(c.y[i]).toFixed(1)).join(' ') + '"/>'; });
+  s += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="11" fill="#1f1f28">temps (s)</text>';
+  o.curves.forEach((c, i) => { const x = W - R - 150, y = T + 14 + i * 14; if (c.name) s += '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 16) + '" y2="' + y + '" stroke="' + c.color + '" stroke-width="2"' + (c.dash ? ' stroke-dasharray="' + c.dash + '"' : '') + '/><text x="' + (x + 21) + '" y="' + (y + 3.5) + '" font-size="10.5" fill="#1f1f28">' + c.name + '</text>'; });
+  svg.innerHTML = s;
+}
+
+/* ================= Atelier : actions P, I, D (approche physique) ================= */
+const QA = { kp: 1, ki: 0, kd: 0, d: 0, preset: 'nc' };
+function mountQA(root) {
+  root.innerHTML = '<h2>Actions proportionnelle, intégrale et dérivée : approche physique</h2><p>Avant de calculer, comprenons ce que fait chaque action. Le correcteur construit la commande <b>u(t)</b> à partir de l\'erreur <b>ε(t) = consigne − sortie</b> :</p>' +
+    '<div class="dwrap"><table class="dt"><thead><tr><th>Action</th><th>La commande est…</th><th>Elle sert à…</th></tr></thead><tbody><tr><td><b>P</b> : u = Kp·ε</td><td>proportionnelle à l\'erreur</td><td>réagir plus fort : gagner en rapidité</td></tr><tr><td><b>I</b> : u = Kᵢ ∫ε dt</td><td>proportionnelle au cumul des erreurs</td><td>annuler l\'erreur permanente : gagner en précision</td></tr><tr><td><b>D</b> : u = K<sub>d</sub> dε/dt</td><td>proportionnelle aux variations de l\'erreur</td><td>freiner à l\'approche de la consigne : gagner en stabilité</td></tr></tbody></table></div>' +
+    '<div id="qa-plant"></div><h3>Choisir une correction</h3><div id="qa-pre"></div><div id="qa-sl"></div><p class="small">Courbes en trait fin gris : système non corrigé (Kp = 1, sans I ni D) ; en bleu : système corrigé. La perturbation est un échelon sur la commande appliqué à mi-parcours.</p>' +
+    '<h3>Sortie y(t)</h3><svg id="qa-y" viewBox="0 0 640 220" style="width:100%;max-width:680px;height:auto"></svg><h3>Erreur ε(t)</h3><svg id="qa-e" viewBox="0 0 640 170" style="width:100%;max-width:680px;height:auto"></svg><h3>Commande u(t) et ses trois parts</h3><svg id="qa-u" viewBox="0 0 640 230" style="width:100%;max-width:680px;height:auto"></svg>' +
+    '<h3>Constat</h3>' + statsHtml([['Dépassement', ''], ['Erreur avant perturbation', ''], ['Erreur finale', '']], 'qa-stats') + '<p class="verdict" id="qa-msg" aria-live="polite"></p>' +
+    '<div class="analogy"><b>Pourquoi pas de dérivée pure ?</b> Si la consigne est constante et que la sortie a convergé vers une valeur quelconque, l\'erreur est constante et sa dérivée nulle : la commande s\'annule. Le système ne « voit » plus la distance à la consigne, la précision est dégradée. On associe donc toujours D à P. Dans un système réel, la saturation de l\'actionneur limite aussi la commande très forte imposée par D à t = 0⁺ (ici la dérivée est calculée sur la sortie, ce qui évite cet à-coup).</div>';
+  const S = QA, tmax = 8, td = 4;
+  const sl = [slider($('#qa-sl'), { name: 'Kp (proportionnel)', min: 0, max: 30, step: 0.1, dec: 1, get: () => S.kp, set: v => { S.kp = v; S.preset = ''; }, onchange: () => upd() }),
+    slider($('#qa-sl'), { name: 'Kᵢ (intégral)', min: 0, max: 30, step: 0.1, dec: 1, unit: 's⁻¹', get: () => S.ki, set: v => { S.ki = v; S.preset = ''; }, onchange: () => upd() }),
+    slider($('#qa-sl'), { name: 'K_d (dérivé)', min: 0, max: 2, step: 0.01, dec: 2, unit: 's', get: () => S.kd, set: v => { S.kd = v; S.preset = ''; }, onchange: () => upd() }),
+    slider($('#qa-sl'), { name: 'Perturbation d', min: 0, max: 1, step: 0.05, dec: 2, get: () => S.d, set: v => { S.d = v; }, onchange: () => upd() })];
+  const PRE = [['nc', 'Non corrigé', 1, 0, 0], ['p', 'P seul (Kp = 5)', 5, 0, 0], ['i', 'I seul (Kᵢ = 2)', 0, 2, 0], ['pi', 'PI (Kp = 3, Kᵢ = 6)', 3, 6, 0], ['pd', 'PD (Kp = 5, K_d = 0,3)', 5, 0, 0.3], ['pid', 'PID', 5, 8, 0.3]];
+  const chips = () => setChips('#qa-pre', PRE.map(p => [p[0], p[1]]), S.preset, id => { const p = PRE.find(q => q[0] === id); Object.assign(S, { kp: p[2], ki: p[3], kd: p[4], preset: id }); sl.forEach(x => x.sync()); upd(); }, 'Corrections prédéfinies');
+  const upd = () => {
+    chips();
+    const A = simPID(PLANT, 1, 0, 0, S.d, td, tmax), B = simPID(PLANT, S.kp, S.ki, S.kd, S.d, td, tmax);
+    const nm = 'non corrigé', gr = '#9aa0aa', bl = '#2e6da4';
+    traceSvg($('#qa-y'), { tmax, h: 220, ref: 1, vline: S.d > 0 ? td : undefined, include: [0, 1.2], curves: [{ name: nm, color: gr, width: 1.6, t: A.t, y: A.y }, { name: 'corrigé', color: bl, width: 2.4, t: B.t, y: B.y }] });
+    traceSvg($('#qa-e'), { tmax, h: 170, ref: 0, vline: S.d > 0 ? td : undefined, curves: [{ color: gr, width: 1.6, t: A.t, y: A.e }, { color: bl, width: 2.4, t: B.t, y: B.e }] });
+    traceSvg($('#qa-u'), { tmax, h: 230, ref: 0, vline: S.d > 0 ? td : undefined, clip: 40, curves: [{ name: 'u total', color: bl, width: 2.4, t: B.t, y: B.u }, { name: 'part P', color: '#e08a00', width: 1.6, dash: '5 3', t: B.t, y: B.up }, { name: 'part I', color: '#1e7a2e', width: 1.6, dash: '5 3', t: B.t, y: B.ui }, { name: 'part D', color: '#7b4fc2', width: 1.6, dash: '5 3', t: B.t, y: B.ud }] });
+    const b = $('#qa-stats').querySelectorAll('.stat b'), m = $('#qa-msg');
+    if (B.blown) { b[0].textContent = b[1].textContent = b[2].textContent = '—'; m.className = 'verdict no'; m.innerHTML = '<b>Système instable.</b> Trop de gain (Kp, Kᵢ ou K_d) : la sortie diverge.'; return; }
+    const iPre = B.t.findIndex(t => t >= td) - 1, last = B.y.length - 1;
+    const yf = B.y[iPre], ef = B.e[last], dep = Math.max(0, (Math.max(...B.y.slice(0, iPre + 1)) - yf) / Math.max(Math.abs(yf), 1e-9) * 100);
+    b[0].textContent = fmt(dep, 0) + ' %'; b[1].textContent = fmt(B.e[iPre] * 100, 1) + ' %'; b[2].textContent = fmt(ef * 100, 1) + ' %';
+    const parts = [];
+    if (S.kp > 1.05) parts.push('P : le système est plus rapide que le non corrigé');
+    if (S.ki > 0) parts.push(Math.abs(ef) < 0.01 ? 'I : l\'erreur permanente est annulée, même après la perturbation' : 'I : l\'erreur finira par s\'annuler (augmentez le temps ou Kᵢ)');
+    if (S.kd > 0) parts.push('D : la commande freine à l\'approche de la consigne, les oscillations diminuent');
+    if (!S.ki && Math.abs(ef) > 0.01) parts.push('sans action intégrale, une erreur permanente subsiste' + (S.d > 0 ? ' et la perturbation la creuse' : ''));
+    m.className = 'verdict ' + (dep > 30 ? 'warn' : 'yes'); m.innerHTML = '<b>Observations :</b> ' + (parts.length ? parts.join(' ; ') : 'comparez avec le système non corrigé.') + '.';
+  };
+  plantEditor($('#qa-plant'), () => upd());
+  upd();
+}
+WORKSHOPS.push({ id: 'qa', title: 'Actions P, I, D', hint: 'Comprenez avec les mains : ce que fait chaque action (rapidité, précision, stabilité) avant de régler quoi que ce soit.', mount: mountQA, reset: () => { Object.assign(QA, { kp: 1, ki: 0, kd: 0, d: 0, preset: 'nc' }); Object.assign(PLANT, PLANT0); } });
+
+/* ================= Atelier : boucles complémentaires et filtre réjecteur ================= */
+const QD = { U0: 24, R: 2, RH: 1, K: 1, B: 0.1, Tm: 0.1, wr: 20, z1: 0.05, z2: 0.5 };
+function simPos(Tm, Km, K, B, tmax) {
+  const n = 6000, dt = tmax / n, f = x => { const u = K * ((1 - x[1]) - B * x[0]); return [(-x[0] + Km * u) / Tm, x[0]]; };
+  let x = [0, 0]; const t = [0], y = [0];
+  for (let i = 1; i <= n; i++) {
+    const k1 = f(x), k2 = f(x.map((v, j) => v + dt / 2 * k1[j])), k3 = f(x.map((v, j) => v + dt / 2 * k2[j])), k4 = f(x.map((v, j) => v + dt * k3[j]));
+    x = x.map((v, j) => v + dt / 6 * (k1[j] + 2 * k2[j] + 2 * k3[j] + k4[j]));
+    if (i % 12 === 0) { t.push(i * dt); y.push(x[1]); }
+  }
+  return { t, y };
+}
+function mountQD(root) {
+  const Km = 10;
+  root.innerHTML = '<h2>Boucles complémentaires et filtre réjecteur</h2><p>Un correcteur n\'est pas la seule façon d\'améliorer les performances : on peut aussi <b>modifier la structure</b> de l\'asservissement en ajoutant des boucles, ou <b>filtrer</b> une perturbation de fréquence connue.</p>' +
+    '<h3>1. Boucle de vitesse (tachymétrique) dans un asservissement de position</h3><p>Le moteur à courant continu est modélisé par H<sub>m</sub>(p) = K<sub>m</sub> / (1 + T<sub>m</sub> p) (K<sub>m</sub> = 10), suivi d\'un intégrateur 1/p. On mesure la vitesse Ω et on la soustrait à la commande avec un gain <b>B</b>. La vitesse étant la dérivée de la position, l\'effet est <b>similaire à une correction dérivée</b>, sans ses inconvénients.</p>' +
+    '<div id="qd-s1"></div>' + statsHtml([['Amortissement ζ', ''], ['Dépassement D', ''], ['Temps de réponse à 5 %', '']], 'qd-stats') + '<svg id="qd-pos" viewBox="0 0 640 220" style="width:100%;max-width:680px;height:auto"></svg><p class="verdict" id="qd-m1"></p>' +
+    '<h3>2. Boucle de courant : limiter le courant au démarrage</h3><p>Sans boucle, un échelon de tension U₀ sur l\'induit (résistance R) donne à vitesse nulle <b>i = U₀ / R</b>. Avec une boucle de courant de gain R<sub>H</sub>, on soustrait R<sub>H</sub>·i à la tension : <b>i = U₀ / (R + R<sub>H</sub>)</b>. Comme le couple est proportionnel au courant, c\'est aussi un contrôle en couple.</p>' +
+    '<div id="qd-s2"></div><div id="qd-i"></div><p class="verdict" id="qd-m2"></p>' +
+    '<h3>3. Filtre réjecteur (Notch)</h3><p>Pour atténuer localement une perturbation sinusoïdale de pulsation connue ω<sub>R</sub>, on place en série le filtre <b>C(p) = (ω<sub>R</sub>² + 2 z₁ ω<sub>R</sub> p + p²) / (ω<sub>R</sub>² + 2 z₂ ω<sub>R</sub> p + p²)</b>. À la pulsation ω<sub>R</sub> son gain vaut z₁ / z₂ : le puits est d\'autant plus profond que z₁ est petit devant z₂.</p>' +
+    '<div id="qd-s3"></div><svg id="qd-n" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg><p class="verdict" id="qd-m3"></p>' +
+    '<p class="small">Remarque : le cours écrit « z₂ &lt; z₁ » ; avec la fonction de transfert donnée, le gain en ω<sub>R</sub> vaut z₁/z₂, donc le puits exige bien z₁ &lt; z₂.</p>';
+  const S = QD;
+  const u1 = () => {
+    const wn = Math.sqrt(S.K * Km / S.Tm), z = (1 + S.K * Km * S.B) / (2 * Math.sqrt(S.K * Km * S.Tm));
+    const tmax = 3, A = simPos(S.Tm, Km, S.K, 0, tmax), B = simPos(S.Tm, Km, S.K, S.B, tmax);
+    const an = analyzeStep(B.t, B.y), a0 = analyzeStep(A.t, A.y);
+    const b = $('#qd-stats').querySelectorAll('.stat b'); b[0].textContent = fmt(z, 2); b[1].textContent = fmt(an.D, 0) + ' %'; b[2].textContent = isFinite(an.tr) ? fmt(an.tr, 2) + ' s' : '> ' + tmax + ' s';
+    stepSvg($('#qd-pos'), { tmax, curves: [{ name: 'sans boucle de vitesse (B = 0)', color: '#9aa0aa', t: A.t, y: A.y, yf: 1 }, { name: 'avec boucle de vitesse', color: '#2e6da4', t: B.t, y: B.y, yf: 1 }] });
+    $('#qd-m1').className = 'verdict ' + (an.D < a0.D ? 'yes' : ''); $('#qd-m1').innerHTML = 'Boucle fermée : T<sub>m</sub> p² + (1 + K·K<sub>m</sub>·B) p + K·K<sub>m</sub> = 0, d\'où <b>ζ = (1 + K K<sub>m</sub> B) / (2 √(K K<sub>m</sub> T<sub>m</sub>))</b> = ' + fmt(z, 2) + ' (ω<sub>n</sub> = ' + fmt(wn, 1) + ' rad/s). Sans boucle : D = ' + fmt(a0.D, 0) + ' %, avec boucle : D = ' + fmt(an.D, 0) + ' %. La rapidité (temps de montée) est conservée alors que le dépassement diminue.';
+  };
+  const u2 = () => {
+    const i0 = S.U0 / S.R, i1 = S.U0 / (S.R + S.RH);
+    $('#qd-i').innerHTML = barRow('Sans boucle', 1, fmt(i0, 1) + ' A', 'bad') + barRow('Avec boucle', i1 / i0, fmt(i1, 1) + ' A', 'ok');
+    $('#qd-m2').className = 'verdict yes'; $('#qd-m2').innerHTML = 'Le courant de démarrage est divisé par <b>' + fmt(1 + S.RH / S.R, 2) + '</b> : le gain R<sub>H</sub> du capteur de courant augmente artificiellement la résistance de l\'induit (R → R + R<sub>H</sub>).';
+  };
+  const u3 = () => {
+    const g = z1z2 => 20 * Math.log10(z1z2);
+    bodeSvg($('#qd-n'), { wmin: 1, wmax: 100, gmin: -40, gmax: 10, curves: [{ name: 'C(jω) filtre réjecteur', color: '#2e6da4', fn: w => { const r = notchFR(w, S.wr, S.z1, S.z2); return [dB(r[0]), r[1]]; } }] });
+    const gr = g(S.z1 / S.z2);
+    $('#qd-m3').className = 'verdict ' + (S.z1 < S.z2 ? 'yes' : 'warn'); $('#qd-m3').innerHTML = S.z1 < S.z2 ? 'Atténuation à ω<sub>R</sub> = ' + fmt(S.wr, 0) + ' rad/s : 20 log(z₁/z₂) = <b>' + fmt(gr, 1) + ' dB</b>. Hors de la zone de ω<sub>R</sub>, le gain reste à 0 dB et la phase est peu modifiée ; plus le puits est étroit (z₂ petit), moins la phase est perturbée.' : '<b>Pas de puits :</b> avec z₁ ≥ z₂ le filtre amplifie au lieu de rejeter. Prenez z₁ &lt; z₂.';
+  };
+  const mk = (id, o) => slider($(id), o);
+  mk('#qd-s1', { name: 'Gain K du hacheur', min: 0.2, max: 5, step: 0.1, dec: 1, get: () => S.K, set: v => { S.K = v; }, onchange: u1 });
+  mk('#qd-s1', { name: 'Gain B de la boucle de vitesse', min: 0, max: 0.5, step: 0.01, dec: 2, get: () => S.B, set: v => { S.B = v; }, onchange: u1 });
+  mk('#qd-s1', { name: 'Constante de temps T_m', min: 0.02, max: 0.5, step: 0.01, dec: 2, unit: 's', get: () => S.Tm, set: v => { S.Tm = v; }, onchange: u1 });
+  mk('#qd-s2', { name: 'Tension U₀', min: 5, max: 48, step: 1, dec: 0, unit: 'V', get: () => S.U0, set: v => { S.U0 = v; }, onchange: u2 });
+  mk('#qd-s2', { name: 'Résistance d\'induit R', min: 0.5, max: 5, step: 0.1, dec: 1, unit: 'Ω', get: () => S.R, set: v => { S.R = v; }, onchange: u2 });
+  mk('#qd-s2', { name: 'Gain R_H de la boucle de courant', min: 0, max: 5, step: 0.1, dec: 1, unit: 'Ω', get: () => S.RH, set: v => { S.RH = v; }, onchange: u2 });
+  mk('#qd-s3', { name: 'Pulsation à rejeter ω_R', min: 2, max: 80, step: 1, dec: 0, unit: 'rad/s', get: () => S.wr, set: v => { S.wr = v; }, onchange: u3 });
+  mk('#qd-s3', { name: 'z₁ (numérateur)', min: 0.01, max: 0.7, step: 0.01, dec: 2, get: () => S.z1, set: v => { S.z1 = v; }, onchange: u3 });
+  mk('#qd-s3', { name: 'z₂ (dénominateur)', min: 0.05, max: 0.7, step: 0.01, dec: 2, get: () => S.z2, set: v => { S.z2 = v; }, onchange: u3 });
+  u1(); u2(); u3();
+}
+function analyzeStep(t, y) {
+  const yf = 1; let D = Math.max(0, (Math.max(...y) - yf) / yf * 100), idx = -1;
+  for (let i = y.length - 1; i >= 0; i--) if (Math.abs(y[i] - yf) > 0.05) { idx = i; break; }
+  return { D, tr: idx < 0 ? 0 : idx >= y.length - 1 ? Infinity : t[idx + 1] };
+}
+WORKSHOPS.push({ id: 'qd', title: 'Boucles et Notch', hint: 'Boucle de vitesse (effet dérivé), boucle de courant (limiter le courant au démarrage) et filtre réjecteur : améliorer les performances sans changer le correcteur.', mount: mountQD, reset: () => { Object.assign(QD, { U0: 24, R: 2, RH: 1, K: 1, B: 0.1, Tm: 0.1, wr: 20, z1: 0.05, z2: 0.5 }); } });
+
+/* ================= Atelier : exemple de rédaction type (annexe du cours) ================= */
+const QR = { K: 218, M: 80, w: 40 };
+function mountQR(root) {
+  root.innerHTML = '<h2>Exemple de rédaction type : PI sur une boucle de vitesse</h2><p>Bras manipulateur collaboratif (Centrale-Supélec MP 2016). Cahier des charges de l\'asservissement de vitesse : <b>marge de phase</b> imposée, <b>écart statique nul</b> vis-à-vis d\'un échelon de consigne et d\'une perturbation constante, <b>pulsation de coupure à 0 dB</b> imposée. La FTBO non corrigée est un intégrateur : <b>FTBO<sub>nc</sub>(p) = K<sub>BO</sub> / p</b>.</p>' +
+    '<div class="opts"><label class="fld"><span>K<sub>BO</sub></span><input type="text" id="qr-K" class="mono"></label><label class="fld"><span>Marge de phase imposée (°)</span><input type="text" id="qr-M" class="mono"></label><label class="fld"><span>ω₀dB imposée (rad/s)</span><input type="text" id="qr-w" class="mono"></label></div>' +
+    '<h3>Rédaction</h3><div id="qr-txt"></div><svg id="qr-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg>' +
+    '<div class="analogy"><b>À retenir pour les concours :</b> suivez la démarche proposée par le sujet quand il y en a une. Ici le sujet fait <b>d\'abord</b> placer la phase (choix de Tᵢ), <b>puis</b> le gain (choix de Kᵢ) : c\'est la méthode « placement fréquentiel » en deux étapes sur une FTBO qui est déjà un intégrateur.</div>';
+  const S = QR, rd = id => parseFloat($(id).value.replace(',', '.'));
+  const upd = () => {
+    const K = rd('#qr-K'), M = rd('#qr-M'), w = rd('#qr-w'), t = $('#qr-txt');
+    if (!(K > 0) || !(M > 0 && M < 90) || !(w > 0)) { t.innerHTML = '<p class="verdict warn">Saisissez K<sub>BO</sub> &gt; 0, une marge de phase entre 0 et 90° (strictement) et ω₀dB &gt; 0.</p>'; return; }
+    Object.assign(S, { K, M, w });
+    const Ti = Math.tan(M * D2R) / w, Ki = Ti * w * w / (K * Math.sqrt(1 + Ti * Ti * w * w));
+    t.innerHTML = '<div class="verdict goal"><b>Q1. Marge de phase de la FTBO non corrigée.</b><br>La FTBO<sub>nc</sub> est un intégrateur d\'ordre 1 : sa phase vaut −90° pour toutes les pulsations. Donc <b>Mφ = 90°</b>' + (M < 90 ? ' &gt; ' + fmt(M, 0) + '° : le critère de stabilité est satisfait.' : '.') + '</div>' +
+      '<div class="verdict goal"><b>Q2. Quelle performance justifie le PI ?</b><br>La FTBO est de classe 0 en amont de la perturbation : le critère de précision vis-à-vis d\'une perturbation constante n\'est pas satisfait. D\'où l\'utilité du correcteur proportionnel intégral. Bode asymptotique de C(p) = Kᵢ (1 + 1/(Tᵢ p)) : pente −20 dB/décade puis gain 20 log Kᵢ au-delà de 1/Tᵢ ; phase de −90° à 0° autour de 1/Tᵢ.</div>' +
+      '<div class="verdict goal"><b>Q3. Réglage de Tᵢ et Kᵢ.</b><br>FTBO<sub>c</sub>(p) = Kᵢ K<sub>BO</sub> (1 + Tᵢ p) / (Tᵢ p²).<br>• <b>Phase.</b> Mφ = arg FTBO<sub>c</sub>(jω₀dB) + 180° = arctan(Tᵢ ω₀dB). Pour ω₀dB = ' + fmt(w, 0) + ' rad/s et Mφ = ' + fmt(M, 0) + '° : <b>Tᵢ = tan(Mφ)/ω₀dB = ' + fmt(Ti, 3) + ' s</b>.<br>• <b>Gain.</b> |FTBO<sub>c</sub>(jω₀dB)| = 1 donne <b>Kᵢ = Tᵢ ω₀dB² / (K<sub>BO</sub> √(1 + Tᵢ²ω₀dB²)) = ' + fmt(Ki, 3) + '</b>.</div>';
+    const FR = x => { const mag = Ki * K * Math.sqrt(1 + Ti * Ti * x * x) / (Ti * x * x); return [dB(mag), -180 + Math.atan(Ti * x) * R2D]; };
+    bodeSvg($('#qr-bode'), { wmin: 0.1, wmax: 1000, gmin: -80, gmax: 80, curves: [{ name: 'FTBO non corrigée K_BO / p', color: '#8a8f98', dash: '6 4', fn: x => [dB(K / x), -90] }, { name: 'FTBO corrigée', color: '#2e6da4', fn: FR }], marks: { wc: w, phWc: FR(w)[1], M: M } });
+  };
+  $('#qr-K').value = String(S.K); $('#qr-M').value = String(S.M); $('#qr-w').value = String(S.w);
+  ['#qr-K', '#qr-M', '#qr-w'].forEach(id => $(id).addEventListener('input', upd));
+  upd();
+}
+WORKSHOPS.push({ id: 'qr', title: 'Rédaction type', hint: 'Reproduisez la rédaction attendue au concours pour régler un PI sur une FTBO intégratrice : phase d\'abord (Tᵢ), gain ensuite (Kᵢ).', mount: mountQR, reset: () => { Object.assign(QR, { K: 218, M: 80, w: 40 }); } });
+
+/* ordre des ateliers */
+(function () { const order = ['q1', 'qa', 'q2', 'q3', 'q4', 'q5', 'qd', 'qr']; WORKSHOPS.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)); })();
+
 /* ---------- activités ---------- */
 const ACT = {
   q1: {
@@ -695,6 +919,7 @@ const ACT = {
       { q: 'Quelle relation approchée lie la marge de phase (en degrés) et l\'amortissement ζ ?', o: ['Mφ ≈ 10·ζ', 'Mφ ≈ 100·ζ', 'Mφ ≈ ζ / 100', 'Mφ ≈ 180·ζ'], a: 1, w: 'Pour un second ordre et ζ ≤ 0,7, Mφ ≈ 100·ζ : ζ = 0,6 donne environ 60°.' },
       { q: 'La marge de phase se mesure :', o: ['à la pulsation où la phase vaut −180°', 'à la pulsation où le gain vaut 0 dB', 'à la pulsation de la bande passante', 'à ω = 1 rad/s'], a: 1, w: 'Mφ = 180° + arg L(jω₀dB), où ω₀dB est la pulsation de coupure à 0 dB de la boucle ouverte.' },
       { q: 'Une erreur statique nulle vis-à-vis d\'une consigne en échelon exige :', o: ['un gain élevé', 'un intégrateur dans la boucle ouverte', 'une grande marge de phase', 'une avance de phase'], a: 1, w: 'L\'intégrateur rend le gain statique infini et annule l\'erreur de position.' },
+      { q: 'Parmi ces critères, lequel est une exigence de stabilité du cahier des charges (valeurs usuelles) ?', o: ['Mφ ≥ 45° et Mg ≥ 12 dB', 'Mφ ≤ 10°', 'Mg ≤ 3 dB', 'ω₀dB = 1 rad/s'], a: 0, w: 'On impose en général Mg ≥ 12 dB et Mφ ≥ 45°, avec D₁ de 10 à 20 % maximum.' },
       { q: 'Un dépassement plus faible correspond à :', o: ['une marge de phase plus petite', 'une marge de phase plus grande', 'une pulsation de coupure plus grande', 'un gain statique plus grand'], a: 1, w: 'Plus la marge de phase est grande, plus l\'amortissement ζ est grand et plus D est faible.' }
     ]
   },
@@ -714,6 +939,7 @@ const ACT = {
       { q: 'Le correcteur proportionnel modifie :', o: ['uniquement le gain de la boucle ouverte', 'uniquement la phase', 'le gain et la phase', 'ni le gain ni la phase'], a: 0, w: 'C(p) = Kp est un réel : il translate la courbe de gain, sans toucher à la phase.' },
       { q: 'Quand on augmente Kp, la marge de phase :', o: ['augmente', 'diminue en général', 'reste constante', 'devient égale à la marge de gain'], a: 1, w: 'ω₀dB monte, là où la phase du système est plus proche de −180°.' },
       { q: 'L\'erreur statique d\'un système de classe 0 avec correcteur P vaut :', o: ['0', '1 / (1 + Kp·K₀)', 'Kp·K₀', '1 / (Kp·K₀)'], a: 1, w: 'Avec un gain de boucle statique Kp·K₀, ε = 1 / (1 + Kp·K₀).' },
+      { q: 'Pour tenir une erreur statique maximale ε imposée avec un correcteur P, on obtient :', o: ['un Kp maximal', 'un Kp minimal', 'un Kp unique quelle que soit la marge', 'Kp = 1'], a: 1, w: 'ε = 1/(1 + Kp K₀) diminue quand Kp augmente : l\'erreur impose Kp ≥ (1/ε − 1)/K₀. C\'est la marge de phase qui impose ensuite un maximum.' },
       { q: 'Pour régler Kp à partir d\'une marge de phase visée, on calcule Kp = 1/|H(jω)| où ω est tel que :', o: ['arg H = −180°', 'arg H = −180° + Mφ', 'arg H = −Mφ', '|H| = 1'], a: 1, w: 'À la pulsation de coupure, on veut arg L = −180° + Mφ ; le gain de L doit y valoir 1.' }
     ]
   },
@@ -734,6 +960,7 @@ const ACT = {
       { q: 'La compensation de pôle consiste à choisir :', o: ['Kp = 1', 'Tᵢ = τ₁', 'Tᵢ = τ₂', 'Tᵢ = 0'], a: 1, w: 'Le zéro (1 + Tᵢ p) du correcteur annule le pôle dominant (1 + τ₁ p) du système.' },
       { q: 'Aux très basses pulsations, la phase d\'un PI vaut :', o: ['0°', '+90°', '−90°', '−180°'], a: 2, w: 'C(jω) ≈ Kp / (jTᵢ ω) : un intégrateur pur, de phase −90°.' },
       { q: 'Après compensation du pôle dominant, la boucle fermée se comporte comme :', o: ['un premier ordre', 'un second ordre', 'un système instable', 'un système sans erreur de traînage'], a: 1, w: 'Il reste un intégrateur et un pôle 1/(1 + τ₂ p) : L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)).' },
+      { q: 'Dans la méthode en trois étapes (placement fréquentiel), on choisit Tᵢ tel que :', o: ['1/Tᵢ = ω₀dB\'/10', '1/Tᵢ = 10·ω₀dB\'', 'Tᵢ = ω₀dB\'', 'Tᵢ = Kp'], a: 0, w: 'La cassure 1/Tᵢ est placée une décade sous ω₀dB\' : l\'intégrateur ne coûte qu\'environ 5° de marge, qu\'on compense à l\'étape 3.' },
       { q: 'Si Tᵢ est beaucoup plus grand que τ₁ :', o: ['la réponse est très rapide', 'une queue lente apparaît dans la réponse', 'le système devient instable', 'l\'erreur statique est non nulle'], a: 1, w: 'Le pôle lent n\'est pas compensé : la sortie rejoint la consigne avec une constante de temps de l\'ordre de Tᵢ.' }
     ]
   },
@@ -775,93 +1002,195 @@ const ACT = {
       { q: 'Après avoir réglé un correcteur par le calcul, il faut :', o: ['livrer directement', 'vérifier marges et réponse temporelle puis ajuster', 'doubler le gain', 'supprimer l\'intégrateur'], a: 1, w: 'Le calcul repose sur des approximations : on vérifie toujours en boucle fermée.' }
     ]
   }
+  ,qa: {
+    title: 'Actions P, I, D', level: 'Niveau 1 · Découvrir', time: '25 min', course: 'physique',
+    goal: 'Comprendre physiquement ce que font les actions proportionnelle, intégrale et dérivée sur la rapidité, la précision et la stabilité.',
+    steps: [
+      'Sélectionnez « P seul ». Comparez la sortie au système non corrigé : qu\'améliore-t-on ? Que reste-t-il comme erreur ?',
+      'Sélectionnez « I seul ». La sortie rejoint-elle la consigne ? Observez le dépassement et la lenteur : pourquoi un intégral pur est-il rarement utilisé ?',
+      'Sélectionnez « PI » puis ajoutez une perturbation (d = 0,5). Quelle part de la commande reprend le relais en fin de régime transitoire ?',
+      'Augmentez Kp à 15 sans D : la sortie oscille. Ajoutez K_d : quel effet sur les oscillations ?',
+      'Mettez Kᵢ = 0 avec Kd > 0 sur un système qui a déjà convergé. Pourquoi la dérivée seule ne corrige-t-elle pas l\'erreur ?'
+    ],
+    defi: { q: 'Quelle combinaison d\'actions faut-il pour un système lent, imprécis et mal amorti ? Quelle part de u(t) agit au début, laquelle en régime permanent ?',
+      a: 'Un PID : P pour la rapidité, I pour annuler l\'erreur permanente, D pour amortir. Au début du mouvement, la part proportionnelle (et dérivée) domine ; en régime permanent, l\'erreur est nulle donc u_P = 0 et seule la part intégrale fournit l\'énergie qui maintient la sortie.' },
+    qcm: [
+      { q: 'L\'action intégrale est proportionnelle :', o: ['à l\'erreur', 'au cumul des erreurs au cours du temps', 'à la variation de l\'erreur', 'à la consigne'], a: 1, w: 'u(t) = Kᵢ ∫ε dt : elle augmente tant qu\'une erreur subsiste.' },
+      { q: 'Pourquoi un correcteur proportionnel seul ne peut-il pas annuler l\'erreur d\'un système qui a besoin d\'énergie pour tenir sa sortie ?', o: ['Il est trop lent', 'Sa commande s\'annule quand l\'erreur est nulle', 'Il déstabilise toujours', 'Il dérive la sortie'], a: 1, w: 'u = Kp·ε devient nulle quand ε = 0 : il n\'y a plus d\'énergie pour maintenir la sortie.' },
+      { q: 'Quelle action sert surtout à améliorer la stabilité (réduire les oscillations) ?', o: ['proportionnelle', 'intégrale', 'dérivée', 'aucune'], a: 2, w: 'L\'action dérivée freine à l\'approche de la consigne, comme un frottement visqueux artificiel.' },
+      { q: 'Pourquoi n\'utilise-t-on jamais une action dérivée pure ?', o: ['Elle est trop rapide', 'Une erreur constante donne une commande nulle : précision dégradée', 'Elle annule les dépassements', 'Elle ne s\'écrit pas dans Laplace'], a: 1, w: 'Si la consigne est constante et la sortie convergée, ε est constante : sa dérivée est nulle.' },
+      { q: 'Dans un PI, quelle part de la commande domine en début de mouvement ?', o: ['la part intégrale', 'la part proportionnelle', 'les deux à parts égales', 'aucune'], a: 1, w: 'L\'intégrale n\'a pas encore cumulé d\'erreur ; elle prend le relais en fin de régime transitoire.' }
+    ]
+  },
+  qd: {
+    title: 'Boucles et Notch', level: 'Niveau 3 · Appliquer', time: '25 min', course: 'boucles',
+    goal: 'Comprendre l\'effet d\'une boucle de vitesse, d\'une boucle de courant et d\'un filtre réjecteur.',
+    steps: [
+      'Boucle de vitesse : placez B = 0, notez le dépassement, puis augmentez B. Que devient ζ ? Et la rapidité ?',
+      'Retrouvez la formule ζ = (1 + K·Km·B) / (2√(K·Km·Tm)) avec les valeurs affichées.',
+      'Boucle de courant : faites varier R_H. De quel facteur le courant de démarrage est-il divisé ?',
+      'Notch : réglez ω_R = 20 rad/s puis z₁ = 0,05 et z₂ = 0,5. Quelle atténuation obtenez-vous en ω_R ?',
+      'Échangez z₁ et z₂ : que se passe-t-il ? Rétrécissez le puits en diminuant z₂ : l\'effet sur la phase ?'
+    ],
+    defi: { q: 'On veut atténuer de 26 dB une perturbation sinusoïdale à 50 rad/s. Proposez z₁ et z₂.',
+      a: '20 log(z₁/z₂) = −26 dB donne z₁/z₂ ≈ 0,05 : par exemple z₂ = 0,5 et z₁ = 0,025 (avec z₁ et z₂ inférieurs à 0,7).' },
+    qcm: [
+      { q: 'L\'effet d\'une boucle de vitesse dans un asservissement de position est similaire à :', o: ['une correction intégrale', 'une correction dérivée', 'une correction proportionnelle', 'un retard pur'], a: 1, w: 'La vitesse est la dérivée de la position : on retranche une image de θ\'.' },
+      { q: 'Une boucle de courant de gain R_H fait passer le courant de démarrage de U₀/R à :', o: ['U₀/(R − R_H)', 'U₀/(R + R_H)', 'U₀·R_H', 'U₀/R_H'], a: 1, w: 'Tout se passe comme si la résistance d\'induit valait R + R_H.' },
+      { q: 'Un filtre réjecteur sert à :', o: ['augmenter la précision', 'atténuer localement une perturbation sinusoïdale de fréquence connue', 'remplacer l\'intégrateur', 'augmenter le gain statique'], a: 1, w: 'Il creuse un puits de gain autour de la pulsation à rejeter.' },
+      { q: 'Dans un moteur à courant continu, le couple est proportionnel :', o: ['à la tension', 'au courant', 'à la vitesse', 'à la position'], a: 1, w: 'D\'où le nom de « contrôle en couple » pour la boucle de courant.' }
+    ]
+  },
+  qr: {
+    title: 'Rédaction type', level: 'Niveau 3 · Appliquer', time: '20 min', course: 'redaction',
+    goal: 'Rédiger le réglage d\'un PI sur une FTBO intégratrice : Tᵢ par la phase, Kᵢ par le gain.',
+    steps: [
+      'Lisez la rédaction avec K_BO = 218, Mφ = 80°, ω₀dB = 40 rad/s. Retrouvez Tᵢ = 0,14 s et Kᵢ = 0,18.',
+      'Changez la marge de phase à 60° : comment évolue Tᵢ ? Pourquoi une marge plus faible autorise-t-elle un Tᵢ plus petit ?',
+      'Doublez ω₀dB : Tᵢ et Kᵢ varient-ils comme prévu ?',
+      'Vérifiez sur le Bode que la courbe corrigée coupe 0 dB à ω₀dB avec la marge demandée.'
+    ],
+    defi: { q: 'Pourquoi ne peut-on pas imposer Mφ = 90° avec ce PI ?',
+      a: 'Mφ = arctan(Tᵢ·ω₀dB) tend vers 90° seulement quand Tᵢ tend vers l\'infini : l\'intégrateur n\'a alors plus d\'effet utile (Kᵢ → 0). 90° est la marge de la FTBO non corrigée.' },
+    qcm: [
+      { q: 'La phase d\'un intégrateur K/p vaut :', o: ['0°', '−45°', '−90°', '−180°'], a: 2, w: 'Donc la marge de phase de K/p vaut 90°.' },
+      { q: 'Avec FTBOc = Kᵢ K_BO (1 + Tᵢp)/(Tᵢp²), la marge de phase vaut :', o: ['arctan(Tᵢ ω₀dB)', '90° − arctan(Tᵢ ω₀dB)', '180°', '−90°'], a: 0, w: 'La phase est −180° + arctan(Tᵢ ω), donc Mφ = arctan(Tᵢ ω₀dB).' },
+      { q: 'Pour Mφ = 80° et ω₀dB = 40 rad/s, Tᵢ vaut environ :', o: ['0,14 s', '1,4 s', '0,014 s', '14 s'], a: 0, w: 'Tᵢ = tan 80° / 40 ≈ 5,67 / 40 ≈ 0,14 s.' }
+    ]
+  }
 };
 
-/* ---------- cours ---------- */
+/* ---------- cours (d'après le cours O8 : régler la commande des SLCI) ---------- */
 const COURSE = [];
-COURSE.push({ id: 'demarche', t: 'Démarche générale de réglage', h: `
-<p>Un <b>asservissement</b> compare la sortie y à la consigne et applique à l'entrée du système une commande calculée par le <b>correcteur</b> C(p). La boucle ouverte est <b>L(p) = C(p)·H(p)</b>, la boucle fermée (retour unitaire) est <b>L / (1 + L)</b>.</p>
-<h3>Les six étapes</h3>
-<ol><li><b>Cahier des charges</b> : stabilité (marges), amortissement (dépassement D), rapidité (temps de réponse tr5 %, bande passante), précision (erreur statique).</li>
-<li><b>Critères fréquentiels</b> : on traduit D en marge de phase Mφ, et le temps de réponse en pulsation de coupure ω₀dB.</li>
-<li><b>Choix du correcteur</b> : P, PI ou avance de phase, selon l'écart entre le système et les exigences.</li>
-<li><b>Calcul des paramètres</b> à partir du Bode de H.</li>
-<li><b>Vérification</b> : marges, réponse indicielle, erreur statique.</li>
-<li><b>Ajustement</b> si une exigence n'est pas tenue.</li></ol>
+COURSE.push({ id: 'demarche', t: 'Performances et démarche générale', h: `
+<p>Un système asservi doit satisfaire plusieurs exigences, <b>non indépendantes</b> : un comportement suffisamment <b>stable</b> (notion de marges), un régime transitoire <b>court</b> et <b>bien amorti</b>, une bonne <b>précision</b> en régime permanent, et une faible sensibilité aux <b>perturbations</b>.</p>
+<p>Un asservissement compare la sortie à la consigne ; le <b>correcteur</b> C(p), placé en <b>série</b> après le comparateur, élabore la commande à partir de l'image de l'erreur. La boucle ouverte est <b>L(p) = C(p)·H(p)</b>.</p>
+<table class="ctable"><thead><tr><th>Performance</th><th>Critères en boucle fermée</th><th>Liens avec la FTBO</th></tr></thead><tbody>
+<tr><td>Stabilité</td><td>Premier dépassement D₁ % = 10 à 20 % maxi ; facteur de résonance Q ≤ 2,3 dB (Q ≈ 1,3)</td><td>Marges imposées : Mg ≥ 12 dB et Mφ ≥ 45°</td></tr>
+<tr><td>Précision</td><td>Erreur permanente nulle ou limitée (échelon, rampe) ; sensibilité aux perturbations</td><td>Gain statique K<sub>BO</sub> et classe α de la FTBO (en amont de la perturbation)</td></tr>
+<tr><td>Rapidité</td><td>Temps de réponse à 5 %, temps de montée, bande passante à −3 dB</td><td>Pulsation de coupure à 0 dB de la FTBO</td></tr></tbody></table>
+<p>Le facteur de résonance est Q = |H(jω<sub>r</sub>)| / |H(jω→0)|, avec ω<sub>r</sub> la pulsation de résonance.</p>
+<h3>Ce que peut (et ne peut pas) un correcteur</h3>
+<ul><li>Il est peu coûteux (faible niveau d'énergie) et facile à modifier ; il est influent car il agit directement sur la commande.</li>
+<li>Il ne compense jamais un défaut majeur de conception de la chaîne d'action (retard rendant le système instable, actionneur sous-dimensionné et saturé, frottement sec…).</li></ul>
+<div class="analogy"><b>Trois règles sur le diagramme de Bode de la FTBO.</b> Pour la <b>précision</b> : augmenter le gain statique. Pour la <b>rapidité</b> : choisir une pulsation de coupure à 0 dB plus élevée. Pour la <b>stabilité</b> : corriger la courbe de phase au voisinage de ω₀dB. Mais l'action d'un correcteur est <b>globale</b> : elle agit sur tout le spectre, d'où des compromis.</div>
+<h3>Les six étapes du réglage</h3>
+<ol><li><b>Cahier des charges</b> (stabilité, rapidité, précision).</li><li><b>Critères fréquentiels</b> : D → Mφ ; temps de réponse → ω₀dB ; erreur → classe et gain.</li><li><b>Choix du correcteur</b> (P, PI, avance de phase).</li><li><b>Calcul des paramètres</b> à partir du Bode de H.</li><li><b>Vérification</b> (marges, réponse indicielle, erreur).</li><li><b>Ajustement</b>.</li></ol>
 <h3>Définitions fréquentielles</h3>
 <table class="ctable"><thead><tr><th>Grandeur</th><th>Définition</th></tr></thead><tbody>
 <tr><td>Pulsation de coupure ω₀dB</td><td>|L(jω₀dB)| = 1 (0 dB)</td></tr>
 <tr><td>Marge de phase Mφ</td><td>Mφ = 180° + arg L(jω₀dB)</td></tr>
-<tr><td>Marge de gain Mg</td><td>Mg = −20 log |L(jω₁₈₀)| où arg L(jω₁₈₀) = −180°</td></tr>
-<tr><td>Bande passante ωBP</td><td>pulsation où le gain de la boucle fermée a perdu 3 dB</td></tr>
-</tbody></table>
-<p>Critère de Bode : la boucle fermée est stable si Mφ &gt; 0 et Mg &gt; 0. En pratique on vise Mφ ≥ 45° (souvent 60°) et Mg ≥ 10 dB.</p>` });
+<tr><td>Marge de gain Mg</td><td>Mg = −20 log |L(jω₋₁₈₀)| où arg L(jω₋₁₈₀) = −180°</td></tr>
+<tr><td>Bande passante ω<sub>−3dB</sub></td><td>à −3 dB de la boucle <b>fermée</b> (gain atténué de 30 % : 0,7 × valeur de référence)</td></tr></tbody></table>` });
 COURSE.push({ id: 'criteres', t: 'Critères temporels et fréquentiels', h: `
 <p>Pour un système du second ordre en boucle fermée (gain statique 1, amortissement ζ, pulsation propre ωₙ) :</p>
 <ul><li>Dépassement : <b>D = 100 · exp(−πζ / √(1 − ζ²))</b> (en %).</li>
 <li>Marge de phase : <b>Mφ ≈ 100·ζ</b> (en °), valable pour ζ ≤ 0,7.</li>
-<li>Pulsation de coupure de la boucle ouverte : ω₀dB ≈ 0,7·ωₙ pour ζ ≈ 0,7. De façon exacte, ω₀dB/ωₙ = √(√(1 + 4ζ⁴) − 2ζ²).</li>
+<li>Pulsation de coupure de la boucle ouverte : ω₀dB/ωₙ = √(√(1 + 4ζ⁴) − 2ζ²) (≈ 0,7 pour ζ ≈ 0,7).</li>
 <li>Temps de réponse à 5 % : <b>ωₙ · tr5 % ≈ 3</b> pour ζ ≈ 0,7 (plus grand si ζ est petit ou grand).</li>
+<li>Facteur de résonance : Q = 1/(2ζ√(1 − ζ²)) pour ζ &lt; 0,707.</li>
 <li>Bande passante : ωBP est de l'ordre de 1,2 à 1,5 fois ω₀dB.</li></ul>
 <table class="ctable"><thead><tr><th>Mφ</th><th>ζ</th><th>D</th></tr></thead><tbody><tr><td>30°</td><td>0,29</td><td>38 %</td></tr><tr><td>45°</td><td>0,42</td><td>23 %</td></tr><tr><td>60°</td><td>0,60</td><td>9,5 %</td></tr></tbody></table>
-<div class="analogy"><b>Rapidité :</b> à marge de phase fixée, un système est d'autant plus rapide que ω₀dB est grande. Régler la rapidité, c'est donc choisir ω₀dB ; régler l'amortissement, c'est choisir la phase en ω₀dB.</div>
-<h3>Précision</h3>
-<p>Classe 0 (pas d'intégrateur) : ε = 1/(1 + L(0)). Classe 1 (un intégrateur) : erreur de position nulle, erreur de vitesse finie.</p>` });
+<h3>Précision (rappel)</h3>
+<ul><li>Échelon E₀/p : e<sub>r</sub>(∞) = E₀ / (1 + K<sub>BO</sub>) en classe 0, nulle en classe ≥ 1.</li><li>Rampe V₀/p² : e<sub>r</sub>(∞) = V₀ / K<sub>BO</sub> en classe 1.</li><li>Pour une perturbation, l'erreur est inversement proportionnelle au gain statique K₁ de la FTBO <b>en amont</b> de la perturbation.</li></ul>` });
+COURSE.push({ id: 'physique', t: 'Actions des correcteurs : approche physique', h: `
+<p>Prenons un moteur linéaire asservi (position ou vitesse) : bonne stabilité, excellente précision et bonne rapidité sont exigées. Chaque défaut a sa correction.</p>
+<h3>Problème de rapidité : action proportionnelle</h3>
+<p>Le système converge trop lentement : on « fait croire » au moteur que l'erreur est <b>Kp fois plus grande</b> que l'erreur réelle (u = Kp·ε). La réponse est beaucoup plus rapide, mais la commande s'annule dès que l'erreur est nulle : elle n'apporte plus d'énergie.</p>
+<h3>Problème de précision : action intégrale</h3>
+<p>Un système qui a besoin d'énergie pour maintenir sa sortie (asservissement de vitesse) ne peut pas être précis avec un P seul. On commande en fonction du <b>cumul des erreurs</b> : <b>u(t) = Kᵢ∫ε dt</b>, soit U(p) = (Kᵢ/p)·ε(p). La commande augmente tant qu'une erreur subsiste : le système devient précis. Inconvénients : temps de réponse allongé, dépassement (stabilité dégradée). On l'associe donc à un P : <b>au début l'action proportionnelle agit, puis l'action intégrale prend le relais</b> et fournit l'énergie permanente.</p>
+<h3>Problème de stabilité : action dérivée</h3>
+<p>Un système de grande inertie dépasse la consigne puis oscille. On <b>anticipe</b> : on diminue la commande quand l'erreur diminue vite, avec <b>u(t) = K<sub>d</sub> dε/dt</b>, U(p) = K<sub>d</sub> p ε(p). C'est un frein artificiel (comme un frottement visqueux). L'action dérivée agit en deux temps : à t = 0⁺ une commande forte (mise en mouvement plus brutale), puis un freinage quand le système prend de la vitesse.</p>
+<div class="analogy"><b>Jamais de dérivée pure :</b> avec une consigne constante et une sortie convergée vers une valeur quelconque, l'erreur est constante et sa dérivée nulle : le système ne voit plus la distance à la consigne, la précision est dégradée. Elle se combine à un P (PD). La saturation de l'actionneur limite en réalité la commande à t = 0⁺ : le gain porte surtout sur la limitation des oscillations, peu sur le temps de montée.</div>
+<h3>Premiers constats</h3>
+<ul><li>P : commande proportionnelle à l'erreur ; I : proportionnelle au cumul des erreurs ; D : proportionnelle aux variations de l'erreur.</li><li>Associer les actions combine leurs effets, mais la mise en œuvre est plus complexe (paramètres interdépendants).</li><li>Au programme de CPGE : P, PI et avance de phase (version réaliste de la dérivée).</li></ul>` });
 COURSE.push({ id: 'proportionnel', t: 'Correcteur proportionnel', h: `
-<p><b>C(p) = Kp.</b> Ne change que le gain : la courbe de gain de la boucle ouverte est translatée de 20 log Kp, la phase est inchangée.</p>
-<h3>Méthode de réglage par la marge de phase</h3>
-<ol><li>Tracer arg H(jω).</li><li>Trouver ω₁ tel que <b>arg H(jω₁) = −180° + Mφ</b>.</li><li>Calculer <b>Kp = 1 / |H(jω₁)|</b> : ω₁ devient la pulsation de coupure.</li></ol>
-<p>Pour H = K₀/((1 + τ₁p)(1 + τ₂p)), la phase tend vers −180° : un gain trop grand rend le système instable.</p>
-<h3>Limites</h3>
-<ul><li>Erreur statique non nulle : ε = 1/(1 + Kp K₀).</li><li>Augmenter Kp réduit ε mais diminue la marge de phase.</li><li>Seul Kp est ajustable : on ne peut pas régler indépendamment précision, rapidité et amortissement.</li></ul>` });
-COURSE.push({ id: 'pi', t: 'Correcteur PI et compensation de pôle', h: `
-<p><b>C(p) = Kp (1 + Tᵢ p) / (Tᵢ p)</b> = Kp + Kp/(Tᵢ p). Gain en basse fréquence infini (intégrateur), gain Kp au-delà de 1/Tᵢ. Phase : −90° très en dessous de 1/Tᵢ, 0° très au-dessus.</p>
-<h3>Compensation du pôle dominant</h3>
-<p>Pour H = K₀/((1 + τ₁p)(1 + τ₂p)) avec τ₁ &gt; τ₂, on choisit <b>Tᵢ = τ₁</b>. La boucle ouverte devient :</p>
-<p><b>L(p) = Kp K₀ / (τ₁ p (1 + τ₂ p))</b></p>
-<p>C'est un système de classe 1 et d'ordre 2 : l'erreur statique est nulle, et le réglage se fait par la marge de phase.</p>
-<h3>Calcul de Kp</h3>
-<ul><li>Mφ = 90° − arctan(ω₀dB τ₂), donc <b>ω₀dB = 1 / (τ₂ tan Mφ)</b>.</li>
-<li>|L(jω₀dB)| = 1 donne <b>Kp = τ₁ ω₀dB √(1 + ω₀dB² τ₂²) / K₀</b>.</li></ul>
-<div class="analogy"><b>Remarque :</b> si Tᵢ ≠ τ₁, il reste un pôle non compensé. Avec Tᵢ &gt; τ₁, une queue lente de constante de temps proche de Tᵢ apparaît dans la réponse.</div>
-<p>Règle pratique sans modèle : Tᵢ ≥ 5 à 10 fois 1/ω₀dB pour que l'intégrateur coûte moins de 10° de marge de phase.</p>` });
+<p><b>C(p) = Kp.</b> Un gain pur : il <b>ne modifie pas la phase</b> mais modifie, pour toutes les pulsations, le gain de la FTBO de <b>20 log Kp</b> : G<sub>dB,c</sub>(ω) = 20 log Kp + G<sub>dB,nc</sub>(ω) ; φ<sub>c</sub> = φ<sub>nc</sub>.</p>
+<h3>Influence sur les performances</h3>
+<table class="ctable"><thead><tr><th></th><th>Stabilité</th><th>Précision</th><th>Rapidité</th></tr></thead><tbody>
+<tr><td>Kp &lt; 1</td><td>↗ marges augmentées (Mg de |20 log Kp|, ω₀dB diminue)</td><td>↘ erreur augmentée (K<sub>BO,c</sub> = Kp·K<sub>BO,nc</sub>)</td><td>↘ ω₀dB et bande passante diminuées</td></tr>
+<tr><td>Kp &gt; 1</td><td>↘ marges diminuées</td><td>↗ erreur diminuée</td><td>↗ ω₀dB et bande passante augmentées</td></tr>
+<tr><td>Kp ≫ 1</td><td>↘↘ système oscillant, dépassements importants, voire instable</td><td>↗</td><td>très rapide mais oscillant : t<sub>r5%</sub> finit par augmenter</td></tr></tbody></table>
+<p>Précision : e<sub>r</sub>(∞) = E₀/(1 + K<sub>BO</sub>) pour un échelon ; V₀/K<sub>BO</sub> pour une rampe (classe 1).</p>
+<h3>Réglage</h3>
+<table class="ctable"><thead><tr><th>Critère imposé</th><th>Démarche</th></tr></thead><tbody>
+<tr><td>Marges de stabilité</td><td><b>Approché (graphique)</b> : tracer le Bode de H, lire la translation verticale Δ<sub>dB</sub> qui donne la marge voulue, puis Kp ≈ 10<sup>Δ<sub>dB</sub>/20</sup>.<br><b>Précis (analytique)</b> : chercher ω₀dB tel que Mφ = marge imposée, puis Kp tel que |H<sub>c</sub>(jω₀dB)| = 1 ; ou chercher ω₋₁₈₀ (arg H = −180°) puis Kp tel que Mg = marge imposée.</td></tr>
+<tr><td>Erreur permanente imposée</td><td>Déterminer le gain statique K<sub>BO,c</sub> = Kp·K<sub>BO,nc</sub> qui donne l'erreur maximale, en déduire <b>Kp minimal</b>.</td></tr>
+<tr><td>Temps de réponse à 5 %</td><td>1<sup>er</sup> ordre : t<sub>5%</sub> = 3 τ<sub>BF</sub> (τ<sub>BF</sub> en fonction de Kp). 2<sup>e</sup> ordre : on retient la tendance (plus Kp augmente, plus t<sub>5%</sub> diminue, jusqu'à une limite).</td></tr>
+<tr><td>Bande passante à −3 dB</td><td>Travailler sur la <b>FTBF</b>. 1<sup>er</sup> ordre : ω<sub>−3dB</sub> = 1/τ<sub>BF</sub>. 2<sup>e</sup> ordre : résoudre G<sub>dB</sub>(ω<sub>−3dB</sub>) = 20 log K<sub>BF</sub> − 3 (ou G = 0,7·K<sub>BF</sub>).</td></tr></tbody></table>
+<div class="analogy"><b>Limite :</b> un seul paramètre ne permet pas de régler indépendamment précision, rapidité et stabilité : la précision pousse Kp vers le haut, la stabilité le limite.</div>` });
+COURSE.push({ id: 'integral', t: 'Correcteur intégral', h: `
+<p><b>C(p) = Kᵢ/p = 1/(Tᵢ p).</b> Il augmente le gain de la FTBO aux basses pulsations, le diminue aux hautes, et apporte un <b>déphasage de −90° pour toutes les pulsations</b> :</p>
+<p>G<sub>dB,c</sub>(ω) = G<sub>dB,nc</sub>(ω) + 20 log Kᵢ − 20 log ω ; φ<sub>c</sub>(ω) = φ<sub>nc</sub>(ω) − 90°.</p>
+<table class="ctable"><thead><tr><th>Performance</th><th>Effet</th></tr></thead><tbody>
+<tr><td>Précision</td><td>↗↗ annule l'erreur face à un échelon de consigne et, placé en amont, face à une perturbation en échelon</td></tr>
+<tr><td>Stabilité</td><td>↘↘ phase diminuée de 90° partout : marges fortement réduites</td></tr>
+<tr><td>Rapidité</td><td>légèrement ↗ ou ↘ selon Kᵢ (Kᵢ &gt; ω₀dB,nc : légèrement plus rapide)</td></tr></tbody></table>
+<p>À cause de son effet néfaste sur la stabilité, il est très peu utilisé seul : on l'associe à une action proportionnelle.</p>` });
+COURSE.push({ id: 'pi', t: 'Correcteur PI : deux méthodes de réglage', h: `
+<p><b>C(p) = Kp + Kᵢ/p = Kp (1 + Tᵢ p)/(Tᵢ p)</b> avec <b>Tᵢ = Kp/Kᵢ</b> (attention : certains sujets écrivent C = Kp + 1/(Tᵢ p)). Intégral pur aux basses pulsations, proportionnel aux hautes ; cassure à ω = 1/Tᵢ, phase de −90° à 0°.</p>
+<p>Avantages : l'augmentation de la <b>classe</b> améliore la précision ; au-delà de 1/Tᵢ la phase n'est plus diminuée, donc la stabilité est peu dégradée <b>si</b> la cassure est bien choisie. Plus 1/Tᵢ est faible, plus Kᵢ est faible et plus le système est lent : c'est un compromis stabilité / rapidité tout en garantissant la précision.</p>
+<h3>Méthode 1 : par marge de phase imposée (placement fréquentiel)</h3>
+<ol><li><b>Kp' (P seul)</b> : on règle Kp' pour la marge de phase imposée (graphiquement par translation Δ<sub>dB</sub>, ou analytiquement : ω₀dB' tel que Mφ = marge, puis |H<sub>c</sub>'(jω₀dB')| = 1).</li>
+<li><b>Tᵢ</b> : on place l'effet intégral loin de ω₀dB' : 1/Tᵢ ≪ ω₀dB', en général une décade : <b>1/Tᵢ = ω₀dB'/10</b>.</li>
+<li><b>Ajustement de Kp</b> : la cassure à une décade coûte environ <b>5° de marge</b>. Variante analytique : garder Tᵢ et recalculer Kp pour retrouver la marge ; variante graphique : viser dès l'étape 1 la marge souhaitée + 5°.</li></ol>
+<h3>Méthode 2 : compensation du pôle dominant réel</h3>
+<p>Si H<sub>nc</sub>(p) = G(p)/(1 + τp) avec un <b>pôle dominant réel</b> −1/τ, on choisit <b>Tᵢ = τ</b> :</p>
+<p>H<sub>c</sub>(p) = G(p)·(1/(1 + τp))·Kp(1 + Tᵢp)/(Tᵢp) = G(p)·Kp/(Tᵢ p).</p>
+<p>On limite ainsi la dégradation de stabilité due à l'intégrateur et on impacte peu la rapidité (ω₀dB repoussée vers les hautes pulsations). Puis on règle Kp pour la marge de phase imposée (translation Δ<sub>dB</sub> ≈ 20 log Kp, ou analytiquement).</p>
+<p>Pour H = K₀/((1 + τ₁p)(1 + τ₂p)) : L = Kp·K₀/(τ₁p(1 + τ₂p)), Mφ = 90° − arctan(ω₀dB τ₂), donc <b>ω₀dB = 1/(τ₂ tan Mφ)</b> et <b>Kp = τ₁ ω₀dB √(1 + ω₀dB²τ₂²)/K₀</b>.</p>
+<div class="analogy"><b>Attention :</b> la méthode 2 est plus rapide à mettre en œuvre, mais n'est possible que si le pôle dominant est réel. Aux concours, suivez la démarche proposée par le sujet.</div>` });
 COURSE.push({ id: 'avance', t: 'Correcteur à avance de phase', h: `
-<p><b>C(p) = K (1 + aTp) / (1 + Tp)</b>, avec a &gt; 1. Gain K en basse fréquence, K·a en haute fréquence. La phase est positive, maximale en <b>ωm = 1/(T√a)</b> :</p>
-<p><b>φmax = arcsin((a − 1)/(a + 1))</b>, et <b>|C(jωm)| = K√a</b>.</p>
-<table class="ctable"><thead><tr><th>a</th><th>2</th><th>4</th><th>10</th><th>20</th></tr></thead><tbody><tr><td>φmax</td><td>19,5°</td><td>37°</td><td>55°</td><td>65°</td></tr></tbody></table>
-<h3>Méthode de réglage</h3>
-<ol><li>Fixer la pulsation de coupure visée ω₀dB (rapidité).</li>
-<li>Lire |H| et arg H à cette pulsation : marge actuelle M₀ = 180° + arg H(jω₀dB).</li>
-<li>Avance nécessaire : <b>φ = Mφ visée − M₀ + (5° à 10°)</b>.</li>
-<li><b>a = (1 + sin φ)/(1 − sin φ)</b>.</li>
-<li>Placer ωm = ω₀dB : <b>T = 1/(ω₀dB √a)</b>.</li>
-<li>Ajuster le gain pour que |L| = 1 en ω₀dB : <b>K = 1/(√a |H(jω₀dB)|)</b>.</li></ol>
-<h3>Limites</h3>
-<ul><li>Au-delà de 60° d'avance, il faut deux cellules en série (a est trop grand).</li><li>Le gain en haute fréquence K·a amplifie les bruits.</li><li>Pas d'intégrateur : l'erreur statique n'est pas annulée.</li></ul>` });
-COURSE.push({ id: 'bilan', t: 'Choix et mise en œuvre', h: `
-<table class="ctable"><thead><tr><th>Correcteur</th><th>Apporte</th><th>Coûte</th></tr></thead><tbody>
-<tr><td>P</td><td>Simplicité</td><td>Erreur statique, compromis précision / marge</td></tr>
-<tr><td>PI</td><td>Erreur statique nulle</td><td>Retard de phase, rapidité limitée</td></tr>
-<tr><td>Avance de phase</td><td>Rapidité et marge de phase</td><td>Pas d'intégrateur, amplification des bruits</td></tr>
-</tbody></table>
+<p>Pour augmenter la phase (donc la marge), on pense aux correcteurs dérivés C = K<sub>d</sub>p ou Kp + K<sub>d</sub>p. Mais leur gain croît indéfiniment avec ω : amplification inacceptable des bruits parasites. On limite donc le gain à partir d'une pulsation : c'est l'<b>avance de phase</b>.</p>
+<p><b>C(p) = Kp (1 + a T<sub>d</sub> p)/(1 + T<sub>d</sub> p)</b> avec <b>a &gt; 1</b>. Il augmente la phase dans une bande de fréquences, avec un maximum :</p>
+<p><b>φ<sub>m</sub> = arcsin((a − 1)/(a + 1))</b> en <b>ω<sub>m</sub> = 1/(T<sub>d</sub>√a)</b> (milieu, en échelle logarithmique, de 1/(aT<sub>d</sub>) et 1/T<sub>d</sub>). Gain : 0 dB (à Kp = 1) à basse fréquence, 20 log a à haute fréquence, 10 log a en ω<sub>m</sub>.</p>
+<table class="ctable"><thead><tr><th>a</th><th>2</th><th>4</th><th>10</th><th>20</th></tr></thead><tbody><tr><td>φ<sub>m</sub></td><td>19,5°</td><td>37°</td><td>55°</td><td>65°</td></tr></tbody></table>
+<h3>Influence</h3><ul><li>Stabilité : ↗↗ (phase augmentée entre 1/(aT<sub>d</sub>) et 1/T<sub>d</sub>).</li><li>Précision : ↗ ou ↘ selon Kp, mais en pratique Kp modifie peu l'erreur permanente.</li><li>Rapidité : légèrement ↗ (le gain en haute fréquence augmente un peu ω₀dB).</li></ul>
+<h3>Réglage (trois étapes)</h3>
+<ol><li><b>a</b> : ω₀dB,nc (ou ω₀dB visée) et marge M<sub>φnc</sub> correspondante ; φ<sub>m</sub> = M<sub>imposée</sub> − M<sub>φnc</sub> ; <b>a = (1 + sin φ<sub>m</sub>)/(1 − sin φ<sub>m</sub>)</b>.</li>
+<li><b>T<sub>d</sub></b> : on centre le maximum de phase en ω₀dB : ω<sub>m</sub> = 1/(T<sub>d</sub>√a) = ω₀dB, donc <b>T<sub>d</sub> = 1/(ω₀dB√a)</b>.</li>
+<li><b>Kp</b> : le correcteur ajoute 10 log a dB en ω<sub>m</sub> ; pour que la coupure reste en ω<sub>m</sub> : <b>Kp = 10<sup>−10 log(a)/20</sup> = 1/√a</b> (si |H(jω₀dB)| = 1 ; sinon Kp = 1/(√a |H(jω₀dB)|)).</li></ol>
+<h3>Autre forme</h3>
+<p><b>C(p) = Kp (1 + T<sub>d</sub>p)/(1 + bT<sub>d</sub>p)</b> avec <b>b &lt; 1</b> (b = 1/a). Même démarche, mais les relations changent : ω<sub>m</sub> = 1/(T<sub>d</sub>√b) ; <b>b = (1 − sin φ<sub>m</sub>)/(1 + sin φ<sub>m</sub>)</b> ; <b>Kp = √b</b>.</p>
+<h3>Démonstration (φ<sub>m</sub> et ω<sub>m</sub>)</h3>
+<p>φ(ω) = arctan(aT<sub>d</sub>ω) − arctan(T<sub>d</sub>ω). dφ/dω = 0 donne (a − 1)(1 − aT<sub>d</sub>²ω²) = 0, d'où ω<sub>m</sub> = 1/(T<sub>d</sub>√a). En ω<sub>m</sub>, H(jω) a pour partie réelle 1 + a T<sub>d</sub>²ω² = 2 et pour partie imaginaire (a − 1)/√a, donc φ<sub>m</sub> = arcsin((a − 1)/(a + 1)).</p>` });
+COURSE.push({ id: 'bilan', t: 'Synthèse et choix du correcteur', h: `
+<table class="ctable"><thead><tr><th>Correcteur</th><th>C(p)</th><th>Stabilité</th><th>Précision</th><th>Rapidité</th></tr></thead><tbody>
+<tr><td>P</td><td>Kp</td><td>↘ si Kp &gt; 1 ; ↗ si Kp &lt; 1</td><td>↗ si Kp &gt; 1 ; ↘ si Kp &lt; 1</td><td>↗ si Kp &gt; 1 ; ↘ si Kp &lt; 1</td></tr>
+<tr><td>PI</td><td>Kp + Kᵢ/p</td><td>~ ou ↗</td><td>↗↗</td><td>~ ou ↗</td></tr>
+<tr><td>Avance de phase</td><td>Kp(1 + aT<sub>d</sub>p)/(1 + T<sub>d</sub>p), a &gt; 1</td><td>↗↗</td><td>↗ ou ↘</td><td>~ ou ↗</td></tr></tbody></table>
+<p>~ : conservée ; ↗ : améliorée ; ↘ : dégradée. Pour PI et avance de phase, il existe une <b>forte interdépendance</b> entre les paramètres : certains exercices contredisent donc ce tableau.</p>
 <h3>Démarche de mise en œuvre</h3>
-<ol><li>Traduire le cahier des charges : Mφ minimale, ω₀dB minimale, classe du système.</li>
-<li>Si une erreur statique nulle est exigée : PI (compenser le pôle dominant).</li>
-<li>Si la phase est insuffisante en ω₀dB visée : avance de phase.</li>
-<li>Régler, puis vérifier marges, dépassement, temps de réponse et erreur statique.</li>
-<li>Si aucun correcteur seul ne convient : les associer (PI + avance de phase) ou relâcher une exigence, en le justifiant.</li></ol>
+<ol><li>Traduire le cahier des charges : Mφ minimale, ω₀dB minimale, classe du système.</li><li>Erreur statique nulle exigée : PI (compensation de pôle si le pôle dominant est réel).</li><li>Phase insuffisante en ω₀dB visée : avance de phase.</li><li>Régler, puis vérifier marges, dépassement, temps de réponse, erreur statique.</li><li>Si aucun correcteur seul ne convient : les associer (PI + avance de phase) ou relâcher une exigence en le justifiant.</li></ol>
 <div class="analogy"><b>Piège classique :</b> une marge de phase élevée est bonne pour la stabilité mais ralentit la réponse. Visez la marge strictement nécessaire (45° à 60°), pas davantage.</div>` });
+COURSE.push({ id: 'boucles', t: 'Boucles complémentaires et filtre réjecteur', h: `
+<p>On améliore aussi les performances en <b>modifiant la structure</b> de l'asservissement. Deux solutions courantes sur les systèmes du laboratoire de SII, pour un moteur à courant continu :</p>
+<h3>Boucle de vitesse (tachymétrique)</h3>
+<p>Dans un asservissement de position θ, on mesure la vitesse Ω et on élabore une tension de commande qui en tient compte (gain B). La vitesse étant la dérivée de la grandeur asservie, l'<b>effet est similaire à une correction dérivée</b> : elle améliore surtout la <b>rapidité</b> et la <b>stabilité</b>, sans les inconvénients d'une dérivée pure. On peut l'affiner avec un correcteur usuel C(p).</p>
+<h3>Boucle de courant</h3>
+<p>Au démarrage (vitesse nulle), l'intensité peut atteindre des valeurs trop fortes. Sans boucle : <b>i(t) = U₀/R</b>. Avec une boucle de courant de gain R<sub>H</sub> (capteur à effet Hall) : i = (U₀ − R<sub>H</sub>·i)/R, soit <b>i(t) = U₀/(R + R<sub>H</sub>)</b>. Le courant est limité (résistance d'induit augmentée artificiellement) et, le couple étant proportionnel au courant, c'est un <b>contrôle en couple</b>. On peut y placer un correcteur, souvent PI.</p>
+<h3>Filtre réjecteur (Notch)</h3>
+<p>Pour atténuer localement l'effet de perturbations sinusoïdales de fréquence connue : <b>C(p) = (ω<sub>R</sub>² + 2z₁ω<sub>R</sub>p + p²)/(ω<sub>R</sub>² + 2z₂ω<sub>R</sub>p + p²)</b>, où ω<sub>R</sub> est la pulsation à rejeter. Numérateur et dénominateur sont du second ordre à faible amortissement (z₁, z₂ &lt; 0,7). Le gain en ω<sub>R</sub> vaut z₁/z₂ : le puits est profond lorsque z₁ est petit devant z₂.</p>` });
+COURSE.push({ id: 'redaction', t: 'Exemple de rédaction type', h: `
+<p>Bras manipulateur collaboratif (Centrale-Supélec MP 2016). Cahier des charges de l'asservissement de vitesse : <b>Mφ = 80°</b> ; écart statique <b>nul</b> vis-à-vis d'un échelon de consigne et d'une perturbation constante ; <b>ω₀dB = 40 rad/s</b>. Pour une masse de 100 kg : FTBO<sub>nc</sub>(p) = K<sub>BO</sub>/p avec K<sub>BO</sub> = 218.</p>
+<ul><li><b>Q12 (marge de phase)</b> : la FTBO<sub>nc</sub> est un intégrateur d'ordre 1, sa phase vaut −90° pour toutes les pulsations. Donc <b>Mφ = 90° &gt; 80°</b> : le critère de stabilité est satisfait.</li>
+<li><b>Q13 (pourquoi un PI)</b> : la FTBO est de classe 0 en amont de la perturbation, le critère de précision vis-à-vis de la perturbation constante n'est pas satisfait : d'où le correcteur PI C<sub>v</sub>(p) = Kᵢ(1 + 1/(Tᵢp)). Bode asymptotique : pente −20 dB/décade puis gain 20 log Kᵢ au-delà de 1/Tᵢ ; phase de −π/2 à 0.</li>
+<li><b>Q14 (réglage)</b> : FTBO<sub>c</sub>(p) = Kᵢ K<sub>BO</sub>(1 + Tᵢp)/(Tᵢp²). La rapidité impose ω₀dB = 40 rad/s ; Mφ = arg FTBO<sub>c</sub>(jω₀dB) + 180° = arctan(Tᵢω₀dB), donc <b>Tᵢ = tan 80°/40 = 0,14 s</b>. Puis |FTBO<sub>c</sub>(jω₀dB)| = 1 donne <b>Kᵢ = 0,18</b>.</li></ul>
+<div class="analogy"><b>Méthode de rédaction :</b> citer la propriété (« la phase d'un intégrateur vaut −90° »), écrire la relation littérale, puis l'application numérique ; encadrer le résultat et conclure vis-à-vis du critère du cahier des charges.</div>` });
 COURSE.push({ id: 'vocabulaire', t: 'Vocabulaire', h: `
 <dl>
-<dt>Boucle ouverte</dt><dd>L(p) = C(p)·H(p).</dd>
+<dt>Boucle ouverte (FTBO)</dt><dd>L(p) = C(p)·H(p).</dd>
 <dt>Pulsation de coupure ω₀dB</dt><dd>Pulsation où le gain de la boucle ouverte vaut 0 dB.</dd>
 <dt>Marge de phase</dt><dd>Distance à −180° de la phase en ω₀dB ; mesure l'amortissement.</dd>
 <dt>Marge de gain</dt><dd>Gain qu'on peut ajouter avant l'instabilité, mesuré à la pulsation où la phase vaut −180°.</dd>
 <dt>Bande passante</dt><dd>Pulsation à −3 dB de la boucle fermée ; mesure la rapidité.</dd>
+<dt>Facteur de résonance Q</dt><dd>Rapport du gain maximal au gain statique en boucle fermée ; Q ≈ 1,3 (2,3 dB) maximum.</dd>
 <dt>Compensation de pôle</dt><dd>Annulation d'un pôle du système par un zéro du correcteur.</dd>
-<dt>Avance de phase</dt><dd>Correcteur qui ajoute de la phase positive autour d'une pulsation choisie.</dd>
+<dt>Avance de phase</dt><dd>Correcteur qui ajoute de la phase positive autour d'une pulsation choisie, avec un gain limité en haute fréquence.</dd>
 <dt>Erreur statique</dt><dd>Écart consigne − sortie en régime permanent.</dd>
 <dt>Classe</dt><dd>Nombre d'intégrateurs dans la boucle ouverte.</dd>
+<dt>Boucle complémentaire</dt><dd>Boucle supplémentaire (vitesse, courant) qui modifie la structure de l'asservissement.</dd>
+<dt>Filtre réjecteur (Notch)</dt><dd>Filtre qui creuse un puits de gain à une pulsation à rejeter.</dd>
 </dl>` });
 /* ---------- interface ---------- */
 const UI = { cur: 'q1' };
@@ -974,9 +1303,9 @@ function openDlg(title, body) {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
 $('#bHelp').addEventListener('click', () => {
-  openDlg('Aide', h('div', { html: '<p>Cinq ateliers sur le réglage des correcteurs P, PI et à avance de phase : démarche et cahier des charges, correcteur P, correcteur PI, avance de phase, mise en œuvre et comparaison.</p>' +
-    '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut, puis déplacez les curseurs : le diagramme de Bode, la réponse indicielle et les marges se mettent à jour.</li><li>Les boutons de réglage automatique appliquent la méthode du cours ; relisez le calcul affiché au-dessus.</li><li>Le bouton <b>Activité</b> affiche les consignes, un défi et un quiz avec correction. Sur téléphone, il s\'ouvre en bas de l\'écran : fermez-le pour manipuler l\'atelier.</li><li>Le bouton <b>Cours</b> détaille chaque partie.</li></ul>' +
-    '<h3>Modèle utilisé</h3><p>Le système est H(p) = K₀ / ((1 + τ₁p)(1 + τ₂p)) en boucle fermée à retour unitaire. La simulation temporelle est calculée numériquement (Runge-Kutta d\'ordre 4).</p><h3>Vos données</h3><p>Les réponses au quiz sont mémorisées dans ce navigateur uniquement.</p>' }));
+  openDlg('Aide', h('div', { html: '<p>Huit ateliers sur le réglage des correcteurs, d\'après le cours O8 : démarche, actions P / I / D, correcteur P, PI, avance de phase, mise en œuvre, boucles complémentaires et filtre réjecteur, rédaction type.</p>' +
+    '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut (elle défile sur petit écran), puis déplacez les curseurs.</li><li>Les diagrammes de Bode montrent trois courbes : <b>H non corrigée</b> (gris pointillé), <b>le correcteur C</b> (orange) et <b>la boucle corrigée C·H</b> (bleu). En dB et en degrés, bleu = gris + orange.</li><li>Les boutons de réglage automatique appliquent la méthode du cours ; relisez le calcul affiché.</li><li>Le bouton <b>Activité</b> affiche les consignes, un défi et un quiz avec correction. Sur téléphone, il s\'ouvre en bas de l\'écran.</li><li>Le bouton <b>Cours</b> reprend le cours.</li></ul>' +
+    '<h3>Modèle utilisé</h3><p>H(p) = K₀ / ((1 + τ₁p)(1 + τ₂p)) en retour unitaire ; simulation numérique (Runge-Kutta d\'ordre 4).</p><h3>Vos données</h3><p>Les réponses au quiz sont mémorisées dans ce navigateur uniquement.</p>' }));
 });
 (function init() { AS.open = !isSmall(); renderSeg(); mountWs(); renderAct(); renderCourse(); })();
 </script>
