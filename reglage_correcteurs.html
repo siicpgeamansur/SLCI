@@ -372,7 +372,10 @@ function bodeSvg(svg, o) {
   const lw0 = Math.log10(wmin), lw1 = Math.log10(wmax);
   const X = w => L + (Math.log10(w) - lw0) / (lw1 - lw0) * (W - L - R);
   const Yg = d => gB - (clamp(d, gmin, gmax) - gmin) / (gmax - gmin) * (gB - gT);
-  const Yp = d => pB - (clamp(d, -270, 0) + 270) / 270 * (pB - pT);
+  let pLo = -270, pHi = 0;
+  { let mn = 0, mx = 0; o.curves.forEach(cv => { if (cv.gainOnly) return; for (let i = 0; i <= 120; i++) { const p = cv.fn(Math.pow(10, lw0 + (lw1 - lw0) * i / 120))[1]; if (isFinite(p)) { mn = Math.min(mn, p); mx = Math.max(mx, p); } } });
+    pHi = mx > 1 ? Math.min(180, Math.ceil(mx / 45) * 45 + (mx % 45 === 0 ? 0 : 0)) : 0; pLo = Math.max(-360, Math.min(-270, Math.floor(mn / 90) * 90)); if (pHi > 0) pLo = Math.min(pLo, -180); }
+  const Yp = d => pB - (clamp(d, pLo, pHi) - pLo) / (pHi - pLo) * (pB - pT);
   let s = '';
   for (let e = Math.ceil(lw0); e <= Math.floor(lw1); e++) {
     const w = Math.pow(10, e), x = X(w);
@@ -380,7 +383,9 @@ function bodeSvg(svg, o) {
     s += '<text x="' + x + '" y="' + (pB + 14) + '" text-anchor="middle" font-size="10.5" fill="#6a6a78">' + (e >= 0 ? fmtN(w) : fmt(w, -e)) + '</text>';
   }
   for (let g = Math.ceil(gmin / 20) * 20; g <= gmax; g += 20) { const y = Yg(g); s += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="' + (g === 0 ? '#55555f' : '#e8e8ee') + '"/><text x="' + (L - 5) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + g + '</text>'; }
-  [0, -90, -180, -270].forEach(p => { const y = Yp(p); s += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="' + (p === -180 ? '#d93a2b' : '#e8e8ee') + '"' + (p === -180 ? ' stroke-dasharray="5 4"' : '') + '/><text x="' + (L - 5) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + p + '</text>'; });
+  const pTicks = []; for (let p = Math.ceil(pLo / 45) * 45; p <= pHi; p += (pHi - pLo > 270 ? 90 : 45)) pTicks.push(p);
+  if (pTicks.indexOf(-180) < 0 && pLo <= -180) pTicks.push(-180);
+  pTicks.forEach(p => { const y = Yp(p); s += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="' + (p === -180 ? '#d93a2b' : '#e8e8ee') + '"' + (p === -180 ? ' stroke-dasharray="5 4"' : '') + '/><text x="' + (L - 5) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + p + '</text>'; });
   s += '<rect x="' + L + '" y="' + gT + '" width="' + (W - L - R) + '" height="' + (gB - gT) + '" fill="none" stroke="#55555f"/><rect x="' + L + '" y="' + pT + '" width="' + (W - L - R) + '" height="' + (pB - pT) + '" fill="none" stroke="#55555f"/>';
   s += '<text transform="translate(12 ' + ((gT + gB) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11.5" fill="#1f1f28">gain (dB)</text><text transform="translate(12 ' + ((pT + pB) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11.5" fill="#1f1f28">phase (°)</text><text x="' + ((L + W - R) / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11.5" fill="#1f1f28">pulsation ω (rad/s)</text>';
   const N = 240;
@@ -581,45 +586,68 @@ WORKSHOPS.push({ id: 'q2', title: 'Correcteur P', hint: 'Faites varier Kp : la c
   mount: mountQ2, reset: () => { Object.assign(Q2, { Kp: 5, Mt: 60 }); Object.assign(PLANT, PLANT0); } });
 
 /* ================= Atelier 3 : Correcteur PI ================= */
-const Q3 = { Kp: 6.7, Ti: 1, Mt: 60 };
+const Q3 = { Kp: 6.7, Ti: 1, Mt: 60, method: 'pole' };
 function mountQ3(root) {
-  root.innerHTML = '<h2>Correcteur proportionnel intégral</h2><p>Le correcteur PI s\'écrit <b>C(p) = Kp (1 + Tᵢ p) / (Tᵢ p)</b>. Il ajoute un intégrateur : l\'erreur statique devient nulle. En contrepartie il retire de la phase aux basses pulsations (−90° à très basse pulsation). Astuce classique : choisir <b>Tᵢ = τ₁</b> pour <b>compenser le pôle dominant</b> du système.</p>' +
-    '<div id="q3-plant"></div><h3>Réglage</h3><div id="q3-sl"></div><div id="q3-sl2"></div><div id="q3-sl3"></div><div class="files" style="margin:6px 0"><button class="btn" id="q3-ti" type="button">Tᵢ = τ₁ (compenser le pôle)</button><button class="btn pri" id="q3-apply" type="button">Kp pour la marge de phase visée</button><button class="btn" id="q3-m3" type="button">Méthode en 3 étapes (placement fréquentiel)</button></div><p class="verdict goal" id="q3-calc" aria-live="polite"></p><div class="verdict" id="q3-m3t" hidden></div>' + analysisHtml('q3') +
-    '<div class="analogy"><b>Pourquoi ça marche :</b> avec Tᵢ = τ₁, le numérateur (1 + Tᵢ p) du correcteur annule le facteur (1 + τ₁ p) du système. Il reste L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)) : un intégrateur et un seul pôle, soit un système du second ordre en boucle fermée, facile à régler par la marge de phase.</div>';
-  const S = Q3;
-  const sl = [slider($('#q3-sl'), { name: 'Kp', min: 0.1, max: 200, step: 0.1, dec: 1, get: () => S.Kp, set: v => { S.Kp = v; }, onchange: () => upd() }),
-    slider($('#q3-sl2'), { name: 'Tᵢ', min: 0.05, max: 10, step: 0.05, dec: 2, unit: 's', get: () => S.Ti, set: v => { S.Ti = v; }, onchange: () => upd() }),
-    slider($('#q3-sl3'), { name: 'Marge de phase visée Mφ', min: 20, max: 85, step: 1, dec: 0, unit: '°', get: () => S.Mt, set: v => { S.Mt = v; }, onchange: () => upd() })];
-  plantEditor($('#q3-plant'), () => upd());
-  const calc = A => {
-    const el = $('#q3-calc'), exact = Math.abs(S.Ti - PLANT.t1) / PLANT.t1 < 0.02;
-    let t;
-    if (exact) {
-      const d = designPI(PLANT, S.Mt);
-      t = '<b>Pôle compensé</b> (Tᵢ ≈ τ₁ = ' + fmt(PLANT.t1, 2) + ' s). La boucle ouverte devient Kp·K₀ / (Tᵢ p (1 + τ₂ p)), donc Mφ = 90° − arctan(ω₀dB·τ₂). Pour Mφ = ' + fmt(S.Mt, 0) + ' ° : ω₀dB = 1 / (τ₂ tan Mφ) = <b>' + fmt(d.w, 2) + ' rad/s</b> et Kp = Tᵢ ω₀dB √(1 + (ω₀dB τ₂)²) / K₀ = <b>' + fmt(d.c.Kp, 2) + '</b>.';
-    } else if (S.Ti > PLANT.t1) t = 'Tᵢ > τ₁ : le pôle dominant n\'est pas compensé, il reste une <b>queue lente</b> dans la réponse (constante de temps de l\'ordre de Tᵢ).';
-    else t = 'Tᵢ < τ₁ : le zéro du correcteur est plus rapide que le pôle à compenser. La phase est moins dégradée en basse pulsation, mais le gain augmente et le dépassement croît.';
-    t += '<br>Kᵢ = Kp / Tᵢ = <b>' + fmt(S.Kp / S.Ti, 2) + '</b> s⁻¹ (forme C = Kp + Kᵢ/p).';
-    if (A && A.wc) t += '<br>Contrôle : Tᵢ·ω₀dB = ' + fmt(S.Ti * A.wc, 1) + ' (la phase perdue par l\'intégrateur à ω₀dB vaut arctan(1 / (Tᵢ ω₀dB)) = ' + fmt(Math.atan(1 / (S.Ti * A.wc)) * R2D, 1) + ' °).';
-    el.innerHTML = t;
+  root.innerHTML = '<h2>Correcteur proportionnel intégral</h2><p>Le correcteur PI s\'écrit <b>C(p) = Kp (1 + Tᵢ p) / (Tᵢ p)</b> avec Kᵢ = Kp/Tᵢ. Il ajoute un intégrateur : l\'erreur statique devient nulle. En contrepartie il retire de la phase aux basses pulsations (−90° très en dessous de 1/Tᵢ). Il y a <b>deux paramètres à régler : Tᵢ et Kp</b>, et deux méthodes du cours pour le faire.</p>' +
+    '<div id="q3-plant"></div><h3>1. Choisir la méthode</h3><div id="q3-met"></div><div class="verdict goal" id="q3-metx"></div>' +
+    '<h3>2. Régler les paramètres</h3><div id="q3-sl3"></div><div class="files" style="margin:6px 0"><button class="btn" id="q3-bti" type="button"></button><button class="btn" id="q3-bkp" type="button"></button><button class="btn" id="q3-ball" type="button">Tout régler (Tᵢ puis Kp)</button></div><p class="small">Un bouton se colore et affiche ✓ lorsque la valeur du curseur correspond au réglage calculé par la méthode choisie. Vous pouvez aussi déplacer les curseurs à la main.</p>' +
+    '<div id="q3-sl"></div><div id="q3-sl2"></div><div class="verdict" id="q3-calc" aria-live="polite"></div>' + analysisHtml('q3') +
+    '<div class="analogy"><b>Pourquoi la compensation marche :</b> avec Tᵢ = τ₁, le numérateur (1 + Tᵢ p) du correcteur annule le facteur (1 + τ₁ p) du système. Il reste L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)) : un intégrateur et un seul pôle, donc un second ordre facile à régler par la marge de phase. Cette méthode n\'est possible que si le pôle dominant est réel.</div>';
+  const S = Q3, METH = [['pole', 'Compensation du pôle dominant'], ['freq', 'Placement fréquentiel (3 étapes)'], ['man', 'Réglage manuel']];
+  const TX = {
+    pole: '<b>Compensation du pôle dominant.</b> Étape 1 : Tᵢ = τ₁ (élimine le pôle dominant). Étape 2 : Kp pour la marge de phase imposée. Plus rapide, mais exige un pôle dominant réel.',
+    freq: '<b>Placement fréquentiel.</b> Étape 1 : Kp′ pour la marge visée avec un P seul, ce qui donne ω₀dB′. Étape 2 : Tᵢ tel que 1/Tᵢ = ω₀dB′/10 (une décade plus bas). Étape 3 : réajuster Kp, car l\'intégrateur coûte environ 5° de marge.',
+    man: '<b>Réglage manuel.</b> Déplacez Kp et Tᵢ : comparez Bode et réponse indicielle. Les boutons restent disponibles avec la méthode « compensation de pôle ».'
   };
-  const upd = () => { const A = renderAnalysis('q3', { type: 'PI', Kp: S.Kp, Ti: S.Ti }); calc(A); };
-  $('#q3-m3').addEventListener('click', () => {
-    const d = designPI3(PLANT, S.Mt), el = $('#q3-m3t');
-    if (!d) { el.hidden = false; el.innerHTML = 'Cette marge de phase n\'est pas atteignable : choisissez une valeur plus faible.'; return; }
-    S.Kp = clamp(d.c.Kp, 0.1, 200); S.Ti = clamp(d.c.Ti, 0.05, 10); sl.forEach(x => x.sync()); upd();
-    el.hidden = false; el.innerHTML = '<b>Méthode du cours en trois étapes.</b><br><b>1. Kp\' (P seul)</b> : on règle Kp\' pour la marge visée : Kp\' = ' + fmt(d.kp1, 2) + ', d\'où ω₀dB\' = ' + fmt(d.w1, 2) + ' rad/s.<br><b>2. Tᵢ</b> : on place la cassure une décade sous ω₀dB\' : 1/Tᵢ = ω₀dB\'/10, soit Tᵢ = ' + fmt(d.c.Ti, 2) + ' s (Kᵢ = Kp/Tᵢ). L\'intégrateur coûte environ 5° de marge.<br><b>3. Kp</b> : on réajuste Kp pour retrouver la marge visée : <b>Kp = ' + fmt(d.c.Kp, 2) + '</b> (variante graphique : viser dès l\'étape 1 la marge + 5°).';
-  });
-  $('#q3-ti').addEventListener('click', () => { S.Ti = PLANT.t1; sl.forEach(x => x.sync()); upd(); });
-  $('#q3-apply').addEventListener('click', () => {
-    const r = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti: S.Ti }, S.Mt);
-    if (!r) { $('#q3-calc').innerHTML = 'Aucune pulsation ne donne cette marge avec ce Tᵢ : augmentez Tᵢ ou visez une marge plus faible.'; return; }
-    S.Kp = r.gain; sl.forEach(x => x.sync()); upd();
-  });
+  const sl = [slider($('#q3-sl'), { name: 'Kp', min: 0.1, max: 200, step: 0.1, dec: 1, get: () => S.Kp, set: v => { S.Kp = v; }, onchange: () => upd() }),
+    slider($('#q3-sl2'), { name: 'Tᵢ', min: 0.05, max: 10, step: 0.05, dec: 2, unit: 's', get: () => S.Ti, set: v => { S.Ti = v; }, onchange: () => upd() })];
+  slider($('#q3-sl3'), { name: 'Marge de phase visée Mφ', min: 20, max: 85, step: 1, dec: 0, unit: '°', get: () => S.Mt, set: v => { S.Mt = v; }, onchange: () => upd() });
+  plantEditor($('#q3-plant'), () => upd());
+  /* valeurs calculées par la méthode choisie */
+  const target = () => {
+    if (S.method === 'freq') { const d = designPI3(PLANT, S.Mt); return d ? { Ti: d.c.Ti, kpWith: Ti => { const r = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti }, S.Mt); return r ? r.gain : null; }, d } : null; }
+    return { Ti: PLANT.t1, kpWith: Ti => { const r = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti }, S.Mt); return r ? r.gain : null; }, d: null };
+  };
+  const doTi = () => { const t = target(); if (!t) return false; S.Ti = clamp(t.Ti, 0.05, 10); sl.forEach(x => x.sync()); return true; };
+  const doKp = () => { const t = target(); if (!t) return false; const k = t.kpWith(S.Ti); if (k === null) return false; S.Kp = clamp(k, 0.1, 200); sl.forEach(x => x.sync()); return true; };
+  const detail = () => {
+    const el = $('#q3-calc'), t = target(), A = analyze(PLANT, { type: 'PI', Kp: S.Kp, Ti: S.Ti });
+    let h = '';
+    if (!t) h = 'Cette marge de phase n\'est pas atteignable avec cette méthode : choisissez une valeur plus faible.';
+    else if (S.method === 'pole') {
+      const d = designPI(PLANT, S.Mt);
+      h = '<b>Étape 1 :</b> Tᵢ = τ₁ = <b>' + fmt(PLANT.t1, 2) + ' s</b>. La boucle ouverte devient Kp·K₀ / (Tᵢ p (1 + τ₂ p)).<br><b>Étape 2 :</b> Mφ = 90° − arctan(ω₀dB τ₂) donne ω₀dB = 1 / (τ₂ tan Mφ) = <b>' + fmt(d.w, 2) + ' rad/s</b>, puis Kp = Tᵢ ω₀dB √(1 + ω₀dB² τ₂²) / K₀ = <b>' + fmt(d.c.Kp, 2) + '</b>.';
+    } else if (S.method === 'freq') {
+      const d = t.d;
+      h = '<b>Étape 1 (P seul) :</b> Kp′ = <b>' + fmt(d.kp1, 2) + '</b> donne la marge visée, avec ω₀dB′ = <b>' + fmt(d.w1, 2) + ' rad/s</b>.<br><b>Étape 2 :</b> 1/Tᵢ = ω₀dB′/10, soit Tᵢ = <b>' + fmt(d.c.Ti, 2) + ' s</b> (Kᵢ = Kp/Tᵢ).<br><b>Étape 3 :</b> on réajuste Kp pour retrouver la marge : <b>Kp = ' + fmt(d.c.Kp, 2) + '</b> (variante graphique : viser dès l\'étape 1 la marge + 5°).';
+    } else {
+      h = S.Ti > PLANT.t1 * 1.02 ? 'Tᵢ &gt; τ₁ : le pôle dominant n\'est pas compensé, une <b>queue lente</b> (constante de temps proche de Tᵢ) apparaît.' : S.Ti < PLANT.t1 * 0.98 ? 'Tᵢ &lt; τ₁ : le zéro du correcteur est plus rapide que le pôle ; le dépassement croît.' : 'Tᵢ ≈ τ₁ : le pôle dominant est compensé.';
+    }
+    h += '<br>Valeurs actuelles : Kᵢ = Kp/Tᵢ = <b>' + fmt(S.Kp / S.Ti, 2) + '</b> s⁻¹' + (A.wc ? ' ; Tᵢ·ω₀dB = ' + fmt(S.Ti * A.wc, 1) + ' (phase perdue par l\'intégrateur en ω₀dB : ' + fmt(Math.atan(1 / (S.Ti * A.wc)) * R2D, 1) + ' °).' : '.');
+    el.innerHTML = h; el.className = 'verdict';
+    return A;
+  };
+  const refreshBtns = () => {
+    const t = target(), bti = $('#q3-bti'), bkp = $('#q3-bkp');
+    const okTi = !!t && Math.abs(S.Ti - clamp(t.Ti, 0.05, 10)) <= 0.02 * S.Ti + 0.026;
+    const k = t ? t.kpWith(S.Ti) : null, okKp = k !== null && Math.abs(S.Kp - clamp(k, 0.1, 200)) <= 0.03 * S.Kp + 0.06;
+    const tiTxt = S.method === 'pole' ? 'Régler Tᵢ = τ₁' : S.method === 'freq' ? 'Régler Tᵢ (1/Tᵢ = ω₀dB′/10)' : 'Régler Tᵢ = τ₁';
+    bti.textContent = tiTxt + (okTi ? '  ✓' : ''); bti.classList.toggle('pri', okTi); bti.setAttribute('aria-pressed', okTi ? 'true' : 'false');
+    bkp.textContent = 'Régler Kp pour Mφ = ' + S.Mt + '°' + (okKp ? '  ✓' : ''); bkp.classList.toggle('pri', okKp); bkp.setAttribute('aria-pressed', okKp ? 'true' : 'false');
+  };
+  const upd = () => {
+    setChips('#q3-met', METH, S.method, id => { S.method = id; if (id === 'pole') { doTi(); doKp(); } else if (id === 'freq') { doTi(); doKp(); } upd(); }, 'Méthode de réglage');
+    $('#q3-metx').innerHTML = TX[S.method];
+    const A = renderAnalysis('q3', { type: 'PI', Kp: S.Kp, Ti: S.Ti });
+    detail(); refreshBtns(); return A;
+  };
+  $('#q3-bti').addEventListener('click', () => { if (S.method === 'man') S.method = 'pole'; if (!doTi()) $('#q3-calc').innerHTML = 'Réglage impossible pour cette marge.'; upd(); });
+  $('#q3-bkp').addEventListener('click', () => { if (S.method === 'man') S.method = 'pole'; if (!doKp()) { $('#q3-calc').innerHTML = 'Aucune pulsation ne donne cette marge avec ce Tᵢ : augmentez Tᵢ ou visez une marge plus faible.'; return; } upd(); });
+  $('#q3-ball').addEventListener('click', () => { if (S.method === 'man') S.method = 'pole'; doTi(); doKp(); upd(); });
   upd();
 }
-WORKSHOPS.push({ id: 'q3', title: 'Correcteur PI', hint: 'Compensez le pôle dominant (Tᵢ = τ₁), réglez Kp par la marge de phase, et observez l\'erreur statique qui disparaît.',
-  mount: mountQ3, reset: () => { Object.assign(Q3, { Kp: 6.7, Ti: 1, Mt: 60 }); Object.assign(PLANT, PLANT0); } });
+WORKSHOPS.push({ id: 'q3', title: 'Correcteur PI', hint: 'Choisissez une méthode (compensation de pôle ou placement fréquentiel), puis réglez Tᵢ et Kp avec les boutons : ✓ indique que le réglage est appliqué.',
+  mount: mountQ3, reset: () => { Object.assign(Q3, { Kp: 6.7, Ti: 1, Mt: 60, method: 'pole' }); Object.assign(PLANT, PLANT0); } });
 
 /* ================= Atelier 4 : Avance de phase ================= */
 const Q4 = { K: 16, a: 2.7, T: 0.04, wt: 15, Mt: 60, ok: false };
@@ -709,7 +737,6 @@ function mountQ5(root) {
 }
 WORKSHOPS.push({ id: 'q5', title: 'Mise en œuvre', hint: 'Réglez P, PI et avance de phase pour le même cahier des charges et identifiez celui (ou ceux) qui le respectent.',
   mount: mountQ5, reset: () => { Object.assign(Q5, { Mt: 60, wt: 15, D: 20, tr: 0.5, es: 5 }); Object.assign(PLANT, PLANT0); } });
-
 /* ================= compléments de logique (cours O8) ================= */
 so.Q = z => 1 / (2 * z * Math.sqrt(1 - z * z));
 /* réglage P pour une bande passante à −3 dB imposée (boucle fermée) */
