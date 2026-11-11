@@ -26,6 +26,7 @@ Aucune installation : chaque outil s'ouvre directement dans le navigateur.
 | [Correcteurs P, PI et PID](https://siicpgeamansur.github.io/SLCI/asservissement_P_PI_PID.html) | Observer l'effet des correcteurs proportionnel, intégral et dérivé sur un asservissement. |
 | [Correcteurs SLCI : vision physique](https://siicpgeamansur.github.io/SLCI/correcteurs_SLCI_vision_physique.html) | Comprendre ce que fait chaque correcteur (P, I, PI, PD, PID, avance de phase) sur la stabilité, la précision et la rapidité. Simulateur avec réponse temporelle, dérivée de l'erreur, contribution de chaque action à la commande et Bode de la FTBO avec marges. Inclut les démarches de réglage pas à pas, un quiz, un mode examen chronométré et un exercice type concours sur le PI. Thème clair ou sombre. |
 | [Réglages de correcteurs](https://siicpgeamansur.github.io/SLCI/reglage_correcteurs.html) | Méthodes de réglage des différents type de correcteur. |
+| [Correcteurs numérique](https://siicpgeamansur.github.io/SLCI/correcteurs_numeriques.html) | Les SLCI dans la vraie vie sont discrets et non continus. |
 | [IA](https://siicpgeamansur.github.io/SLCI/ia.html) | L’IA pour asservir l’impossible. |
 
 ## Capteurs
