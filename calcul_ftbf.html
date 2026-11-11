@@ -37,7 +37,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel);max-width:100%;overflow-x:auto}
 .seg button{border:0;background:transparent;padding:6px 12px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap}
 .seg button+button{border-left:1px solid var(--line)}
-.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.seg button[aria-pressed="true"],.seg button.active{background:var(--accent);color:var(--accent-fg)}
 .work{flex:1;min-height:0;display:flex;gap:10px;padding-block:10px}
 #palette{flex:none;width:106px;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
 .tool{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer;font-weight:500;font-size:11.5px;min-width:90px;text-align:center;line-height:1.2}
@@ -52,6 +52,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 #hint{flex:none;padding:6px 12px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
 #scroller{flex:1;min-height:0;overflow:auto}
 #svg{display:block;width:1400px;height:900px;touch-action:none;user-select:none;-webkit-user-select:none}
+#zoombar{position:absolute;right:12px;bottom:12px;display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px;box-shadow:0 2px 10px rgba(0,0,0,.08);z-index:6;user-select:none}
+#zoombar button{width:30px;height:30px;border:0;background:transparent;border-radius:5px;cursor:pointer;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--fg)}
+#zoombar button:hover{background:var(--panel2);color:var(--accent)}
+#zoomLbl{display:flex;align-items:center;justify-content:center;padding:0 6px;font-size:12px;color:var(--muted);min-width:46px;font-variant-numeric:tabular-nums;cursor:pointer}
+#zoomLbl:hover{color:var(--accent)}
 .node{cursor:grab}
 .mode-link .node{cursor:crosshair}
 .blk{fill:var(--node-fill);stroke:var(--node-stroke);stroke-width:2;stroke-linejoin:round}
@@ -60,13 +65,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 .nlabel{font:600 12.5px var(--font-ui);fill:var(--fg)}
 .tlabel{font:500 10.5px var(--font-ui);fill:var(--muted)}
 .bexpr{font:500 12px var(--font-mono);fill:var(--fg)}
-.selbox{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3}
+.selbox{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3;pointer-events:none}
+.marquee{fill:rgba(46,109,164,.10);stroke:var(--accent);stroke-width:1.2;stroke-dasharray:4 3;pointer-events:none}
 .cab{stroke:var(--cable);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none}
 .cab.on{stroke:var(--accent);stroke-width:3.6}
 .arr{fill:var(--cable)}.arr.on{fill:var(--accent)}
 .hit{stroke:transparent;stroke-width:14;fill:none;cursor:pointer}
-.port{fill:#fff;stroke:var(--node-stroke);stroke-width:1.6}
-.mode-link .port{stroke:var(--accent);stroke-width:2.2}
+.port{fill:#fff;stroke:var(--node-stroke);stroke-width:1.6;transition:stroke .1s,stroke-width .1s}
+.mode-link .port{stroke:var(--accent);stroke-width:2.2;cursor:crosshair}
+.mode-link .port:hover{stroke-width:3.4}
 .ph{fill:transparent;stroke:none}
 .sgn{font:700 15px var(--font-ui);fill:var(--fg)}
 .dot{fill:var(--cable)}
@@ -179,7 +186,16 @@ details.mason ul{padding-left:18px;margin:4px 0}
   </div></header>
   <main class="inner work" id="work">
     <nav id="palette" aria-label="Palette de blocs"></nav>
-    <section id="stage"><div id="hint"></div><div id="scroller"><svg id="svg" width="1400" height="900" role="application" aria-label="Zone de travail du schéma-blocs"></svg></div></section>
+    <section id="stage">
+      <div id="hint"></div>
+      <div id="scroller"><svg id="svg" width="1400" height="900" viewBox="0 0 1400 900" preserveAspectRatio="xMinYMin meet" role="application" aria-label="Zone de travail du schéma-blocs"></svg></div>
+      <div id="zoombar" role="toolbar" aria-label="Zoom et vue">
+        <button type="button" id="bZoomOut" title="Zoom arrière (Ctrl −)">−</button>
+        <span id="zoomLbl" aria-live="polite" title="Cliquer pour réinitialiser à 100 %">100 %</span>
+        <button type="button" id="bZoomIn" title="Zoom avant (Ctrl +)">+</button>
+        <button type="button" id="bZoomFit" title="Ajuster à la vue (Ctrl 0)">⛶</button>
+      </div>
+    </section>
     <aside id="panel" aria-label="Propriétés et résultat"></aside>
   </main>
   <section id="course" hidden aria-label="Cours"></section>
@@ -502,11 +518,43 @@ function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
 
 const S = { blocks: [], links: [], nid: 1, nl: 1, sel: null, tool: 'sel', linkFrom: null, tab: 'props', panel: !isSmall(), calc: false, form: 'nc', vals: 'sym' };
+/* Vue : niveau de zoom. Les coordonnées internes restent en 1400×900. */
+const V = { z: 1 };
+/* Piles d'historique (instantanés JSON). */
+let undoStack = [], redoStack = [];
 let drag = null, mouse = null;
 const blk = id => S.blocks.find(b => b.id === id);
 function save() { lsSet(KEY, { blocks: S.blocks, links: S.links, nid: S.nid, nl: S.nl, form: S.form, vals: S.vals }); }
 
-/* ---------- géométrie ---------- */
+/* ---------- Historique ---------- */
+function snap() { return JSON.stringify({ blocks: S.blocks, links: S.links, nid: S.nid, nl: S.nl }); }
+function pushUndo() {
+  const s = snap();
+  if (undoStack[undoStack.length - 1] === s) return;
+  undoStack.push(s);
+  if (undoStack.length > 80) undoStack.shift();
+  redoStack.length = 0;
+}
+function doUndo() {
+  if (!undoStack.length) return;
+  redoStack.push(snap());
+  const s = JSON.parse(undoStack.pop());
+  S.blocks = s.blocks; S.links = s.links; S.nid = s.nid; S.nl = s.nl;
+  S.sel = null; S.linkFrom = null;
+  save(); draw(); renderPanel(); updHint();
+  toast('Annulé');
+}
+function doRedo() {
+  if (!redoStack.length) return;
+  undoStack.push(snap());
+  const s = JSON.parse(redoStack.pop());
+  S.blocks = s.blocks; S.links = s.links; S.nid = s.nid; S.nl = s.nl;
+  S.sel = null; S.linkFrom = null;
+  save(); draw(); renderPanel(); updHint();
+  toast('Rétabli');
+}
+
+/* ---------- géométrie (locale) ---------- */
 const exprText = b => TYPES[b.type].expr ? TYPES[b.type].expr(b.p.map(q => q.sym)) : '';
 function geo(b) {
   if (b.type === 'sum') return { w: 48, h: 48, ins: [{ x: 0, y: 24, side: 'l' }, { x: 24, y: 48, side: 'b' }], out: { x: 48, y: 24 } };
@@ -515,15 +563,98 @@ function geo(b) {
   const w = Math.max(124, Math.round(exprText(b).length * 7.3 + 26));
   return { w, h: 64, ins: [{ x: 0, y: 32, side: 'l' }], out: { x: w, y: 32 } };
 }
-function linkPts(l, cnt) {
-  const a = blk(l.from), b = blk(l.to); if (!a || !b) return null;
-  const ga = geo(a), gb = geo(b), pin = gb.ins[l.port]; if (!ga.out || !pin) return null;
-  const p1 = { x: a.x + ga.out.x, y: a.y + ga.out.y }, p2 = { x: b.x + pin.x, y: b.y + pin.y }, pts = [[p1.x, p1.y]];
-  const low = () => Math.max(a.y + ga.h, b.y + gb.h) + 26 + 11 * (cnt.n++);
-  if (pin.side === 'b') { const yb = low(); pts.push([p1.x + 16, p1.y], [p1.x + 16, yb], [p2.x, yb]); }
-  else if (p2.x - p1.x >= 36) { if (p1.y !== p2.y) { const mx = Math.round((p1.x + p2.x) / 2); pts.push([mx, p1.y], [mx, p2.y]); } }
-  else { const yb = low(); pts.push([p1.x + 16, p1.y], [p1.x + 16, yb], [p2.x - 16, yb], [p2.x - 16, p2.y]); }
-  pts.push([p2.x, p2.y]); return pts;
+
+/* Rotation */
+function rotateSide(side, deg) {
+  const order = ['r', 'b', 'l', 't'];
+  const i = order.indexOf(side);
+  if (i < 0) return side;
+  const steps = ((Math.round((deg || 0) / 90) % 4) + 4) % 4;
+  return order[(i + steps) % 4];
+}
+function sideDir(side) {
+  return { r: { x: 1, y: 0 }, l: { x: -1, y: 0 }, t: { x: 0, y: -1 }, b: { x: 0, y: 1 } }[side] || { x: 1, y: 0 };
+}
+function portWorld(b, which) {
+  const g = geo(b);
+  let lx, ly, side;
+  if (which === 'out') {
+    if (!g.out) return null;
+    lx = g.out.x; ly = g.out.y; side = 'r';
+  } else {
+    const p = g.ins[which];
+    if (!p) return null;
+    lx = p.x; ly = p.y; side = p.side;
+  }
+  const rot = (b.rot || 0) * Math.PI / 180;
+  const cx = g.w / 2, cy = g.h / 2;
+  const rx = (lx - cx) * Math.cos(rot) - (ly - cy) * Math.sin(rot) + cx;
+  const ry = (lx - cx) * Math.sin(rot) + (ly - cy) * Math.cos(rot) + cy;
+  return { x: b.x + rx, y: b.y + ry, side: rotateSide(side, b.rot || 0) };
+}
+function blockBBox(b) {
+  const g = geo(b);
+  if (!b.rot) return { x1: b.x, y1: b.y, x2: b.x + g.w, y2: b.y + g.h };
+  const cx = b.x + g.w / 2, cy = b.y + g.h / 2;
+  const rot = b.rot * Math.PI / 180, cos = Math.cos(rot), sin = Math.sin(rot);
+  const corners = [[-g.w / 2, -g.h / 2], [g.w / 2, -g.h / 2], [g.w / 2, g.h / 2], [-g.w / 2, g.h / 2]];
+  let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+  for (const [x, y] of corners) {
+    const rx = x * cos - y * sin + cx, ry = x * sin + y * cos + cy;
+    minx = Math.min(minx, rx); maxx = Math.max(maxx, rx);
+    miny = Math.min(miny, ry); maxy = Math.max(maxy, ry);
+  }
+  return { x1: minx, y1: miny, x2: maxx, y2: maxy };
+}
+
+/* Tracé d'une liaison : sortie → entrée, avec routage orthogonal.
+   d1 est la direction sortante à la source, d2 la direction sortante de l'entrée (opposée au déplacement). */
+function route(p1, d1, p2, d2) {
+  const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+  const stub = Math.min(28, Math.max(14, dist / 4));
+  const s1 = { x: p1.x + d1.x * stub, y: p1.y + d1.y * stub };
+  const s2 = { x: p2.x + d2.x * stub, y: p2.y + d2.y * stub };
+  const pts = [p1, s1];
+  const h1 = d1.x !== 0, h2 = d2.x !== 0;
+  if (h1 && h2) {
+    if (Math.abs(s1.y - s2.y) < 1) {
+      pts.push(s2);
+    } else {
+      const mx = (s1.x + s2.x) / 2;
+      pts.push({ x: mx, y: s1.y }, { x: mx, y: s2.y }, s2);
+    }
+  } else if (!h1 && !h2) {
+    if (Math.abs(s1.x - s2.x) < 1) {
+      pts.push(s2);
+    } else {
+      const my = (s1.y + s2.y) / 2;
+      pts.push({ x: s1.x, y: my }, { x: s2.x, y: my }, s2);
+    }
+  } else if (h1 && !h2) {
+    pts.push({ x: s2.x, y: s1.y }, s2);
+  } else {
+    pts.push({ x: s1.x, y: s2.y }, s2);
+  }
+  pts.push(p2);
+  return pts.map(p => [p.x, p.y]);
+}
+function linkPts(l) {
+  const a = blk(l.from), b = blk(l.to);
+  if (!a || !b) return null;
+  const pa = portWorld(a, 'out');
+  const pb = portWorld(b, l.port);
+  if (!pa || !pb) return null;
+  return route(pa, sideDir(pa.side), pb, sideDir(pb.side));
+}
+
+/* Texte : contre-rotation pour rester lisible quand le bloc est tourné. */
+function bText(b, attrs, ...kids) {
+  const rot = b.rot || 0;
+  if (rot) {
+    const x = attrs.x, y = attrs.y;
+    return sv('text', { ...attrs, transform: `rotate(${-rot},${x},${y})` }, ...kids);
+  }
+  return sv('text', attrs, ...kids);
 }
 
 /* ---------- dessin ---------- */
@@ -532,95 +663,349 @@ function draw() {
   svg.classList.toggle('mode-link', S.tool === 'link');
   svg.append(sv('defs', null, sv('pattern', { id: 'dots', width: 20, height: 20, patternUnits: 'userSpaceOnUse' }, sv('circle', { cx: 1, cy: 1, r: 1, fill: '#d5dae0' }))));
   svg.append(sv('rect', { width: 1400, height: 900, fill: 'url(#dots)' }));
-  const cnt = { n: 0 }, fan = {};
+  const fan = {};
   S.links.forEach(l => { fan[l.from] = (fan[l.from] || 0) + 1; });
   S.links.forEach(l => {
-    const pts = linkPts(l, cnt); if (!pts) return;
+    const pts = linkPts(l); if (!pts) return;
     const on = S.sel && S.sel.t === 'l' && S.sel.id === l.id, ps = pts.map(p => p.join(',')).join(' ');
-    const g = sv('g', { 'data-l': l.id }); g.append(sv('polyline', { class: 'hit', points: ps }), sv('polyline', { class: 'cab' + (on ? ' on' : ''), points: ps }));
-    const [x0, y0] = pts[pts.length - 2], [x1, y1] = pts[pts.length - 1], dx = Math.sign(x1 - x0), dy = Math.sign(y1 - y0), px = -dy, py = dx;
+    const g = sv('g', { 'data-l': l.id });
+    g.append(sv('polyline', { class: 'hit', points: ps }), sv('polyline', { class: 'cab' + (on ? ' on' : ''), points: ps }));
+    const [x0, y0] = pts[pts.length - 2], [x1, y1] = pts[pts.length - 1];
+    const dx = Math.sign(x1 - x0), dy = Math.sign(y1 - y0), px = -dy, py = dx;
     g.append(sv('polygon', { class: 'arr' + (on ? ' on' : ''), points: `${x1},${y1} ${x1 - 10 * dx + 5 * px},${y1 - 10 * dy + 5 * py} ${x1 - 10 * dx - 5 * px},${y1 - 10 * dy - 5 * py}` }));
     if (fan[l.from] > 1) g.append(sv('circle', { class: 'dot', cx: pts[0][0], cy: pts[0][1], r: 4.5 }));
     svg.append(g);
   });
   S.blocks.forEach(b => {
-    const g = geo(b), n = sv('g', { class: 'node', 'data-b': b.id, transform: `translate(${b.x},${b.y})` });
+    const g = geo(b), rot = b.rot || 0;
+    const tf = rot ? `translate(${b.x},${b.y}) rotate(${rot},${g.w / 2},${g.h / 2})` : `translate(${b.x},${b.y})`;
+    const n = sv('g', { class: 'node', 'data-b': b.id, transform: tf });
     const src = S.linkFrom === b.id;
     if (b.type === 'sum') {
-      n.append(sv('circle', { class: 'blk' + (src ? ' src' : ''), cx: 24, cy: 24, r: 22 }), sv('text', { class: 'nlabel', x: 24, y: 29, 'text-anchor': 'middle', style: 'font-size:16px' }, 'Σ'));
-      n.append(sv('text', { class: 'sgn', x: -12, y: 18 }, (b.signs[0] < 0 ? '−' : '+')), sv('text', { class: 'sgn', x: 31, y: 63 }, (b.signs[1] < 0 ? '−' : '+')));
-      n.append(sv('text', { class: 'nlabel', x: 24, y: -6, 'text-anchor': 'middle' }, b.name));
+      n.append(sv('circle', { class: 'blk' + (src ? ' src' : ''), cx: 24, cy: 24, r: 22 }));
+      n.append(bText(b, { class: 'nlabel', x: 24, y: 29, 'text-anchor': 'middle', style: 'font-size:16px' }, 'Σ'));
+      n.append(bText(b, { class: 'sgn', x: -12, y: 18 }, (b.signs[0] < 0 ? '−' : '+')));
+      n.append(bText(b, { class: 'sgn', x: 31, y: 63 }, (b.signs[1] < 0 ? '−' : '+')));
+      n.append(bText(b, { class: 'nlabel', x: 24, y: -6, 'text-anchor': 'middle' }, b.name));
     } else if (b.type === 'in' || b.type === 'out') {
-      n.append(sv('rect', { class: 'blk io' + (src ? ' src' : ''), width: g.w, height: g.h, rx: 22 }), sv('text', { class: 'nlabel', x: g.w / 2, y: g.h / 2 + 5, 'text-anchor': 'middle', style: 'font-size:14px' }, b.type === 'in' ? 'E(p)' : 'S(p)'));
+      n.append(sv('rect', { class: 'blk io' + (src ? ' src' : ''), width: g.w, height: g.h, rx: 22 }));
+      n.append(bText(b, { class: 'nlabel', x: g.w / 2, y: g.h / 2 + 5, 'text-anchor': 'middle', style: 'font-size:14px' }, b.type === 'in' ? 'E(p)' : 'S(p)'));
     } else {
-      n.append(sv('rect', { class: 'blk' + (src ? ' src' : ''), width: g.w, height: g.h, rx: 8 }),
-        sv('text', { class: 'tlabel', x: g.w / 2, y: 20, 'text-anchor': 'middle' }, TYPES[b.type].label),
-        sv('text', { class: 'bexpr', x: g.w / 2, y: 45, 'text-anchor': 'middle' }, exprText(b)),
-        sv('text', { class: 'nlabel', x: 0, y: -6 }, b.name));
+      n.append(sv('rect', { class: 'blk' + (src ? ' src' : ''), width: g.w, height: g.h, rx: 8 }));
+      n.append(bText(b, { class: 'tlabel', x: g.w / 2, y: 20, 'text-anchor': 'middle' }, TYPES[b.type].label));
+      n.append(bText(b, { class: 'bexpr', x: g.w / 2, y: 45, 'text-anchor': 'middle' }, exprText(b)));
+      n.append(bText(b, { class: 'nlabel', x: 0, y: -6 }, b.name));
     }
-    g.ins.forEach((p, i) => { n.append(sv('circle', { class: 'port', cx: p.x, cy: p.y, r: 4 }), sv('circle', { class: 'ph', cx: p.x, cy: p.y, r: 11, 'data-port': i })); });
+    g.ins.forEach((p, i) => {
+      n.append(sv('circle', { class: 'port', cx: p.x, cy: p.y, r: 4 }));
+      n.append(sv('circle', { class: 'ph', cx: p.x, cy: p.y, r: 11, 'data-port': i }));
+    });
     if (g.out) n.append(sv('circle', { class: 'port', cx: g.out.x, cy: g.out.y, r: 4 }));
-    if (S.sel && S.sel.t === 'b' && S.sel.id === b.id) n.append(sv('rect', { class: 'selbox', x: -6, y: -6, width: g.w + 12, height: g.h + 12, rx: 10 }));
+    if (S.sel && S.sel.t === 'b' && S.sel.ids.has(b.id)) n.append(sv('rect', { class: 'selbox', x: -6, y: -6, width: g.w + 12, height: g.h + 12, rx: 10 }));
     svg.append(n);
   });
-  if (S.linkFrom) { const b = blk(S.linkFrom), g = b && geo(b); if (g && g.out) { const m = mouse || { x: b.x + g.out.x + 40, y: b.y + g.out.y }; svg.append(sv('line', { id: 'rb', x1: b.x + g.out.x, y1: b.y + g.out.y, x2: m.x, y2: m.y, stroke: 'var(--accent)', 'stroke-width': 2.4, 'stroke-dasharray': '6 4', 'pointer-events': 'none' })); } }
+  if (S.linkFrom) {
+    const b = blk(S.linkFrom), g = b && geo(b);
+    if (g && g.out) {
+      const pw = portWorld(b, 'out');
+      const m = mouse || { x: pw.x + 40, y: pw.y };
+      svg.append(sv('line', { id: 'rb', x1: pw.x, y1: pw.y, x2: m.x, y2: m.y, stroke: 'var(--accent)', 'stroke-width': 2.4, 'stroke-dasharray': '6 4', 'pointer-events': 'none' }));
+    }
+  }
+  if (drag && drag.type === 'marquee') {
+    const x = Math.min(drag.startX, drag.curX), y = Math.min(drag.startY, drag.curY);
+    const w = Math.abs(drag.curX - drag.startX), hh = Math.abs(drag.curY - drag.startY);
+    if (w + hh > 2) svg.append(sv('rect', { class: 'marquee', x, y, width: w, height: hh }));
+  }
 }
-function svgPt(e) { const r = $('#svg').getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+
+/* Conversion écran → coordonnées internes (1400×900), tenant compte du zoom CSS. */
+function svgPt(e) {
+  const svg = $('#svg'), r = svg.getBoundingClientRect();
+  const sx = 1400 / r.width, sy = 900 / r.height;
+  return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
+}
 const snap = v => Math.round(v / 10) * 10;
 
-/* ---------- interactions ---------- */
-function select(sel) { S.sel = sel; if (sel) S.tab = 'props'; draw(); renderPanel(); }
+/* ---------- sélection ---------- */
+function select(sel) {
+  if (sel && sel.t === 'b' && !(sel.ids instanceof Set)) sel = { t: 'b', ids: new Set([sel.id]) };
+  S.sel = sel;
+  if (sel) S.tab = 'props';
+  draw(); renderPanel();
+}
 function updHint() {
   let t;
   if (S.tool === 'link') t = S.linkFrom ? `Source : ${blk(S.linkFrom) ? blk(S.linkFrom).name : ''}. Cliquez maintenant le bloc destinataire (Échap pour annuler). Sur un comparateur, cliquez sur le petit cercle d’une entrée pour la choisir.` : 'Relier : cliquez d’abord le bloc source, puis le bloc destinataire. Une sortie peut alimenter plusieurs blocs.';
-  else t = 'Cliquez sur un bloc de la palette pour l’ajouter, puis glissez-le. Outil « Relier » pour tracer les liaisons. Suppr pour effacer la sélection.';
+  else t = 'Glissez un bloc pour le déplacer. Cliquez-glissez dans le vide pour sélectionner plusieurs blocs (Maj pour ajouter). Ctrl+Z / Ctrl+Y : annuler / rétablir. Molette + Ctrl : zoom.';
   $('#hint').textContent = t;
 }
+
+/* ---------- Liaisons ---------- */
 function linkClick(b, portHit) {
-  if (!S.linkFrom) { if (!geo(b).out) { toast('S(p) n’a pas de sortie à relier.'); return; } S.linkFrom = b.id; updHint(); draw(); return; }
+  if (!S.linkFrom) {
+    if (!geo(b).out) { toast('S(p) n’a pas de sortie à relier.'); return; }
+    S.linkFrom = b.id; updHint(); draw(); return;
+  }
   const src = blk(S.linkFrom);
   if (b.id === src.id) { S.linkFrom = null; updHint(); draw(); return; }
   const g = geo(b); if (!g.ins.length) { toast('E(p) ne reçoit aucun signal : choisissez un autre destinataire.'); return; }
   let port = portHit != null ? portHit : g.ins.findIndex((_, i) => !S.links.some(l => l.to === b.id && l.port === i));
   if (port < 0) port = 0;
+  pushUndo();
   S.links = S.links.filter(l => !(l.to === b.id && l.port === port));
   S.links.push({ id: S.nl++, from: src.id, to: b.id, port });
   if (b.type === 'sum') toast(`${src.name} → ${b.name} : ${portName(b, port)} (signe ${b.signs[port] < 0 ? '−' : '+'}).`);
   S.linkFrom = null; save(); updHint(); draw(); renderPanel();
 }
+
+/* ---------- Zoom ---------- */
+function setZoom(z, clientX, clientY) {
+  z = Math.max(0.2, Math.min(3, z));
+  const sc = $('#scroller'), svg = $('#svg');
+  const scr = sc.getBoundingClientRect();
+  const ax = clientX != null ? clientX : scr.left + sc.clientWidth / 2;
+  const ay = clientY != null ? clientY : scr.top + sc.clientHeight / 2;
+  const vx = ax - scr.left, vy = ay - scr.top;
+  const wx = (sc.scrollLeft + vx) / V.z;
+  const wy = (sc.scrollTop + vy) / V.z;
+  V.z = z;
+  svg.style.width = (1400 * z) + 'px';
+  svg.style.height = (900 * z) + 'px';
+  sc.scrollLeft = wx * z - vx;
+  sc.scrollTop = wy * z - vy;
+  $('#zoomLbl').textContent = Math.round(z * 100) + ' %';
+}
+function fitView() {
+  const sc = $('#scroller'), svg = $('#svg');
+  if (!S.blocks.length) {
+    V.z = 1; svg.style.width = '1400px'; svg.style.height = '900px';
+    sc.scrollLeft = 0; sc.scrollTop = 0;
+    $('#zoomLbl').textContent = '100 %'; return;
+  }
+  let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+  S.blocks.forEach(b => { const bb = blockBBox(b); minx = Math.min(minx, bb.x1); miny = Math.min(miny, bb.y1); maxx = Math.max(maxx, bb.x2); maxy = Math.max(maxy, bb.y2); });
+  const pad = 40;
+  const w = maxx - minx + 2 * pad, hh = maxy - miny + 2 * pad;
+  let z = Math.min(sc.clientWidth / w, sc.clientHeight / hh);
+  z = Math.max(0.2, Math.min(2, z));
+  V.z = z;
+  svg.style.width = (1400 * z) + 'px';
+  svg.style.height = (900 * z) + 'px';
+  sc.scrollLeft = (minx - pad) * z;
+  sc.scrollTop = (miny - pad) * z;
+  $('#zoomLbl').textContent = Math.round(z * 100) + ' %';
+}
+$('#bZoomIn').addEventListener('click', () => setZoom(V.z * 1.2));
+$('#bZoomOut').addEventListener('click', () => setZoom(V.z / 1.2));
+$('#bZoomFit').addEventListener('click', fitView);
+$('#zoomLbl').addEventListener('click', () => setZoom(1));
+$('#stage').addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    setZoom(V.z * Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY);
+  }
+}, { passive: false });
+
+/* ---------- Interactions SVG ---------- */
 $('#svg').addEventListener('pointerdown', e => {
+  /* Pan avec le bouton du milieu */
+  if (e.button === 1) {
+    e.preventDefault();
+    const startX = e.clientX, startY = e.clientY;
+    const sc = $('#scroller'), sx = sc.scrollLeft, sy = sc.scrollTop;
+    const onMove = ev => { sc.scrollLeft = sx - (ev.clientX - startX); sc.scrollTop = sy - (ev.clientY - startY); };
+    const onUp = () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); };
+    window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp);
+    return;
+  }
   const t = e.target, bl = t.closest('[data-b]'), lk = t.closest('[data-l]'), pt = svgPt(e);
   if (S.tool === 'link') {
     if (bl) { const ph = t.getAttribute && t.getAttribute('data-port'); linkClick(blk(+bl.getAttribute('data-b')), ph != null ? +ph : null); }
     else { S.linkFrom = null; updHint(); draw(); }
     e.preventDefault(); return;
   }
-  if (bl) { const b = blk(+bl.getAttribute('data-b')); drag = { id: b.id, dx: pt.x - b.x, dy: pt.y - b.y }; select({ t: 'b', id: b.id }); e.preventDefault(); }
-  else if (lk) select({ t: 'l', id: +lk.getAttribute('data-l') });
-  else select(null);
+  if (bl) {
+    const b = blk(+bl.getAttribute('data-b'));
+    if (e.shiftKey) {
+      const ids = new Set(S.sel && S.sel.t === 'b' ? S.sel.ids : []);
+      if (ids.has(b.id)) ids.delete(b.id); else ids.add(b.id);
+      select({ t: 'b', ids });
+    } else {
+      const ids = (S.sel && S.sel.t === 'b' && S.sel.ids.has(b.id)) ? S.sel.ids : new Set([b.id]);
+      select({ t: 'b', ids });
+      const startPositions = new Map();
+      ids.forEach(id => { const bb = blk(id); if (bb) startPositions.set(id, { x: bb.x, y: bb.y }); });
+      drag = { type: 'multi', startX: pt.x, startY: pt.y, startPositions, moved: false };
+    }
+    e.preventDefault();
+  } else if (lk) {
+    select({ t: 'l', id: +lk.getAttribute('data-l') });
+  } else {
+    if (!e.shiftKey) S.sel = null;
+    drag = { type: 'marquee', startX: pt.x, startY: pt.y, curX: pt.x, curY: pt.y, preSel: e.shiftKey ? S.sel : null, shiftKey: e.shiftKey };
+    draw(); renderPanel();
+  }
 });
+
 window.addEventListener('pointermove', e => {
-  if (drag) { const b = blk(drag.id), pt = svgPt(e), g = geo(b); if (!b) return; b.x = Math.max(10, Math.min(1400 - g.w - 10, snap(pt.x - drag.dx))); b.y = Math.max(20, Math.min(900 - g.h - 10, snap(pt.y - drag.dy))); draw(); }
-  else if (S.linkFrom) { mouse = svgPt(e); const rb = $('#rb'); if (rb) { rb.setAttribute('x2', mouse.x); rb.setAttribute('y2', mouse.y); } }
+  const pt = svgPt(e);
+  if (drag) {
+    if (drag.type === 'multi') {
+      if (!drag.moved && (Math.abs(pt.x - drag.startX) > 1 || Math.abs(pt.y - drag.startY) > 1)) {
+        pushUndo();
+        drag.moved = true;
+      }
+      if (!drag.moved) return;
+      if (drag.startPositions.size === 1) {
+        const [[id, pos]] = [...drag.startPositions];
+        const b = blk(id);
+        if (b) { b.x = snap(pos.x + (pt.x - drag.startX)); b.y = snap(pos.y + (pt.y - drag.startY)); }
+      } else {
+        const dx = snap(pt.x - drag.startX), dy = snap(pt.y - drag.startY);
+        drag.startPositions.forEach((pos, id) => {
+          const b = blk(id); if (b) { b.x = pos.x + dx; b.y = pos.y + dy; }
+        });
+      }
+      draw();
+    } else if (drag.type === 'marquee') {
+      drag.curX = pt.x; drag.curY = pt.y;
+      draw();
+    }
+  } else if (S.linkFrom) {
+    mouse = pt;
+    const rb = $('#rb');
+    if (rb) { rb.setAttribute('x2', pt.x); rb.setAttribute('y2', pt.y); }
+  }
 });
-window.addEventListener('pointerup', () => { if (drag) { drag = null; save(); } });
+
+window.addEventListener('pointerup', () => {
+  if (!drag) return;
+  if (drag.type === 'multi' && drag.moved) {
+    save();
+    updHint();
+  } else if (drag.type === 'marquee') {
+    const r = { x1: Math.min(drag.startX, drag.curX), y1: Math.min(drag.startY, drag.curY), x2: Math.max(drag.startX, drag.curX), y2: Math.max(drag.startY, drag.curY) };
+    if (r.x2 - r.x1 > 3 || r.y2 - r.y1 > 3) {
+      const selected = new Set(drag.preSel && drag.preSel.t === 'b' ? drag.preSel.ids : []);
+      S.blocks.forEach(b => {
+        const bb = blockBBox(b);
+        if (bb.x1 < r.x2 && bb.x2 > r.x1 && bb.y1 < r.y2 && bb.y2 > r.y1) selected.add(b.id);
+      });
+      if (selected.size) S.sel = { t: 'b', ids: selected };
+    }
+    drag = null;
+    save(); draw(); renderPanel();
+    return;
+  }
+  drag = null;
+});
+
+/* ---------- Clavier ---------- */
 document.addEventListener('keydown', e => {
   const tg = e.target && e.target.tagName;
-  if (e.key === 'Escape') { if (!$('#dlg').hidden) closeDlg(); else if (S.linkFrom) { S.linkFrom = null; updHint(); draw(); } else if (S.tool === 'link') setTool('sel'); return; }
-  if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && tg !== 'INPUT' && tg !== 'TEXTAREA' && tg !== 'SELECT') { e.preventDefault(); delSel(); }
+  const inField = tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT';
+  /* Zoom */
+  if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); setZoom(V.z * 1.2); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); setZoom(V.z / 1.2); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); fitView(); return; }
+  /* Annuler / rétablir */
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') { if (!inField) { e.preventDefault(); doUndo(); } return; }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z') { if (!inField) { e.preventDefault(); doRedo(); } return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { if (!inField) { e.preventDefault(); doRedo(); } return; }
+  /* Tout sélectionner */
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !inField) {
+    e.preventDefault();
+    if (S.blocks.length) select({ t: 'b', ids: new Set(S.blocks.map(b => b.id)) });
+    return;
+  }
+  /* Dupliquer */
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && !inField) { e.preventDefault(); duplicateSelection(); return; }
+  /* Échap */
+  if (e.key === 'Escape') {
+    if (!$('#dlg').hidden) closeDlg();
+    else if (S.linkFrom) { S.linkFrom = null; updHint(); draw(); }
+    else if (S.tool === 'link') setTool('sel');
+    else if (S.sel) { S.sel = null; draw(); renderPanel(); }
+    return;
+  }
+  /* Suppr */
+  if ((e.key === 'Delete' || e.key === 'Backspace') && S.sel && !inField) { e.preventDefault(); delSel(); return; }
+  /* Flèches : déplacement fin */
+  if (!inField && S.sel && S.sel.t === 'b' && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+    e.preventDefault();
+    if (!nudgeTimer) { pushUndo(); nudgeTimer = setTimeout(() => { nudgeTimer = null; }, 600); }
+    const step = e.shiftKey ? 10 : 1;
+    const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+    const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+    S.sel.ids.forEach(id => { const b = blk(id); if (b) { b.x += dx; b.y += dy; } });
+    save(); draw();
+  }
 });
+let nudgeTimer = null;
+
+/* ---------- Suppression, rotation, duplication, alignement ---------- */
 function delSel() {
   if (!S.sel) return;
-  if (S.sel.t === 'b') { const id = S.sel.id; S.blocks = S.blocks.filter(b => b.id !== id); S.links = S.links.filter(l => l.from !== id && l.to !== id); if (S.linkFrom === id) S.linkFrom = null; }
-  else S.links = S.links.filter(l => l.id !== S.sel.id);
+  pushUndo();
+  if (S.sel.t === 'b') {
+    const ids = S.sel.ids;
+    S.blocks = S.blocks.filter(b => !ids.has(b.id));
+    S.links = S.links.filter(l => !ids.has(l.from) && !ids.has(l.to));
+    if (S.linkFrom && ids.has(S.linkFrom)) S.linkFrom = null;
+  } else {
+    S.links = S.links.filter(l => l.id !== S.sel.id);
+  }
   S.sel = null; save(); draw(); renderPanel(); updHint();
+}
+function rotateBlocks(delta, reset) {
+  if (!S.sel || S.sel.t !== 'b' || S.sel.ids.size === 0) return;
+  pushUndo();
+  S.sel.ids.forEach(id => {
+    const b = blk(id); if (!b) return;
+    if (reset) b.rot = 0;
+    else b.rot = ((((b.rot || 0) + delta) % 360) + 360) % 360;
+  });
+  save(); draw(); renderPanel();
+}
+function duplicateSelection() {
+  if (!S.sel || S.sel.t !== 'b' || !S.sel.ids.size) return;
+  pushUndo();
+  const map = new Map(), newIds = new Set();
+  S.sel.ids.forEach(id => {
+    const b = blk(id); if (!b) return;
+    const nb = JSON.parse(JSON.stringify(b));
+    nb.id = S.nid++;
+    nb.x += 20; nb.y += 20;
+    const m = /^(\D+)(\d+)$/.exec(b.name);
+    nb.name = m ? m[1] + nextNum(m[1]) : b.name + '2';
+    S.blocks.push(nb);
+    map.set(b.id, nb.id);
+    newIds.add(nb.id);
+  });
+  S.links.forEach(l => { if (map.has(l.from) && map.has(l.to)) S.links.push({ id: S.nl++, from: map.get(l.from), to: map.get(l.to), port: l.port }); });
+  S.sel = { t: 'b', ids: newIds };
+  save(); draw(); renderPanel();
+  toast(newIds.size + ' bloc(s) dupliqué(s)');
+}
+function alignSelected(mode) {
+  if (!S.sel || S.sel.t !== 'b' || S.sel.ids.size < 2) return;
+  pushUndo();
+  const items = [...S.sel.ids].map(id => blk(id)).filter(Boolean).map(b => ({ b, bb: blockBBox(b) }));
+  if (mode === 'left') { const m = Math.min(...items.map(x => x.bb.x1)); items.forEach(x => { x.b.x += m - x.bb.x1; }); }
+  else if (mode === 'right') { const m = Math.max(...items.map(x => x.bb.x2)); items.forEach(x => { x.b.x += m - x.bb.x2; }); }
+  else if (mode === 'center-h') { const cx = (Math.min(...items.map(x => x.bb.x1)) + Math.max(...items.map(x => x.bb.x2))) / 2; items.forEach(x => { x.b.x += cx - (x.bb.x1 + x.bb.x2) / 2; }); }
+  else if (mode === 'top') { const m = Math.min(...items.map(x => x.bb.y1)); items.forEach(x => { x.b.y += m - x.bb.y1; }); }
+  else if (mode === 'bottom') { const m = Math.max(...items.map(x => x.bb.y2)); items.forEach(x => { x.b.y += m - x.bb.y2; }); }
+  else if (mode === 'center-v') { const cy = (Math.min(...items.map(x => x.bb.y1)) + Math.max(...items.map(x => x.bb.y2))) / 2; items.forEach(x => { x.b.y += cy - (x.bb.y1 + x.bb.y2) / 2; }); }
+  save(); draw();
 }
 
 /* ---------- blocs ---------- */
 function nextNum(pre) { let m = 0; S.blocks.forEach(b => { if (b.name.startsWith(pre)) { const n = +b.name.slice(pre.length); if (Number.isInteger(n)) m = Math.max(m, n); } }); return m + 1; }
 function mkBlock(type, x, y, vals) {
   const sp = TYPES[type], io = type === 'in' || type === 'out', n = io ? 0 : nextNum(sp.pre);
-  const b = { id: S.nid++, type, x, y, name: io ? sp.pre : sp.pre + n, signs: [1, -1], p: sp.params.map((q, i) => ({ sym: q[0] + n, val: vals && vals[i] != null ? vals[i] : q[2] })) };
+  const b = { id: S.nid++, type, x, y, rot: 0, name: io ? sp.pre : sp.pre + n, signs: [1, -1], p: sp.params.map((q, i) => ({ sym: q[0] + n, val: vals && vals[i] != null ? vals[i] : q[2] })) };
   S.blocks.push(b); return b;
 }
 function freeSpot(type) {
@@ -631,9 +1016,14 @@ function freeSpot(type) {
   return { x: 40, y: 60 };
 }
 function addBlock(type) {
-  if ((type === 'in' || type === 'out') && S.blocks.some(b => b.type === type)) { const b = S.blocks.find(x => x.type === type); toast(type === 'in' ? 'Il n’y a qu’une seule entrée E(p).' : 'Il n’y a qu’une seule sortie S(p).'); select({ t: 'b', id: b.id }); return; }
+  if ((type === 'in' || type === 'out') && S.blocks.some(b => b.type === type)) {
+    const b = S.blocks.find(x => x.type === type);
+    toast(type === 'in' ? 'Il n’y a qu’une seule entrée E(p).' : 'Il n’y a qu’une seule sortie S(p).');
+    select({ t: 'b', id: b.id }); return;
+  }
+  pushUndo();
   const pos = freeSpot(type), b = mkBlock(type, pos.x, pos.y);
-  S.calc && false; save(); select({ t: 'b', id: b.id });
+  save(); select({ t: 'b', id: b.id });
   if (isSmall()) toast(b.name + ' ajouté : glissez-le pour le placer.');
 }
 function lk(a, b, port) { S.links.push({ id: S.nl++, from: a.id, to: b.id, port: port || 0 }); }
@@ -653,7 +1043,7 @@ const EXAMPLES = [
     const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), h1 = mkBlock('ord1', 260, 100, [2, 1]), s2 = mkBlock('sum', 430, 108), h2 = mkBlock('int', 520, 100, [1]), o = mkBlock('out', 700, 110), h3 = mkBlock('der', 430, 250, [0.5]);
     lk(e, s1, 0); lk(s1, h1); lk(h1, s2, 0); lk(s2, h2); lk(h2, o); lk(h2, s1, 1); lk(h2, h3); lk(h3, s2, 1); } }
 ];
-function loadExample(i) { if (CS.open) { CS.open = false; renderCourse(); } S.blocks = []; S.links = []; S.nid = 1; S.nl = 1; S.sel = null; S.linkFrom = null; S.calc = false; S.tab = 'props'; EXAMPLES[i].f(); save(); draw(); renderPanel(); updHint(); }
+function loadExample(i) { if (CS.open) { CS.open = false; renderCourse(); } pushUndo(); S.blocks = []; S.links = []; S.nid = 1; S.nl = 1; S.sel = null; S.linkFrom = null; S.calc = false; S.tab = 'props'; EXAMPLES[i].f(); save(); draw(); renderPanel(); updHint(); }
 
 /* ---------- palette ---------- */
 const bi = (t, fs) => `<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-body" x="1.5" y="7" width="31" height="20" rx="4"/><text x="17" y="21" text-anchor="middle" font-size="${fs || 10}" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">${t}</text></svg>`;
@@ -665,7 +1055,7 @@ const ICON = {
   sum: '<svg viewBox="0 0 34 34" aria-hidden="true"><circle class="ic-body" cx="17" cy="17" r="11"/><text x="17" y="22" text-anchor="middle" font-size="14" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">Σ</text></svg>',
   prop: bi('K', 12), int: bi('1/p', 10), der: bi('p', 12), ord1: bi('1er', 10), ord2: bi('2nd', 10), ord1inv: bi('1er⁻¹', 8.5), ord2inv: bi('2nd⁻¹', 8.5), corP: bi('P', 12), corPI: bi('PI', 11), corAv: bi('AV', 10)
 };
-const PAL = [['sel', 'Déplacer', 1], ['link', 'Relier', 1], 0, ['in', 'Entrée E(p)'], ['out', 'Sortie S(p)'], ['sum', 'Comparateur'], 0, ['prop', 'Proportionnel'], ['int', 'Intégrateur'], ['der', 'Dérivateur'], ['ord1', '1er ordre'], ['ord2', '2nd ordre'], ['ord1inv', '1er ordre inversé'], ['ord2inv', '2nd ordre inversé'], 0, ['corP', 'Correcteur P'], ['corPI', 'Correcteur PI'], ['corAv', 'Avance de phase']];
+const PAL = [['sel', 'Sélectionner', 1], ['link', 'Relier', 1], 0, ['in', 'Entrée E(p)'], ['out', 'Sortie S(p)'], ['sum', 'Comparateur'], 0, ['prop', 'Proportionnel'], ['int', 'Intégrateur'], ['der', 'Dérivateur'], ['ord1', '1er ordre'], ['ord2', '2nd ordre'], ['ord1inv', '1er ordre inversé'], ['ord2inv', '2nd ordre inversé'], 0, ['corP', 'Correcteur P'], ['corPI', 'Correcteur PI'], ['corAv', 'Avance de phase']];
 function setTool(t) { S.tool = t; S.linkFrom = null; renderPalette(); updHint(); draw(); }
 function renderPalette() {
   const box = $('#palette'); box.replaceChildren();
@@ -699,29 +1089,50 @@ function renderPanel() {
   box.classList.toggle('wide', S.tab === 'res');
   if (!S.panel) { box.replaceChildren(); return; }
   box.replaceChildren();
-  box.append(h('div', { class: 'phead' }, h('b', null, S.tab === 'res' ? 'Résultat' : 'Propriétés'), h('span', { class: 'sub' }, S.tab === 'res' ? 'FTBF du schéma' : (S.sel ? (S.sel.t === 'b' ? (blk(S.sel.id) || {}).name : 'Liaison') : '')), h('button', { class: 'btn sm', type: 'button', onclick: () => { S.panel = false; renderPanel(); } }, 'Fermer')));
+  let sub = '';
+  if (S.tab === 'res') sub = 'FTBF du schéma';
+  else if (S.sel) {
+    if (S.sel.t === 'l') sub = 'Liaison';
+    else sub = S.sel.ids.size === 1 ? (blk([...S.sel.ids][0]) || {}).name : S.sel.ids.size + ' blocs';
+  }
+  box.append(h('div', { class: 'phead' }, h('b', null, S.tab === 'res' ? 'Résultat' : 'Propriétés'), h('span', { class: 'sub' }, sub), h('button', { class: 'btn sm', type: 'button', onclick: () => { S.panel = false; renderPanel(); } }, 'Fermer')));
   box.append(h('div', { class: 'tabs', role: 'tablist' },
     h('button', { type: 'button', role: 'tab', 'aria-selected': S.tab === 'props' ? 'true' : 'false', onclick: () => { S.tab = 'props'; renderPanel(); } }, 'Propriétés'),
     h('button', { type: 'button', role: 'tab', 'aria-selected': S.tab === 'res' ? 'true' : 'false', onclick: () => { S.tab = 'res'; renderPanel(); } }, 'Résultat')));
   const body = h('div', { class: 'pbody' });
   (S.tab === 'res' ? resultView : propsView)(body); box.append(body);
 }
+
+function rotSection(b) {
+  return h('div', { class: 'grp' }, h('h3', null, 'Orientation'),
+    h('div', { class: 'seg', role: 'group', 'aria-label': 'Rotation' },
+      h('button', { type: 'button', onclick: () => rotateBlocks(-90), title: 'Tourner de 90° dans le sens horaire inverse' }, '↺ 90°'),
+      h('button', { type: 'button', onclick: () => rotateBlocks(90), title: 'Tourner de 90° dans le sens horaire' }, '↻ 90°'),
+      h('button', { type: 'button', onclick: () => rotateBlocks(180), title: 'Demi-tour' }, '180°'),
+      h('button', { type: 'button', onclick: () => rotateBlocks(0, true), title: 'Réinitialiser l’orientation' }, '0°')
+    ));
+}
+
 function propsView(body) {
   if (!S.sel) {
     body.append(h('div', { class: 'goal' }, h('b', null, 'Objectif. '), 'Dessiner un schéma-blocs et obtenir la fonction de transfert en boucle fermée T(p) = S(p) / E(p).'),
       h('ol', { class: 'steps' },
         h('li', null, 'Ajoutez une ', h('b', null, 'Entrée'), ', une ', h('b', null, 'Sortie'), ', un ', h('b', null, 'Comparateur'), ' et les blocs de la chaîne directe et du retour.'),
-        h('li', null, 'Choisissez l’outil ', h('b', null, 'Relier'), ' : cliquez le bloc source puis le bloc destinataire. Pour un comparateur, cliquez sur le petit cercle de l’entrée voulue (la 1re liaison va à gauche, la 2e en bas).'),
-        h('li', null, 'Cliquez un bloc pour régler ses paramètres, et un comparateur pour choisir les signes + ou −.'),
-        h('li', null, 'Cliquez sur ', h('b', null, 'Calculer la FTBF'), ' : choisissez ensuite la forme canonique ou non canonique, avec les symboles ou les valeurs numériques.')),
-      h('p', { class: 'small' }, 'Astuce : le menu « Exemples » charge des schémas prêts à l’emploi.'));
+        h('li', null, 'Choisissez l’outil ', h('b', null, 'Relier'), ' : cliquez le bloc source puis le bloc destinataire. Pour un comparateur, cliquez sur le petit cercle de l’entrée voulue.'),
+        h('li', null, 'Cliquez un bloc pour régler ses paramètres et son orientation (rotation 90° / 180°).'),
+        h('li', null, 'Cliquez-glissez dans le vide pour sélectionner plusieurs blocs. Maj + clic ajoute à la sélection.'),
+        h('li', null, 'Cliquez sur ', h('b', null, 'Calculer la FTBF'), ' : choisissez la forme canonique ou non canonique.')),
+      h('p', { class: 'small' }, 'Astuce : Ctrl+Z annule, Ctrl+Y rétablit, Ctrl+D duplique, Ctrl+molette zoome, molette + Maj ouvre un panneau mobile.'));
     return;
   }
   if (S.sel.t === 'l') {
     const l = S.links.find(x => x.id === S.sel.id), a = l && blk(l.from), b = l && blk(l.to); if (!l) return;
     body.append(h('p', null, h('b', null, a.name + ' → ' + b.name), b.type === 'sum' ? ' (' + portName(b, l.port) + ')' : ''), h('button', { class: 'btn del', type: 'button', onclick: delSel }, 'Supprimer la liaison')); return;
   }
-  const b = blk(S.sel.id); if (!b) return; const sp = TYPES[b.type];
+  if (!S.sel.ids.size) { S.sel = null; return propsView(body); }
+  if (S.sel.ids.size > 1) { renderMultiSel(body); return; }
+  const id = [...S.sel.ids][0], b = blk(id); if (!b) { S.sel = null; return propsView(body); }
+  const sp = TYPES[b.type];
   const nameI = h('input', { type: 'text', value: b.name, 'aria-label': 'Nom du bloc', autocomplete: 'off' });
   nameI.addEventListener('input', () => { b.name = nameI.value || b.name; save(); draw(); });
   body.append(h('label', { class: 'fld' }, h('span', null, 'Nom'), nameI), h('p', { class: 'small' }, sp.label));
@@ -731,18 +1142,65 @@ function propsView(body) {
     b.p.forEach((q, i) => {
       const si = h('input', { type: 'text', class: 'mono' + (validSym(q.sym) ? '' : ' bad'), value: q.sym, 'aria-label': 'Symbole : ' + sp.params[i][1], autocomplete: 'off', spellcheck: 'false' });
       const vi = h('input', { type: 'text', class: 'mono', inputmode: 'decimal', value: String(q.val).replace('.', ','), 'aria-label': 'Valeur : ' + sp.params[i][1], autocomplete: 'off' });
-      si.addEventListener('input', () => { q.sym = si.value.trim(); si.classList.toggle('bad', !validSym(q.sym)); ex.textContent = 'H(p) = ' + exprText(b); save(); draw(); });
-      vi.addEventListener('input', () => { const v = parseFloat(vi.value.replace(',', '.').replace('−', '-')); const ok = vi.value.trim() !== '' && isFinite(v) && /^[-+]?[\d.,]+(e[-+]?\d+)?$/i.test(vi.value.trim()); vi.classList.toggle('bad', !ok); if (ok) { q.val = v; save(); } });
+      let siTouched = false, viTouched = false;
+      si.addEventListener('focus', () => { siTouched = false; });
+      si.addEventListener('input', () => { if (!siTouched) { pushUndo(); siTouched = true; } q.sym = si.value.trim(); si.classList.toggle('bad', !validSym(q.sym)); ex.textContent = 'H(p) = ' + exprText(b); save(); draw(); });
+      vi.addEventListener('focus', () => { viTouched = false; });
+      vi.addEventListener('input', () => {
+        if (!viTouched) { pushUndo(); viTouched = true; }
+        const v = parseFloat(vi.value.replace(',', '.').replace('−', '-'));
+        const ok = vi.value.trim() !== '' && isFinite(v) && /^[-+]?[\d.,]+(e[-+]?\d+)?$/i.test(vi.value.trim());
+        vi.classList.toggle('bad', !ok);
+        if (ok) { q.val = v; save(); draw(); }
+      });
       grp.append(h('div', { class: 'prm' }, h('span', { class: 'pl' }, sp.params[i][1]), si, vi));
     });
     body.append(grp, h('p', { class: 'small' }, 'Deux paramètres de même symbole sont considérés comme identiques : ils doivent avoir la même valeur.'));
   } else if (b.type === 'sum') {
     const grp = h('div', { class: 'grp' }, h('h3', null, 'Signes des entrées'));
-    [0, 1].forEach(i => { const sel = h('select', { 'aria-label': 'Signe de l’' + portName(b, i) }, h('option', { value: '1', selected: b.signs[i] > 0 }, '+  (somme)'), h('option', { value: '-1', selected: b.signs[i] < 0 }, '−  (différence)')); sel.addEventListener('change', () => { b.signs[i] = +sel.value; save(); draw(); }); grp.append(h('label', { class: 'fld' }, h('span', null, portName(b, i)[0].toUpperCase() + portName(b, i).slice(1)), sel)); });
+    [0, 1].forEach(i => {
+      const sel = h('select', { 'aria-label': 'Signe de l’' + portName(b, i) },
+        h('option', { value: '1', selected: b.signs[i] > 0 }, '+  (somme)'),
+        h('option', { value: '-1', selected: b.signs[i] < 0 }, '−  (différence)'));
+      sel.addEventListener('change', () => { pushUndo(); b.signs[i] = +sel.value; save(); draw(); });
+      grp.append(h('label', { class: 'fld' }, h('span', null, portName(b, i)[0].toUpperCase() + portName(b, i).slice(1)), sel));
+    });
     body.append(grp, h('p', { class: 'small' }, 'Par défaut : entrée 1 (consigne) en +, entrée 2 (retour) en −.'));
   } else body.append(h('p', { class: 'small' }, b.type === 'in' ? 'Signal d’entrée E(p), un seul par schéma.' : 'Signal de sortie S(p), un seul par schéma.'));
-  body.append(h('p', null, h('button', { class: 'btn del', type: 'button', onclick: delSel }, 'Supprimer le bloc')));
+  body.append(rotSection(b));
+  body.append(h('p', null,
+    h('button', { class: 'btn', type: 'button', onclick: duplicateSelection }, 'Dupliquer'),
+    ' ',
+    h('button', { class: 'btn del', type: 'button', onclick: delSel }, 'Supprimer le bloc')));
 }
+
+function renderMultiSel(body) {
+  const n = S.sel.ids.size;
+  body.append(h('p', null, h('b', null, n + ' blocs sélectionnés.')));
+  body.append(h('div', { class: 'grp' }, h('h3', null, 'Aligner'),
+    h('div', { class: 'seg', role: 'group', 'aria-label': 'Aligner horizontalement', style: 'margin-bottom:6px' },
+      h('button', { type: 'button', onclick: () => alignSelected('left'), title: 'Aligner à gauche' }, '⟵ gauche'),
+      h('button', { type: 'button', onclick: () => alignSelected('center-h'), title: 'Centrer horizontalement' }, '↔ centre'),
+      h('button', { type: 'button', onclick: () => alignSelected('right'), title: 'Aligner à droite' }, 'droite ⟶')
+    ),
+    h('div', { class: 'seg', role: 'group', 'aria-label': 'Aligner verticalement' },
+      h('button', { type: 'button', onclick: () => alignSelected('top'), title: 'Aligner en haut' }, '↑ haut'),
+      h('button', { type: 'button', onclick: () => alignSelected('center-v'), title: 'Centrer verticalement' }, '↕ milieu'),
+      h('button', { type: 'button', onclick: () => alignSelected('bottom'), title: 'Aligner en bas' }, 'bas ↓')
+    )));
+  body.append(h('div', { class: 'grp' }, h('h3', null, 'Orientation'),
+    h('div', { class: 'seg', role: 'group', 'aria-label': 'Rotation' },
+      h('button', { type: 'button', onclick: () => rotateBlocks(-90) }, '↺ 90°'),
+      h('button', { type: 'button', onclick: () => rotateBlocks(90) }, '↻ 90°'),
+      h('button', { type: 'button', onclick: () => rotateBlocks(180) }, '180°'),
+      h('button', { type: 'button', onclick: () => rotateBlocks(0, true) }, '0°')
+    )));
+  body.append(h('p', null,
+    h('button', { class: 'btn', type: 'button', onclick: duplicateSelection }, 'Dupliquer'),
+    ' ',
+    h('button', { class: 'btn del', type: 'button', onclick: delSel }, 'Supprimer les ' + n)));
+}
+
 function resultView(body) {
   if (!S.calc) { body.append(h('p', { class: 'small' }, 'Construisez le schéma, puis lancez le calcul.'), h('p', null, h('button', { class: 'btn run', type: 'button', onclick: doCalc }, 'Calculer la FTBF'))); return; }
   const R = solveDiagram(S);
@@ -758,7 +1216,6 @@ function resultView(body) {
     body.append(h('p', null, h('button', { class: 'btn sm', type: 'button', onclick: () => { const tx = 'T(p) = ' + markupToText(mk); (navigator.clipboard ? navigator.clipboard.writeText(tx) : Promise.reject()).then(() => toast('Expression copiée.'), () => toast(tx)); } }, 'Copier en texte'), ' ', h('span', { class: 'small' }, S.form === 'c' ? 'Forme canonique : K·(1 + b₁p + …) / (pᵅ·(1 + a₁p + …)).' : 'Forme non canonique : polynômes en p développés.')));
   }
   if (R.zero) body.append(h('p', { class: 'small' }, 'Les chaînes directes se compensent : la FTBF est nulle.'));
-  /* caractéristiques */
   if (R.chars) {
     const c = R.chars, kv = h('dl', { class: 'kv' });
     const row = (k, v) => { kv.append(h('dt', null, k), h('dd', null, v)); };
@@ -771,7 +1228,6 @@ function resultView(body) {
     body.append(h('div', { class: 'card' }, h('h4', null, 'Caractéristiques (valeurs numériques)'), kv),
       h('p', { class: 'small' }, 'Les simplifications pôle / zéro éventuelles ne sont pas effectuées. Les pôles proviennent du dénominateur de la forme réduite ci-dessus.'));
   }
-  /* Mason */
   if (R.paths) {
     body.append(h('details', { class: 'mason' }, h('summary', null, 'Méthode : formule de Mason'),
       h('p', null, 'T = Σ(Pₖ·Δₖ) / Δ, avec Δ = 1 − Σ gains des boucles + Σ produits de boucles disjointes − …'),
@@ -843,20 +1299,15 @@ COURSE.push({ id: 'black', t: 'La formule de Black', h: `
 <div class="retain"><b>À retenir.</b> T = ${F('G', '1 + G·H')} pour un retour négatif, ${F('G', '1 − G·H')} pour un retour positif. Le dénominateur « 1 + FTBO » est l’équation caractéristique : ses racines sont les pôles de la FTBF.</div>` });
 
 COURSE.push({ id: 'mason', t: 'La méthode de Mason', h: `
-<p>La formule de Mason donne directement la FTBF de <b>n’importe quel schéma-blocs</b>, quel que soit le nombre de boucles et de chaînes directes. On la voit comme un graphe : les signaux sont des nœuds, les blocs des gains portés par les branches.</p>
-<h3>Vocabulaire</h3>
-<ul>
-<li><b>Chemin direct</b> P<sub>k</sub> : chemin de E vers S qui ne passe qu’une fois par chaque nœud. Son gain est le produit des gains rencontrés (avec le signe − si on traverse une entrée soustractive d’un comparateur).</li>
-<li><b>Boucle</b> L<sub>i</sub> : chemin fermé qui ne passe qu’une fois par chaque nœud. Son gain est le produit des gains de la boucle, y compris le signe. Un retour négatif donne L = −G·H.</li>
-<li>Deux boucles (ou une boucle et un chemin) sont <b>disjointes</b> (ou « ne se touchent pas ») si elles n’ont <b>aucun nœud commun</b>.</li>
-</ul>
+<p>La formule de Mason donne directement la FTBF de <b>n’importe quel schéma-blocs</b>, quel que soit le nombre de boucles et de chaînes directes.</p>
 <h3>La formule</h3>
 <div class="formula">T(p) = ${F('Σ<sub>k</sub> P<sub>k</sub>·Δ<sub>k</sub>', 'Δ')}</div>
 <div class="formula">Δ = 1 − ΣL<sub>i</sub> + ΣL<sub>i</sub>L<sub>j</sub> − ΣL<sub>i</sub>L<sub>j</sub>L<sub>k</sub> + …</div>
 <ul>
-<li>ΣL<sub>i</sub> : somme des gains de <b>toutes</b> les boucles.</li>
-<li>ΣL<sub>i</sub>L<sub>j</sub> : somme des produits des boucles <b>deux à deux disjointes</b> ; puis trois à trois, avec des signes alternés.</li>
-<li>Δ<sub>k</sub> : le même calcul que Δ, mais en ne gardant que les boucles qui <b>ne touchent pas</b> le chemin P<sub>k</sub>. Si toutes les boucles touchent P<sub>k</sub>, alors Δ<sub>k</sub> = 1.</li>
+<li><b>Chemin direct</b> P<sub>k</sub> : chemin de E vers S qui ne passe qu’une fois par chaque nœud. Son gain est le produit des gains rencontrés.</li>
+<li><b>Boucle</b> L<sub>i</sub> : chemin fermé qui ne passe qu’une fois par chaque nœud. Son gain inclut le signe (retour négatif : L = −G·H).</li>
+<li>Deux boucles sont <b>disjointes</b> si elles n’ont aucun nœud commun.</li>
+<li>Δ<sub>k</sub> : même calcul que Δ, en ne gardant que les boucles qui ne touchent pas le chemin P<sub>k</sub>.</li>
 </ul>
 <h3>Méthode en 5 étapes</h3>
 <ol>
@@ -866,51 +1317,12 @@ COURSE.push({ id: 'mason', t: 'La méthode de Mason', h: `
 <li>Calculer Δ, puis chaque Δ<sub>k</sub>.</li>
 <li>Assembler T = ${F('ΣP<sub>k</sub>Δ<sub>k</sub>', 'Δ')} et mettre sous forme canonique.</li>
 </ol>
-<h3>Exemple A : boucles imbriquées</h3>
-<p>E → Σ₁ → H₁ → Σ₂ → H₂ → S. Retour unitaire de S vers Σ₁ (boucle externe), et retour H₃ de la sortie de H₂ vers Σ₂ (boucle interne).</p>
-<ul>
-<li>Chemin direct : P₁ = H₁·H₂.</li>
-<li>Boucles : L₁ = −H₁H₂ (externe) et L₂ = −H₂H₃ (interne). Elles passent toutes deux par H₂ : elles se touchent.</li>
-<li>Δ = 1 − L₁ − L₂ = 1 + H₁H₂ + H₂H₃. Les deux boucles touchent P₁ : Δ₁ = 1.</li>
-</ul>
-<div class="formula">T(p) = ${F('H₁H₂', '1 + H₁H₂ + H₂H₃')}</div>
-<p>C’est exactement l’exemple « Deux boucles imbriquées » du menu Exemples de l’atelier.</p>
-<h3>Exemple B : boucles disjointes</h3>
-<p>Chaîne G₁, G₂, G₃. Une boucle de retour H₁ autour de G₁ seul, une autre H₂ autour de G₃ seul. Elles n’ont aucun nœud commun.</p>
-<ul>
-<li>P₁ = G₁G₂G₃ ; L₁ = −G₁H₁ ; L₂ = −G₃H₂ ; L₁ et L₂ sont disjointes.</li>
-<li>Δ = 1 − (L₁ + L₂) + L₁L₂ = 1 + G₁H₁ + G₃H₂ + G₁H₁G₃H₂ = (1 + G₁H₁)(1 + G₃H₂). Δ₁ = 1.</li>
-</ul>
-<div class="formula">T(p) = ${F('G₁G₂G₃', '(1 + G₁H₁)(1 + G₃H₂)')}</div>
-<p>On retrouve le produit de deux boucles fermées indépendantes, comme attendu.</p>
-<h3>Exemple C : pourquoi Δ<sub>k</sub> ?</h3>
-<p>Deux chemins directs : P₁ = G₁G₂ (avec une boucle de retour H autour de G₂ seul) et P₂ = G₃ (chemin parallèle sans boucle), les deux sorties s’additionnant.</p>
-<ul>
-<li>Une seule boucle L₁ = −G₂H. Elle touche P₁ (passe par G₂) mais ne touche pas P₂.</li>
-<li>Δ = 1 + G₂H ; Δ₁ = 1 (la boucle touche P₁) ; Δ₂ = 1 − L₁ = 1 + G₂H (la boucle ne touche pas P₂).</li>
-</ul>
-<div class="formula">T(p) = ${F('G₁G₂·1 + G₃·(1 + G₂H)', '1 + G₂H')} = ${F('G₁G₂', '1 + G₂H')} + G₃</div>
-<p>Le résultat est bien la somme des deux contributions : le chemin avec boucle, et le chemin parallèle.</p>
-<div class="cwarn"><b>Erreurs fréquentes.</b> Oublier le signe de la boucle (retour négatif : L = −GH). Oublier une boucle qui passe par un point de prélèvement. Compter comme « disjointes » deux boucles qui partagent un comparateur.</div>
 <div class="retain"><b>À retenir.</b> T = ${F('ΣP<sub>k</sub>Δ<sub>k</sub>', 'Δ')} avec Δ = 1 − ΣL + ΣLL − … Les boucles qui se touchent ne se multiplient pas ; Δ<sub>k</sub> ignore les boucles qui touchent P<sub>k</sub>.</div>` });
 
 COURSE.push({ id: 'lien', t: 'Black et Mason : le lien', h: `
 <p>La formule de Black est le cas particulier de Mason avec <b>un seul chemin direct</b> et <b>une seule boucle</b>.</p>
-<ul>
-<li>Un chemin : P₁ = G.</li>
-<li>Une boucle (retour négatif) : L₁ = −G·H.</li>
-<li>Δ = 1 − L₁ = 1 + G·H ; Δ₁ = 1 (la boucle touche le chemin).</li>
-</ul>
 <div class="formula">T = ${F('P₁Δ₁', 'Δ')} = ${F('G', '1 + GH')}</div>
-<table class="ctable"><thead><tr><th></th><th>Black</th><th>Mason</th></tr></thead><tbody>
-<tr><td>Schémas visés</td><td>Une seule boucle</td><td>Tout schéma</td></tr>
-<tr><td>Principe</td><td>Réduire la boucle en un bloc équivalent</td><td>Énumérer chemins et boucles</td></tr>
-<tr><td>Intérêt</td><td>Rapide et intuitif</td><td>Systématique, sans déplacer de points de prélèvement</td></tr>
-<tr><td>Risque</td><td>Erreurs lors des déplacements de blocs</td><td>Oubli d’une boucle ou d’un signe</td></tr>
-</tbody></table>
-<h3>Ce que fait l’atelier</h3>
-<p>L’atelier applique Mason. Chaque bloc est écrit sous la forme N(p)/D(p). Chaque terme de la formule est multiplié par le produit des dénominateurs D des blocs : le résultat sort ainsi directement sous forme d’un quotient de polynômes, mis sur dénominateur commun. L’encadré « Méthode : formule de Mason » du panneau Résultat liste les chemins P<sub>k</sub>, les boucles L<sub>i</sub> et les Δ trouvés.</p>
-<div class="retain"><b>À retenir.</b> Une seule boucle : Black. Plusieurs boucles ou plusieurs chemins : Mason (et Black en est un cas particulier).</div>` });
+<div class="retain"><b>À retenir.</b> Une seule boucle : Black. Plusieurs boucles ou plusieurs chemins : Mason.</div>` });
 
 COURSE.push({ id: 'canonique', t: 'Forme canonique de la FTBF', h: `
 <p>Une fois T(p) = ${F('N(p)', 'D(p)')} obtenue, on la met sous <b>forme canonique</b> : on factorise pour que les termes de plus bas degré valent 1.</p>
@@ -920,33 +1332,31 @@ COURSE.push({ id: 'canonique', t: 'Forme canonique de la FTBF', h: `
 <li><b>α</b> : classe, nombre d’intégrateurs de la FTBF.</li>
 <li><b>n</b> : ordre, degré du dénominateur.</li>
 </ul>
-<table class="ctable"><thead><tr><th>Système</th><th>Forme canonique</th><th>Paramètres</th></tr></thead><tbody>
-<tr><td>1er ordre</td><td>${F('K', '1 + τp')}</td><td>K : gain, τ : constante de temps (réponse à 63 % à t = τ)</td></tr>
-<tr><td>2nd ordre</td><td>${F('K', '1 + 2ξp/ω₀ + p²/ω₀²')}</td><td>ω₀ : pulsation propre, ξ : amortissement</td></tr>
-<tr><td>Intégrateur</td><td>${F('K', 'p')}</td><td>Classe α = 1</td></tr>
-</tbody></table>
-<h3>Lire un 2nd ordre</h3>
-<p>Si D(p) normalisé vaut 1 + a₁p + a₂p², alors ω₀ = ${F('1', '√a₂')} et ξ = ${F('a₁·ω₀', '2')}.</p>
-<ul>
-<li>ξ &lt; 1 : pôles complexes conjugués, réponse oscillatoire amortie.</li>
-<li>ξ = 1 : amortissement critique (pôle double réel).</li>
-<li>ξ &gt; 1 : deux pôles réels, réponse apériodique.</li>
-</ul>
-<h3>Stabilité</h3>
-<p>Le système est stable si tous les pôles (racines de D) ont une partie réelle strictement négative. Un retour positif peut rendre la boucle fermée instable même si les blocs sont stables.</p>
 <div class="retain"><b>À retenir.</b> Forme canonique = constantes de plus bas degré égales à 1. On lit alors directement gain, classe, constante de temps ou (ω₀, ξ).</div>` });
 
 COURSE.push({ id: 'atelier', t: 'Utiliser l’atelier', h: `
 <ol>
 <li>Ajoutez une Entrée, une Sortie, un Comparateur et les blocs voulus depuis la palette.</li>
 <li>Reliez avec l’outil « Relier ». Un retour négatif est le réglage par défaut du comparateur (entrée 1 : +, entrée 2 : −).</li>
+<li><b>Déplacez</b> un bloc en le glissant. <b>Sélectionnez plusieurs blocs</b> en cliquant-glissant dans le vide. <b>Maj + clic</b> ajoute ou retire un bloc de la sélection.</li>
+<li><b>Tournez</b> les blocs de 90° ou 180° depuis le panneau Propriétés pour adapter la disposition.</li>
 <li>Cliquez sur « Calculer la FTBF ».</li>
 <li>Comparez avec votre calcul à la main : activez « Non canonique » (N/D) puis « Canonique ».</li>
 <li>Passez en « Valeurs numériques » pour lire K, τ ou ω₀ et ξ, les pôles et la stabilité.</li>
 </ol>
-<h3>Vérifier un exercice</h3>
-<p>Construisez le schéma de l’énoncé, remplacez les valeurs numériques par les vôtres, puis comparez la forme canonique obtenue avec la vôtre. Le panneau « Méthode : formule de Mason » liste les chemins et les boucles : confrontez-les aux vôtres.</p>
-<div class="cwarn"><b>Limite.</b> L’atelier ne simplifie pas les pôles et zéros qui se compensent exactement : si votre calcul à la main simplifie un facteur commun, il peut rester dans le résultat de l’atelier.</div>` });
+<h3>Raccourcis clavier</h3>
+<table class="ctable"><thead><tr><th>Raccourci</th><th>Action</th></tr></thead><tbody>
+<tr><td>Ctrl + Z / Ctrl + Y</td><td>Annuler / rétablir</td></tr>
+<tr><td>Ctrl + D</td><td>Dupliquer la sélection</td></tr>
+<tr><td>Ctrl + A</td><td>Tout sélectionner</td></tr>
+<tr><td>Suppr / Retour arrière</td><td>Supprimer la sélection</td></tr>
+<tr><td>Flèches (Maj pour ×10)</td><td>Déplacer la sélection au clavier</td></tr>
+<tr><td>Ctrl + molette</td><td>Zoomer autour du curseur</td></tr>
+<tr><td>Ctrl + = / Ctrl + − / Ctrl + 0</td><td>Zoom + / Zoom − / Ajuster à la vue</td></tr>
+<tr><td>Clic bouton du milieu + glisser</td><td>Déplacer la vue (pan)</td></tr>
+<tr><td>Échap</td><td>Annuler le tracé d’une liaison / désélectionner</td></tr>
+</tbody></table>
+<div class="cwarn"><b>Limite.</b> L’atelier ne simplifie pas les pôles et zéros qui se compensent exactement.</div>` });
 
 COURSE.push({ id: 'exos', t: 'Exercices', h: `
 <div class="ex"><h3>Exercice 1 : Black, retour unitaire</h3>
@@ -1012,8 +1422,19 @@ $('#bHelp').addEventListener('click', () => {
   const rows = ['prop', 'int', 'der', 'ord1', 'ord2', 'ord1inv', 'ord2inv', 'corP', 'corPI', 'corAv'].map(t => h('tr', null, h('td', null, TYPES[t].label), h('td', { class: 'mono-s' }, TYPES[t].expr(TYPES[t].params.map(q => q[0])).replace(/ω/g, 'ω₀')), h('td', null, TYPES[t].params.map(q => q[0]).join(', '))));
   openDlg('Aide', h('div', null,
     h('p', null, 'Cet atelier calcule la fonction de transfert en boucle fermée T(p) = S(p)/E(p) d’un schéma-blocs, avec la formule de Mason et un calcul symbolique exact.'),
-    h('h3', null, 'Utilisation'),
-    h('ul', null, h('li', null, 'Cliquez sur un bloc de la palette pour l’ajouter, glissez-le pour le placer.'), h('li', null, 'Outil « Relier » : source puis destinataire. Un comparateur a deux entrées : la 1re liaison va à gauche, la 2e en bas ; cliquez un petit cercle pour imposer l’entrée. Une nouvelle liaison remplace celle de la même entrée.'), h('li', null, 'Suppr efface le bloc ou la liaison sélectionné. Échap annule une liaison en cours.'), h('li', null, 'Les symboles des paramètres sont modifiables (ex. renommer K2 en K1 pour partager un gain).')),
+    h('h3', null, 'Navigation'),
+    h('ul', null,
+      h('li', null, 'Molette + Ctrl : zoomer / dézoomer autour du curseur. Boutons en bas à droite : +, −, ajuster à la vue.'),
+      h('li', null, 'Clic bouton du milieu + glisser : déplacer la vue.'),
+      h('li', null, 'Ctrl + =, Ctrl + −, Ctrl + 0 : raccourcis clavier du zoom.')),
+    h('h3', null, 'Sélection et édition'),
+    h('ul', null,
+      h('li', null, 'Clic-glisser dans le vide : rectangle de sélection.'),
+      h('li', null, 'Maj + clic : ajouter ou retirer un bloc de la sélection.'),
+      h('li', null, 'Glisser un bloc sélectionné déplace toute la sélection.'),
+      h('li', null, 'Flèches du clavier : déplacement fin. Maj + flèche : pas de 10 px.'),
+      h('li', null, 'Ctrl + Z / Ctrl + Y : annuler / rétablir. Ctrl + D : dupliquer. Ctrl + A : tout sélectionner.'),
+      h('li', null, 'Panneau Propriétés : rotation 90° / 180°, alignement pour une sélection multiple.')),
     h('h3', null, 'Blocs disponibles'),
     h('table', null, h('thead', null, h('tr', null, h('th', null, 'Bloc'), h('th', null, 'H(p)'), h('th', null, 'Paramètres'))), h('tbody', null, rows)),
     h('p', { class: 'small' }, '« 1er ordre inversé » : inverse d’un 1er ordre. « 2nd ordre inversé » : inverse d’un 2nd ordre. ω₀ est noté ω dans les symboles.'),
@@ -1027,6 +1448,7 @@ $('#bClear').addEventListener('click', ev => {
   const b = ev.currentTarget;
   if (!armT) { b.textContent = 'Confirmer ?'; armT = setTimeout(() => { b.textContent = 'Effacer'; armT = null; }, 3000); return; }
   clearTimeout(armT); armT = null; b.textContent = 'Effacer';
+  pushUndo();
   S.blocks = []; S.links = []; S.nid = 1; S.nl = 1; S.sel = null; S.linkFrom = null; S.calc = false; save(); draw(); renderPanel(); updHint();
 });
 $('#bCalc').addEventListener('click', doCalc);
@@ -1037,7 +1459,13 @@ $('#bPanel').addEventListener('click', () => { S.panel = !S.panel; renderPanel()
   const saved = lsGet(KEY, null); let ok = false;
   try {
     if (saved && Array.isArray(saved.blocks) && saved.blocks.length && Array.isArray(saved.links)) {
-      S.blocks = saved.blocks.filter(b => TYPES[b.type] && Array.isArray(b.p) && b.p.length === TYPES[b.type].params.length).map(b => ({ id: +b.id, type: b.type, x: +b.x || 40, y: +b.y || 60, name: String(b.name || '?'), signs: Array.isArray(b.signs) ? b.signs : [1, -1], p: b.p.map(q => ({ sym: String(q.sym), val: Number.isFinite(+q.val) ? +q.val : 1 })) }));
+      S.blocks = saved.blocks.filter(b => TYPES[b.type] && Array.isArray(b.p) && b.p.length === TYPES[b.type].params.length).map(b => ({
+        id: +b.id, type: b.type, x: +b.x || 40, y: +b.y || 60,
+        rot: ((+b.rot || 0) % 360 + 360) % 360,
+        name: String(b.name || '?'),
+        signs: Array.isArray(b.signs) ? b.signs : [1, -1],
+        p: b.p.map(q => ({ sym: String(q.sym), val: Number.isFinite(+q.val) ? +q.val : 1 }))
+      }));
       S.links = saved.links.map(l => ({ id: +l.id, from: +l.from, to: +l.to, port: +l.port || 0 }));
       S.nid = Math.max(+saved.nid || 1, ...S.blocks.map(b => b.id + 1)); S.nl = Math.max(+saved.nl || 1, ...S.links.map(l => l.id + 1));
       if (saved.form === 'c') S.form = 'c'; if (saved.vals === 'num') S.vals = 'num'; ok = S.blocks.length > 0;
@@ -1045,6 +1473,8 @@ $('#bPanel').addEventListener('click', () => { S.panel = !S.panel; renderPanel()
   } catch (e) { ok = false; }
   renderPalette(); updHint();
   if (!ok) loadExample(0); else { draw(); renderPanel(); }
+  /* Ajuster la vue au premier chargement si beaucoup de blocs */
+  setTimeout(() => { if (S.blocks.length > 4) fitView(); }, 80);
 })();
 </script>
 </body></html>
