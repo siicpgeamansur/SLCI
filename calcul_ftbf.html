@@ -68,6 +68,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .selbox{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 3;pointer-events:none}
 .marquee{fill:rgba(46,109,164,.10);stroke:var(--accent);stroke-width:1.2;stroke-dasharray:4 3;pointer-events:none}
 .cab{stroke:var(--cable);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.cab-halo{fill:none;stroke:#ffffff;stroke-width:5.5;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
 .cab.on{stroke:var(--accent);stroke-width:3.6}
 .arr{fill:var(--cable)}.arr.on{fill:var(--accent)}
 .hit{stroke:transparent;stroke-width:14;fill:none;cursor:pointer}
@@ -202,7 +203,6 @@ details.mason ul{padding-left:18px;margin:4px 0}
 <div id="dlg" hidden></div>
 <div id="toast" hidden></div>
 
-<!-- Gestionnaire d'erreurs placé AVANT le script principal : attrape aussi les erreurs de syntaxe -->
 <script>
 window.addEventListener('error', function (ev) {
   try {
@@ -530,9 +530,6 @@ let pinch = null;
 const blk = id => S.blocks.find(b => b.id === id);
 function save() { lsSet(KEY, { blocks: S.blocks, links: S.links, nid: S.nid, nl: S.nl, form: S.form, vals: S.vals }); }
 
-/* ---------- Historique ---------- */
-/* IMPORTANT : cette fonction s'appelle historySnap (et non snap),
-   car snap est déjà pris plus bas par la fonction d'aimantation à la grille. */
 function historySnap() { return JSON.stringify({ blocks: S.blocks, links: S.links, nid: S.nid, nl: S.nl }); }
 function pushUndo() {
   const s = historySnap();
@@ -604,11 +601,74 @@ function blockBBox(b) {
   }
   return { x1: minx, y1: miny, x2: maxx, y2: maxy };
 }
-function route(p1, d1, p2, d2) {
+
+/* ---------- routage des liaisons ----------
+   Deux régimes :
+   - "retour" (feedback) : la cible est à gauche de la source (p2.x < p1.x - 40).
+     Le tracé est détourné SOUS (ou AU-DESSUS) de tous les blocs présents dans la
+     plage horizontale, ce qui rend la boucle clairement visible.
+   - "direct" : routage orthogonal classique avec un coude au milieu.
+*/
+let feedbackRanks = new Map();
+function computeFeedbackRanks() {
+  feedbackRanks = new Map();
+  const fb = [];
+  S.links.forEach(l => {
+    const a = blk(l.from), b = blk(l.to);
+    if (!a || !b) return;
+    const pa = portWorld(a, 'out'), pb = portWorld(b, l.port);
+    if (!pa || !pb) return;
+    if (sideDir(pa.side).x > 0 && pb.x < pa.x - 40) {
+      fb.push({ l, maxX: Math.max(pa.x, pb.x), minX: Math.min(pa.x, pb.x) });
+    }
+  });
+  /* Tri : boucle la plus à droite en premier (rank 0 = la plus interne).
+     Départage par minX croissant (plage la plus large en priorité). */
+  fb.sort((a, b) => b.maxX - a.maxX || a.minX - b.minX);
+  fb.forEach((f, i) => feedbackRanks.set(f.l.id, i));
+}
+function route(p1, d1, p2, d2, rank) {
+  rank = rank || 0;
+  const stub = 22;
+  const isFeedback = d1.x > 0 && p2.x < p1.x - 40;
+
+  if (isFeedback) {
+    const minX = Math.min(p1.x, p2.x);
+    const maxX = Math.max(p1.x, p2.x);
+    /* Un port d'entrée "bas" se prend toujours par en dessous : on force le détour bas. */
+    const routeBelow = (d2.y > 0) || (p2.y >= p1.y - 40);
+    let detourY;
+    if (routeBelow) {
+      detourY = Math.max(p1.y, p2.y) + 50;
+      S.blocks.forEach(b => {
+        const bb = blockBBox(b);
+        if (bb.x2 > minX - 40 && bb.x1 < maxX + 40) detourY = Math.max(detourY, bb.y2 + 30);
+      });
+      detourY = Math.min(detourY + rank * 16, 880);
+    } else {
+      detourY = Math.min(p1.y, p2.y) - 50;
+      S.blocks.forEach(b => {
+        const bb = blockBBox(b);
+        if (bb.x2 > minX - 40 && bb.x1 < maxX + 40) detourY = Math.min(detourY, bb.y1 - 30);
+      });
+      detourY = Math.max(detourY - rank * 16, 20);
+    }
+    const pts = [p1, { x: p1.x + stub, y: p1.y }, { x: p1.x + stub, y: detourY }];
+    if (d2.y !== 0) {
+      pts.push({ x: p2.x, y: detourY });
+    } else {
+      const ax = p2.x + (d2.x < 0 ? -stub : stub);
+      pts.push({ x: ax, y: detourY }, { x: ax, y: p2.y });
+    }
+    pts.push(p2);
+    return pts.map(p => [p.x, p.y]);
+  }
+
+  /* Routage direct (existant) */
   const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-  const stub = Math.min(28, Math.max(14, dist / 4));
-  const s1 = { x: p1.x + d1.x * stub, y: p1.y + d1.y * stub };
-  const s2 = { x: p2.x + d2.x * stub, y: p2.y + d2.y * stub };
+  const st = Math.min(28, Math.max(14, dist / 4));
+  const s1 = { x: p1.x + d1.x * st, y: p1.y + d1.y * st };
+  const s2 = { x: p2.x + d2.x * st, y: p2.y + d2.y * st };
   const pts = [p1, s1];
   const h1 = d1.x !== 0, h2 = d2.x !== 0;
   if (h1 && h2) {
@@ -627,7 +687,8 @@ function linkPts(l) {
   if (!a || !b) return null;
   const pa = portWorld(a, 'out'), pb = portWorld(b, l.port);
   if (!pa || !pb) return null;
-  return route(pa, sideDir(pa.side), pb, sideDir(pb.side));
+  const rank = feedbackRanks.get(l.id) || 0;
+  return route(pa, sideDir(pa.side), pb, sideDir(pb.side), rank);
 }
 function bText(b, attrs, ...kids) {
   const rot = b.rot || 0;
@@ -637,6 +698,7 @@ function bText(b, attrs, ...kids) {
 
 /* ---------- dessin ---------- */
 function draw() {
+  computeFeedbackRanks();
   const svg = $('#svg'); svg.replaceChildren();
   svg.classList.toggle('mode-link', S.tool === 'link');
   svg.append(sv('defs', null, sv('pattern', { id: 'dots', width: 20, height: 20, patternUnits: 'userSpaceOnUse' }, sv('circle', { cx: 1, cy: 1, r: 1, fill: '#d5dae0' }))));
@@ -647,10 +709,15 @@ function draw() {
     const pts = linkPts(l); if (!pts) return;
     const on = S.sel && S.sel.t === 'l' && S.sel.id === l.id, ps = pts.map(p => p.join(',')).join(' ');
     const g = sv('g', { 'data-l': l.id });
-    g.append(sv('polyline', { class: 'hit', points: ps }), sv('polyline', { class: 'cab' + (on ? ' on' : ''), points: ps }));
+    /* Halo blanc + câble : les croisements de câbles restent lisibles. */
+    g.append(
+      sv('polyline', { class: 'hit', points: ps }),
+      sv('polyline', { class: 'cab-halo', points: ps }),
+      sv('polyline', { class: 'cab' + (on ? ' on' : ''), points: ps })
+    );
     const [x0, y0] = pts[pts.length - 2], [x1, y1] = pts[pts.length - 1];
     const dx = Math.sign(x1 - x0), dy = Math.sign(y1 - y0), px = -dy, py = dx;
-    g.append(sv('polygon', { class: 'arr' + (on ? ' on' : ''), points: `${x1},${y1} ${x1 - 10 * dx + 5 * px},${y1 - 10 * dy + 5 * py} ${x1 - 10 * dx - 5 * px},${y1 - 10 * dy - 5 * py}` }));
+    g.append(sv('polygon', { class: 'arr' + (on ? ' on' : ''), points: `${x1},${y1} ${x1 - 12 * dx + 6 * px},${y1 - 12 * dy + 6 * py} ${x1 - 12 * dx - 6 * px},${y1 - 12 * dy - 6 * py}` }));
     if (fan[l.from] > 1) g.append(sv('circle', { class: 'dot', cx: pts[0][0], cy: pts[0][1], r: 4.5 }));
     svg.append(g);
   });
@@ -702,7 +769,6 @@ function svgPt(e) {
   const sx = 1400 / r.width, sy = 900 / r.height;
   return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
 }
-/* Aimantation à la grille. NE PAS renommer : les appelants ci-dessous utilisent snap(v). */
 const snap = v => Math.round(v / 10) * 10;
 
 function select(sel) {
@@ -760,6 +826,11 @@ function fitView() {
   }
   let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
   S.blocks.forEach(b => { const bb = blockBBox(b); minx = Math.min(minx, bb.x1); miny = Math.min(miny, bb.y1); maxx = Math.max(maxx, bb.x2); maxy = Math.max(maxy, bb.y2); });
+  /* Inclure les liaisons de retour qui descendent sous les blocs */
+  S.links.forEach(l => {
+    const pts = linkPts(l); if (!pts) return;
+    pts.forEach(([px, py]) => { minx = Math.min(minx, px); maxx = Math.max(maxx, px); miny = Math.min(miny, py); maxy = Math.max(maxy, py); });
+  });
   const pad = 40;
   const w = maxx - minx + 2 * pad, hh = maxy - miny + 2 * pad;
   let z = Math.min(sc.clientWidth / w, sc.clientHeight / hh);
@@ -786,12 +857,7 @@ function pinchStart() {
   const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
   const sc = $('#scroller');
   const r = sc.getBoundingClientRect();
-  pinch = {
-    startDist: Math.max(dist, 1),
-    startZoom: VIEW.z,
-    contentX: (sc.scrollLeft + (midX - r.left)) / VIEW.z,
-    contentY: (sc.scrollTop + (midY - r.top)) / VIEW.z,
-  };
+  pinch = { startDist: Math.max(dist, 1), startZoom: VIEW.z, contentX: (sc.scrollLeft + (midX - r.left)) / VIEW.z, contentY: (sc.scrollTop + (midY - r.top)) / VIEW.z };
 }
 function pinchMove() {
   if (!pinch || pointers.size < 2) return;
@@ -821,28 +887,14 @@ $('#svg').addEventListener('pointerdown', e => {
     window.addEventListener('pointermove', onMove); window.addEventListener('pointerup', onUp);
     return;
   }
-
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
-
-  if (pointers.size >= 2) {
-    drag = null;
-    pinchStart();
-    e.preventDefault();
-    return;
-  }
-
+  if (pointers.size >= 2) { drag = null; pinchStart(); e.preventDefault(); return; }
   const t = e.target;
   const bl = t.closest('[data-b]'), lk = t.closest('[data-l]');
-
   if (S.tool === 'link') {
-    if (bl) {
-      const ph = t.getAttribute && t.getAttribute('data-port');
-      linkClick(blk(+bl.getAttribute('data-b')), ph != null ? +ph : null);
-      e.preventDefault(); return;
-    }
+    if (bl) { const ph = t.getAttribute && t.getAttribute('data-port'); linkClick(blk(+bl.getAttribute('data-b')), ph != null ? +ph : null); e.preventDefault(); return; }
     if (S.linkFrom) { S.linkFrom = null; updHint(); draw(); e.preventDefault(); return; }
   }
-
   if (bl) {
     const b = blk(+bl.getAttribute('data-b'));
     const pt = svgPt(e);
@@ -860,7 +912,6 @@ $('#svg').addEventListener('pointerdown', e => {
     e.preventDefault(); return;
   }
   if (lk) { select({ t: 'l', id: +lk.getAttribute('data-l') }); e.preventDefault(); return; }
-
   if (e.pointerType === 'touch') {
     const sc = $('#scroller');
     drag = { type: 'pan', pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, startScrollLeft: sc.scrollLeft, startScrollTop: sc.scrollTop, moved: false };
@@ -981,9 +1032,7 @@ function delSel() {
     S.blocks = S.blocks.filter(b => !ids.has(b.id));
     S.links = S.links.filter(l => !ids.has(l.from) && !ids.has(l.to));
     if (S.linkFrom && ids.has(S.linkFrom)) S.linkFrom = null;
-  } else {
-    S.links = S.links.filter(l => l.id !== S.sel.id);
-  }
+  } else { S.links = S.links.filter(l => l.id !== S.sel.id); }
   S.sel = null; save(); draw(); renderPanel(); updHint();
 }
 function rotateBlocks(delta, reset) {
@@ -1142,7 +1191,7 @@ function propsView(body) {
         h('li', null, 'Sélectionnez plusieurs blocs par rectangle de sélection (souris) ou Maj+clic.'),
         h('li', null, 'Sur mobile : glissez dans le vide pour déplacer la vue, pincez pour zoomer.'),
         h('li', null, 'Cliquez sur Calculer la FTBF.')),
-      h('p', { class: 'small' }, 'Raccourcis : Ctrl+Z annule, Ctrl+Y rétablit, Ctrl+D duplique, Ctrl+molette zoome, Ctrl+A sélectionne tout.'));
+      h('p', { class: 'small' }, 'Les liaisons de retour sont automatiquement détournées sous le schéma, pour que la boucle soit visible.'));
     return;
   }
   if (S.sel.t === 'l') {
@@ -1302,6 +1351,8 @@ COURSE.push({ id: 'atelier', t: 'Utiliser l’atelier', h: `
 <li><b>Pincer à 2 doigts</b> : zoom + pan simultanés.</li>
 <li>Glisser un bloc : déplacer le bloc (ou toute la sélection).</li>
 </ul>
+<h3>Liaisons de retour</h3>
+<p>Les liaisons dont la cible est à gauche de la source (retour classique) sont automatiquement détournées sous le schéma, pour rendre la boucle visible. Plusieurs boucles sont étalées verticalement.</p>
 <div class="cwarn"><b>Limite.</b> L’atelier ne simplifie pas les pôles et zéros qui se compensent.</div>` });
 COURSE.push({ id: 'exos', t: 'Exercices', h: `
 <div class="ex"><h3>Exercice 1 : Black, retour unitaire</h3>
@@ -1356,6 +1407,8 @@ $('#bHelp').addEventListener('click', () => {
       h('li', null, 'Glisser dans le vide à 1 doigt : déplacer la vue.'),
       h('li', null, 'Pincer à 2 doigts : zoom + pan.'),
       h('li', null, 'Glisser un bloc : déplacer le bloc (ou la sélection).')),
+    h('h3', null, 'Routage des liaisons'),
+    h('p', null, 'Les liaisons de retour (cible à gauche de la source) sont détournées sous le schéma. Plusieurs boucles sont étalées verticalement. Un halo blanc sépare les câbles qui se croisent.'),
     h('h3', null, 'Blocs disponibles'),
     h('table', null, h('thead', null, h('tr', null, h('th', null, 'Bloc'), h('th', null, 'H(p)'), h('th', null, 'Paramètres'))), h('tbody', null, rows))));
 });
