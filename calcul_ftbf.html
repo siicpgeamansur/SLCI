@@ -140,7 +140,6 @@ details.mason ul{padding-left:18px;margin:4px 0}
   .tool{min-width:78px}
   #panel,#panel.wide{position:fixed;left:0;right:0;bottom:0;width:auto;height:66%;max-height:none;border-radius:14px 14px 0 0;z-index:30;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
 }
-/* ---- cours ---- */
 #course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
 .ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
@@ -174,7 +173,7 @@ details.mason ul{padding-left:18px;margin:4px 0}
 <body>
 <div id="app">
   <header class="band"><div class="inner row">
-    <div class="brand"><svg width="28" height="26" viewBox="0 0 28 26" aria-hidden="true"><rect x="2" y="7" width="9" height="12" rx="2" fill="none" stroke="var(--fg)" stroke-width="1.6"/><rect x="17" y="7" width="9" height="12" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.6"/><path d="M11 13h6m-3-3l3 3-3 3" fill="none" stroke="var(--fg)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Atelier Schémas-blocs <small>FTBF</small></span></div>
+    <div class="brand"><svg width="28" height="26" viewBox="0 0 28 26" aria-hidden="true"><rect x="2" y="7" width="9" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="17" y="7" width="9" height="12" rx="2" fill="none" stroke="#2e6da4" stroke-width="1.6"/><path d="M11 13h6m-3-3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Atelier Schémas-blocs <small>FTBF</small></span></div>
     <div class="files">
       <button class="btn run" id="bCalc" type="button">Calculer la FTBF</button>
       <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
@@ -203,10 +202,25 @@ details.mason ul{padding-left:18px;margin:4px 0}
 <div id="dlg" hidden></div>
 <div id="toast" hidden></div>
 
+<!-- Gestionnaire d'erreurs placé AVANT le script principal : attrape aussi les erreurs de syntaxe -->
+<script>
+window.addEventListener('error', function (ev) {
+  try {
+    var t = document.getElementById('toast');
+    if (t) {
+      t.textContent = '⚠ Erreur JavaScript : ' + (ev.message || 'inconnue');
+      t.hidden = false;
+      t.style.background = '#c0281f';
+      t.style.color = '#fff';
+    }
+    if (window.console) console.error('Erreur JS :', ev.message, (ev.filename || '') + ':' + (ev.lineno || ''));
+  } catch (_) {}
+});
+</script>
+
 <script>
 'use strict';
 /*MATH-START*/
-/* ====== Polynômes multivariés (variables : p et les symboles des paramètres) ====== */
 const SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '-': '⁻', '+': '' };
 const sup = n => String(n).split('').map(c => SUP[c] != null ? SUP[c] : c).join('');
 const gcd = (a, b) => b ? gcd(b, a % b) : a;
@@ -220,7 +234,6 @@ const PLY = {
   neg(a) { const r = new Map(); for (const [k, c] of a) r.set(k, -c); return r; },
   mul(a, b) { const r = new Map(); for (const [ka, ca] of a) for (const [kb, cb] of b) { const k = mulKey(ka, kb), n = (r.get(k) || 0) + ca * cb; if (n) r.set(k, n); else r.delete(k); } return r; }
 };
-/* NOTE: V, C, PP, A, M sont des symboles MATHÉMATIQUES. Ne pas réutiliser ces noms ailleurs. */
 const V = n => PLY.v(n), C = n => PLY.c(n), PP = PLY.v('p');
 const A = (...x) => x.reduce((a, b) => PLY.add(a, b));
 const M = (...x) => x.reduce((a, b) => PLY.mul(a, b));
@@ -508,23 +521,21 @@ function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
 
 const S = { blocks: [], links: [], nid: 1, nl: 1, sel: null, tool: 'sel', linkFrom: null, tab: 'props', panel: !isSmall(), calc: false, form: 'nc', vals: 'sym' };
-/* Vue : niveau de zoom. ATTENTION : ne pas nommer cette constante « V »,
-   « V » est déjà utilisé dans la section mathématique (V = PLY.v). */
 const VIEW = { z: 1 };
 let undoStack = [], redoStack = [];
 let drag = null, mouse = null;
-
-/* Gestuelle multi-touch : on suit tous les pointeurs actifs. */
-const pointers = new Map(); // pointerId -> {x: clientX, y: clientY, type}
-let pinch = null;           // état d'un pinch en cours
+const pointers = new Map();
+let pinch = null;
 
 const blk = id => S.blocks.find(b => b.id === id);
 function save() { lsSet(KEY, { blocks: S.blocks, links: S.links, nid: S.nid, nl: S.nl, form: S.form, vals: S.vals }); }
 
 /* ---------- Historique ---------- */
-function snap() { return JSON.stringify({ blocks: S.blocks, links: S.links, nid: S.nid, nl: S.nl }); }
+/* IMPORTANT : cette fonction s'appelle historySnap (et non snap),
+   car snap est déjà pris plus bas par la fonction d'aimantation à la grille. */
+function historySnap() { return JSON.stringify({ blocks: S.blocks, links: S.links, nid: S.nid, nl: S.nl }); }
 function pushUndo() {
-  const s = snap();
+  const s = historySnap();
   if (undoStack[undoStack.length - 1] === s) return;
   undoStack.push(s);
   if (undoStack.length > 80) undoStack.shift();
@@ -532,7 +543,7 @@ function pushUndo() {
 }
 function doUndo() {
   if (!undoStack.length) return;
-  redoStack.push(snap());
+  redoStack.push(historySnap());
   const s = JSON.parse(undoStack.pop());
   S.blocks = s.blocks; S.links = s.links; S.nid = s.nid; S.nl = s.nl;
   S.sel = null; S.linkFrom = null;
@@ -541,7 +552,7 @@ function doUndo() {
 }
 function doRedo() {
   if (!redoStack.length) return;
-  undoStack.push(snap());
+  undoStack.push(historySnap());
   const s = JSON.parse(redoStack.pop());
   S.blocks = s.blocks; S.links = s.links; S.nid = s.nid; S.nl = s.nl;
   S.sel = null; S.linkFrom = null;
@@ -593,8 +604,6 @@ function blockBBox(b) {
   }
   return { x1: minx, y1: miny, x2: maxx, y2: maxy };
 }
-
-/* Routage orthogonal d'une liaison. */
 function route(p1, d1, p2, d2) {
   const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
   const stub = Math.min(28, Math.max(14, dist / 4));
@@ -688,12 +697,12 @@ function draw() {
   }
 }
 
-/* Conversion écran → coordonnées internes (1400×900), tenant compte du zoom. */
 function svgPt(e) {
   const svg = $('#svg'), r = svg.getBoundingClientRect();
   const sx = 1400 / r.width, sy = 900 / r.height;
   return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
 }
+/* Aimantation à la grille. NE PAS renommer : les appelants ci-dessous utilisent snap(v). */
 const snap = v => Math.round(v / 10) * 10;
 
 function select(sel) {
@@ -726,7 +735,6 @@ function linkClick(b, portHit) {
   S.linkFrom = null; save(); updHint(); draw(); renderPanel();
 }
 
-/* ---------- Zoom ---------- */
 function setZoom(z, clientX, clientY) {
   z = Math.max(0.2, Math.min(3, z));
   const sc = $('#scroller'), svg = $('#svg');
@@ -771,7 +779,6 @@ $('#stage').addEventListener('wheel', e => {
   if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(VIEW.z * Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY); }
 }, { passive: false });
 
-/* Aide pinch */
 function pinchStart() {
   if (pointers.size < 2) return;
   const [p1, p2] = [...pointers.values()];
@@ -802,12 +809,9 @@ function pinchMove() {
   $('#zoomLbl').textContent = Math.round(z * 100) + ' %';
 }
 
-/* ---------- Interactions SVG ---------- */
-/* Empêcher le menu contextuel d'iOS sur appui long. */
 $('#svg').addEventListener('contextmenu', e => e.preventDefault());
 
 $('#svg').addEventListener('pointerdown', e => {
-  /* Pan bouton du milieu (souris) */
   if (e.button === 1) {
     e.preventDefault();
     const startX = e.clientX, startY = e.clientY;
@@ -818,10 +822,8 @@ $('#svg').addEventListener('pointerdown', e => {
     return;
   }
 
-  /* Suivi des pointeurs (utile pour pinch) */
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
 
-  /* Deux doigts : pinch + pan */
   if (pointers.size >= 2) {
     drag = null;
     pinchStart();
@@ -839,7 +841,6 @@ $('#svg').addEventListener('pointerdown', e => {
       e.preventDefault(); return;
     }
     if (S.linkFrom) { S.linkFrom = null; updHint(); draw(); e.preventDefault(); return; }
-    /* sinon on tombe dans le pan/marquee */
   }
 
   if (bl) {
@@ -860,9 +861,7 @@ $('#svg').addEventListener('pointerdown', e => {
   }
   if (lk) { select({ t: 'l', id: +lk.getAttribute('data-l') }); e.preventDefault(); return; }
 
-  /* Vide */
   if (e.pointerType === 'touch') {
-    /* Pan tactile à 1 doigt */
     const sc = $('#scroller');
     drag = { type: 'pan', pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, startScrollLeft: sc.scrollLeft, startScrollTop: sc.scrollTop, moved: false };
     e.preventDefault();
@@ -876,11 +875,7 @@ $('#svg').addEventListener('pointerdown', e => {
 
 window.addEventListener('pointermove', e => {
   if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
-
-  /* Pinch en cours */
   if (pinch && pointers.size >= 2) { pinchMove(); e.preventDefault(); return; }
-
-  /* Pan 1 doigt */
   if (drag && drag.type === 'pan') {
     if (!drag.moved && (Math.abs(e.clientX - drag.startX) > 3 || Math.abs(e.clientY - drag.startY) > 3)) drag.moved = true;
     const sc = $('#scroller');
@@ -888,7 +883,6 @@ window.addEventListener('pointermove', e => {
     sc.scrollTop = drag.startScrollTop - (e.clientY - drag.startY);
     e.preventDefault(); return;
   }
-
   if (drag && drag.type === 'multi') {
     const pt = svgPt(e);
     if (!drag.moved && (Math.abs(pt.x - drag.startX) > 1 || Math.abs(pt.y - drag.startY) > 1)) { pushUndo(); drag.moved = true; }
@@ -898,16 +892,14 @@ window.addEventListener('pointermove', e => {
       const b = blk(id);
       if (b) { b.x = snap(pos.x + (pt.x - drag.startX)); b.y = snap(pos.y + (pt.y - drag.startY)); }
     } else {
-      const dx = pt.x - drag.startX, dy = pt.y - drag.startY;
+      const dx = snap(pt.x - drag.startX), dy = snap(pt.y - drag.startY);
       drag.startPositions.forEach((pos, id) => { const b = blk(id); if (b) { b.x = pos.x + dx; b.y = pos.y + dy; } });
     }
     draw(); return;
   }
-
   if (drag && drag.type === 'marquee') {
     const pt = svgPt(e); drag.curX = pt.x; drag.curY = pt.y; draw(); return;
   }
-
   if (S.linkFrom) {
     const pt = svgPt(e); mouse = pt;
     const rb = $('#rb');
@@ -917,8 +909,6 @@ window.addEventListener('pointermove', e => {
 
 function endPointer(e) {
   pointers.delete(e.pointerId);
-
-  /* Sortie de pinch : si un doigt reste, on continue en pan */
   if (pinch) {
     if (pointers.size < 2) {
       pinch = null;
@@ -930,16 +920,12 @@ function endPointer(e) {
     }
     return;
   }
-
-  /* Pan 1 doigt : désélection si c'était un tap */
   if (drag && drag.type === 'pan') {
     if (!drag.moved && S.sel) { S.sel = null; draw(); renderPanel(); }
     if (drag.pointerId === e.pointerId) drag = null;
     return;
   }
-
   if (!drag) return;
-
   if (drag.type === 'multi' && drag.moved) { save(); updHint(); }
   else if (drag.type === 'marquee') {
     const r = { x1: Math.min(drag.startX, drag.curX), y1: Math.min(drag.startY, drag.curY), x2: Math.max(drag.startX, drag.curX), y2: Math.max(drag.startY, drag.curY) };
@@ -956,7 +942,6 @@ function endPointer(e) {
 window.addEventListener('pointerup', endPointer);
 window.addEventListener('pointercancel', endPointer);
 
-/* ---------- Clavier ---------- */
 document.addEventListener('keydown', e => {
   const tg = e.target && e.target.tagName;
   const inField = tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT';
@@ -1042,7 +1027,6 @@ function alignSelected(mode) {
   save(); draw();
 }
 
-/* ---------- blocs ---------- */
 function nextNum(pre) { let m = 0; S.blocks.forEach(b => { if (b.name.startsWith(pre)) { const n = +b.name.slice(pre.length); if (Number.isInteger(n)) m = Math.max(m, n); } }); return m + 1; }
 function mkBlock(type, x, y, vals) {
   const sp = TYPES[type], io = type === 'in' || type === 'out', n = io ? 0 : nextNum(sp.pre);
@@ -1069,7 +1053,6 @@ function addBlock(type) {
 }
 function lk(a, b, port) { S.links.push({ id: S.nl++, from: a.id, to: b.id, port: port || 0 }); }
 
-/* ---------- exemples ---------- */
 const EXAMPLES = [
   { t: 'Asservissement du 1er ordre, retour unitaire', d: 'T = H / (1 + H) : le cas le plus simple.', f() {
     const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), h1 = mkBlock('ord1', 270, 100, [4, 0.5]), o = mkBlock('out', 480, 110);
@@ -1086,7 +1069,6 @@ const EXAMPLES = [
 ];
 function loadExample(i) { if (CS.open) { CS.open = false; renderCourse(); } pushUndo(); S.blocks = []; S.links = []; S.nid = 1; S.nl = 1; S.sel = null; S.linkFrom = null; S.calc = false; S.tab = 'props'; EXAMPLES[i].f(); save(); draw(); renderPanel(); updHint(); }
 
-/* ---------- palette ---------- */
 const bi = (t, fs) => `<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-body" x="1.5" y="7" width="31" height="20" rx="4"/><text x="17" y="21" text-anchor="middle" font-size="${fs || 10}" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">${t}</text></svg>`;
 const ICON = {
   sel: '<svg viewBox="0 0 34 34" aria-hidden="true"><path class="ic-acc" d="M10 5v20l5-4 4 8 3-1-4-8h7z"/></svg>',
@@ -1142,7 +1124,7 @@ function renderPanel() {
   (S.tab === 'res' ? resultView : propsView)(body); box.append(body);
 }
 
-function rotSection(b) {
+function rotSection() {
   return h('div', { class: 'grp' }, h('h3', null, 'Orientation'),
     h('div', { class: 'seg', role: 'group', 'aria-label': 'Rotation' },
       h('button', { type: 'button', onclick: () => rotateBlocks(-90) }, '↺ 90°'),
@@ -1205,7 +1187,7 @@ function propsView(body) {
     });
     body.append(grp, h('p', { class: 'small' }, 'Par défaut : entrée 1 (consigne) en +, entrée 2 (retour) en −.'));
   } else body.append(h('p', { class: 'small' }, b.type === 'in' ? 'Signal d’entrée E(p), un seul par schéma.' : 'Signal de sortie S(p), un seul par schéma.'));
-  body.append(rotSection(b));
+  body.append(rotSection());
   body.append(h('p', null,
     h('button', { class: 'btn', type: 'button', onclick: duplicateSelection }, 'Dupliquer'),
     ' ',
@@ -1275,7 +1257,6 @@ function doCalc() {
   const pb = $('#panel .pbody'); if (pb) pb.scrollTop = 0;
 }
 
-/* ---------- cours ---------- */
 const F = (n, d) => `<span class="fr"><span>${n}</span><span>${d}</span></span>`;
 const COURSE = [];
 COURSE.push({ id: 'vocab', t: 'Vocabulaire des schémas-blocs', h: `
@@ -1352,7 +1333,6 @@ function renderCourse() {
 function openCourse(id) { if (id) CS.id = id; CS.open = true; renderCourse(); }
 $('#bCourse').addEventListener('click', () => { CS.open = !CS.open; renderCourse(); });
 
-/* ---------- boîtes de dialogue ---------- */
 function closeDlg() { $('#dlg').hidden = true; $('#dlg').replaceChildren(); }
 function openDlg(title, body) {
   const d = $('#dlg'); d.replaceChildren(); d.hidden = false;
@@ -1390,7 +1370,6 @@ $('#bClear').addEventListener('click', ev => {
 $('#bCalc').addEventListener('click', doCalc);
 $('#bPanel').addEventListener('click', () => { S.panel = !S.panel; renderPanel(); });
 
-/* ---------- démarrage ---------- */
 (function init() {
   const saved = lsGet(KEY, null); let ok = false;
   try {
