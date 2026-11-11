@@ -250,7 +250,7 @@ const REG = {
     { x: 5, y: 6.2 }, { x: 6, y: 7.5 }, { x: 7, y: 7.8 }, { x: 8, y: 9.1 }, { x: 9, y: 10.5 }
   ],
   a: REG_INIT.a, b: REG_INIT.b, alpha: REG_INIT.alpha,
-  view: { theta: Math.PI / 4, phi: Math.PI / 6, dragging: null },
+  view: { theta: -0.7, phi: 0.55, dragging: null, windowBound: false },
   path: []
 };
 function Jcost(a, b) {
@@ -279,6 +279,7 @@ const RM = {
   a1: 1.0, a2: 10, b: 0,
   x1new: 110, x2new: 4
 };
+const RMV = { theta: 0.65, phi: 0.50, dragging: null, bound: false };
 function rmPredict(a1, a2, b, x1, x2) { return a1 * x1 + a2 * x2 + b; }
 function rmRMSE(a1, a2, b) {
   let s = 0;
@@ -639,8 +640,9 @@ function mountReg(root) {
     + '<div class="verdict" id="reg-msg"></div>'
 
     + '<h3>2. Surface de coût J(a, b)</h3>'
-    + '<p>La fonction J(a, b) est une <b>cuvette convexe</b>. <b>Glissez</b> la souris sur la surface pour la faire tourner. La ligne rouge est le chemin de la descente.</p>'
-    + '<canvas class="viz" id="reg-3d" style="height:400px;cursor:grab"></canvas>'
+    + '<p>La fonction J(a, b) est une <b>cuvette convexe</b> avec un unique minimum. <b>Glissez</b> la souris sur la surface pour la faire tourner. La ligne rouge est le chemin de la descente.</p>'
+    + '<p class="small">La hauteur est tracée en <b>√J</b> : J varie de 0 à ≈33 sur ce domaine, l\'échelle racine rend le fond de la cuvette lisible. Les axes a, b et J sont gradués.</p>'
+    + '<canvas class="viz" id="reg-3d" style="height:440px;cursor:grab"></canvas>'
     + '<div class="files">'
     + '<button class="btn" id="reg-3d-step1">1 pas</button>'
     + '<button class="btn" id="reg-3d-step10">10 pas</button>'
@@ -685,7 +687,7 @@ function mountReg(root) {
   const c3d = $('#reg-3d');
   const onDown = e => {
     REG.view.dragging = { x: e.clientX, y: e.clientY, theta: REG.view.theta, phi: REG.view.phi };
-    c3d.style.cursor = 'grabbing';
+    const cv = $('#reg-3d'); if (cv) cv.style.cursor = 'grabbing';
   };
   const onMove = e => {
     if (!REG.view.dragging) return;
@@ -696,14 +698,17 @@ function mountReg(root) {
     drawReg3D();
   };
   const onUp = () => {
-    if (REG.view.dragging) { REG.view.dragging = null; c3d.style.cursor = 'grab'; }
+    if (REG.view.dragging) { REG.view.dragging = null; const cv = $('#reg-3d'); if (cv) cv.style.cursor = 'grab'; }
   };
   c3d.addEventListener('mousedown', onDown);
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('mouseup', onUp);
   c3d.addEventListener('touchstart', e => { if (e.touches[0]) onDown(e.touches[0]); }, { passive: true });
   c3d.addEventListener('touchmove', e => { if (e.touches[0]) onMove(e.touches[0]); }, { passive: true });
   c3d.addEventListener('touchend', onUp);
+  if (!REG.view.windowBound) {
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    REG.view.windowBound = true;
+  }
 
   if (!REG.path || REG.path.length === 0) REG.path = [{ a: REG.a, b: REG.b, J: Jcost(REG.a, REG.b) }];
   regUpdate();
@@ -806,6 +811,7 @@ function drawReg() {
   ctx.fillText('f(x) = ' + REG.a.toFixed(2) + '·x + ' + REG.b.toFixed(2), pad + 6, pad + 14);
 }
 
+/* ====== Surface de coût J(a,b) : rendu 3D lissé + axes gradués ====== */
 function drawReg3D() {
   const canvas = $('#reg-3d'); if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -818,10 +824,9 @@ function drawReg3D() {
   ctx.fillStyle = '#fafbfc'; ctx.fillRect(0, 0, W, H);
 
   const aMin = 0, aMax = 2, bMin = -1, bMax = 4;
-  const N = 20;
-  const Z_CAP = 0.5;
+  const N = 32;
   const grid = [];
-  let jMax = 0.01;
+  let jMax = 1e-6;
   for (let i = 0; i <= N; i++) {
     const row = [];
     for (let j = 0; j <= N; j++) {
@@ -833,82 +838,147 @@ function drawReg3D() {
     }
     grid.push(row);
   }
-  const zCap = Math.min(jMax, Z_CAP);
 
-  const cx = W / 2, cy = H * 0.72;
-  const scale = Math.min(W, H * 1.1) * 0.32;
   const th = REG.view.theta, ph = REG.view.phi;
   const ct = Math.cos(th), st = Math.sin(th);
   const cp = Math.cos(ph), sp = Math.sin(ph);
+  const scale = Math.min(W * 0.40, H * 0.28);
+  const cx = W * 0.5, cy = H * 0.57;
 
-  function proj(a, b, J) {
-    const u = (a - aMin) / (aMax - aMin) * 2 - 1;
-    const v = (b - bMin) / (bMax - bMin) * 2 - 1;
-    const w = Math.min(J, zCap) / zCap * 1.1;
-    const x = u * ct - v * st;
-    const z0 = u * st + v * ct;
-    const y2 = w * cp - z0 * sp;
-    const z2 = w * sp + z0 * cp;
-    return { sx: cx + x * scale, sy: cy - y2 * scale, depth: z2 };
+  function P(a, b, J) {
+    const X = ((a - aMin) / (aMax - aMin)) * 2 - 1;
+    const Y = ((b - bMin) / (bMax - bMin)) * 2 - 1;
+    const Z = Math.sqrt(Math.max(0, J) / jMax) * 1.4;
+    return {
+      sx: cx + (X * ct - Y * st) * scale,
+      sy: cy - (Z * cp - (X * st + Y * ct) * sp) * scale,
+      depth: Z * sp + (X * st + Y * ct) * cp,
+      X, Y, Z
+    };
   }
+
+  // Lumière (coordonnées monde normalisées)
+  const L = [-0.42, -0.48, 0.77];
+  const Ln = Math.hypot(L[0], L[1], L[2]);
+  L[0] /= Ln; L[1] /= Ln; L[2] /= Ln;
 
   const quads = [];
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
       const g00 = grid[i][j], g10 = grid[i + 1][j], g11 = grid[i + 1][j + 1], g01 = grid[i][j + 1];
-      const p00 = proj(g00.a, g00.b, g00.J);
-      const p10 = proj(g10.a, g10.b, g10.J);
-      const p11 = proj(g11.a, g11.b, g11.J);
-      const p01 = proj(g01.a, g01.b, g01.J);
+      const p00 = P(g00.a, g00.b, g00.J);
+      const p10 = P(g10.a, g10.b, g10.J);
+      const p11 = P(g11.a, g11.b, g11.J);
+      const p01 = P(g01.a, g01.b, g01.J);
+      const t1x = p10.X - p00.X, t1y = p10.Y - p00.Y, t1z = p10.Z - p00.Z;
+      const t2x = p01.X - p00.X, t2y = p01.Y - p00.Y, t2z = p01.Z - p00.Z;
+      const nx = t1y * t2z - t1z * t2y;
+      const ny = t1z * t2x - t1x * t2z;
+      const nz = t1x * t2y - t1y * t2x;
+      const nl = Math.hypot(nx, ny, nz) || 1;
+      const lam = Math.max(0, (nx * L[0] + ny * L[1] + nz * L[2]) / nl);
       const avgJ = (g00.J + g10.J + g11.J + g01.J) / 4;
-      const depth = (p00.depth + p10.depth + p11.depth + p01.depth) / 4;
-      quads.push({ pts: [p00, p10, p11, p01], J: avgJ, depth });
+      const t = Math.sqrt(Math.max(0, avgJ) / jMax);
+      const hue = 205 - 175 * t;
+      const lig = 34 + 24 * lam;
+      quads.push({
+        pts: [p00, p10, p11, p01],
+        depth: (p00.depth + p10.depth + p11.depth + p01.depth) / 4,
+        fill: 'hsl(' + hue.toFixed(0) + ',62%,' + lig.toFixed(0) + '%)'
+      });
     }
   }
   quads.sort((A, B) => B.depth - A.depth);
-
-  quads.forEach(q => {
-    const t = Math.min(q.J, zCap) / zCap;
-    const r = Math.round(30 + 225 * t);
-    const g = Math.round(140 - 100 * t);
-    const b = Math.round(230 - 200 * t);
-    ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+  for (const q of quads) {
+    ctx.fillStyle = q.fill;
+    ctx.strokeStyle = q.fill;
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(q.pts[0].sx, q.pts[0].sy);
-    for (let k = 1; k < 4; k++) ctx.lineTo(q.pts[k].sx, q.pts[k].sy);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.lineWidth = 0.5; ctx.stroke();
-  });
-
-  if (REG.path && REG.path.length > 0) {
-    ctx.strokeStyle = '#c0281f'; ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    let first = true;
-    REG.path.forEach(p => {
-      const sp = proj(p.a, p.b, p.J);
-      if (first) { ctx.moveTo(sp.sx, sp.sy); first = false; }
-      else ctx.lineTo(sp.sx, sp.sy);
-    });
-    ctx.stroke();
-    REG.path.forEach((p, i) => {
-      const sp = proj(p.a, p.b, p.J);
-      ctx.beginPath();
-      ctx.arc(sp.sx, sp.sy, i === 0 ? 5 : 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = i === 0 ? '#9a5b00' : '#c0281f';
-      ctx.fill();
-      if (i === 0) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); }
-    });
-    const last = REG.path[REG.path.length - 1];
-    const spL = proj(last.a, last.b, last.J);
-    ctx.beginPath(); ctx.arc(spL.sx, spL.sy, 6, 0, Math.PI * 2);
-    ctx.fillStyle = '#1e7a2e'; ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.lineTo(q.pts[1].sx, q.pts[1].sy);
+    ctx.lineTo(q.pts[2].sx, q.pts[2].sy);
+    ctx.lineTo(q.pts[3].sx, q.pts[3].sy);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
   }
 
-  ctx.fillStyle = '#5a6068'; ctx.font = '12px "IBM Plex Sans", sans-serif'; ctx.textAlign = 'center';
-  const lA = proj(aMax, bMin, 0); ctx.fillText('a', lA.sx + 20, lA.sy + 5);
-  const lB = proj(aMin, bMax, 0); ctx.fillText('b', lB.sx - 20, lB.sy + 5);
-  const lJ = proj(aMin, bMin, zCap); ctx.fillText('J', lJ.sx - 15, lJ.sy - 8);
+  /* ---- Axes gradués ---- */
+  const padA = 0.10, padB = 0.22;
+  const a0 = aMin - padA, b0 = bMin - padB;
+  const origin = P(a0, b0, 0);
+  const aEnd = P(aMax, b0, 0);
+  const bEnd = P(a0, bMax, 0);
+  const jEnd = P(a0, b0, jMax);
+
+  ctx.strokeStyle = '#3f4750'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(origin.sx, origin.sy); ctx.lineTo(aEnd.sx, aEnd.sy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(origin.sx, origin.sy); ctx.lineTo(bEnd.sx, bEnd.sy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(origin.sx, origin.sy); ctx.lineTo(jEnd.sx, jEnd.sy); ctx.stroke();
+
+  function sdir(p1, p2) {
+    const dx = p2.sx - p1.sx, dy = p2.sy - p1.sy, l = Math.hypot(dx, dy) || 1;
+    return { dx: dx / l, dy: dy / l };
+  }
+  const labels = [];
+  // a
+  const dA = sdir(P(aMin, b0, 0), P(aMin, b0 - 0.6, 0));
+  [0, 0.5, 1, 1.5, 2].forEach(v => {
+    const q = P(v, b0, 0);
+    ctx.strokeStyle = '#3f4750'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(q.sx, q.sy); ctx.lineTo(q.sx + dA.dx * 5, q.sy + dA.dy * 5); ctx.stroke();
+    labels.push({ x: q.sx + dA.dx * 15, y: q.sy + dA.dy * 15, text: String(v).replace('.', ','), font: '10.5px' });
+  });
+  // b
+  const dB = sdir(P(a0, bMin, 0), P(a0 - 0.25, bMin, 0));
+  [-1, 0, 1, 2, 3, 4].forEach(v => {
+    const q = P(a0, v, 0);
+    ctx.strokeStyle = '#3f4750'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(q.sx, q.sy); ctx.lineTo(q.sx + dB.dx * 5, q.sy + dB.dy * 5); ctx.stroke();
+    labels.push({ x: q.sx + dB.dx * 15, y: q.sy + dB.dy * 15, text: String(v).replace('.', ','), font: '10.5px' });
+  });
+  // J (graduations en valeurs réelles, positions en √J)
+  const dJ = sdir(P(a0, b0, jMax * 0.5), P(a0 - 0.25, b0, jMax * 0.5));
+  [1, 4, 9, 16, 25].forEach(v => {
+    const q = P(a0, b0, v);
+    ctx.strokeStyle = '#3f4750'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(q.sx, q.sy); ctx.lineTo(q.sx + dJ.dx * 5, q.sy + dJ.dy * 5); ctx.stroke();
+    labels.push({ x: q.sx + dJ.dx * 15, y: q.sy + dJ.dy * 15, text: String(v), font: '10.5px' });
+  });
+  // Titres d'axes
+  const dAt = sdir(P(aMax, b0, 0), P(aMax + 0.3, b0, 0));
+  labels.push({ x: aEnd.sx + dAt.dx * 20, y: aEnd.sy + dAt.dy * 20, text: 'a', font: 'bold 13px' });
+  const dBt = sdir(P(a0, bMax, 0), P(a0, bMax + 0.5, 0));
+  labels.push({ x: bEnd.sx + dBt.dx * 20, y: bEnd.sy + dBt.dy * 20, text: 'b', font: 'bold 13px' });
+  const dJt = sdir(P(a0, b0, jMax), P(a0 - 0.3, b0, jMax));
+  labels.push({ x: jEnd.sx + dJt.dx * 20, y: jEnd.sy + dJt.dy * 20 - 4, text: 'J', font: 'bold 13px' });
+
+  /* ---- Chemin de descente ---- */
+  if (REG.path && REG.path.length > 0) {
+    ctx.strokeStyle = '#c0281f'; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath();
+    REG.path.forEach((p, i) => {
+      const q = P(p.a, p.b, p.J);
+      if (i === 0) ctx.moveTo(q.sx, q.sy); else ctx.lineTo(q.sx, q.sy);
+    });
+    ctx.stroke();
+    const p0 = REG.path[0], q0 = P(p0.a, p0.b, p0.J);
+    ctx.beginPath(); ctx.arc(q0.sx, q0.sy, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#9a5b00'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8; ctx.stroke();
+    const pL = REG.path[REG.path.length - 1], qL = P(pL.a, pL.b, pL.J);
+    ctx.beginPath(); ctx.arc(qL.sx, qL.sy, 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#1e7a2e'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8; ctx.stroke();
+  }
+
+  /* ---- Étiquettes (par-dessus) ---- */
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#3c434b';
+  labels.forEach(l => {
+    ctx.font = l.font + ' "IBM Plex Sans", sans-serif';
+    ctx.fillText(l.text, l.x, l.y);
+  });
 }
 
 function drawReg2D() {
@@ -1131,7 +1201,7 @@ function drawRegMultiAlpha() {
   });
 }
 WORKSHOPS.push({ id: 'reg', title: 'Régression linéaire', hint: 'Surface 3D, coupe 2D, descente de gradient et rôle de α.', mount: mountReg,
-  reset: () => { REG.a = REG_INIT.a; REG.b = REG_INIT.b; REG.alpha = REG_INIT.alpha; REG.path = []; REG.view.theta = Math.PI / 4; REG.view.phi = Math.PI / 6; } });
+  reset: () => { REG.a = REG_INIT.a; REG.b = REG_INIT.b; REG.alpha = REG_INIT.alpha; REG.path = []; REG.view.theta = -0.7; REG.view.phi = 0.55; } });
 
 /* ============ ATELIER 6 : RÉGRESSION LINÉAIRE MULTIPLE ============ */
 function mountRegMulti(root) {
@@ -1142,6 +1212,9 @@ function mountRegMulti(root) {
     + '<h3>Jeu de données immobilier</h3>'
     + '<p class="small">Surface (m²) et nombre de chambres → prix (k€).</p>'
     + '<div id="rm-table"></div>'
+    + '<h3>Visualisation 3D : nuage de points et plan d\'ajustement</h3>'
+    + '<p class="small">Glissez la souris (ou le doigt) sur le graphique pour le faire tourner. Les <span style="color:#c0281f">segments rouges pointillés</span> sont les <b>résidus</b> (écart vertical entre le prix réel et le prix prédit par le plan). Le point orange est le nouvel appartement (110 m², 4 chambres).</p>'
+    + '<canvas class="viz" id="rm-3d" style="height:400px;cursor:grab"></canvas>'
     + '<h3>Réglez les coefficients</h3>'
     + '<div class="opts">'
     + '<label class="fld"><span>a₁ (surface) = <b id="rm-a1-out">1.00</b></span><input type="range" id="rm-a1" min="-1" max="4" step="0.05" value="1"></label>'
@@ -1175,7 +1248,36 @@ function mountRegMulti(root) {
     RM.a1 = 1; RM.a2 = 10; RM.b = 0;
     renderRM();
   });
+  bindRM3D();
   renderRM();
+}
+
+function bindRM3D() {
+  const c = $('#rm-3d'); if (!c) return;
+  const onDown = e => {
+    RMV.dragging = { x: e.clientX, y: e.clientY, th: RMV.theta, ph: RMV.phi };
+    const cv = $('#rm-3d'); if (cv) cv.style.cursor = 'grabbing';
+  };
+  const onMove = e => {
+    if (!RMV.dragging) return;
+    RMV.theta = RMV.dragging.th + (e.clientX - RMV.dragging.x) * 0.01;
+    RMV.phi = Math.max(0.15, Math.min(1.0, RMV.dragging.ph - (e.clientY - RMV.dragging.y) * 0.01));
+    drawRM3D();
+  };
+  const onUp = () => {
+    if (!RMV.dragging) return;
+    RMV.dragging = null;
+    const cv = $('#rm-3d'); if (cv) cv.style.cursor = 'grab';
+  };
+  c.addEventListener('mousedown', onDown);
+  c.addEventListener('touchstart', e => { if (e.touches[0]) onDown(e.touches[0]); }, { passive: true });
+  c.addEventListener('touchmove', e => { if (e.touches[0]) onMove(e.touches[0]); }, { passive: true });
+  c.addEventListener('touchend', onUp);
+  if (!RMV.bound) {
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    RMV.bound = true;
+  }
 }
 
 function renderRM() {
@@ -1226,6 +1328,139 @@ function renderRM() {
     const pred = rmPredict(RM.a1, RM.a2, RM.b, RM.x1new, RM.x2new);
     np.innerHTML = '<div class="metric hl"><span>ŷ = ' + RM.a1.toFixed(2) + '·110 + ' + RM.a2.toFixed(2) + '·4 + ' + RM.b.toFixed(0) + '</span><b>' + pred.toFixed(1) + ' k€</b></div>';
   }
+  drawRM3D();
+}
+
+function drawRM3D() {
+  const canvas = $('#rm-3d'); if (!canvas) return;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fafbfc'; ctx.fillRect(0, 0, W, H);
+
+  const x1max = 160, x2max = 6, ymax = 500;
+  const th = RMV.theta, ph = RMV.phi;
+  const ct = Math.cos(th), st = Math.sin(th);
+  const cp = Math.cos(ph), sp = Math.sin(ph);
+  const scale = Math.min(W * 0.36, H * 0.28);
+  const cx = W * 0.5, cy = H * 0.60;
+
+  function P(x1, x2, y) {
+    const X = (x1 / x1max) * 2 - 1;
+    const Y = (x2 / x2max) * 2 - 1;
+    const Z = (y / ymax) * 1.5;
+    return {
+      sx: cx + (X * ct - Y * st) * scale,
+      sy: cy - (Z * cp - (X * st + Y * ct) * sp) * scale,
+      depth: Z * sp + (X * st + Y * ct) * cp
+    };
+  }
+  const clampY = y => Math.max(0, Math.min(ymax, y));
+
+  // Sol
+  const O = P(0, 0, 0), X1 = P(x1max, 0, 0), X2 = P(0, x2max, 0), X12 = P(x1max, x2max, 0);
+  ctx.fillStyle = 'rgba(90,96,104,0.05)';
+  ctx.strokeStyle = 'rgba(90,96,104,0.30)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(O.sx, O.sy); ctx.lineTo(X1.sx, X1.sy); ctx.lineTo(X12.sx, X12.sy); ctx.lineTo(X2.sx, X2.sy); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Axes
+  const Yt = P(0, 0, ymax);
+  ctx.strokeStyle = '#3f4750'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(O.sx, O.sy); ctx.lineTo(X1.sx, X1.sy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(O.sx, O.sy); ctx.lineTo(X2.sx, X2.sy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(O.sx, O.sy); ctx.lineTo(Yt.sx, Yt.sy); ctx.stroke();
+
+  // Plan d'ajustement
+  const GX = 6, GY = 4;
+  const cells = [];
+  for (let i = 0; i < GX; i++) {
+    for (let j = 0; j < GY; j++) {
+      const x1a = (i / GX) * x1max, x1b = ((i + 1) / GX) * x1max;
+      const x2a = (j / GY) * x2max, x2b = ((j + 1) / GY) * x2max;
+      const q00 = P(x1a, x2a, clampY(rmPredict(RM.a1, RM.a2, RM.b, x1a, x2a)));
+      const q10 = P(x1b, x2a, clampY(rmPredict(RM.a1, RM.a2, RM.b, x1b, x2a)));
+      const q11 = P(x1b, x2b, clampY(rmPredict(RM.a1, RM.a2, RM.b, x1b, x2b)));
+      const q01 = P(x1a, x2b, clampY(rmPredict(RM.a1, RM.a2, RM.b, x1a, x2b)));
+      cells.push({ pts: [q00, q10, q11, q01], depth: (q00.depth + q10.depth + q11.depth + q01.depth) / 4 });
+    }
+  }
+  cells.sort((A, B) => B.depth - A.depth);
+  for (const c of cells) {
+    ctx.fillStyle = 'rgba(46,109,164,0.10)';
+    ctx.strokeStyle = 'rgba(46,109,164,0.45)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(c.pts[0].sx, c.pts[0].sy);
+    for (let k = 1; k < 4; k++) ctx.lineTo(c.pts[k].sx, c.pts[k].sy);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  }
+
+  // Résidus
+  ctx.setLineDash([3, 3]); ctx.lineWidth = 1.3; ctx.strokeStyle = 'rgba(192,40,31,0.60)';
+  RM.data.forEach(p => {
+    const yh = clampY(rmPredict(RM.a1, RM.a2, RM.b, p.x1, p.x2));
+    const a = P(p.x1, p.x2, p.y), b2 = P(p.x1, p.x2, yh);
+    ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b2.sx, b2.sy); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Points de données
+  const pts = RM.data.map(p => ({ p, q: P(p.x1, p.x2, p.y) }));
+  pts.sort((A, B) => B.q.depth - A.q.depth);
+  for (const { q } of pts) {
+    ctx.beginPath(); ctx.arc(q.sx, q.sy, 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#2e6da4'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.stroke();
+  }
+
+  // Nouvel appartement
+  const ynew = rmPredict(RM.a1, RM.a2, RM.b, RM.x1new, RM.x2new);
+  if (ynew >= 0 && ynew <= ymax) {
+    const q = P(RM.x1new, RM.x2new, ynew);
+    ctx.beginPath(); ctx.arc(q.sx, q.sy, 7, 0, Math.PI * 2);
+    ctx.fillStyle = '#e8a33d'; ctx.fill();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.fillStyle = '#111'; ctx.font = 'bold 11px "IBM Plex Sans", sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('nouvel appartement', q.sx + 11, q.sy);
+  }
+
+  // Labels d'axes
+  function sdir(p1, p2) {
+    const dx = p2.sx - p1.sx, dy = p2.sy - p1.sy, l = Math.hypot(dx, dy) || 1;
+    return { dx: dx / l, dy: dy / l };
+  }
+  const out1 = sdir(O, P(0, -1, 0));
+  const out2 = sdir(O, P(-30, 0, 0));
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#3c434b';
+  ctx.font = '10.5px "IBM Plex Sans", sans-serif';
+  [[80, '80'], [160, '160']].forEach(([v, t]) => {
+    const q = P(v, 0, 0);
+    ctx.fillText(t, q.sx + out1.dx * 13, q.sy + out1.dy * 13);
+  });
+  [[3, '3'], [6, '6']].forEach(([v, t]) => {
+    const q = P(0, v, 0);
+    ctx.fillText(t, q.sx + out2.dx * 13, q.sy + out2.dy * 13);
+  });
+  [[250, '250'], [500, '500']].forEach(([v, t]) => {
+    const q = P(0, 0, v);
+    ctx.fillText(t, q.sx + out2.dx * 15, q.sy + out2.dy * 15);
+  });
+
+  const d1 = sdir(X1, P(x1max + 30, 0, 0));
+  const d2 = sdir(X2, P(0, x2max + 1.2, 0));
+  const dy = sdir(Yt, P(-30, 0, ymax));
+  ctx.fillStyle = '#111'; ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
+  ctx.fillText('x₁ (m²)', X1.sx + d1.dx * 24, X1.sy + d1.dy * 24);
+  ctx.fillText('x₂ (nb)', X2.sx + d2.dx * 24, X2.sy + d2.dy * 24);
+  ctx.fillText('prix (k€)', Yt.sx + dy.dx * 24, Yt.sy + dy.dy * 24);
 }
 WORKSHOPS.push({ id: 'regmulti', title: 'Régression multiple', hint: 'Deux variables explicatives, un modèle linéaire, moindres carrés.', mount: mountRegMulti, reset: () => { RM.a1 = 1; RM.a2 = 10; RM.b = 0; } });
 
@@ -1713,6 +1948,7 @@ const ACT = {
     goal: 'Étendre le modèle linéaire à plusieurs variables explicatives.',
     steps: [
       'Observez les données : surface et nombre de chambres pour prédire le prix.',
+      'Faites tourner la visualisation 3D : les points bleus sont les appartements, le plan est le modèle, les segments rouges sont les résidus.',
       'Ajustez a₁, a₂ et b à la main pour minimiser la RMSE.',
       'Cliquez sur <b>Solution des moindres carrés</b> : le modèle optimal est trouvé analytiquement.',
       'Pourquoi un modèle multivariable est-il plus précis qu\'un modèle monovariable ?',
@@ -1903,7 +2139,7 @@ COURSE.push({ id: 'regression', t: 'Régression linéaire', h: `
 <p>Chaque coefficient aᵢ mesure le poids de la variable xᵢ. La résolution se fait par <b>équations normales</b> (solution analytique) ou par <b>descente de gradient</b>.</p>
 <h3>Fonction coût</h3>
 <div class="formula">J(a, b) = (1 / 2n) · Σ (a·x<sub>i</sub> + b − y<sub>i</sub>)²</div>
-<p>Cette fonction est <b>convexe</b> : un seul minimum global.</p>
+<p>Cette fonction est <b>convexe</b> : un seul minimum global. Visuellement, c'est une <b>cuvette</b> (paraboloïde) — pas plusieurs cuvettes : le nombre de points ne change que la courbure.</p>
 <h3>Descente de gradient</h3>
 <div class="formula">a ← a − α · ∂J/∂a &nbsp;&nbsp; b ← b − α · ∂J/∂b</div>
 <div class="formula">∂J/∂a = (1/n) · Σ x<sub>i</sub>·(a·x<sub>i</sub> + b − y<sub>i</sub>) &nbsp;&nbsp; ∂J/∂b = (1/n) · Σ (a·x<sub>i</sub> + b − y<sub>i</sub>)</div>
@@ -2123,15 +2359,13 @@ $('#bHelp').addEventListener('click', () => {
     '<li>2. Représentation des données (X, y, types de variables)</li>' +
     '<li>3. Évaluation d\'un modèle (matrice de confusion, sensibilité, spécificité)</li>' +
     '<li>4. k plus proches voisins (k-NN)</li>' +
-    '<li>5. Régression linéaire monovariable (descente de gradient, surface de coût)</li>' +
-    '<li>6. <b>Régression linéaire multiple</b> (multivariable, moindres carrés)</li>' +
+    '<li>5. Régression linéaire monovariable (surface de coût 3D avec axes gradués)</li>' +
+    '<li>6. <b>Régression linéaire multiple</b> (plan 3D, nuage de points, résidus)</li>' +
     '<li>7. Perceptron interactif (poids, biais, activation)</li>' +
     '<li>8. Réseau multicouche (XOR, couche cachée)</li>' +
     '<li>9. <b>Démarche de résolution</b> (décomposition, choix d\'algorithme, apprentissage / inférence)</li></ul>' +
-    '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut.</li>' +
-    '<li>Le bouton <b>Activité</b> propose consignes, défi et QCM corrigé.</li>' +
-    '<li>Le bouton <b>Cours</b> propose une synthèse rédigée (10 sections).</li></ul>' +
-    '<h3>Régression linéaire</h3><p>Sur la surface 3D, glissez la souris pour tourner. Les trois coupes 2D montrent l\'effet de α sur la taille des sauts.</p>' +
+    '<h3>Graphiques 3D</h3><ul><li><b>Surface de coût J(a,b)</b> : glissez pour tourner. La hauteur est tracée en √J pour rendre le fond lisible. Les axes a, b et J sont gradués.</li>' +
+    '<li><b>Régression multiple</b> : glissez le graphique pour faire tourner le nuage de points, le plan et les résidus.</li></ul>' +
     '<h3>Vos données</h3><p>Les réponses au QCM sont mémorisées dans ce navigateur uniquement.</p>' }));
 });
 
@@ -2141,6 +2375,7 @@ window.addEventListener('resize', () => {
   resizeTimer = setTimeout(() => {
     if (UI.cur === 'knn') drawKNN();
     else if (UI.cur === 'reg') { drawReg(); drawReg3D(); drawReg2D(); drawRegMultiAlpha(); }
+    else if (UI.cur === 'regmulti') drawRM3D();
     else if (UI.cur === 'perc') drawPerc();
     else if (UI.cur === 'mlp') { drawMLP(); drawActs(); }
   }, 120);
