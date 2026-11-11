@@ -602,13 +602,7 @@ function blockBBox(b) {
   return { x1: minx, y1: miny, x2: maxx, y2: maxy };
 }
 
-/* ---------- routage des liaisons ----------
-   Deux régimes :
-   - "retour" (feedback) : la cible est à gauche de la source (p2.x < p1.x - 40).
-     Le tracé est détourné SOUS (ou AU-DESSUS) de tous les blocs présents dans la
-     plage horizontale, ce qui rend la boucle clairement visible.
-   - "direct" : routage orthogonal classique avec un coude au milieu.
-*/
+/* ---------- routage des liaisons ---------- */
 let feedbackRanks = new Map();
 function computeFeedbackRanks() {
   feedbackRanks = new Map();
@@ -618,12 +612,11 @@ function computeFeedbackRanks() {
     if (!a || !b) return;
     const pa = portWorld(a, 'out'), pb = portWorld(b, l.port);
     if (!pa || !pb) return;
-    if (sideDir(pa.side).x > 0 && pb.x < pa.x - 40) {
+    const dirA = sideDir(pa.side);
+    if (pb.x < pa.x - 40 && dirA.x >= 0) {
       fb.push({ l, maxX: Math.max(pa.x, pb.x), minX: Math.min(pa.x, pb.x) });
     }
   });
-  /* Tri : boucle la plus à droite en premier (rank 0 = la plus interne).
-     Départage par minX croissant (plage la plus large en priorité). */
   fb.sort((a, b) => b.maxX - a.maxX || a.minX - b.minX);
   fb.forEach((f, i) => feedbackRanks.set(f.l.id, i));
 }
@@ -635,7 +628,6 @@ function route(p1, d1, p2, d2, rank) {
   if (isFeedback) {
     const minX = Math.min(p1.x, p2.x);
     const maxX = Math.max(p1.x, p2.x);
-    /* Un port d'entrée "bas" se prend toujours par en dessous : on force le détour bas. */
     const routeBelow = (d2.y > 0) || (p2.y >= p1.y - 40);
     let detourY;
     if (routeBelow) {
@@ -664,7 +656,6 @@ function route(p1, d1, p2, d2, rank) {
     return pts.map(p => [p.x, p.y]);
   }
 
-  /* Routage direct (existant) */
   const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
   const st = Math.min(28, Math.max(14, dist / 4));
   const s1 = { x: p1.x + d1.x * st, y: p1.y + d1.y * st };
@@ -709,7 +700,6 @@ function draw() {
     const pts = linkPts(l); if (!pts) return;
     const on = S.sel && S.sel.t === 'l' && S.sel.id === l.id, ps = pts.map(p => p.join(',')).join(' ');
     const g = sv('g', { 'data-l': l.id });
-    /* Halo blanc + câble : les croisements de câbles restent lisibles. */
     g.append(
       sv('polyline', { class: 'hit', points: ps }),
       sv('polyline', { class: 'cab-halo', points: ps }),
@@ -826,7 +816,6 @@ function fitView() {
   }
   let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
   S.blocks.forEach(b => { const bb = blockBBox(b); minx = Math.min(minx, bb.x1); miny = Math.min(miny, bb.y1); maxx = Math.max(maxx, bb.x2); maxy = Math.max(maxy, bb.y2); });
-  /* Inclure les liaisons de retour qui descendent sous les blocs */
   S.links.forEach(l => {
     const pts = linkPts(l); if (!pts) return;
     pts.forEach(([px, py]) => { minx = Math.min(minx, px); maxx = Math.max(maxx, px); miny = Math.min(miny, py); maxy = Math.max(maxy, py); });
@@ -1036,7 +1025,10 @@ function delSel() {
   S.sel = null; save(); draw(); renderPanel(); updHint();
 }
 function rotateBlocks(delta, reset) {
-  if (!S.sel || S.sel.t !== 'b' || S.sel.ids.size === 0) return;
+  if (!S.sel || S.sel.t !== 'b' || S.sel.ids.size === 0) {
+    toast('Sélectionnez au moins un bloc pour le pivoter.');
+    return;
+  }
   pushUndo();
   S.sel.ids.forEach(id => {
     const b = blk(id); if (!b) return;
@@ -1110,10 +1102,12 @@ const EXAMPLES = [
     const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), c1 = mkBlock('corPI', 260, 100, [1.5, 2]), h1 = mkBlock('ord2', 450, 100, [1, 0.5, 3]), o = mkBlock('out', 710, 110);
     lk(e, s1, 0); lk(s1, c1); lk(c1, h1); lk(h1, o); lk(h1, s1, 1); } },
   { t: 'Retour non unitaire', d: 'Correcteur P, 1er ordre, intégrateur, capteur H3 dans la chaîne de retour.', f() {
-    const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), c1 = mkBlock('corP', 260, 100, [5]), h1 = mkBlock('ord1', 420, 100, [1, 1]), h2 = mkBlock('int', 600, 100, [1]), o = mkBlock('out', 800, 110), h3 = mkBlock('prop', 400, 250, [0.5]);
+    const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), c1 = mkBlock('corP', 260, 100, [5]), h1 = mkBlock('ord1', 420, 100, [1, 1]), h2 = mkBlock('int', 600, 100, [1]), o = mkBlock('out', 800, 110), h3 = mkBlock('prop', 420, 230, [0.5]);
+    h3.rot = 180;
     lk(e, s1, 0); lk(s1, c1); lk(c1, h1); lk(h1, h2); lk(h2, o); lk(h2, h3); lk(h3, s1, 1); } },
   { t: 'Deux boucles imbriquées', d: 'Retour tachymétrique (boucle interne) et retour unitaire (boucle externe).', f() {
-    const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), h1 = mkBlock('ord1', 260, 100, [2, 1]), s2 = mkBlock('sum', 430, 108), h2 = mkBlock('int', 520, 100, [1]), o = mkBlock('out', 700, 110), h3 = mkBlock('der', 430, 250, [0.5]);
+    const e = mkBlock('in', 30, 110), s1 = mkBlock('sum', 170, 108), h1 = mkBlock('ord1', 260, 100, [2, 1]), s2 = mkBlock('sum', 430, 108), h2 = mkBlock('int', 520, 100, [1]), o = mkBlock('out', 700, 110), h3 = mkBlock('der', 520, 230, [0.5]);
+    h3.rot = 180;
     lk(e, s1, 0); lk(s1, h1); lk(h1, s2, 0); lk(s2, h2); lk(h2, o); lk(h2, s1, 1); lk(h2, h3); lk(h3, s2, 1); } }
 ];
 function loadExample(i) { if (CS.open) { CS.open = false; renderCourse(); } pushUndo(); S.blocks = []; S.links = []; S.nid = 1; S.nl = 1; S.sel = null; S.linkFrom = null; S.calc = false; S.tab = 'props'; EXAMPLES[i].f(); save(); draw(); renderPanel(); updHint(); }
@@ -1122,19 +1116,42 @@ const bi = (t, fs) => `<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="
 const ICON = {
   sel: '<svg viewBox="0 0 34 34" aria-hidden="true"><path class="ic-acc" d="M10 5v20l5-4 4 8 3-1-4-8h7z"/></svg>',
   link: '<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-body" x="1.5" y="10" width="9" height="14" rx="2"/><rect class="ic-body" x="23.5" y="10" width="9" height="14" rx="2"/><path class="ic-acc" d="M10.5 17h11m-4-4l4 4-4 4"/></svg>',
+  'rot-l': '<svg viewBox="0 0 34 34" aria-hidden="true"><path class="ic-acc" d="M17 6a11 11 0 1 1-7.8 3.2M9 5l.2 4.2 4.2-.2"/></svg>',
+  'rot-r': '<svg viewBox="0 0 34 34" aria-hidden="true"><path class="ic-acc" d="M17 6a11 11 0 1 0 7.8 3.2M25 5l-.2 4.2-4.2-.2"/></svg>',
+  'rot-180': '<svg viewBox="0 0 34 34" aria-hidden="true"><path class="ic-acc" d="M17 6a11 11 0 1 1-11 11h22M25 15v4h4M9 15v4H5"/><text x="17" y="21" text-anchor="middle" font-size="9" font-weight="bold" fill="currentColor" font-family="IBM Plex Sans,sans-serif">180</text></svg>',
   in: '<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-screen" x="1.5" y="9" width="31" height="16" rx="8"/><text x="17" y="21" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">E(p)</text></svg>',
   out: '<svg viewBox="0 0 34 34" aria-hidden="true"><rect class="ic-screen" x="1.5" y="9" width="31" height="16" rx="8"/><text x="17" y="21" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">S(p)</text></svg>',
   sum: '<svg viewBox="0 0 34 34" aria-hidden="true"><circle class="ic-body" cx="17" cy="17" r="11"/><text x="17" y="22" text-anchor="middle" font-size="14" font-weight="600" fill="currentColor" font-family="IBM Plex Sans,sans-serif">Σ</text></svg>',
   prop: bi('K', 12), int: bi('1/p', 10), der: bi('p', 12), ord1: bi('1er', 10), ord2: bi('2nd', 10), ord1inv: bi('1er⁻¹', 8.5), ord2inv: bi('2nd⁻¹', 8.5), corP: bi('P', 12), corPI: bi('PI', 11), corAv: bi('AV', 10)
 };
-const PAL = [['sel', 'Sélectionner', 1], ['link', 'Relier', 1], 0, ['in', 'Entrée E(p)'], ['out', 'Sortie S(p)'], ['sum', 'Comparateur'], 0, ['prop', 'Proportionnel'], ['int', 'Intégrateur'], ['der', 'Dérivateur'], ['ord1', '1er ordre'], ['ord2', '2nd ordre'], ['ord1inv', '1er ordre inversé'], ['ord2inv', '2nd ordre inversé'], 0, ['corP', 'Correcteur P'], ['corPI', 'Correcteur PI'], ['corAv', 'Avance de phase']];
+const PAL = [
+  ['sel', 'Sélectionner', 1], ['link', 'Relier', 1],
+  0,
+  ['rot-l', 'Pivoter ↺', 'rot'], ['rot-r', 'Pivoter ↻', 'rot'], ['rot-180', 'Demi-tour', 'rot'],
+  0,
+  ['in', 'Entrée E(p)'], ['out', 'Sortie S(p)'], ['sum', 'Comparateur'],
+  0,
+  ['prop', 'Proportionnel'], ['int', 'Intégrateur'], ['der', 'Dérivateur'],
+  ['ord1', '1er ordre'], ['ord2', '2nd ordre'], ['ord1inv', '1er ordre inversé'], ['ord2inv', '2nd ordre inversé'],
+  0,
+  ['corP', 'Correcteur P'], ['corPI', 'Correcteur PI'], ['corAv', 'Avance de phase']
+];
 function setTool(t) { S.tool = t; S.linkFrom = null; renderPalette(); updHint(); draw(); }
 function renderPalette() {
   const box = $('#palette'); box.replaceChildren();
   PAL.forEach(p => {
     if (!p) { box.append(h('div', { class: 'sep' })); return; }
-    const mode = p[2], on = mode && S.tool === p[0];
-    box.append(h('button', { type: 'button', class: 'tool' + (on ? ' on' : ''), 'aria-pressed': mode ? (on ? 'true' : 'false') : false, title: p[1], onclick: () => mode ? setTool(p[0]) : addBlock(p[0]) }, h('span', { html: ICON[p[0]], style: 'display:flex' }), p[1]));
+    const key = p[0], label = p[1], kind = p[2];
+    if (kind === 'rot') {
+      box.append(h('button', { type: 'button', class: 'tool', title: label, onclick: () => {
+        if (key === 'rot-l') rotateBlocks(-90);
+        else if (key === 'rot-r') rotateBlocks(90);
+        else if (key === 'rot-180') rotateBlocks(180);
+      } }, h('span', { html: ICON[key], style: 'display:flex' }), label));
+    } else {
+      const on = kind === 1 && S.tool === key;
+      box.append(h('button', { type: 'button', class: 'tool' + (on ? ' on' : ''), 'aria-pressed': kind === 1 ? (on ? 'true' : 'false') : false, title: label, onclick: () => kind === 1 ? setTool(key) : addBlock(key) }, h('span', { html: ICON[key], style: 'display:flex' }), label));
+    }
   });
 }
 
