@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Intelligence artificielle — SII · CPGE PSI*</title>
+<title>Intelligence artificielle — ITC · CPGE PSI*</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -78,7 +78,7 @@ fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
 .ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
 .cwrap{flex:1;min-height:0;display:flex;gap:28px;padding-block:14px}
-.ctoc{flex:none;width:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc{flex:none;width:260px;overflow:auto;display:flex;flex-direction:column;gap:1px}
 .ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px}
 .ctoc button:hover{background:var(--panel2)}
 .ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
@@ -98,7 +98,7 @@ fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
 pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
 .gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
 .cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
-#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:980px}
+#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:1000px}
 #ws h2{font-size:24px;margin:0 0 8px;text-wrap:balance}
 #ws h3{font-size:16.5px;margin:24px 0 6px}
 #ws p,#ws li{font-size:14.5px;line-height:1.55}
@@ -135,6 +135,8 @@ canvas.viz{width:100%;height:340px;display:block;border:1px solid var(--line);bo
 .fb{font-size:12.5px;color:var(--muted);margin-top:2px}
 .fb.ok{color:var(--ok)}.fb.no{color:var(--bad)}
 .reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.net-arch{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:8px 0}
+.net-arch .fld{margin:0}
 @media (max-width:900px){.reg-grid{grid-template-columns:1fr}}
 @media (max-width:820px){
   .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
@@ -164,7 +166,7 @@ canvas.viz{width:100%;height:340px;display:block;border:1px solid var(--line);bo
           <line x1="15.5" y1="9" x2="18.5" y2="13"/><line x1="15.5" y1="17" x2="18.5" y2="13"/>
         </g>
       </svg>
-      <span>Intelligence artificielle <small>SII · CPGE PSI*</small></span>
+      <span>Intelligence artificielle <small>ITC · CPGE PSI*</small></span>
     </div>
     <div class="files">
       <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
@@ -198,7 +200,7 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
-const KEYS = { act: 'atelier-ia-v2' };
+const KEYS = { act: 'atelier-ia-v4' };
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 const WORKSHOPS = [];
@@ -264,7 +266,6 @@ function gradJ(a, b) {
   return { ga: ga / REG.pts.length, gb: gb / REG.pts.length };
 }
 
-/* --- Régression linéaire MULTIPLE (atelier 6) --- */
 const RM = {
   data: [
     { x1: 50,  x2: 2, y: 175 },
@@ -320,14 +321,14 @@ function rmSolve() {
   return { b: x[0], a1: x[1], a2: x[2] };
 }
 
-/* --- Démarche de résolution (atelier 9) --- */
 const DEM = {
   scenarios: [
     { t: 'Prédire le prix d\'une maison à partir de sa surface et du nombre de pièces.', type: 'reg', algo: 'regmulti', why: 'La sortie est une valeur continue : régression linéaire multiple.' },
-    { t: 'Détecter si une transaction bancaire est frauduleuse.', type: 'cla', algo: 'knn', why: 'Deux classes (fraude / non fraude) avec exemples étiquetés : classification par k-NN (ou réseau).' },
+    { t: 'Détecter si une transaction bancaire est frauduleuse.', type: 'cla', algo: 'knn', why: 'Deux classes avec exemples étiquetés : classification par k-NN (ou réseau).' },
     { t: 'Reconnaître un chiffre manuscrit (0 à 9) sur une image.', type: 'cla', algo: 'mlp', why: '10 classes à partir d\'images : réseau de neurones, capable de frontières complexes.' },
     { t: 'Résoudre le problème XOR.', type: 'cla', algo: 'mlp', why: 'XOR n\'est pas linéairement séparable : il faut une couche cachée.' },
-    { t: 'Estimer la consommation électrique d\'un bâtiment à partir de sa surface, de l\'isolation et de la température extérieure.', type: 'reg', algo: 'regmulti', why: 'Plusieurs variables quantitatives pour une sortie continue : régression multiple.' }
+    { t: 'Estimer la consommation électrique d\'un bâtiment à partir de sa surface, de l\'isolation et de la température extérieure.', type: 'reg', algo: 'regmulti', why: 'Plusieurs variables quantitatives pour une sortie continue : régression multiple.' },
+    { t: 'Prédire les angles articulaires d\'un robot à partir de la position cartésienne.', type: 'reg', algo: 'mlp', why: 'Relation non linéaire complexe, plusieurs entrées/sorties : réseau de neurones.' }
   ],
   choices: { reg: 'Régression', cla: 'Classification', algo: { regmulti: 'Régression multiple', knn: 'k-NN', mlp: 'Réseau de neurones' } },
   assign: {}, checked: false,
@@ -343,6 +344,7 @@ const DEM = {
 };
 
 const CM = { tn: 50, fp: 5, fn: 10, tp: 35, ctx: 'fraude' };
+const CM_MULTI = { va: 814, vb: 186, wa: 747, wb: 40, mode: 'bin' };
 const GT = { assign: {}, checked: false };
 const DT = { choices: ['ql', 'qc', 'qd', 'ql'], checked: false };
 const PERC = {
@@ -369,6 +371,70 @@ const MLP = {
     { x1: 0, x2: 1, y: 1 }, { x1: 1, x2: 0, y: 1 }
   ]
 };
+
+/* ====== RÉSEAU INTERACTIF ====== */
+const NET = {
+  nIn: 2, nHidden: 2,
+  neurons: [3, 3, 3],
+  inputs: [0.6, -0.4, 0.8],
+  activation: 'sigmoid',
+  weights: [],
+  biases: [],
+  seed: 42,
+  showWeights: true
+};
+function netRand(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+function netInitWeights() {
+  const rnd = netRand(NET.seed);
+  NET.weights = [];
+  NET.biases = [];
+  const layers = [NET.nIn, ...NET.neurons.slice(0, NET.nHidden), 1];
+  for (let l = 1; l < layers.length; l++) {
+    const W = [];
+    const B = [];
+    for (let j = 0; j < layers[l]; j++) {
+      const row = [];
+      for (let i = 0; i < layers[l-1]; i++) {
+        row.push((rnd() * 2 - 1) * 2);
+      }
+      W.push(row);
+      B.push((rnd() * 2 - 1) * 0.5);
+    }
+    NET.weights.push(W);
+    NET.biases.push(B);
+  }
+}
+function netForward() {
+  const layers = [NET.inputs.slice(0, NET.nIn)];
+  const activations = [NET.inputs.slice(0, NET.nIn)];
+  const zs = [];
+  for (let l = 0; l < NET.weights.length; l++) {
+    const prev = activations[l];
+    const z = [], a = [];
+    for (let j = 0; j < NET.weights[l].length; j++) {
+      let s = NET.biases[l][j];
+      for (let i = 0; i < prev.length; i++) s += NET.weights[l][j][i] * prev[i];
+      z.push(s);
+      a.push(ACTS[NET.activation](s));
+    }
+    zs.push(z);
+    activations.push(a);
+  }
+  return { activations, zs };
+}
+function netParamCount() {
+  const layers = [NET.nIn, ...NET.neurons.slice(0, NET.nHidden), 1];
+  let n = 0;
+  for (let l = 1; l < layers.length; l++) n += layers[l-1] * layers[l] + layers[l];
+  return n;
+}
+netInitWeights();
 
 /* ============ ATELIER 1 : TYPES ============ */
 function mountTypes(root) {
@@ -435,7 +501,6 @@ function renderDT() {
   const tbody = h('tbody');
   for (let i = 0; i < 7; i++) tbody.append(h('tr', null, ...DATA_COLS.map(c => h('td', { class: 'm' }, String(c.vals[i])))));
   table.append(tbody); tb.append(table);
-
   const ch = $('#dt-choices'); ch.innerHTML = '';
   DATA_COLS.forEach((c, j) => {
     const row = h('div', { class: 'task-row' }, h('div', null, h('b', null, c.name)));
@@ -456,7 +521,6 @@ function renderDT() {
     }
     ch.append(fb);
   });
-
   const msg = $('#dt-msg');
   if (DT.checked) {
     let ok = 0;
@@ -464,7 +528,6 @@ function renderDT() {
     msg.className = 'verdict ' + (ok === DATA_COLS.length ? 'yes' : 'warn');
     msg.textContent = 'Score : ' + ok + ' / ' + DATA_COLS.length + '. Le prix est la cible (y), les autres forment X.';
   } else { msg.className = 'verdict'; msg.textContent = ''; }
-
   const mx = $('#dt-matrices'); mx.innerHTML = '';
   const xRows = [];
   for (let i = 0; i < 7; i++) xRows.push([DATA_COLS[0].vals[i], DATA_COLS[1].vals[i], DATA_COLS[2].vals[i]]);
@@ -475,25 +538,46 @@ function renderDT() {
 WORKSHOPS.push({ id: 'data', title: 'Représentation des données', hint: 'Identifier les types de données et reconstruire X et y.', mount: mountData, reset: () => { DT.choices = ['ql', 'qc', 'qd', 'ql']; DT.checked = false; } });
 
 /* ============ ATELIER 3 : ÉVALUATION ============ */
-const CM_MULTI = { va: 814, vb: 186, wa: 747, wb: 40, mode: 'bin' };
 function mountEval(root) {
   root.innerHTML = '<h2>3. Évaluation d\'un modèle</h2>'
-    + '<p>On mesure la qualité d\'un modèle de classification avec une <b>matrice de confusion</b> et trois indicateurs.</p>'
+    + '<p>On mesure la qualité d\'un modèle de classification avec une <b>matrice de confusion</b> et des indicateurs.</p>'
     + '<div class="opts"><div class="fld"><span>Mode</span><div id="cm-mode"></div></div></div>'
-    + '<div id="cm-out"></div>'
-    + '<p class="small">Le mode multi-classes reprend la matrice du CCINP TSI SI 2025 (substrats A et B).</p>';
+    + '<div id="cm-bin-inputs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:8px 0">'
+    + '<label class="fld"><span>Vrais négatifs (TN)</span><input type="number" id="cm-tn" min="0" max="999"></label>'
+    + '<label class="fld"><span>Faux positifs (FP)</span><input type="number" id="cm-fp" min="0" max="999"></label>'
+    + '<label class="fld"><span>Faux négatifs (FN)</span><input type="number" id="cm-fn" min="0" max="999"></label>'
+    + '<label class="fld"><span>Vrais positifs (TP)</span><input type="number" id="cm-tp" min="0" max="999"></label>'
+    + '</div>'
+    + '<div id="cm-ctx-box"></div>'
+    + '<div id="cm-out"></div>';
+  ['tn', 'fp', 'fn', 'tp'].forEach(k => {
+    const el = $('#cm-' + k);
+    if (el) el.addEventListener('input', e => {
+      CM[k] = Math.max(0, Math.min(999, parseInt(e.target.value) || 0));
+      renderCM();
+    });
+  });
   renderCM();
 }
 function renderCM() {
-  const modeBox = $('#cm-mode'); modeBox.innerHTML = '';
-  modeBox.append(h('div', { class: 'chips' }, [
-    ['bin', 'Binaire'], ['multi', 'Multi-classes (CCINP TSI 2025)']
-  ].map(([k, l]) => h('button', {
-    type: 'button', class: 'chip' + (CM_MULTI.mode === k ? ' on' : ''),
-    onclick: () => { CM_MULTI.mode = k; renderCM(); }
-  }, l))));
-  const out = $('#cm-out'); out.innerHTML = '';
+  const modeBox = $('#cm-mode');
+  if (modeBox) {
+    modeBox.innerHTML = '';
+    modeBox.append(h('div', { class: 'chips' }, [
+      ['bin', 'Binaire'], ['multi', 'Multi-classes (CCINP TSI 2025)']
+    ].map(([k, l]) => h('button', {
+      type: 'button', class: 'chip' + (CM_MULTI.mode === k ? ' on' : ''),
+      onclick: () => { CM_MULTI.mode = k; renderCM(); }
+    }, l))));
+  }
+  const binInputs = $('#cm-bin-inputs');
+  const ctxBox = $('#cm-ctx-box');
+  const out = $('#cm-out');
+  if (!out) return;
+  out.innerHTML = '';
   if (CM_MULTI.mode === 'multi') {
+    if (binInputs) binInputs.style.display = 'none';
+    if (ctxBox) ctxBox.innerHTML = '';
     out.append(h('p', { style: 'margin:4px 0' }, 'Matrice de confusion A/B (substrats A et B) :'));
     out.append(h('table', { class: 'cm' },
       h('thead', null, h('tr', null, h('th', null, ''), h('th', null, 'Prédit A'), h('th', null, 'Prédit B'))),
@@ -510,11 +594,42 @@ function renderCM() {
     out.append(h('div', { class: 'verdict' }, 'Le substrat <b>A</b> est le plus sensible et le plus précis. B est presque toujours confondu avec A (5 % de détection) : l\'algorithme n\'est pas fiable pour B.'));
     return;
   }
-  // Mode binaire : code existant
+  if (binInputs) binInputs.style.display = 'grid';
   ['tn', 'fp', 'fn', 'tp'].forEach(k => { const el = $('#cm-' + k); if (el) el.value = CM[k]; });
-  // ... (conserver le code binaire existant)
+  if (ctxBox) {
+    ctxBox.innerHTML = '';
+    ctxBox.append(h('div', { class: 'opts' }, h('div', { class: 'fld' }, h('span', null, 'Contexte'),
+      h('div', { class: 'chips' }, [
+        ['fraude', 'Fraude bancaire'], ['spam', 'Filtre anti-spam'], ['medical', 'Dépistage médical']
+      ].map(([k, l]) => h('button', {
+        type: 'button', class: 'chip' + (CM.ctx === k ? ' on' : ''),
+        onclick: () => { CM.ctx = k; renderCM(); }
+      }, l))))));
+  }
+  const { tn, fp, fn, tp } = CM;
+  const sens = (tp + fn) ? tp / (tp + fn) : 0;
+  const spec = (tn + fp) ? tn / (tn + fp) : 0;
+  const acc = (tn + fp + fn + tp) ? (tp + tn) / (tn + fp + fn + tp) : 0;
+  out.append(h('table', { class: 'cm' },
+    h('thead', null, h('tr', null, h('th', null, ''), h('th', null, 'Réel 0'), h('th', null, 'Réel 1'))),
+    h('tbody', null,
+      h('tr', null, h('th', null, 'Prédit 0'), h('td', { class: 'good' }, 'TN = ' + tn), h('td', { class: 'bad' }, 'FN = ' + fn)),
+      h('tr', null, h('th', null, 'Prédit 1'), h('td', { class: 'bad' }, 'FP = ' + fp), h('td', { class: 'good' }, 'TP = ' + tp)))));
+  const hlSens = CM.ctx === 'fraude' || CM.ctx === 'medical';
+  const hlSpec = CM.ctx === 'spam';
+  out.append(
+    h('div', { class: 'metric' + (hlSens ? ' hl' : '') }, h('span', null, 'Sensibilité = TP/(TP+FN)'), h('b', null, (sens * 100).toFixed(1) + ' %')),
+    h('div', { class: 'metric' + (hlSpec ? ' hl' : '') }, h('span', null, 'Spécificité = TN/(TN+FP)'), h('b', null, (spec * 100).toFixed(1) + ' %')),
+    h('div', { class: 'metric' }, h('span', null, 'Précision = (TP+TN)/total'), h('b', null, (acc * 100).toFixed(1) + ' %')));
+  const notes = {
+    fraude: 'Fraude : on veut <b>FN = 0</b>, on privilégie la <b>sensibilité</b>.',
+    spam: 'Anti-spam : on veut <b>FP = 0</b>, on privilégie la <b>spécificité</b>.',
+    medical: 'Dépistage : on veut <b>FN = 0</b>, on privilégie la <b>sensibilité</b>.'
+  };
+  out.append(h('div', { class: 'verdict', html: notes[CM.ctx] }));
 }
-WORKSHOPS.push({ id: 'eval', title: 'Évaluation d\'un modèle', hint: 'Matrice de confusion et indicateurs.', mount: mountEval, reset: () => { Object.assign(CM, { tn: 50, fp: 5, fn: 10, tp: 35, ctx: 'fraude' }); } });
+WORKSHOPS.push({ id: 'eval', title: 'Évaluation d\'un modèle', hint: 'Matrice de confusion binaire et multi-classes.', mount: mountEval,
+  reset: () => { Object.assign(CM, { tn: 50, fp: 5, fn: 10, tp: 35, ctx: 'fraude' }); CM_MULTI.mode = 'bin'; } });
 
 /* ============ ATELIER 4 : KNN ============ */
 function mountKNN(root) {
@@ -560,7 +675,6 @@ function drawKNN() {
   ctx.strokeStyle = '#8a929c'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(W - pad, H - pad); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(pad, pad); ctx.stroke();
-
   const qx = px(KNN.q.x), qy = py(KNN.q.y);
   const ds = KNN.pts.map(p => ({ p, d: Math.hypot(px(p.x) - qx, py(p.y) - qy) }));
   ds.sort((A, B) => A.d - B.d);
@@ -589,7 +703,6 @@ function drawKNN() {
   ctx.fillStyle = '#111'; ctx.font = 'bold 13px "IBM Plex Sans", sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('?', qx, qy + 1);
-
   const aC = neigh.filter(n => n.p.c === 'A').length;
   const bC = neigh.length - aC;
   let pred = aC > bC ? 'A' : bC > aC ? 'B' : neigh[0].p.c;
@@ -607,7 +720,6 @@ function mountReg(root) {
   root.innerHTML = '<h2>5. Régression linéaire (monovariable)</h2>'
     + '<p>On cherche <b>f(x) = a·x + b</b> qui ajuste un nuage de points. La qualité est mesurée par la fonction coût :</p>'
     + '<div class="formula">J(a, b) = (1 / 2n) · Σ (a·x<sub>i</sub> + b − y<sub>i</sub>)²</div>'
-
     + '<h3>1. Ajustement manuel</h3>'
     + '<div class="opts">'
     + '<label class="fld"><span>pente a = <b id="reg-a-out">0.50</b></span><input type="range" id="reg-a" min="-1" max="3" step="0.05" value="0.5"></label>'
@@ -623,7 +735,6 @@ function mountReg(root) {
     + '<button class="btn" id="reg-reset">Réinitialiser</button>'
     + '</div>'
     + '<div class="verdict" id="reg-msg"></div>'
-
     + '<h3>2. Surface de coût J(a, b)</h3>'
     + '<p>La fonction J(a, b) est une <b>cuvette convexe</b> avec un unique minimum. <b>Glissez</b> la souris sur la surface pour la faire tourner. La ligne rouge est le chemin de la descente.</p>'
     + '<p class="small">La hauteur est tracée en <b>√J</b> : J varie de 0 à ≈33 sur ce domaine, l\'échelle racine rend le fond de la cuvette lisible. Les axes a, b et J sont gradués.</p>'
@@ -635,11 +746,9 @@ function mountReg(root) {
     + '<button class="btn" id="reg-3d-reset">Réinitialiser</button>'
     + '</div>'
     + '<div class="gstats" id="reg-3d-stats"></div>'
-
     + '<h3>3. Coupe 2D : J en fonction de a, à b fixe</h3>'
     + '<p>Pour b fixé, J(a) est une <b>parabole convexe</b> avec un minimum a*. La descente en a fait des <b>sauts</b> dont la taille dépend de α et de la pente locale.</p>'
     + '<canvas class="viz" id="reg-2d" style="height:280px;cursor:default"></canvas>'
-
     + '<h3>4. Influence de α sur les sauts</h3>'
     + '<p>Trois descentes depuis a = 0,5 (à b = 1,4 fixe), avec trois valeurs de α : minuscules, adaptés, alternants.</p>'
     + '<canvas class="viz" id="reg-multi" style="height:360px;cursor:default"></canvas>';
@@ -659,7 +768,6 @@ function mountReg(root) {
     REG.path = [{ a: REG.a, b: REG.b, J: Jcost(REG.a, REG.b) }];
     regUpdate();
   });
-
   $('#reg-3d-step1').addEventListener('click', () => { reg3dStep(1); });
   $('#reg-3d-step10').addEventListener('click', () => { reg3dStep(10); });
   $('#reg-3d-step100').addEventListener('click', () => { reg3dStep(100); });
@@ -668,7 +776,6 @@ function mountReg(root) {
     REG.path = [{ a: REG.a, b: REG.b, J: Jcost(REG.a, REG.b) }];
     regUpdate(); drawReg3D();
   });
-
   const c3d = $('#reg-3d');
   const onDown = e => {
     REG.view.dragging = { x: e.clientX, y: e.clientY, theta: REG.view.theta, phi: REG.view.phi };
@@ -694,11 +801,9 @@ function mountReg(root) {
     window.addEventListener('mouseup', onUp);
     REG.view.windowBound = true;
   }
-
   if (!REG.path || REG.path.length === 0) REG.path = [{ a: REG.a, b: REG.b, J: Jcost(REG.a, REG.b) }];
   regUpdate();
 }
-
 function regUpdate() {
   if (!$('#reg-a')) return;
   $('#reg-a').value = REG.a; $('#reg-b').value = REG.b; $('#reg-alpha').value = REG.alpha;
@@ -706,14 +811,12 @@ function regUpdate() {
   $('#reg-b-out').textContent = REG.b.toFixed(2);
   $('#reg-alpha-out').textContent = REG.alpha.toFixed(3);
   drawReg(); drawReg3D(); drawReg2D(); drawRegMultiAlpha();
-
   const mse = Jcost(REG.a, REG.b);
   const stats = $('#reg-stats'); stats.innerHTML = '';
   stats.append(
     h('div', { class: 'stat' }, h('span', null, 'pente a'), h('b', null, REG.a.toFixed(3))),
     h('div', { class: 'stat' }, h('span', null, 'biais b'), h('b', null, REG.b.toFixed(3))),
     h('div', { class: 'stat' }, h('span', null, 'MSE = J(a,b)'), h('b', null, mse.toFixed(4))));
-
   const stats3d = $('#reg-3d-stats'); stats3d.innerHTML = '';
   stats3d.append(
     h('div', { class: 'stat' }, h('span', null, 'itération'), h('b', null, String(REG.path.length - 1))),
@@ -721,7 +824,6 @@ function regUpdate() {
     h('div', { class: 'stat' }, h('span', null, 'b courant'), h('b', null, REG.b.toFixed(3))),
     h('div', { class: 'stat' }, h('span', null, 'J(a,b)'), h('b', null, Jcost(REG.a, REG.b).toFixed(4))));
 }
-
 function regStep(steps) {
   if (!REG.path || REG.path.length === 0) REG.path = [{ a: REG.a, b: REG.b, J: Jcost(REG.a, REG.b) }];
   for (let s = 0; s < steps; s++) {
@@ -745,7 +847,6 @@ function regStep(steps) {
     m.textContent = steps + ' pas effectué(s). MSE = ' + mse.toFixed(4) + (mse < 0.3 ? '. Proche du minimum !' : '. Continuez pour approcher le minimum.');
   }
 }
-
 function reg3dStep(steps) {
   if (!REG.path || REG.path.length === 0) REG.path = [{ a: REG.a, b: REG.b, J: Jcost(REG.a, REG.b) }];
   for (let s = 0; s < steps; s++) {
@@ -758,7 +859,6 @@ function reg3dStep(steps) {
   }
   regUpdate();
 }
-
 function drawReg() {
   const canvas = $('#reg-canvas'); if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -795,8 +895,6 @@ function drawReg() {
   ctx.fillStyle = '#c0281f'; ctx.textAlign = 'left'; ctx.font = 'bold 13px "IBM Plex Mono", monospace';
   ctx.fillText('f(x) = ' + REG.a.toFixed(2) + '·x + ' + REG.b.toFixed(2), pad + 6, pad + 14);
 }
-
-/* ====== Surface de coût J(a,b) : rendu 3D lissé + axes gradués ====== */
 function drawReg3D() {
   const canvas = $('#reg-3d'); if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -807,7 +905,6 @@ function drawReg3D() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = '#fafbfc'; ctx.fillRect(0, 0, W, H);
-
   const aMin = 0, aMax = 2, bMin = -1, bMax = 4;
   const N = 32;
   const grid = [];
@@ -823,13 +920,11 @@ function drawReg3D() {
     }
     grid.push(row);
   }
-
   const th = REG.view.theta, ph = REG.view.phi;
   const ct = Math.cos(th), st = Math.sin(th);
   const cp = Math.cos(ph), sp = Math.sin(ph);
   const scale = Math.min(W * 0.40, H * 0.28);
   const cx = W * 0.5, cy = H * 0.57;
-
   function P(a, b, J) {
     const X = ((a - aMin) / (aMax - aMin)) * 2 - 1;
     const Y = ((b - bMin) / (bMax - bMin)) * 2 - 1;
@@ -841,12 +936,9 @@ function drawReg3D() {
       X, Y, Z
     };
   }
-
-  // Lumière (coordonnées monde normalisées)
   const L = [-0.42, -0.48, 0.77];
   const Ln = Math.hypot(L[0], L[1], L[2]);
   L[0] /= Ln; L[1] /= Ln; L[2] /= Ln;
-
   const quads = [];
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
@@ -875,37 +967,29 @@ function drawReg3D() {
   }
   quads.sort((A, B) => B.depth - A.depth);
   for (const q of quads) {
-    ctx.fillStyle = q.fill;
-    ctx.strokeStyle = q.fill;
-    ctx.lineWidth = 1;
+    ctx.fillStyle = q.fill; ctx.strokeStyle = q.fill; ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(q.pts[0].sx, q.pts[0].sy);
     ctx.lineTo(q.pts[1].sx, q.pts[1].sy);
     ctx.lineTo(q.pts[2].sx, q.pts[2].sy);
     ctx.lineTo(q.pts[3].sx, q.pts[3].sy);
-    ctx.closePath();
-    ctx.fill(); ctx.stroke();
+    ctx.closePath(); ctx.fill(); ctx.stroke();
   }
-
-  /* ---- Axes gradués ---- */
   const padA = 0.10, padB = 0.22;
   const a0 = aMin - padA, b0 = bMin - padB;
   const origin = P(a0, b0, 0);
   const aEnd = P(aMax, b0, 0);
   const bEnd = P(a0, bMax, 0);
   const jEnd = P(a0, b0, jMax);
-
   ctx.strokeStyle = '#3f4750'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(origin.sx, origin.sy); ctx.lineTo(aEnd.sx, aEnd.sy); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(origin.sx, origin.sy); ctx.lineTo(bEnd.sx, bEnd.sy); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(origin.sx, origin.sy); ctx.lineTo(jEnd.sx, jEnd.sy); ctx.stroke();
-
   function sdir(p1, p2) {
     const dx = p2.sx - p1.sx, dy = p2.sy - p1.sy, l = Math.hypot(dx, dy) || 1;
     return { dx: dx / l, dy: dy / l };
   }
   const labels = [];
-  // a
   const dA = sdir(P(aMin, b0, 0), P(aMin, b0 - 0.6, 0));
   [0, 0.5, 1, 1.5, 2].forEach(v => {
     const q = P(v, b0, 0);
@@ -913,7 +997,6 @@ function drawReg3D() {
     ctx.beginPath(); ctx.moveTo(q.sx, q.sy); ctx.lineTo(q.sx + dA.dx * 5, q.sy + dA.dy * 5); ctx.stroke();
     labels.push({ x: q.sx + dA.dx * 15, y: q.sy + dA.dy * 15, text: String(v).replace('.', ','), font: '10.5px' });
   });
-  // b
   const dB = sdir(P(a0, bMin, 0), P(a0 - 0.25, bMin, 0));
   [-1, 0, 1, 2, 3, 4].forEach(v => {
     const q = P(a0, v, 0);
@@ -921,7 +1004,6 @@ function drawReg3D() {
     ctx.beginPath(); ctx.moveTo(q.sx, q.sy); ctx.lineTo(q.sx + dB.dx * 5, q.sy + dB.dy * 5); ctx.stroke();
     labels.push({ x: q.sx + dB.dx * 15, y: q.sy + dB.dy * 15, text: String(v).replace('.', ','), font: '10.5px' });
   });
-  // J (graduations en valeurs réelles, positions en √J)
   const dJ = sdir(P(a0, b0, jMax * 0.5), P(a0 - 0.25, b0, jMax * 0.5));
   [1, 4, 9, 16, 25].forEach(v => {
     const q = P(a0, b0, v);
@@ -929,15 +1011,12 @@ function drawReg3D() {
     ctx.beginPath(); ctx.moveTo(q.sx, q.sy); ctx.lineTo(q.sx + dJ.dx * 5, q.sy + dJ.dy * 5); ctx.stroke();
     labels.push({ x: q.sx + dJ.dx * 15, y: q.sy + dJ.dy * 15, text: String(v), font: '10.5px' });
   });
-  // Titres d'axes
   const dAt = sdir(P(aMax, b0, 0), P(aMax + 0.3, b0, 0));
   labels.push({ x: aEnd.sx + dAt.dx * 20, y: aEnd.sy + dAt.dy * 20, text: 'a', font: 'bold 13px' });
   const dBt = sdir(P(a0, bMax, 0), P(a0, bMax + 0.5, 0));
   labels.push({ x: bEnd.sx + dBt.dx * 20, y: bEnd.sy + dBt.dy * 20, text: 'b', font: 'bold 13px' });
   const dJt = sdir(P(a0, b0, jMax), P(a0 - 0.3, b0, jMax));
   labels.push({ x: jEnd.sx + dJt.dx * 20, y: jEnd.sy + dJt.dy * 20 - 4, text: 'J', font: 'bold 13px' });
-
-  /* ---- Chemin de descente ---- */
   if (REG.path && REG.path.length > 0) {
     ctx.strokeStyle = '#c0281f'; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.beginPath();
@@ -955,17 +1034,12 @@ function drawReg3D() {
     ctx.fillStyle = '#1e7a2e'; ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8; ctx.stroke();
   }
-
-  /* ---- Étiquettes (par-dessus) ---- */
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#3c434b';
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.fillStyle = '#3c434b';
   labels.forEach(l => {
     ctx.font = l.font + ' "IBM Plex Sans", sans-serif';
     ctx.fillText(l.text, l.x, l.y);
   });
 }
-
 function drawReg2D() {
   const canvas = $('#reg-2d'); if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -976,7 +1050,6 @@ function drawReg2D() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = '#fafbfc'; ctx.fillRect(0, 0, W, H);
-
   const aMin = 0, aMax = 2, bFix = REG.b;
   const N = 80;
   const samples = [];
@@ -991,7 +1064,6 @@ function drawReg2D() {
   const pad = 44;
   const px = a => pad + (a - aMin) / (aMax - aMin) * (W - 2 * pad);
   const py = J => H - pad - Math.min(J, jCap) / jCap * (H - 2 * pad);
-
   ctx.strokeStyle = '#e6eaee'; ctx.lineWidth = 1;
   for (let i = 1; i <= 4; i++) {
     const x = pad + (W - 2 * pad) * i / 5;
@@ -1017,7 +1089,6 @@ function drawReg2D() {
   ctx.fillText('a', W - pad + 15, H - pad + 5);
   ctx.textAlign = 'left';
   ctx.fillText('J(a) à b = ' + bFix.toFixed(2), pad, pad - 12);
-
   ctx.strokeStyle = '#2e6da4'; ctx.lineWidth = 2.2;
   ctx.beginPath();
   samples.forEach((s, i) => {
@@ -1025,7 +1096,6 @@ function drawReg2D() {
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   });
   ctx.stroke();
-
   const sumX2 = REG.pts.reduce((s, p) => s + p.x * p.x, 0);
   const sumX = REG.pts.reduce((s, p) => s + p.x, 0);
   const sumXY = REG.pts.reduce((s, p) => s + p.x * p.y, 0);
@@ -1041,7 +1111,6 @@ function drawReg2D() {
     ctx.textAlign = 'center';
     ctx.fillText('a* = ' + aStar.toFixed(2), px(aStar), pad + 15);
   }
-
   const iterA = [REG.a];
   let cur = REG.a;
   for (let k = 0; k < 12; k++) {
@@ -1082,7 +1151,6 @@ function drawReg2D() {
     }
   }
 }
-
 function drawRegMultiAlpha() {
   const canvas = $('#reg-multi'); if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -1093,7 +1161,6 @@ function drawRegMultiAlpha() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = '#fafbfc'; ctx.fillRect(0, 0, W, H);
-
   const alphas = [
     { value: 0.001, label: 'α = 0,001 — sauts minuscules, convergence très lente', color: '#2e6da4' },
     { value: 0.02, label: 'α = 0,02 — sauts adaptés, convergence rapide et stable', color: '#1e7a2e' },
@@ -1112,12 +1179,10 @@ function drawRegMultiAlpha() {
   const jCap = Math.min(jMax, 0.3);
   const rowH = H / alphas.length;
   const padX = 50, padTop = 22, padBot = 30;
-
   const sumX2 = REG.pts.reduce((s, p) => s + p.x * p.x, 0);
   const sumX = REG.pts.reduce((s, p) => s + p.x, 0);
   const sumXY = REG.pts.reduce((s, p) => s + p.x * p.y, 0);
   const aStar = (sumXY - bFix * sumX) / sumX2;
-
   alphas.forEach((alpha, k) => {
     const top = k * rowH + padTop / 2;
     const bot = (k + 1) * rowH - padBot / 2;
@@ -1125,15 +1190,12 @@ function drawRegMultiAlpha() {
     const innerH = bot - top;
     const px = a => padX + (a - aMin) / (aMax - aMin) * innerW;
     const py = J => bot - Math.min(J, jCap) / jCap * innerH;
-
     ctx.fillStyle = '#111';
     ctx.font = 'bold 11px "IBM Plex Sans", sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(alpha.label, 8, top + 10);
-
     ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(padX, bot); ctx.lineTo(W - padX, bot); ctx.stroke();
-
     ctx.strokeStyle = alpha.color; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.4;
     ctx.beginPath();
     samples.forEach((s, i) => {
@@ -1142,13 +1204,11 @@ function drawRegMultiAlpha() {
     });
     ctx.stroke();
     ctx.globalAlpha = 1;
-
     if (aStar >= aMin && aStar <= aMax) {
       ctx.strokeStyle = 'rgba(30,122,46,0.4)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(px(aStar), top); ctx.lineTo(px(aStar), bot); ctx.stroke();
       ctx.setLineDash([]);
     }
-
     const iterA = [0.5];
     let cur = 0.5;
     for (let i = 0; i < 12; i++) {
@@ -1157,7 +1217,6 @@ function drawRegMultiAlpha() {
       iterA.push(cur);
       if (Math.abs(cur) > 5) break;
     }
-
     ctx.strokeStyle = alpha.color; ctx.lineWidth = 1.5;
     iterA.forEach((a, i) => {
       if (i === 0) return;
@@ -1166,7 +1225,6 @@ function drawRegMultiAlpha() {
       if (x1 < padX - 20 || x1 > W - padX + 20) return;
       ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
     });
-
     iterA.forEach((a, i) => {
       const x = px(a), y = py(Jcost(a, bFix));
       if (x < padX - 5 || x > W - padX + 5) return;
@@ -1176,7 +1234,6 @@ function drawRegMultiAlpha() {
       ctx.fill();
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
     });
-
     ctx.fillStyle = '#111';
     ctx.font = '11px "IBM Plex Mono", monospace';
     ctx.textAlign = 'right';
@@ -1188,17 +1245,18 @@ function drawRegMultiAlpha() {
 WORKSHOPS.push({ id: 'reg', title: 'Régression linéaire', hint: 'Surface 3D, coupe 2D, descente de gradient et rôle de α.', mount: mountReg,
   reset: () => { REG.a = REG_INIT.a; REG.b = REG_INIT.b; REG.alpha = REG_INIT.alpha; REG.path = []; REG.view.theta = -0.7; REG.view.phi = 0.55; } });
 
-/* ============ ATELIER 6 : RÉGRESSION LINÉAIRE MULTIPLE ============ */
+/* ============ ATELIER 6 : RÉGRESSION MULTIPLE ============ */
 function mountRegMulti(root) {
   root.innerHTML = '<h2>6. Régression linéaire multiple</h2>'
     + '<p>Quand <b>plusieurs variables</b> expliquent la cible, on généralise le modèle linéaire :</p>'
     + '<div class="formula">f(x₁, x₂) = a₁·x₁ + a₂·x₂ + b</div>'
     + '<p>Chaque coefficient aᵢ mesure le poids de la variable xᵢ. Le biais b est l\'ordonnée à l\'origine.</p>'
+    + '<p class="small">Exemple CCINP SI PSI 2025 : relation λ(θb) linéarisée par <code>LinearRegression</code>.</p>'
     + '<h3>Jeu de données immobilier</h3>'
     + '<p class="small">Surface (m²) et nombre de chambres → prix (k€).</p>'
     + '<div id="rm-table"></div>'
     + '<h3>Visualisation 3D : nuage de points et plan d\'ajustement</h3>'
-    + '<p class="small">Glissez la souris (ou le doigt) sur le graphique pour le faire tourner. Les <span style="color:#c0281f">segments rouges pointillés</span> sont les <b>résidus</b> (écart vertical entre le prix réel et le prix prédit par le plan). Le point orange est le nouvel appartement (110 m², 4 chambres).</p>'
+    + '<p class="small">Glissez la souris (ou le doigt) sur le graphique pour le faire tourner. Les <span style="color:#c0281f">segments rouges pointillés</span> sont les <b>résidus</b>. Le point orange est le nouvel appartement (110 m², 4 chambres).</p>'
     + '<canvas class="viz" id="rm-3d" style="height:400px;cursor:grab"></canvas>'
     + '<h3>Réglez les coefficients</h3>'
     + '<div class="opts">'
@@ -1212,7 +1270,7 @@ function mountRegMulti(root) {
     + '<h3>Prédiction pour un nouvel appartement</h3>'
     + '<p>Surface = 110 m², 4 chambres.</p>'
     + '<div id="rm-newpred"></div>'
-    + '<div class="retain"><b>À retenir.</b> La régression multiple est une <b>généralisation</b> de la régression monovariable. Le modèle est un <b>plan</b> dans l\'espace à (m+1) dimensions. La solution analytique existe (équations normales) et est convexe.</div>';
+    + '<div class="retain"><b>À retenir.</b> La régression multiple est une <b>généralisation</b> de la régression monovariable. Le modèle est un <b>plan</b> dans l\'espace à (m+1) dimensions.</div>';
   ['a1', 'a2', 'b'].forEach(k => {
     $('#rm-' + k).addEventListener('input', e => {
       RM[k] = +e.target.value;
@@ -1236,7 +1294,6 @@ function mountRegMulti(root) {
   bindRM3D();
   renderRM();
 }
-
 function bindRM3D() {
   const c = $('#rm-3d'); if (!c) return;
   const onDown = e => {
@@ -1264,7 +1321,6 @@ function bindRM3D() {
     RMV.bound = true;
   }
 }
-
 function renderRM() {
   ['a1', 'a2', 'b'].forEach(k => {
     const el = $('#rm-' + k); if (el) el.value = RM[k];
@@ -1286,7 +1342,6 @@ function renderRM() {
   tb.append(h('div', { class: 'dwrap' }, h('table', { class: 'dt' },
     h('thead', null, h('tr', null, ['Surface', 'Chambres', 'Prix réel', 'Prix prédit', 'Erreur'].map(t => h('th', null, t)))),
     tbody)));
-
   const stats = $('#rm-stats');
   if (stats) {
     stats.innerHTML = '';
@@ -1299,7 +1354,6 @@ function renderRM() {
       h('div', { class: 'stat' }, h('span', null, 'RMSE'), h('b', null, rmse.toFixed(2))),
       h('div', { class: 'stat' }, h('span', null, 'J(a₁,a₂,b)'), h('b', null, j.toFixed(1))));
   }
-
   const m = $('#rm-msg');
   if (m) {
     const rmse = rmRMSE(RM.a1, RM.a2, RM.b);
@@ -1307,7 +1361,6 @@ function renderRM() {
     else if (rmse < 10) { m.className = 'verdict warn'; m.textContent = 'Ajustement correct. RMSE = ' + rmse.toFixed(2) + ' k€. Ajustez encore les coefficients.'; }
     else { m.className = 'verdict'; m.textContent = 'Ajustement médiocre. RMSE = ' + rmse.toFixed(2) + ' k€. Cherchez de meilleurs coefficients.'; }
   }
-
   const np = $('#rm-newpred');
   if (np) {
     const pred = rmPredict(RM.a1, RM.a2, RM.b, RM.x1new, RM.x2new);
@@ -1315,7 +1368,6 @@ function renderRM() {
   }
   drawRM3D();
 }
-
 function drawRM3D() {
   const canvas = $('#rm-3d'); if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -1326,14 +1378,12 @@ function drawRM3D() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
   ctx.fillStyle = '#fafbfc'; ctx.fillRect(0, 0, W, H);
-
   const x1max = 160, x2max = 6, ymax = 500;
   const th = RMV.theta, ph = RMV.phi;
   const ct = Math.cos(th), st = Math.sin(th);
   const cp = Math.cos(ph), sp = Math.sin(ph);
   const scale = Math.min(W * 0.36, H * 0.28);
   const cx = W * 0.5, cy = H * 0.60;
-
   function P(x1, x2, y) {
     const X = (x1 / x1max) * 2 - 1;
     const Y = (x2 / x2max) * 2 - 1;
@@ -1345,23 +1395,17 @@ function drawRM3D() {
     };
   }
   const clampY = y => Math.max(0, Math.min(ymax, y));
-
-  // Sol
   const O = P(0, 0, 0), X1 = P(x1max, 0, 0), X2 = P(0, x2max, 0), X12 = P(x1max, x2max, 0);
   ctx.fillStyle = 'rgba(90,96,104,0.05)';
   ctx.strokeStyle = 'rgba(90,96,104,0.30)'; ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(O.sx, O.sy); ctx.lineTo(X1.sx, X1.sy); ctx.lineTo(X12.sx, X12.sy); ctx.lineTo(X2.sx, X2.sy); ctx.closePath();
   ctx.fill(); ctx.stroke();
-
-  // Axes
   const Yt = P(0, 0, ymax);
   ctx.strokeStyle = '#3f4750'; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(O.sx, O.sy); ctx.lineTo(X1.sx, X1.sy); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(O.sx, O.sy); ctx.lineTo(X2.sx, X2.sy); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(O.sx, O.sy); ctx.lineTo(Yt.sx, Yt.sy); ctx.stroke();
-
-  // Plan d'ajustement
   const GX = 6, GY = 4;
   const cells = [];
   for (let i = 0; i < GX; i++) {
@@ -1386,8 +1430,6 @@ function drawRM3D() {
     ctx.closePath();
     ctx.fill(); ctx.stroke();
   }
-
-  // Résidus
   ctx.setLineDash([3, 3]); ctx.lineWidth = 1.3; ctx.strokeStyle = 'rgba(192,40,31,0.60)';
   RM.data.forEach(p => {
     const yh = clampY(rmPredict(RM.a1, RM.a2, RM.b, p.x1, p.x2));
@@ -1395,8 +1437,6 @@ function drawRM3D() {
     ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b2.sx, b2.sy); ctx.stroke();
   });
   ctx.setLineDash([]);
-
-  // Points de données
   const pts = RM.data.map(p => ({ p, q: P(p.x1, p.x2, p.y) }));
   pts.sort((A, B) => B.q.depth - A.q.depth);
   for (const { q } of pts) {
@@ -1404,8 +1444,6 @@ function drawRM3D() {
     ctx.fillStyle = '#2e6da4'; ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.6; ctx.stroke();
   }
-
-  // Nouvel appartement
   const ynew = rmPredict(RM.a1, RM.a2, RM.b, RM.x1new, RM.x2new);
   if (ynew >= 0 && ynew <= ymax) {
     const q = P(RM.x1new, RM.x2new, ynew);
@@ -1416,8 +1454,6 @@ function drawRM3D() {
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillText('nouvel appartement', q.sx + 11, q.sy);
   }
-
-  // Labels d'axes
   function sdir(p1, p2) {
     const dx = p2.sx - p1.sx, dy = p2.sy - p1.sy, l = Math.hypot(dx, dy) || 1;
     return { dx: dx / l, dy: dy / l };
@@ -1438,7 +1474,6 @@ function drawRM3D() {
     const q = P(0, 0, v);
     ctx.fillText(t, q.sx + out2.dx * 15, q.sy + out2.dy * 15);
   });
-
   const d1 = sdir(X1, P(x1max + 30, 0, 0));
   const d2 = sdir(X2, P(0, x2max + 1.2, 0));
   const dy = sdir(Yt, P(-30, 0, ymax));
@@ -1454,7 +1489,7 @@ function mountPerc(root) {
   root.innerHTML = '<h2>7. Perceptron interactif</h2>'
     + '<p>Un <b>perceptron</b> calcule une somme pondérée puis applique une fonction d\'activation :</p>'
     + '<div class="formula">z = w₁·x₁ + w₂·x₂ + b &nbsp;puis&nbsp; y = φ(z)</div>'
-    + '<p>Réglez les poids, le biais et l\'activation. La <b>droite bleue</b> est la frontière de décision. Le point jaune est l\'entrée courante.</p>'
+    + '<p>Réglez les poids, le biais et l\'activation. La <b>droite bleue</b> est la frontière de décision.</p>'
     + '<div class="reg-grid">'
     + '<canvas class="viz" id="perc-canvas" style="height:340px;cursor:default"></canvas>'
     + '<div>'
@@ -1479,14 +1514,8 @@ function mountPerc(root) {
       drawPerc();
     });
   });
-  const acts = ['sigmoid', 'tanh', 'relu', 'step'];
-  $('#perc-act').appendChild(h('div', { class: 'chips' }, acts.map(a => h('button', {
-    type: 'button', class: 'chip' + (PERC.act === a ? ' on' : ''),
-    onclick: () => { PERC.act = a; drawPerc(); }
-  }, a))));
   drawPerc();
 }
-
 function drawPerc() {
   ['x1', 'x2', 'w1', 'w2', 'b'].forEach(k => {
     const el = $('#perc-' + k); if (el) el.value = PERC[k];
@@ -1509,12 +1538,10 @@ function drawPerc() {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
-
   const xmin = -2, xmax = 2, ymin = -2, ymax = 2;
   const pad = 30;
   const sx = x => pad + (x - xmin) / (xmax - xmin) * (W - 2 * pad);
   const sy = y => H - pad - (y - ymin) / (ymax - ymin) * (H - 2 * pad);
-
   const step = 4;
   for (let py = 0; py < H; py += step) {
     for (let px = 0; px < W; px += step) {
@@ -1547,7 +1574,6 @@ function drawPerc() {
   ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2);
   ctx.fillStyle = '#f4c430'; ctx.fill();
   ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.stroke();
-
   const z = PERC.w1 * PERC.x1 + PERC.w2 * PERC.x2 + PERC.b;
   const output = ACTS[PERC.act](z);
   const predClass = output > 0.5 ? 1 : 0;
@@ -1577,18 +1603,18 @@ function drawPerc() {
   const msg = $('#perc-msg');
   if (msg) {
     if (acc === 100) { msg.className = 'verdict yes'; msg.textContent = 'Parfait ! Tous les points sont classés correctement.'; }
-    else if (acc >= 70) { msg.className = 'verdict warn'; msg.textContent = 'Bien, mais pas parfait. Ajustez w₁, w₂ ou b pour séparer tous les points.'; }
-    else { msg.className = 'verdict'; msg.textContent = 'Ajustez w₁, w₂ et b pour déplacer la frontière et séparer les points (classe 1 en haut à droite, classe 0 en bas à gauche).'; }
+    else if (acc >= 70) { msg.className = 'verdict warn'; msg.textContent = 'Bien, mais pas parfait. Ajustez w₁, w₂ ou b.'; }
+    else { msg.className = 'verdict'; msg.textContent = 'Ajustez w₁, w₂ et b pour déplacer la frontière.'; }
   }
 }
 WORKSHOPS.push({ id: 'perc', title: 'Perceptron interactif', hint: 'Régler poids, biais et activation d\'un neurone.', mount: mountPerc,
   reset: () => { PERC.w1 = 0; PERC.w2 = 1; PERC.b = 0; PERC.act = 'sigmoid'; PERC.x1 = 0.5; PERC.x2 = 0.8; } });
 
-/* ============ ATELIER 8 : RÉSEAU MULTICOUCHE ============ */
+/* ============ ATELIER 8 : RÉSEAU XOR ============ */
 function mountMLP(root) {
   root.innerHTML = '<h2>8. Réseau multicouche : le problème XOR</h2>'
-    + '<p>Un perceptron simple ne peut séparer que des données <b>linéairement séparables</b>. Le problème <b>XOR</b> ne l\'est pas : aucune droite ne sépare (0,0) et (1,1) de (0,1) et (1,0).</p>'
-    + '<p>Un réseau à <b>une couche cachée</b> de deux neurones y arrive. Réglez les seuils c₁ et c₂ des neurones cachés.</p>'
+    + '<p>Un perceptron simple ne peut séparer que des données <b>linéairement séparables</b>. Le problème <b>XOR</b> ne l\'est pas.</p>'
+    + '<p>Un réseau à <b>une couche cachée</b> de deux neurones y arrive.</p>'
     + '<div class="reg-grid">'
     + '<canvas class="viz" id="mlp-canvas" style="height:340px;cursor:default"></canvas>'
     + '<div>'
@@ -1613,14 +1639,12 @@ function mountMLP(root) {
   });
   drawMLP(); drawActs();
 }
-
 function mlpPredict(x1, x2) {
   const k = MLP.k, K = MLP.K;
   const h1 = 1 / (1 + Math.exp(-k * (x1 + x2 - MLP.c1)));
   const h2 = 1 / (1 + Math.exp(-k * (x1 + x2 - MLP.c2)));
   return { h1, h2, y: 1 / (1 + Math.exp(-K * (h1 - h2 - 0.4))) };
 }
-
 function drawMLP() {
   $('#mlp-c1').value = MLP.c1; $('#mlp-c2').value = MLP.c2;
   $('#mlp-c1-out').textContent = MLP.c1.toFixed(2);
@@ -1633,11 +1657,9 @@ function drawMLP() {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
-
   const xmin = -0.5, xmax = 1.5, pad = 30;
   const sx = x => pad + (x - xmin) / (xmax - xmin) * (W - 2 * pad);
   const sy = y => H - pad - (y - xmin) / (xmax - xmin) * (H - 2 * pad);
-
   const step = 5;
   for (let py = 0; py < H; py += step) {
     for (let px = 0; px < W; px += step) {
@@ -1649,7 +1671,6 @@ function drawMLP() {
       ctx.fillRect(px, py, step, step);
     }
   }
-
   ctx.strokeStyle = '#8a929c'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(W - pad, H - pad); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, H - pad); ctx.stroke();
@@ -1662,12 +1683,10 @@ function drawMLP() {
     ctx.fillText(String(v), pad - 5, H - pad - (H - 2 * pad) * i / 2 + 4);
     ctx.textAlign = 'center';
   }
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#111';
+  ctx.textAlign = 'center'; ctx.fillStyle = '#111';
   ctx.fillText('x₁', W - pad + 15, H - pad + 5);
   ctx.textAlign = 'left';
   ctx.fillText('x₂', pad - 30, pad - 5);
-
   MLP.points.forEach(p => {
     const x = sx(p.x1), y = sy(p.x2);
     ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2);
@@ -1677,7 +1696,6 @@ function drawMLP() {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(String(p.y), x, y + 1);
   });
-
   const tb = $('#mlp-table');
   if (tb) {
     let correct = 0;
@@ -1703,12 +1721,11 @@ function drawMLP() {
     const acc = correct / 4 * 100;
     const m = $('#mlp-msg');
     if (m) {
-      if (acc === 100) { m.className = 'verdict yes'; m.innerHTML = '<b>100 %</b> — c\'est la solution du XOR ! Les deux neurones cachés ont des seuils différents.'; }
-      else { m.className = 'verdict warn'; m.innerHTML = 'Précision : <b>' + acc + ' %</b>. Essayez c₁ ≈ 0,5 et c₂ ≈ 1,5 pour séparer correctement les quatre points.'; }
+      if (acc === 100) { m.className = 'verdict yes'; m.innerHTML = '<b>100 %</b> — solution du XOR !'; }
+      else { m.className = 'verdict warn'; m.innerHTML = 'Précision : <b>' + acc + ' %</b>. Essayez c₁ ≈ 0,5 et c₂ ≈ 1,5.'; }
     }
   }
 }
-
 function drawActs() {
   const canvas = $('#mlp-acts'); if (!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
@@ -1749,27 +1766,258 @@ function drawActs() {
     ctx.fillText(fn.name, 8 + idx * 100, pad + 12);
   });
 }
-WORKSHOPS.push({ id: 'mlp', title: 'Réseau multicouche', hint: 'Le problème XOR et la solution par une couche cachée.', mount: mountMLP,
+WORKSHOPS.push({ id: 'mlp', title: 'Réseau XOR', hint: 'Le problème XOR et la solution par une couche cachée.', mount: mountMLP,
   reset: () => { MLP.c1 = 0.8; MLP.c2 = 0.8; } });
 
-/* ============ ATELIER 9 : DÉMARCHE DE RÉSOLUTION ============ */
+/* ============ ATELIER 9 : RÉSEAU INTERACTIF ============ */
+function mountNetInter(root) {
+  root.innerHTML = '<h2>9. Réseau de neurones interactif</h2>'
+    + '<p>Construisez votre réseau : choisissez le <b>nombre d\'entrées</b>, de <b>couches cachées</b>, de <b>neurones par couche</b> et l\'<b>activation</b>. Observez la propagation avant.</p>'
+    + '<p class="small">Connexions bleues : poids positifs ; rouges : négatifs ; épaisseur ∝ |w|. Le <b>nombre de paramètres</b> affiché suit la formule n_param = Σ(n_{k}·n_{k+1} + n_{k+1}).</p>'
+    + '<h3>Architecture</h3>'
+    + '<div class="net-arch">'
+    + '<label class="fld"><span>Entrées : <b id="net-nin-out">2</b></span><input type="range" id="net-nin" min="1" max="3" step="1" value="2"></label>'
+    + '<label class="fld"><span>Couches cachées : <b id="net-nh-out">2</b></span><input type="range" id="net-nh" min="0" max="3" step="1" value="2"></label>'
+    + '<label class="fld"><span>Activation</span><div id="net-act"></div></label>'
+    + '</div>'
+    + '<div id="net-neurons-box"></div>'
+    + '<div id="net-param-box" class="gstats"></div>'
+    + '<h3>Entrées (x₁ … xₙ)</h3>'
+    + '<div id="net-inputs-box"></div>'
+    + '<h3>Vue du réseau</h3>'
+    + '<canvas class="viz" id="net-canvas" style="height:400px;cursor:default"></canvas>'
+    + '<div class="files"><button class="btn" id="net-shuffle" type="button">Nouveaux poids aléatoires</button><button class="btn" id="net-toggle-w" type="button">Masquer les poids</button></div>'
+    + '<h3>Propagation avant</h3>'
+    + '<div id="net-forward"></div>';
+
+  $('#net-nin').addEventListener('input', e => {
+    NET.nIn = +e.target.value;
+    netInitWeights();
+    renderNetInter();
+  });
+  $('#net-nh').addEventListener('input', e => {
+    NET.nHidden = +e.target.value;
+    netInitWeights();
+    renderNetInter();
+  });
+  $('#net-shuffle').addEventListener('click', () => {
+    NET.seed = Math.floor(Math.random() * 100000);
+    netInitWeights();
+    renderNetInter();
+  });
+  $('#net-toggle-w').addEventListener('click', () => {
+    NET.showWeights = !NET.showWeights;
+    $('#net-toggle-w').textContent = NET.showWeights ? 'Masquer les poids' : 'Afficher les poids';
+    drawNetInter();
+  });
+  renderNetInter();
+}
+function renderNetInter() {
+  $('#net-nin').value = NET.nIn;
+  $('#net-nh').value = NET.nHidden;
+  $('#net-nin-out').textContent = NET.nIn;
+  $('#net-nh-out').textContent = NET.nHidden;
+
+  const ab = $('#net-act');
+  if (ab) {
+    ab.innerHTML = '';
+    ab.append(h('div', { class: 'chips' }, ['sigmoid', 'tanh', 'relu', 'step'].map(a => h('button', {
+      type: 'button', class: 'chip' + (NET.activation === a ? ' on' : ''),
+      onclick: () => { NET.activation = a; renderNetInter(); }
+    }, a))));
+  }
+
+  const nb = $('#net-neurons-box');
+  if (nb) {
+    nb.innerHTML = '';
+    for (let i = 0; i < NET.nHidden; i++) {
+      nb.append(h('label', { class: 'fld' },
+        h('span', null, 'Couche ' + (i + 1) + ' : <b>' + NET.neurons[i] + '</b> neurone(s)'),
+        h('input', { type: 'range', min: '1', max: '6', step: '1', value: String(NET.neurons[i]),
+          oninput: e => { NET.neurons[i] = +e.target.value; netInitWeights(); renderNetInter(); } })));
+    }
+  }
+
+  // Nombre de paramètres + règle empirique
+  const pb = $('#net-param-box');
+  if (pb) {
+    pb.innerHTML = '';
+    const nParam = netParamCount();
+    const data10 = nParam * 10;
+    const data50 = nParam * 50;
+    pb.append(
+      h('div', { class: 'stat' }, h('span', null, 'paramètres à apprendre'), h('b', null, String(nParam))),
+      h('div', { class: 'stat' }, h('span', null, 'données (×10, mini)'), h('b', null, data10.toLocaleString('fr-FR'))),
+      h('div', { class: 'stat' }, h('span', null, 'données (×50, confort)'), h('b', null, data50.toLocaleString('fr-FR'))));
+  }
+
+  const ib = $('#net-inputs-box');
+  if (ib) {
+    ib.innerHTML = '';
+    const labels = ['x₁', 'x₂', 'x₃'];
+    for (let i = 0; i < NET.nIn; i++) {
+      ib.append(h('label', { class: 'fld' },
+        h('span', null, labels[i] + ' = <b>' + NET.inputs[i].toFixed(2) + '</b>'),
+        h('input', { type: 'range', min: '-1', max: '1', step: '0.05', value: String(NET.inputs[i]),
+          oninput: e => { NET.inputs[i] = +e.target.value; renderNetInter(); } })));
+    }
+  }
+
+  drawNetInter();
+  renderNetForward();
+}
+function drawNetInter() {
+  const canvas = $('#net-canvas'); if (!canvas) return;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fafbfc'; ctx.fillRect(0, 0, W, H);
+  const layers = [NET.nIn, ...NET.neurons.slice(0, NET.nHidden), 1];
+  const nCols = layers.length;
+  const M = 70, MT = 40, MB = 40;
+  const xStep = nCols > 1 ? (W - 2 * M) / (nCols - 1) : 0;
+  const fwd = netForward();
+  const allActivations = fwd.activations;
+  const positions = [];
+  layers.forEach((count, col) => {
+    const positions_col = [];
+    const usableH = H - MT - MB;
+    const spacing = count > 1 ? usableH / (count + 1) : usableH / 2;
+    for (let i = 0; i < count; i++) {
+      const x = M + col * xStep;
+      const y = MT + spacing * (i + 1);
+      positions_col.push({ x, y });
+    }
+    positions.push(positions_col);
+  });
+  for (let l = 0; l < NET.weights.length; l++) {
+    const from = positions[l];
+    const to = positions[l + 1];
+    for (let j = 0; j < NET.weights[l].length; j++) {
+      for (let i = 0; i < NET.weights[l][j].length; i++) {
+        const w = NET.weights[l][j][i];
+        const a = from[i], b = to[j];
+        const sign = w >= 0 ? '#2e6da4' : '#c0281f';
+        ctx.strokeStyle = sign;
+        ctx.globalAlpha = Math.min(0.9, 0.25 + Math.abs(w) * 0.25);
+        ctx.lineWidth = 0.8 + Math.abs(w) * 1.2;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        if (NET.showWeights && Math.abs(w) > 0.1) {
+          const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+          ctx.fillStyle = w >= 0 ? '#1b4a76' : '#8a1c14';
+          ctx.font = '9.5px "IBM Plex Mono", monospace';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillRect(mx - 13, my - 6, 26, 12);
+          ctx.fillStyle = '#fff';
+          ctx.fillText(w.toFixed(1), mx, my);
+        }
+      }
+    }
+  }
+  const actLabel = { sigmoid: 'σ', tanh: 'tanh', relu: 'ReLU', step: 'step' };
+  layers.forEach((count, col) => {
+    positions[col].forEach((pos, i) => {
+      const val = allActivations[col][i];
+      let r, g, bl;
+      if (col === 0) { r = 220; g = 230; bl = 245; }
+      else {
+        const t = Math.max(0, Math.min(1, (val + 1) / 2));
+        r = Math.round(255 * (1 - t) + 46 * t);
+        g = Math.round(200 * (1 - t) + 122 * t);
+        bl = Math.round(200 * (1 - t) + 164 * t);
+      }
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 15, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + bl + ')';
+      ctx.fill();
+      ctx.strokeStyle = col === layers.length - 1 ? '#9a5b00' : '#3f4750';
+      ctx.lineWidth = col === layers.length - 1 ? 2.2 : 1.5;
+      ctx.stroke();
+      ctx.fillStyle = '#111';
+      ctx.font = 'bold 10px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(val.toFixed(2), pos.x, pos.y + 22);
+    });
+    const label = col === 0 ? 'entrée (n=' + count + ')' : col === layers.length - 1 ? 'sortie (n=' + count + ')' : 'cachée ' + col + ' (n=' + count + ')';
+    ctx.fillStyle = '#5a6068';
+    ctx.font = 'bold 11px "IBM Plex Sans", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, positions[col][0].x, MT - 20);
+  });
+  NET.biases.forEach((biases, l) => {
+    biases.forEach((b, j) => {
+      const p = positions[l + 1][j];
+      ctx.fillStyle = '#5a6068';
+      ctx.font = '9px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText('b=' + b.toFixed(2), p.x + 18, p.y);
+    });
+  });
+}
+function renderNetForward() {
+  const box = $('#net-forward'); if (!box) return;
+  box.innerHTML = '';
+  const fwd = netForward();
+  const layers = [NET.inputs.slice(0, NET.nIn), ...fwd.activations.slice(1)];
+  const rows = [];
+  layers.forEach((A, l) => {
+    if (l === 0) {
+      rows.push({ label: 'Entrée', formula: '', out: A.map(v => v.toFixed(3)).join(', ') });
+    } else {
+      const zs = fwd.zs[l - 1];
+      const W = NET.weights[l - 1];
+      const prev = layers[l - 1];
+      for (let j = 0; j < A.length; j++) {
+        let sum = NET.biases[l - 1][j].toFixed(2);
+        for (let i = 0; i < prev.length; i++) sum += ' + ' + W[j][i].toFixed(2) + '·' + prev[i].toFixed(2);
+        rows.push({
+          label: (l === layers.length - 1 ? 'sortie' : 'couche ' + l) + ' · neurone ' + (j + 1),
+          formula: 'z = ' + sum + ' = ' + zs[j].toFixed(3) + ' → ' + NET.activation + '(z)',
+          out: A[j].toFixed(3)
+        });
+      }
+    }
+  });
+  const tbody = h('tbody');
+  rows.forEach(r => tbody.append(h('tr', null,
+    h('td', null, r.label),
+    h('td', { class: 'm' }, r.formula),
+    h('td', { class: 'm' }, h('b', null, r.out))
+  )));
+  box.append(h('div', { class: 'dwrap' }, h('table', { class: 'dt' },
+    h('thead', null, h('tr', null, ['Couche', 'Calcul', 'Valeur'].map(t => h('th', null, t)))),
+    tbody)));
+  const final = layers[layers.length - 1][0];
+  box.append(h('div', { class: 'verdict yes' },
+    'Sortie finale ŷ = <b>' + final.toFixed(4) + '</b> (' + NET.activation + ')'
+    + (NET.activation === 'sigmoid' || NET.activation === 'step' ? ' → classe ' + (final > 0.5 ? '1' : '0') : '')));
+}
+WORKSHOPS.push({ id: 'netinter', title: 'Réseau interactif', hint: 'Construire son réseau : entrées, couches, neurones, activation.', mount: mountNetInter,
+  reset: () => { NET.nIn = 2; NET.nHidden = 2; NET.neurons = [3, 3, 3]; NET.inputs = [0.6, -0.4, 0.8]; NET.activation = 'sigmoid'; NET.seed = 42; NET.showWeights = true; netInitWeights(); } });
+
+/* ============ ATELIER 10 : DÉMARCHE ============ */
 function mountDemarche(root) {
-  root.innerHTML = '<h2>9. Démarche de résolution</h2>'
-    + '<p>Face à un problème d\'ingénierie, on <b>décompose</b> le problème complexe en sous-problèmes simples, on <b>choisit</b> l\'algorithme adapté (k-NN, régression multiple, réseau de neurones), puis on mène les phases d\'<b>apprentissage</b> et d\'<b>inférence</b>.</p>'
+  root.innerHTML = '<h2>10. Démarche de résolution</h2>'
+    + '<p>Face à un problème, on <b>décompose</b> en sous-problèmes simples, on <b>choisit</b> l\'algorithme adapté, puis on mène les phases d\'<b>apprentissage</b> et d\'<b>inférence</b>.</p>'
     + '<h3>Partie A. Type et algorithme</h3>'
-    + '<p>Pour chaque scénario, indiquez s\'il s\'agit de <b>classification</b> ou de <b>régression</b>, puis l\'algorithme recommandé.</p>'
     + '<div id="dem-a"></div>'
     + '<h3>Partie B. Phase d\'apprentissage ou d\'inférence</h3>'
-    + '<p>Classez chaque action dans la phase correspondante.</p>'
     + '<div id="dem-b"></div>'
     + '<div class="files" style="margin-top:8px"><button class="btn pri" id="dem-check" type="button">Vérifier</button><button class="btn" id="dem-reset" type="button">Recommencer</button></div>'
     + '<div class="verdict" id="dem-msg"></div>'
-    + '<div class="retain"><b>À retenir.</b> La démarche est toujours la même : <b>décomposer</b> → <b>choisir l\'algorithme</b> → <b>entraîner</b> (apprentissage) → <b>inférer</b> (prédire). Le choix de l\'algorithme dépend du type de sortie (classe / valeur) et de la nature du problème (linéaire / non linéaire).</div>';
+    + '<div class="retain"><b>À retenir.</b> Décomposer → choisir l\'algorithme → entraîner → inférer.</div>';
   renderDem();
   $('#dem-check').addEventListener('click', () => { DEM.checked = true; DEM.checkedPhase = true; renderDem(); });
   $('#dem-reset').addEventListener('click', () => { DEM.assign = {}; DEM.assignPhase = {}; DEM.checked = false; DEM.checkedPhase = false; renderDem(); });
 }
-
 function renderDem() {
   const a = $('#dem-a'); if (!a) return;
   a.innerHTML = '';
@@ -1793,7 +2041,6 @@ function renderDem() {
     }, DEM.choices.algo[c])));
     a.append(h('div', { class: 'task-row' }, h('div', null, h('b', null, (i + 1) + '. ' + sc.t), h('div', { style: 'margin-top:4px' }, chipsType, chipsAlgo), fb)));
   });
-
   const b = $('#dem-b'); if (!b) return;
   b.innerHTML = '';
   DEM.phases.forEach((ph, i) => {
@@ -1813,7 +2060,6 @@ function renderDem() {
     }, c.l)));
     b.append(h('div', { class: 'task-row' }, h('div', null, h('span', null, (i + 1) + '. ' + ph.t), fb), chips));
   });
-
   const msg = $('#dem-msg');
   if (msg && DEM.checked) {
     let ok = 0;
@@ -1830,10 +2076,82 @@ function renderDem() {
 }
 WORKSHOPS.push({ id: 'demarche', title: 'Démarche de résolution', hint: 'Choisir un algorithme et distinguer apprentissage et inférence.', mount: mountDemarche, reset: () => { DEM.assign = {}; DEM.assignPhase = {}; DEM.checked = false; DEM.checkedPhase = false; } });
 
-/* ============ ATELIER 10 : EXEMPLES DE CONCOURS ============ */
+/* ============ ATELIER 11 : EXEMPLES DE CONCOURS ============ */
+const CONCOURS = {
+  examples: [
+    { ref: 'CCINP SI PSI 2025', title: 'Régression non linéaire — friction',
+      context: 'On étudie le frottement d\'un inverseur de poussée. X contient 1481 vitesses mesurées (mm/s), Y les 1481 forces associées (N). La relation est fortement non linéaire (marche de friction autour de v = 0).',
+      code: `Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, Y, test_size=200, random_state=9)
+mdl = MLPRegressor(hidden_layer_sizes=(600,50), tol=1e-3, max_iter=1000, random_state=9)
+mdl.fit(Xtrain, Ytrain)
+sc = mdl.score(Xtrain, Ytrain)        # >>> 0.98
+Yp = mdl.predict(Xtest)
+r2_score(Ytest, Yp)                    # >>> 0.97`,
+      questions: [
+        { q: 'Combien de données disponibles ? Combien pour les tests ?', a: '1481 données au total. test_size=200 → <b>200 données de test</b> et <b>1281 d\'entraînement</b>.' },
+        { q: 'Préciser le type d\'IA et les paramètres de la méthode.', a: '<b>Apprentissage supervisé</b>, tâche de <b>régression</b> (sortie continue), méthode <b>réseau de neurones</b> (MLPRegressor). Paramètres : deux couches cachées de <b>600 et 50 neurones</b>, tolérance 1e-3, 1000 itérations max.' },
+        { q: 'Commenter les deux grandeurs affichées.', a: 'Le <b>score R²</b> vaut 0,98 (train) et 0,97 (test). R² proche de 1 ⇒ très bon ajustement. Score test ≈ score train ⇒ pas de surapprentissage.' }
+      ] },
+    { ref: 'CCINP SI PSI 2025', title: 'Régression linéaire univariée — λ(θb)',
+      context: 'Pour l\'asservissement de l\'inverseur de poussée, on cherche une relation linéaire entre V20 = dλ/dt et ωb = dθb/dt. Fichier "mesure.txt" : θb en degrés, λi en mm.',
+      code: `X = pl.array(theta_regression).reshape((-1,1))
+Y = pl.array(lbda_regression)
+model_linReg = LinearRegression().fit(X, Y)
+a = model_linReg.coef_[0]
+b = model_linReg.intercept_`,
+      questions: [
+        { q: 'Pourquoi une régression plutôt qu\'une linéarisation autour d\'un point ?', a: 'La linéarisation n\'est valable que <b>localement</b>. La régression exploite <b>toute la plage</b> et fournit une loi globale.' },
+        { q: 'Critiquer ce choix sur θb ∈ [5°, 30°].', a: 'La dérivée dλ/dθb varie fortement dans cette zone. Le modèle linéaire global est <b>moins précis aux basses températures</b> ; compromis précision / simplicité.' },
+        { q: 'Que valent a et b dans le code ?', a: '<code>a = model_linReg.coef_[0]</code> (coefficient directeur = gain Kcc) et <code>b = model_linReg.intercept_</code> (ordonnée à l\'origine).' }
+      ] },
+    { ref: 'CCINP TSI SI 2025', title: 'Classification de substrats par caméra',
+      context: 'Une micropipette doit s\'adapter au type de substrat (A ou B) pour éviter l\'instabilité. La caméra fournit des images à classer.',
+      code: `# Matrice de confusion (multi-classes) :
+#              Prédit A   Prédit B
+#   Réel A        814        186
+#   Réel B        747         40
+#
+# S = VP / (VP + FN)   P = VP / (VP + FP)`,
+      questions: [
+        { q: 'Classification ou régression ? Justifier.', a: '<b>Classification</b> : la sortie est <b>qualitative</b> (substrat A ou B).' },
+        { q: 'Sensibilité et précision du substrat A.', a: 'Pour A : VP=814, FN=186, FP=747.<br>S = 814/(814+186) = <b>0,814</b> (81,4 %)<br>P = 814/(814+747) = <b>0,521</b> (52,1 %)' },
+        { q: 'Sensibilité et précision du substrat B.', a: 'Pour B : VP=40, FN=747, FP=186.<br>S = 40/(40+747) = <b>0,051</b> (5,1 %)<br>P = 40/(40+186) = <b>0,177</b> (17,7 %)' },
+        { q: 'Quel substrat est le plus sensible / précis ?', a: 'Le substrat <b>A</b> : plus sensible (81,4 %) et plus précis (52,1 %). L\'algorithme confond B avec A.' }
+      ] },
+    { ref: 'Concours (robotique)', title: 'Modèle géométrique inverse par réseau de neurones',
+      context: 'On cherche à prédire les angles articulaires θ (ou leur sinus/cosinus) à partir des coordonnées cartésiennes X du robot. Le réseau est dense, avec n_e entrées, n_s sorties, n_c couches cachées de n_n neurones chacune. On teste 6 configurations avec 1 million de données chacune.',
+      code: `# Réseau dense : n_e entrées, n_c couches cachées de n_n neurones,
+# n_s sorties
+#
+# n_param = n_n·n_e + n_n                       (entrée → 1re cachée)
+#         + (n_c − 1)·(n_n² + n_n)              (cachée → cachée)
+#         + n_s·n_n + n_s                       (dernière cachée → sortie)
+#
+# Règle empirique : au moins 10× plus d'exemples que de paramètres
+# (parfois 30 à 50×)
+#
+# Configurations testées :
+#   1 : 4  couches × 12 neurones
+#   2 : 8  couches × 12 neurones
+#   3 : 16 couches × 12 neurones
+#   4 : 16 couches × 24 neurones
+#   5 : 32 couches × 48 neurones
+#   6 : 64 couches × 48 neurones
+#
+# Sans fonction de perte : erreur reconstruite > 5 m (mauvais)
+# Avec fonction de perte ε(θ) = ||f(θ) − X||² : erreur < 5 mm pour config 5`,
+      questions: [
+        { q: 'Nombre de neurones sur la première et la dernière couche ?', a: '<b>n_e = 6</b> (3 coordonnées + 3 angles, ou 3 sin + 3 cos selon la stratégie) et <b>n_s = 6</b> (3 sin + 3 cos des angles).' },
+        { q: 'Formule du nombre de paramètres du réseau ?', a: '<b>n_param = n_n·n_e + n_n + (n_c − 1)·(n_n² + n_n) + n_s·n_n + n_s</b>.<br>Détail : passage entrée→1<sup>re</sup> cachée : n_n·n_e + n_n ; entre cachées : (n_c − 1)(n_n² + n_n) ; dernière cachée→sortie : n_s·n_n + n_s.' },
+        { q: 'Nombre minimal de données d\'entraînement ?', a: 'Règle empirique : <b>10× le nombre de paramètres</b> (parfois 30 à 50×). Pour 32 couches × 48 neurones, n_param ≈ 75 000 → ≥ 750 000 données. On utilise souvent 1 million.' },
+        { q: 'Critiquer le modèle initial (sans fonction de perte).', a: 'Erreur moyenne reconstruite <b>> 5 m</b> : beaucoup trop élevée. De plus, il n\'est pas fait mention d\'un jeu de test séparé, ce qui rend difficile l\'évaluation du surapprentissage.' },
+        { q: 'Quelle configuration retenir ?', a: '<b>Configuration 5</b> (32 couches × 48 neurones). Erreur reconstruite < 5 mm, soit un compromis entre précision et temps de calcul (moins de paramètres que la config 6).' }
+      ] }
+  ]
+};
 function mountConcours(root) {
-  root.innerHTML = '<h2>10. Exemples de concours</h2>'
-    + '<p>Trois exemples récents de concours (CCINP SI PSI 2025, CCINP TSI SI 2025) illustrent le programme d\'IA. Pour chacun, lisez le contexte, le code fourni aux candidats, puis répondez aux questions.</p>'
+  root.innerHTML = '<h2>11. Exemples de concours</h2>'
+    + '<p>Quatre exemples récents illustrent le programme d\'IA. Lisez le contexte, le code fourni aux candidats, puis répondez aux questions.</p>'
     + '<div id="cc-list"></div>';
   renderConcours();
 }
@@ -1846,263 +2164,200 @@ function renderConcours() {
         h('b', { style: 'font-size:15px' }, (i + 1) + '. ' + ex.title),
         h('span', { class: 'chip', style: 'font-size:12px;cursor:default' }, ex.ref)),
       h('p', { style: 'margin:4px 0;color:var(--muted)' }, ex.context),
-      h('pre', { class: 'code', style: 'margin:8px 0' }, ex.code)
-    );
+      h('pre', { class: 'code', style: 'margin:8px 0' }, ex.code));
     ex.questions.forEach((qq, j) => {
-      const id = 'cc-' + i + '-' + j;
-      const det2 = h('details', { style: 'margin:6px 0;padding:6px 10px;border-radius:6px;background:var(--panel2)' },
+      det.append(h('details', { style: 'margin:6px 0;padding:6px 10px;border-radius:6px;background:var(--panel2)' },
         h('summary', { style: 'cursor:pointer;font-weight:500' }, 'Q' + (j + 1) + '. ' + qq.q),
-        h('p', { style: 'margin:6px 0', html: qq.a }));
-      det.append(det2);
+        h('p', { style: 'margin:6px 0', html: qq.a })));
     });
     box.append(det);
   });
 }
-WORKSHOPS.push({ id: 'concours', title: 'Exemples de concours', hint: 'Trois sujets récents : friction, λ(θb), classification de substrats.', mount: mountConcours, reset: () => {} });
+WORKSHOPS.push({ id: 'concours', title: 'Exemples de concours', hint: 'Quatre sujets : friction, λ(θb), substrats, robotique.', mount: mountConcours, reset: () => {} });
 
-/* ============ DONNÉES CONCOURS ============ */
-const CONCOURS = {
-  examples: [
-    {
-      ref: 'CCINP SI PSI 2025',
-      title: 'Régression non linéaire — friction',
-      context: 'On étudie le frottement d\'un inverseur de poussée. X contient 1481 vitesses mesurées (mm/s), Y les 1481 forces associées (N). La relation est fortement non linéaire (marche de friction autour de v = 0).',
-      code: `Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, Y, test_size=200, random_state=9)
-mdl = MLPRegressor(hidden_layer_sizes=(600,50), tol=1e-3, max_iter=1000, random_state=9)
-mdl.fit(Xtrain, Ytrain)
-sc = mdl.score(Xtrain, Ytrain)        # >>> 0.98
-Yp = mdl.predict(Xtest)
-r2_score(Ytest, Yp)                    # >>> 0.97`,
-      questions: [
-        { q: 'Combien de données disponibles ? Combien pour les tests ?',
-          a: '1481 données au total (X.shape = (1481,1)). test_size=200 → <b>200 données de test</b> et <b>1281 d\'entraînement</b> (Xtrain.shape = (1281,1)).' },
-        { q: 'Préciser le type d\'IA et les paramètres de la méthode.',
-          a: '<b>Apprentissage supervisé</b>, tâche de <b>régression</b> (la force est une sortie continue), méthode <b>réseau de neurones</b> (MLPRegressor). Paramètres : deux couches cachées de <b>600 et 50 neurones</b>, tolérance 1e-3, 1000 itérations max, random_state=9.' },
-        { q: 'Commenter les deux grandeurs affichées.',
-          a: 'Le <b>score R²</b> (coefficient de détermination) vaut 0,98 sur l\'entraînement et 0,97 sur le test. Un R² proche de 1 signifie que le modèle explique 97-98 % de la variance : <b>très bon ajustement</b>. Le score test ≈ score train ⇒ pas de surapprentissage. La figure 8 (comparaison prédiction / mesure) confirme visuellement la qualité du modèle sur toute la plage de vitesses.' }
-      ]
-    },
-    {
-      ref: 'CCINP SI PSI 2025',
-      title: 'Régression linéaire univariée — λ(θb)',
-      context: 'Pour compléter l\'asservissement en position de l\'inverseur de poussée, on cherche une relation linéaire continue entre V20(t) = dλ/dt et ωb(t) = dθb/dt. Fichier "mesure.txt" : θb en degrés, λi en mm.',
-      code: `theta_regression, lbda_regression = [], []
-# lecture de mesure.txt ...
-X = pl.array(theta_regression).reshape((-1,1))
-Y = pl.array(lbda_regression)
-model_linReg = LinearRegression().fit(X, Y)
-a = model_linReg.coef_[0]
-b = model_linReg.intercept_
-fitLine = a * X + b
-pl.plot(X, Y, '--k'); pl.plot(X, fitLine, c='grey')`,
-      questions: [
-        { q: 'Pourquoi une régression linéaire plutôt qu\'une linéarisation autour d\'un point ?',
-          a: 'La linéarisation autour d\'un point de fonctionnement n\'est valable que <b>localement</b>. La régression exploite <b>toute la plage</b> de mesures et fournit une loi globale f(θb) = a·θb + b, utilisable sur toute la course de l\'inverseur.' },
-        { q: 'Critiquer ce choix sur θb ∈ [5°, 30°].',
-          a: 'Sur cette plage, la dérivée dλ/dθb varie fortement (courbe b de la figure 11) : le modèle linéaire global est <b>moins précis aux basses températures</b>. Une linéarisation locale autour de 20° serait plus précise sur [15°, 25°], mais ne serait pas valable sur toute la course. Le choix de la régression est un compromis <b>précision vs simplicité</b>.' },
-        { q: 'Que valent a et b dans le code ?',
-          a: '<code>a = model_linReg.coef_[0]</code> (coefficient directeur = gain Kcc de la chaîne cinématique) et <code>b = model_linReg.intercept_</code> (ordonnée à l\'origine).' },
-        { q: 'Fonction de transfert Kcc = ωb/V20 ?',
-          a: 'Kcc est le <b>coefficient directeur a</b> de la régression linéaire : ωb = a · V20 (à l\'échelle de la chaîne cinématique).' }
-      ]
-    },
-    {
-      ref: 'CCINP TSI SI 2025',
-      title: 'Classification de substrats par caméra',
-      context: 'Une micropipette doit s\'adapter au type de substrat (A ou B) pour éviter l\'instabilité de l\'asservissement. La caméra fournit des images à analyser par un algorithme de classification.',
-      code: `# Matrice de confusion (multi-classes) :
-#              Prédit A   Prédit B
-#   Réel A        814        186
-#   Réel B        747         40
-#
-# S = VP / (VP + FN)   # sensibilité
-# P = VP / (VP + FP)   # précision`,
-      questions: [
-        { q: 'Classification ou régression ? Justifier.',
-          a: '<b>Classification</b> : la sortie est <b>qualitative</b> (substrat A ou B), pas une valeur continue. On prédit une classe à partir d\'images.' },
-        { q: 'Sensibilité et précision du substrat A.',
-          a: 'Pour A : VP = 814 (A prédit A), FN = 186 (A prédit B), FP = 747 (B prédit A).<br>S = 814/(814+186) = <b>0,814</b> (81,4 %)<br>P = 814/(814+747) = <b>0,521</b> (52,1 %)' },
-        { q: 'Sensibilité et précision du substrat B.',
-          a: 'Pour B : VP = 40 (B prédit B), FN = 747 (B prédit A), FP = 186 (A prédit B).<br>S = 40/(40+747) = <b>0,051</b> (5,1 %)<br>P = 40/(40+186) = <b>0,177</b> (17,7 %)' },
-        { q: 'Quel substrat est le plus sensible ? Le plus précis ?',
-          a: 'Le substrat <b>A</b> est à la fois le plus <b>sensible</b> (81,4 % vs 5,1 %) et le plus <b>précis</b> (52,1 % vs 17,7 %). L\'algorithme identifie bien A (81 % des A détectés), mais confond massivement B avec A (seulement 5 % des B détectés). Un rééquilibrage du jeu d\'entraînement serait nécessaire.' }
-      ]
-    }
-  ]
-};
+/* ============ ATELIER 12 : RÉTRO-PROPAGATION ============ */
+const BP = { ex1: { shown: false }, ex2: { shown: false } };
+function mountBackprop(root) {
+  root.innerHTML = '<h2>12. Rétro-propagation (back-propagation)</h2>'
+    + '<p>Deux exercices classiques : calcul symbolique des gradients, puis application numérique avec α = 0,1.</p>'
+    + '<h3>Exercice 1 — Calcul symbolique</h3>'
+    + '<p>Réseau à 2 entrées (1, x), 2 neurones cachés (σ), 1 neurone de sortie (identité).</p>'
+    + '<button class="btn pri" id="bp-show1" type="button">Voir la correction</button>'
+    + '<div id="bp-out1" style="margin-top:10px"></div>'
+    + '<h3>Exercice 2 — Application numérique</h3>'
+    + '<p>Donnée : (x, y) = (2, 1). Poids initiaux : w₁ = 0,5 ; w₂ = −1 ; w₃ = −2 ; w₄ = 1,5 ; w₅ = 1 ; w₆ = 1 ; w₇ = −1. Pas α = 0,1.</p>'
+    + '<button class="btn pri" id="bp-show2" type="button">Voir la correction</button>'
+    + '<div id="bp-out2" style="margin-top:10px"></div>';
+  $('#bp-show1').addEventListener('click', () => { BP.ex1.shown = !BP.ex1.shown; renderBP(); });
+  $('#bp-show2').addEventListener('click', () => { BP.ex2.shown = !BP.ex2.shown; renderBP(); });
+  renderBP();
+}
+function renderBP() {
+  const o1 = $('#bp-out1');
+  if (o1) {
+    o1.innerHTML = '';
+    if (BP.ex1.shown) {
+      o1.append(h('div', { class: 'dwrap', style: 'padding:10px' },
+        h('h3', { style: 'margin-top:0' }, '1. Propagation avant'),
+        h('pre', { class: 'code' }, 'f11 = w₂·x + w₁\nf12 = w₃·x + w₄\nh11 = σ(f11) = 1/(1+e^(−f11))\nh12 = σ(f12) = 1/(1+e^(−f12))\nf21 = w₆·h11 + w₇·h12 + w₅\nŷ = f21  (activation identité)'),
+        h('h3', null, '2. Propagation arrière'),
+        h('p', { style: 'margin:4px 0' }, 'E = (y − ŷ)²  ⇒  ∂E/∂wⱼ = −2(y − ŷ)·∂ŷ/∂wⱼ'),
+        h('pre', { class: 'code' }, '∂ŷ/∂w₅ = 1\n∂ŷ/∂w₆ = h11\n∂ŷ/∂w₇ = h12\n∂ŷ/∂w₁ = w₆·h11·(1−h11)\n∂ŷ/∂w₂ = w₆·h11·(1−h11)·x\n∂ŷ/∂w₃ = w₇·h12·(1−h12)·x\n∂ŷ/∂w₄ = w₇·h12·(1−h12)'),
+        h('p', { style: 'margin:8px 0 0' }, 'Mise à jour : Δwⱼ = α·(y − ŷ)·∂ŷ/∂wⱼ  puis wⱼ ← wⱼ + Δwⱼ.')
+      ));
+    } else o1.append(h('p', { class: 'small' }, 'Cliquez sur le bouton pour révéler la correction.'));
+  }
+  const o2 = $('#bp-out2');
+  if (o2) {
+    o2.innerHTML = '';
+    if (BP.ex2.shown) {
+      o2.append(h('div', { class: 'dwrap', style: 'padding:10px' },
+        h('h3', { style: 'margin-top:0' }, '1. Sorties intermédiaires'),
+        h('pre', { class: 'code' }, 'f11 = 0,5 + (−1)·2 = −1,5\nf12 = (−2) + 1,5·2 = 1,0\nh11 = σ(−1,5) = 0,1824\nh12 = σ(1,0) = 0,7311\nf21 = 1 + 1·0,1824 + (−1)·0,7311 = 0,4513\nŷ = f21 = 0,4513'),
+        h('h3', null, '2. Erreur'),
+        h('pre', { class: 'code' }, 'y − ŷ = 1 − 0,4513 = 0,5487'),
+        h('h3', null, '3. Gradients et mises à jour (α = 0,1)'),
+        h('div', { class: 'dwrap' },
+          h('table', { class: 'dt' },
+            h('thead', null, h('tr', null, ['wⱼ', '∂ŷ/∂wⱼ', 'Δwⱼ', 'wⱼ (nouveau)'].map(t => h('th', null, t)))),
+            h('tbody', null,
+              [['w₁', '0,1491', '+0,0082', '0,5082'],
+               ['w₂', '0,2983', '+0,0164', '−0,9836'],
+               ['w₃', '0,1966', '+0,0108', '−1,9892'],
+               ['w₄', '0,3932', '+0,0216', '1,5216'],
+               ['w₅', '1', '+0,0549', '1,0549'],
+               ['w₆', '0,1824', '+0,0100', '1,0100'],
+               ['w₇', '0,7311', '+0,0401', '−0,9599']].map(r => h('tr', null, ...r.map(c => h('td', { class: 'm' }, c))))))),
+        h('p', { style: 'margin-top:10px;color:var(--muted);font-size:13px' }, 'Vérification : h11 = 1/(1+e^1,5) ≈ 0,1824 ; h12 = 1/(1+e^−1) ≈ 0,7311.')
+      ));
+    } else o2.append(h('p', { class: 'small' }, 'Cliquez sur le bouton pour révéler la correction.'));
+  }
+}
+WORKSHOPS.push({ id: 'backprop', title: 'Rétro-propagation', hint: 'Exercices corrigés : calcul symbolique et application numérique.', mount: mountBackprop, reset: () => { BP.ex1.shown = false; BP.ex2.shown = false; } });
 
-/* ============ ACTIVITÉS ============ */
+/* ============ ACTIVITÉS QCM ============ */
 const ACT = {
   types: {
-    title: 'Types d\'apprentissage', level: 'Niveau 1 · Découvrir', time: '20 min', course: 'apprentissage',
-    goal: 'Distinguer supervisé (classification / régression), non supervisé (clustering / filtrage) et renforcement.',
-    steps: [
-      'Parcourez les sept tâches proposées. Pour chacune, demandez-vous : <b>dispose-t-on d\'un jeu de données étiqueté ?</b>',
-      'Si oui : prédit-on une <b>classe</b> (classification) ou une <b>valeur numérique</b> (régression) ?',
-      'Si non : la machine doit-elle <b>regrouper</b> des données (clustering) ou s\'appuyer sur des comportements similaires (filtrage) ?',
-      'Si un <b>agent</b> apprend par essais-erreurs dans un environnement, on parle de renforcement.',
-      'Cliquez sur <b>Vérifier</b> pour valider.'
-    ],
-    defi: { q: 'Parmi ces tâches, lesquelles relèvent de l\'apprentissage supervisé ?', a: '<b>Détection de fraude</b> (classification), <b>prédiction de prix</b> (régression), <b>filtre anti-spam</b> (classification), <b>probabilité de panne</b> (régression). Le clustering, la recommandation et le pilotage d\'un drone ne sont pas supervisés.' },
+    title: 'Types d\'apprentissage', level: 'Niveau 1', time: '20 min', course: 'apprentissage',
+    goal: 'Distinguer supervisé / non supervisé / renforcement.',
+    steps: ['Parcourir les sept tâches.', 'Dispose-t-on d\'un jeu étiqueté ?', 'Cliquer sur Vérifier.'],
+    defi: { q: 'Quelles tâches relèvent du supervisé ?', a: 'Fraude (classification), prix (régression), anti-spam (classification), panne (régression).' },
     qcm: [
-      { q: 'Qu\'est-ce qui distingue supervisé et non supervisé ?', o: ['La taille du jeu de données', 'La présence d\'étiquettes dans le jeu d\'entraînement', 'Le nombre de variables', 'L\'usage d\'un réseau de neurones'], a: 1, w: 'En supervisé, chaque exemple est associé à sa sortie attendue (y). En non supervisé, on ne dispose que de X.' },
-      { q: 'Prédire le prix d\'un appartement est une tâche de…', o: ['Classification', 'Régression', 'Clustering', 'Renforcement'], a: 1, w: 'On prédit une valeur numérique continue : c\'est de la régression.' },
-      { q: 'Segmenter des clients en groupes homogènes relève de…', o: ['La classification supervisée', 'La régression', 'L\'apprentissage non supervisé', 'Le renforcement'], a: 2, w: 'Les classes ne sont pas pré-remplies : c\'est la machine qui les découvre (k-moyennes, CAH…).' },
-      { q: 'Le filtrage collaboratif de Netflix est un exemple de…', o: ['Classification supervisée', 'Apprentissage non supervisé', 'Régression', 'Renforcement'], a: 1, w: 'Le modèle s\'appuie sur les comportements implicites d\'utilisateurs similaires, sans étiquette.' },
-      { q: 'Un drone qui apprend à livrer par essais-erreurs relève de…', o: ['La classification', 'La régression', 'Le clustering', 'Le renforcement'], a: 3, w: 'L\'agent réalise des actions et reçoit une récompense quand il atteint l\'objectif.' }
+      { q: 'Qu\'est-ce qui distingue supervisé et non supervisé ?', o: ['La taille', 'La présence d\'étiquettes', 'Le nombre de variables', 'L\'usage d\'un réseau'], a: 1, w: 'Supervisé = étiquettes.' },
+      { q: 'Prédire un prix est une tâche de…', o: ['Classification', 'Régression', 'Clustering', 'Renforcement'], a: 1, w: 'Valeur continue.' },
+      { q: 'Segmenter des clients relève de…', o: ['Classification supervisée', 'Régression', 'Non supervisé', 'Renforcement'], a: 2, w: 'Classes découvertes.' }
     ]
   },
   data: {
-    title: 'Représentation des données', level: 'Niveau 1 · Découvrir', time: '20 min', course: 'donnees',
-    goal: 'Identifier les types de données et construire X et y.',
-    steps: [
-      'Observez les quatre colonnes du jeu immobilier.',
-      'Distinguez : <b>quantitative continue</b> (mesure), <b>quantitative discrète</b> (comptage), <b>qualitative</b> (modalité).',
-      'Remarquez que « Qualité » est codée par un entier mais reste <b>qualitative</b> : 5 n\'est pas « plus grand » que 3.',
-      'La cible (y) est le prix ; les trois autres forment X.',
-      'Cliquez sur <b>Vérifier</b>.'
-    ],
-    defi: { q: 'Pourquoi coder les données qualitatives par des nombres ?', a: 'Un algorithme de ML manipule des <b>vecteurs et des matrices de nombres</b> : sans encodage (one-hot, ordinal…), il ne peut pas traiter la variable. Attention : l\'entier associé n\'a pas de sens mathématique.' },
+    title: 'Représentation des données', level: 'Niveau 1', time: '20 min', course: 'donnees',
+    goal: 'Types de données et construction X, y.',
+    steps: ['Observer les 4 colonnes.', 'Continue / discrète / qualitative.', 'Vérifier.'],
+    defi: { q: 'Pourquoi coder les qualitatives ?', a: 'Un algorithme manipule des nombres (one-hot, ordinal…).' },
     qcm: [
-      { q: 'Laquelle est quantitative continue ?', o: ['Nombre d\'enfants', 'Surface habitable', 'Couleur d\'une voiture', 'Pays de naissance'], a: 1, w: 'La surface prend une infinité de valeurs (mesure).' },
-      { q: 'Le nombre de chambres est une variable…', o: ['Quantitative continue', 'Quantitative discrète', 'Qualitative nominale', 'Qualitative ordinale'], a: 1, w: 'C\'est un comptage : un entier fini.' },
-      { q: 'Affecter 1 = France et 2 = Espagne…', o: ['Permet d\'écrire 2 > 1', 'Est un codage valide, mais l\'ordre n\'a pas de sens', 'Est interdit', 'Exige un réseau de neurones'], a: 1, w: 'Les nombres n\'ont pas de sémantique mathématique.' },
-      { q: 'Dans le jeu immobilier, combien de lignes et de colonnes a X ?', o: ['3 × 7', '7 × 3', '7 × 4', '4 × 3'], a: 1, w: 'n = 7 échantillons, m = 3 caractéristiques.' },
-      { q: 'Quelle est la taille du vecteur y ?', o: ['3', '7', '10', '4'], a: 1, w: 'Une valeur par échantillon : 7.' }
+      { q: 'Surface habitable est…', o: ['Quantitative continue', 'Quantitative discrète', 'Qualitative', 'Aucune'], a: 0, w: 'Mesure continue.' },
+      { q: 'Nombre de chambres est…', o: ['Quantitative continue', 'Quantitative discrète', 'Qualitative', 'Aucune'], a: 1, w: 'Comptage entier.' }
     ]
   },
   eval: {
-    title: 'Évaluation d\'un modèle', level: 'Niveau 2 · Comprendre', time: '25 min', course: 'evaluation',
-    goal: 'Lire une matrice de confusion et choisir l\'indicateur adapté au contexte.',
-    steps: [
-      'Partez des valeurs par défaut (TN=50, FP=5, FN=10, TP=35). Vérifiez les indicateurs.',
-      'Augmentez FN (10 → 40). Que devient la sensibilité ? Est-ce acceptable pour une banque ?',
-      'Passez en contexte « anti-spam » et augmentez FP. Quel indicateur se dégrade ?',
-      'Trouvez une configuration où la précision est élevée mais la sensibilité faible.',
-      'Concluez : le bon indicateur dépend de <b>ce qui coûte le plus cher</b>.'
-    ],
-    defi: { q: 'Modèle A : précision 95 %, sensibilité 40 %. Modèle B : précision 85 %, sensibilité 95 %. Lequel choisir pour dépister une maladie grave ?', a: 'Le modèle <b>B</b>. En dépistage, on veut <b>ne rater aucun malade</b> (FN = 0) : on privilégie la <b>sensibilité</b>.' },
+    title: 'Évaluation d\'un modèle', level: 'Niveau 2', time: '25 min', course: 'evaluation',
+    goal: 'Lire une matrice de confusion, choisir l\'indicateur.',
+    steps: ['Valeurs par défaut.', 'Augmenter FN.', 'Passer en anti-spam.', 'Tester le mode multi-classes.'],
+    defi: { q: 'A : 95 % précision / 40 % sensibilité. B : 85 % / 95 %. Lequel pour dépister une maladie ?', a: 'Le modèle B : sensibilité prioritaire (FN = 0).' },
     qcm: [
-      { q: 'Que représente FN ?', o: ['Un vrai négatif', 'Un positif prédit comme négatif', 'Un négatif prédit comme positif', 'Un vrai positif'], a: 1, w: 'False Negative : on a prédit 0 alors que la vraie valeur est 1.' },
-      { q: 'Sensibilité = ?', o: ['TN/(TN+FP)', 'TP/(TP+FN)', '(TP+TN)/total', 'FP/(FP+FN)'], a: 1, w: 'Proportion de positifs réels correctement détectés.' },
-      { q: 'Banque / fraude : on veut surtout…', o: ['Minimiser les FN', 'Minimiser les FP', 'Maximiser les FN', 'Minimiser la sensibilité'], a: 0, w: 'Ne laisser passer aucune fraude (FN = 0), donc sensibilité élevée.' },
-      { q: 'Anti-spam : on veut surtout…', o: ['Minimiser les FN', 'Minimiser les FP', 'Minimiser la spécificité', 'Maximiser les FP'], a: 1, w: 'Ne pas classer un vrai message en spam (FP = 0), donc spécificité élevée.' },
-      { q: 'Précision (accuracy) = ?', o: ['TP/(TP+FN)', 'TN/(TN+FP)', '(TP+TN)/total', 'FN/(FN+FP)'], a: 2, w: 'Proportion de prédictions correctes.' }
+      { q: 'FN représente…', o: ['Un vrai négatif', 'Un positif prédit négatif', 'Un négatif prédit positif', 'Un vrai positif'], a: 1, w: 'False Negative.' },
+      { q: 'Sensibilité = ?', o: ['TN/(TN+FP)', 'TP/(TP+FN)', '(TP+TN)/total', 'FP/(FP+FN)'], a: 1, w: 'Vrais positifs détectés.' }
     ]
   },
   knn: {
-    title: 'k plus proches voisins', level: 'Niveau 2 · Comprendre', time: '25 min', course: 'knn',
-    goal: 'Comprendre le principe du k-NN et le rôle de k.',
-    steps: [
-      'Placez le point au centre avec k = 3. Quelle classe est prédite ?',
-      'Déplacez le point vers le groupe rouge. La prédiction change-t-elle ?',
-      'Faites varier k (1, 3, 5, 7, 9). Que remarquez-vous quand k augmente ?',
-      'Placez le point à la frontière entre les deux groupes.',
-      'Dans le cours, relisez la règle k < √n et les différentes distances.'
-    ],
-    defi: { q: 'Avec k = 3, un point est entouré de 1 rouge et 2 verts. Que prédit le k-NN ? Et avec k = 1 ?', a: 'Avec <b>k = 3</b> : majorité verte (2 contre 1), donc <b>classe verte</b>. Avec <b>k = 1</b> : on prend la classe du voisin le plus proche.' },
+    title: 'k plus proches voisins', level: 'Niveau 2', time: '25 min', course: 'knn',
+    goal: 'Comprendre le k-NN et le rôle de k.',
+    steps: ['Point au centre k=3.', 'Déplacer vers le rouge.', 'Faire varier k.'],
+    defi: { q: 'k=3, 1 rouge et 2 verts. Prédiction ?', a: 'Classe verte (majorité).' },
     qcm: [
-      { q: 'Le k-NN est…', o: ['Non supervisé', 'Supervisé et non paramétrique', 'Supervisé et paramétrique', 'Par renforcement'], a: 1, w: 'Il utilise un échantillon étiqueté et ne stocke pas de paramètres (memory-based).' },
-      { q: 'Inconvénient principal du k-NN ?', o: ['Il est trop rapide', 'Il faut parcourir toutes les données à chaque prédiction', 'Il ne gère pas les étiquettes', 'Il ne peut pas classer plus de 2 classes'], a: 1, w: 'À chaque nouvelle donnée, on calcule sa distance à tous les points.' },
-      { q: 'Règle d\'usage pour k ?', o: ['k > n', 'k < √n', 'k = n/2', 'k = 1 toujours'], a: 1, w: 'On prend souvent k < √n (n = nombre de données étiquetées).' },
-      { q: 'Distance adaptée à des variables quantitatives de même type ?', o: ['Manhattan', 'Euclidienne', 'Tchebychev', 'Hamming'], a: 1, w: 'Par défaut pour des variables quantitatives.' },
-      { q: 'Avant de calculer les distances, si les échelles diffèrent, il faut…', o: ['Rien', 'Normaliser les attributs', 'Supprimer une variable', 'Utiliser un réseau'], a: 1, w: 'Sans normalisation, un attribut à grandes valeurs domine.' }
+      { q: 'Le k-NN est…', o: ['Non supervisé', 'Supervisé et non paramétrique', 'Supervisé et paramétrique', 'Renforcement'], a: 1, w: 'Memory-based.' },
+      { q: 'Règle d\'usage pour k ?', o: ['k > n', 'k < √n', 'k = n/2', 'k = 1'], a: 1, w: 'Souvent k < √n.' }
     ]
   },
   reg: {
-    title: 'Régression linéaire', level: 'Niveau 3 · Approfondir', time: '35 min', course: 'regression',
-    goal: 'Comprendre la surface de coût, la descente de gradient et le rôle de α sur la taille des sauts.',
-    steps: [
-      'Section 1 : réglez a = 0, b = 0. Le MSE est élevé. Déplacez b puis a pour minimiser visuellement le MSE.',
-      'Section 2 : sur la surface 3D, tournez la vue. Le chemin rouge part d\'un point et converge vers le fond de la cuvette.',
-      'Section 3 : sur la coupe 2D, observez les <b>flèches</b> entre les points : chaque flèche est un saut de la descente pour l\'α courant.',
-      'Baissez α à 0,001 : les sauts deviennent minuscules et la descente est très lente.',
-      'Montez α à 0,062 : les sauts deviennent grands et alternent de part et d\'autre du minimum.',
-      'Section 4 : comparez les trois α sur la même figure.'
-    ],
-    defi: { q: 'Avec les données proposées, quel est approximativement le α qui sépare convergence et divergence ?', a: 'Le α critique est ≈ 2/λ_max avec λ_max ≈ 32 : cela donne α ≈ <b>0,062</b>. En dessous, convergence (rapide pour α ≈ 0,02) ; au-dessus, divergence.' },
+    title: 'Régression linéaire', level: 'Niveau 3', time: '35 min', course: 'regression',
+    goal: 'Surface J(a,b) et rôle de α.',
+    steps: ['Ajuster a, b.', 'Tourner la surface 3D.', 'Faire varier α.'],
+    defi: { q: 'Avec un α trop grand ?', a: 'Sauts qui alternent voire divergence.' },
     qcm: [
-      { q: 'J(a, b) est une fonction…', o: ['Concave', 'Convexe', 'Constante', 'Périodique'], a: 1, w: 'Somme de carrés : elle est convexe et admet un unique minimum global.' },
-      { q: 'Que fait la descente de gradient ?', o: ['Elle augmente J', 'Elle déplace (a, b) dans le sens opposé au gradient', 'Elle supprime des données', 'Elle normalise les variables'], a: 1, w: 'a ← a − α·∂J/∂a, etc. : on va vers le minimum.' },
-      { q: 'Avec α trop grand, la descente…', o: ['Converge plus vite sans risque', 'Peut osciller puis diverger', 'Devient convexe', 'Ne change rien'], a: 1, w: 'Le pas dépasse le minimum : le point rebondit de l\'autre côté, puis s\'éloigne.' },
-      { q: 'Avec α très petit, la descente…', o: ['Diverge', 'Converge très lentement', 'Change de signe', 'Devient inutile'], a: 1, w: 'Les sauts sont minuscules : il faut beaucoup d\'itérations pour converger.' },
-      { q: 'Le biais b du modèle est…', o: ['La pente', 'L\'ordonnée à l\'origine', 'L\'erreur du modèle', 'La moyenne des y'], a: 1, w: 'Dans f(x) = a·x + b, b est la valeur de f quand x = 0.' }
+      { q: 'J(a,b) est…', o: ['Concave', 'Convexe', 'Constante', 'Périodique'], a: 1, w: 'Un seul minimum.' },
+      { q: 'Avec α trop grand…', o: ['Converge vite', 'Oscille / diverge', 'Reste constant', 'Aucun effet'], a: 1, w: 'Dépasse le minimum.' }
     ]
   },
   regmulti: {
-    title: 'Régression linéaire multiple', level: 'Niveau 3 · Approfondir', time: '25 min', course: 'regression',
-    goal: 'Étendre le modèle linéaire à plusieurs variables explicatives.',
-    steps: [
-      'Observez les données : surface et nombre de chambres pour prédire le prix.',
-      'Faites tourner la visualisation 3D : les points bleus sont les appartements, le plan est le modèle, les segments rouges sont les résidus.',
-      'Ajustez a₁, a₂ et b à la main pour minimiser la RMSE.',
-      'Cliquez sur <b>Solution des moindres carrés</b> : le modèle optimal est trouvé analytiquement.',
-      'Pourquoi un modèle multivariable est-il plus précis qu\'un modèle monovariable ?',
-      'Lisez la prédiction pour le nouvel appartement (110 m², 4 chambres).'
-    ],
-    defi: { q: 'Quel est l\'intérêt de la régression linéaire multiple par rapport à la régression monovariable ?', a: 'Elle exploite <b>plusieurs variables explicatives</b> simultanément : chaque coefficient aᵢ mesure la contribution marginale de xᵢ toutes choses égales par ailleurs. Le modèle capture mieux la complexité du réel.' },
+    title: 'Régression multiple', level: 'Niveau 3', time: '25 min', course: 'regression',
+    goal: 'Plusieurs variables explicatives.',
+    steps: ['Ajuster a₁, a₂, b.', 'Cliquer sur Solution des moindres carrés.'],
+    defi: { q: 'Intérêt de la régression multiple ?', a: 'Exploiter plusieurs variables : chaque coefficient mesure la contribution marginale.' },
     qcm: [
-      { q: 'Avec deux variables, le modèle est…', o: ['Une droite', 'Un plan', 'Un cercle', 'Une sphère'], a: 1, w: 'f(x₁,x₂) = a₁x₁ + a₂x₂ + b est l\'équation d\'un plan dans l\'espace 3D.' },
-      { q: 'La fonction coût J reste…', o: ['Concave', 'Convexe', 'Non convexe', 'Constante'], a: 1, w: 'Somme de carrés : convexe, avec un unique minimum.' },
-      { q: 'Le coefficient aᵢ mesure…', o: ['La moyenne de xᵢ', 'Le poids de xᵢ dans la prédiction', 'La variance', 'L\'erreur'], a: 1, w: 'Il quantifie la contribution de xᵢ à la sortie.' },
-      { q: 'La solution des moindres carrés s\'obtient par…', o: ['Une descente de gradient', 'La résolution de (XᵀX)β = Xᵀy', 'Un tirage aléatoire', 'Un réseau de neurones'], a: 1, w: 'C\'est la solution analytique (équations normales).' },
-      { q: 'Le biais b permet…', o: ['De supprimer les variables', 'De décaler le plan (ordonnée à l\'origine)', 'De trier', 'Rien'], a: 1, w: 'Sans b, le plan passerait par l\'origine.' }
+      { q: 'Avec 2 variables, le modèle est…', o: ['Une droite', 'Un plan', 'Un cercle', 'Une sphère'], a: 1, w: 'Plan dans l\'espace 3D.' },
+      { q: 'Solution analytique ?', o: ['Descente de gradient', '(XᵀX)β = Xᵀy', 'Tirage aléatoire', 'Réseau'], a: 1, w: 'Équations normales.' }
     ]
   },
   perc: {
-    title: 'Perceptron interactif', level: 'Niveau 2 · Comprendre', time: '25 min', course: 'reseau',
-    goal: 'Comprendre le calcul d\'un neurone : somme pondérée, biais, fonction d\'activation, frontière de décision.',
-    steps: [
-      'Partez des valeurs par défaut : w₁ = 0, w₂ = 1, b = 0. La frontière est horizontale. Quelle est la précision ?',
-      'Pourquoi certains points sont-ils mal classés ? Où se trouve la vraie séparation des deux classes ?',
-      'Déplacez w₁ vers 1 et w₂ vers 0. La frontière devient verticale. La précision devient-elle 100 % ?',
-      'Réglez b : où se place la frontière quand b = -1 ? quand b = 1 ?',
-      'Changez la fonction d\'activation (sigmoid → tanh → step). La précision change-t-elle ? Pourquoi ?'
-    ],
-    defi: { q: 'Avec w₁ = 1, w₂ = 0, b = 0 et l\'activation step, quelle est l\'équation de la frontière ? Pourquoi 100 % ?', a: 'La frontière est z = 0, donc x₁ = 0 (verticale). Les points de classe 1 ont x₁ > 0, ceux de classe 0 ont x₁ < 0 : ils sont parfaitement séparés, donc 100 % de précision.' },
+    title: 'Perceptron interactif', level: 'Niveau 2', time: '25 min', course: 'reseau',
+    goal: 'Somme pondérée, biais, activation, frontière.',
+    steps: ['Valeurs par défaut.', 'Déplacer w₁, w₂, b.', 'Changer l\'activation.'],
+    defi: { q: 'w₁=1, w₂=0, b=0, step ?', a: 'Frontière x₁=0 verticale, précision 100 % si séparable en x₁.' },
     qcm: [
-      { q: 'Que calcule un perceptron avant l\'activation ?', o: ['Une somme pondérée + biais', 'Un produit', 'Une moyenne', 'Un maximum'], a: 0, w: 'z = Σ wᵢ·xᵢ + b, puis y = φ(z).' },
-      { q: 'Que fait la fonction d\'activation ?', o: ['Elle normalise', 'Elle ajoute de la non-linéarité', 'Elle supprime le biais', 'Elle copie l\'entrée'], a: 1, w: 'Sans non-linéarité, la composition de couches reste équivalente à une seule transformation linéaire.' },
-      { q: 'La frontière de décision d\'un perceptron est…', o: ['Un cercle', 'Une droite (hyperplan)', 'Un paraboloïde', 'Un point'], a: 1, w: 'z = 0 définit un hyperplan : une droite en 2D.' },
-      { q: 'Le biais b sert à…', o: ['Ralentir le calcul', 'Décaler la frontière', 'Ajouter du bruit', 'Rien'], a: 1, w: 'Sans biais, la frontière passe par l\'origine : impossible de traiter des jeux décalés.' },
-      { q: 'Un perceptron simple peut-il résoudre XOR ?', o: ['Oui, toujours', 'Non, XOR n\'est pas linéairement séparable', 'Oui avec step', 'Oui avec sigmoid'], a: 1, w: 'Aucune droite ne sépare (0,0),(1,1) de (0,1),(1,0) : il faut une couche cachée.' }
+      { q: 'Avant l\'activation, un perceptron calcule…', o: ['Somme pondérée + biais', 'Produit', 'Moyenne', 'Max'], a: 0, w: 'z = Σwᵢxᵢ + b.' },
+      { q: 'Sans non-linéarité ?', o: ['Plus de classes', 'Équivalent à une seule couche', 'Convergence', 'Rien'], a: 1, w: 'Composition de linéaires = linéaire.' }
     ]
   },
   mlp: {
-    title: 'Réseau multicouche et XOR', level: 'Niveau 3 · Approfondir', time: '25 min', course: 'reseau',
-    goal: 'Comprendre pourquoi une couche cachée permet de résoudre XOR, et comment deux seuils différents suffisent.',
-    steps: [
-      'Partez des valeurs c₁ = c₂ = 0,8. Tous les points ont-ils la même sortie ? Pourquoi ?',
-      'La précision est de 50 % : seuls (0,0) et (1,1) sont bien classés. Pourquoi ?',
-      'Baissez c₁ à 0,5 : h₁ devient « x₁ + x₂ > 0,5 ». Que se passe-t-il ?',
-      'Montez c₂ à 1,5 : h₂ devient « x₁ + x₂ > 1,5 ». La précision atteint 100 %.',
-      'Observez la <b>frontière courbe</b> : elle n\'est plus une droite, c\'est une région en forme de « X » que le réseau a apprise.'
-    ],
-    defi: { q: 'Expliquez pourquoi h₁ = σ(5(x₁ + x₂ − 0,5)) et h₂ = σ(5(x₁ + x₂ − 1,5)) permettent de séparer XOR.', a: 'h₁ vaut ≈ 0,92 sur (0,1),(1,0),(1,1) et ≈ 0,08 sur (0,0) : il « détecte » les points où au moins une entrée est active. h₂ vaut ≈ 0,92 uniquement sur (1,1) : il détecte le cas « les deux actives ». La sortie σ(10(h₁ − h₂ − 0,4)) vaut alors : ≈ 0 sur (0,0) et (1,1), ≈ 1 sur (0,1) et (1,0). C\'est exactement XOR.' },
+    title: 'Réseau XOR', level: 'Niveau 3', time: '25 min', course: 'reseau',
+    goal: 'Couche cachée et problème XOR.',
+    steps: ['c₁ = c₂ = 0,8 : précision 50 %.', 'c₁ = 0,5 et c₂ = 1,5 : 100 %.'],
+    defi: { q: 'Pourquoi une couche cachée suffit-elle pour XOR ?', a: 'Les neurones cachés créent des frontières non linéaires.' },
     qcm: [
-      { q: 'Pourquoi un perceptron simple ne peut-il pas résoudre XOR ?', o: ['Il est trop lent', 'XOR n\'est pas linéairement séparable', 'Il n\'a pas de biais', 'Il faut plus d\'entrées'], a: 1, w: 'Aucune droite ne sépare les deux classes de XOR.' },
-      { q: 'Une couche cachée permet de…', o: ['Trier les données', 'Créer des frontières non linéaires', 'Normaliser', 'Supprimer le biais'], a: 1, w: 'Les neurones cachés apprennent des « détecteurs » de motifs, dont la combinaison est non linéaire.' },
-      { q: 'Avec c₁ = c₂, que se passe-t-il ?', o: ['Tout est bien classé', 'h₁ = h₂, donc h₁ − h₂ = 0 et y ≈ σ(−4) constante', 'Le réseau diverge', 'Rien ne change'], a: 1, w: 'Les deux neurones cachés ont la même sortie : la différence s\'annule.' },
-      { q: 'La fonction d\'activation ReLU…', o: ['Renvoie toujours 0', 'Renvoie max(0, z)', 'Renvoie 1/(1+e⁻ᶻ)', 'Renvoie tanh(z)'], a: 1, w: 'Rectified Linear Unit : g(z) = max(0, z).' },
-      { q: 'Quel est le risque d\'un réseau trop profond ?', o: ['Il devient convexe', 'Le surapprentissage', 'Il perd le biais', 'Il supprime les entrées'], a: 1, w: 'Au-delà de 6–10 couches, on observe souvent du surapprentissage (overfitting).' }
+      { q: 'XOR est-il linéairement séparable ?', o: ['Oui', 'Non', 'Oui avec step', 'Oui avec sigmoid'], a: 1, w: 'Aucune droite ne sépare.' },
+      { q: 'Une couche cachée permet…', o: ['Trier', 'Frontières non linéaires', 'Normaliser', 'Supprimer le biais'], a: 1, w: 'Détecteurs de motifs.' }
+    ]
+  },
+  netinter: {
+    title: 'Réseau interactif', level: 'Niveau 3', time: '30 min', course: 'reseau',
+    goal: 'Construire un réseau et suivre la propagation avant.',
+    steps: ['Choisir l\'architecture (entrées, couches, neurones).', 'Régler l\'activation.', 'Modifier xᵢ et observer ŷ.', 'Observer le nombre de paramètres et la règle des 10× données.'],
+    defi: { q: 'Pourquoi la règle des 10× données ?', a: 'Éviter le surapprentissage : avec trop peu de données par rapport aux paramètres, le réseau mémorise au lieu de généraliser. Ordre de grandeur : 10× minimum, parfois 30-50×.' },
+    qcm: [
+      { q: 'Nombre de paramètres pour 2 entrées, 600+50 neurones cachés, 1 sortie ?', o: ['~600', '~6 000', '~33 000', '~3 millions'], a: 2, w: '2×600 + 600×50 + 50×1 + 600+50+1 ≈ 32 000.' },
+      { q: 'Règle empirique données/paramètres ?', o: ['1×', '10×', '100×', '1000×'], a: 1, w: 'Au moins 10× (parfois 30-50×).' }
     ]
   },
   demarche: {
-    title: 'Démarche de résolution', level: 'Niveau 3 · Approfondir', time: '25 min', course: 'demarche',
-    goal: 'Décomposer un problème, choisir l\'algorithme et distinguer apprentissage / inférence.',
-    steps: [
-      'Lisez chaque scénario et demandez-vous : <b>quel type de sortie</b> ? (classe ou valeur continue)',
-      'Pour une valeur continue, la régression linéaire multiple est adaptée. Pour des classes, k-NN ou réseau de neurones.',
-      'Le réseau est préférable quand les frontières sont non linéaires (XOR, images).',
-      'Partie B : l\'<b>apprentissage</b> ajuste les paramètres du modèle, l\'<b>inférence</b> utilise le modèle sur de nouvelles données.'
-    ],
-    defi: { q: 'Quelles sont les trois étapes principales de la démarche de résolution d\'un problème d\'IA ?', a: '<b>1. Décomposition</b> du problème complexe en sous-problèmes simples. <b>2. Choix</b> de l\'algorithme adapté (k-NN, régression multiple, réseau). <b>3. Mise en œuvre</b> : phase d\'apprentissage puis phase d\'inférence, avec choix des données.' },
+    title: 'Démarche de résolution', level: 'Niveau 3', time: '25 min', course: 'demarche',
+    goal: 'Décomposer, choisir l\'algorithme, distinguer apprentissage / inférence.',
+    steps: ['Type de sortie ?', 'Valeur continue → régression. Classe → k-NN / réseau.', 'Partie B.'],
+    defi: { q: 'Trois étapes principales ?', a: 'Décomposer → choisir l\'algorithme → entraîner / inférer.' },
     qcm: [
-      { q: 'Quelle est la première étape d\'un projet d\'IA ?', o: ['Choisir un réseau', 'Décomposer le problème', 'Acheter un GPU', 'Normaliser les données'], a: 1, w: 'On décompose un problème complexe en sous-problèmes simples.' },
-      { q: 'Pour prédire une valeur continue à partir de plusieurs variables quantitatives, on choisit…', o: ['k-NN', 'Régression linéaire multiple', 'XOR', 'Aucun'], a: 1, w: 'La régression multiple est l\'outil dédié.' },
-      { q: 'La phase d\'apprentissage consiste à…', o: ['Faire des prédictions sur de nouvelles données', 'Ajuster les paramètres du modèle à partir des données d\'entraînement', 'Séparer les données', 'Choisir l\'algorithme'], a: 1, w: 'L\'apprentissage ajuste les poids/coefficients pour minimiser le coût.' },
-      { q: 'La phase d\'inférence consiste à…', o: ['Entraîner le modèle', 'Utiliser le modèle sur de nouvelles données', 'Supprimer le biais', 'Normaliser'], a: 1, w: 'L\'inférence produit des prédictions avec un modèle déjà entraîné.' },
-      { q: 'XOR nécessite…', o: ['Un perceptron simple', 'Un réseau avec couche cachée', 'Une régression', 'Un k-NN'], a: 1, w: 'XOR n\'est pas linéairement séparable : il faut une couche cachée.' }
+      { q: 'Première étape ?', o: ['Choisir un réseau', 'Décomposer le problème', 'Acheter un GPU', 'Normaliser'], a: 1, w: 'Sous-problèmes simples.' },
+      { q: 'Apprentissage = ?', o: ['Prédire', 'Ajuster les paramètres', 'Séparer', 'Choisir'], a: 1, w: 'Minimise le coût.' }
+    ]
+  },
+  concours: {
+    title: 'Exemples de concours', level: 'Niveau 3', time: '35 min', course: 'concours',
+    goal: 'Analyser 4 sujets réels.',
+    steps: ['Lire les 4 exemples.', 'Repérer type, algorithme, hyperparamètres.', 'Calculer les indicateurs.'],
+    defi: { q: 'Formule n_param du concours robotique ?', a: 'n_param = n_n·n_e + n_n + (n_c−1)(n_n² + n_n) + n_s·n_n + n_s.' },
+    qcm: [
+      { q: 'Friction (CCINP SI PSI 2025) : méthode ?', o: ['k-NN', 'Régression linéaire', 'Réseau de neurones', 'Clustering'], a: 2, w: 'MLPRegressor 600/50.' },
+      { q: 'λ(θb) : intérêt de la régression vs linéarisation ?', o: ['Plus rapide', 'Valable sur toute la plage', 'Plus précis localement', 'Aucun'], a: 1, w: 'Modèle global.' },
+      { q: 'Robotique : règle des données d\'entraînement ?', o: ['1×', '10× (ou 30-50×) paramètres', '1000×', 'Aucune'], a: 1, w: 'Règle empirique.' },
+      { q: 'Robotique : pourquoi prédire sin/cos plutôt que θ ?', o: ['Plus rapide', 'Éviter la discontinuité périodique', 'Moins de paramètres', 'Aucune raison'], a: 1, w: 'θ est périodique (2π) ; sin/cos sont continus.' }
+    ]
+  },
+  backprop: {
+    title: 'Rétro-propagation', level: 'Niveau 3', time: '30 min', course: 'backprop',
+    goal: '4 étapes : forward, cost, back, gradient.',
+    steps: ['Forward.', 'Cost.', 'Back.', 'Gradient descent.'],
+    defi: { q: 'Rôle de la chaîne de gradients ?', a: 'Décomposer ∂E/∂w en produits de dérivées locales pour propager l\'erreur.' },
+    qcm: [
+      { q: 'Ordre des étapes ?', o: ['Back → Forward → Cost → Gradient', 'Forward → Cost → Back → Gradient', 'Cost → Forward → Back → Gradient', 'Gradient → Back → Forward → Cost'], a: 1, w: 'Cycle standard.' },
+      { q: 'Mise à jour d\'un poids ?', o: ['wⱼ ← wⱼ + α·E', 'wⱼ ← wⱼ − α·∂E/∂wⱼ', 'wⱼ ← α·E²', 'wⱼ ← E/α'], a: 1, w: 'Descente de gradient.' }
     ]
   }
 };
@@ -2110,239 +2365,201 @@ const ACT = {
 /* ============ COURS ============ */
 const COURSE = [];
 COURSE.push({ id: 'intro', t: 'Introduction à l\'IA', h: `
-<p>L'<b>intelligence artificielle</b> désigne l'ensemble des techniques permettant de « simuler l'intelligence humaine ». L'essor actuel est lié à l'<b>explosion des données</b> et des capacités de calcul à partir des années 2000.</p>
-<h3>Les grandes familles</h3>
+<p>L'<b>intelligence artificielle</b> désigne l'ensemble des techniques permettant de simuler l'intelligence humaine.</p>
+<h3>Familles</h3>
 <ul>
-<li><b>Apprentissage supervisé</b> : classification et régression (k-NN, régression linéaire, réseaux de neurones…)</li>
-<li><b>Apprentissage non supervisé</b> : clustering et réduction de dimension</li>
-<li><b>Apprentissage par renforcement</b> : un agent apprend par essais-erreurs</li>
+<li><b>Supervisé</b> : classification, régression</li>
+<li><b>Non supervisé</b> : clustering, réduction de dimension</li>
+<li><b>Renforcement</b> : agent qui apprend par essais-erreurs</li>
 </ul>
 <div class="retain"><b>Au programme PSI*.</b> Seul l'apprentissage <b>supervisé</b> est étudié, avec trois algorithmes : k plus proches voisins, régression linéaire multiple, réseaux de neurones.</div>
 ` });
 COURSE.push({ id: 'apprentissage', t: 'Supervisé et non supervisé', h: `
 <h3>Supervisé</h3>
-<p>La machine connaît les <b>réponses attendues</b> (données étiquetées). Deux types de tâches : <b>classification</b> (attribuer une classe) et <b>régression</b> (prédire une valeur).</p>
+<p>Réponses attendues connues (étiquettes). <b>Classification</b> (classe) ou <b>régression</b> (valeur).</p>
 <h3>Non supervisé</h3>
-<p>Pas d'étiquettes : la machine crée ses propres regroupements. <b>Clustering</b> (segmentation client) et <b>filtrage collaboratif</b> (recommandations Netflix/Spotify).</p>
+<p>Pas d'étiquettes : <b>clustering</b>, <b>filtrage collaboratif</b>.</p>
 <h3>Renforcement</h3>
-<p>Un <b>agent</b> réalise des actions dans un environnement, récompensé quand il atteint son objectif.</p>
-<h3>Biais et surapprentissage</h3>
-<p>Un jeu biaisé produit des décisions biaisées (exemple : le recrutement d'Amazon). Un modèle en <b>surapprentissage</b> (overfitting) apprend trop l'échantillon et généralise mal.</p>
-<div class="retain"><b>À retenir.</b> Supervisé = étiquettes ; non supervisé = regroupements ; renforcement = essais-erreurs récompensés.</div>
+<p>Agent qui apprend par essais-erreurs récompensés.</p>
+<div class="retain"><b>À retenir.</b> Supervisé = étiquettes ; non supervisé = regroupements ; renforcement = essais-erreurs.</div>
 ` });
 COURSE.push({ id: 'donnees', t: 'Représentation des données', h: `
 <h3>Types</h3>
 <ul>
-<li><b>Quantitative continue</b> : mesure (poids, distance, prix…)</li>
-<li><b>Quantitative discrète</b> : comptage (nombre d'enfants…)</li>
-<li><b>Qualitative</b> (modalité) : pas de sémantique mathématique (sexe, pays…)</li>
+<li><b>Quantitative continue</b> : mesure</li>
+<li><b>Quantitative discrète</b> : comptage</li>
+<li><b>Qualitative</b> : modalité</li>
 </ul>
-<p>Il faut <b>coder</b> les données qualitatives par des nombres (one-hot, ordinal) avant de les donner à un algorithme.</p>
-<h3>Structuration</h3>
-<p>On rassemble les m caractéristiques de n échantillons dans une matrice <b>X</b> et les sorties dans un vecteur <b>y</b>. On cherche f telle que <b>y ≈ f(X)</b>.</p>
+<p>Coder les qualitatives par des nombres (one-hot, ordinal).</p>
 <div class="formula">X ∈ M<sub>n,m</sub> &nbsp;·&nbsp; y ∈ ℝ<sup>n</sup></div>
-<div class="retain"><b>À retenir.</b> Un algorithme manipule des nombres : la qualité du codage conditionne la qualité du modèle.</div>
+<div class="retain"><b>À retenir.</b> Un algorithme manipule des nombres.</div>
 ` });
 COURSE.push({ id: 'etapes', t: 'Apprentissage et inférence', h: `
 <h3>Préparation</h3>
 <ol>
-<li>Collecte et mise en forme des données.</li>
-<li>Séparation : jeu d'<b>entraînement</b> (≈ 80 %) et jeu de <b>test</b> (≈ 20 %).</li>
-<li>Choix de l'algorithme (k-NN, régression multiple, réseau de neurones) et des hyperparamètres.</li>
+<li>Collecte et mise en forme.</li>
+<li>Séparation train (≈ 80 %) / test (≈ 20 %).</li>
+<li>Choix de l'algorithme et des hyperparamètres.</li>
 </ol>
 <h3>Phase d'apprentissage</h3>
-<p>On <b>ajuste les paramètres</b> du modèle à partir du jeu d'entraînement, en minimisant une <b>fonction coût</b> (MSE pour la régression, entropie croisée pour la classification…).</p>
-<ul>
-<li>Régression linéaire : on ajuste les coefficients aᵢ et le biais b.</li>
-<li>k-NN : pas d'apprentissage à proprement parler (mémorisation des exemples).</li>
-<li>Réseau de neurones : on ajuste les poids et biais par rétro-propagation du gradient.</li>
-</ul>
+<p>Ajuster les paramètres en minimisant une <b>fonction coût</b>.</p>
 <h3>Phase d'inférence</h3>
-<p>Le modèle entraîné est utilisé sur de <b>nouvelles données</b> pour produire des prédictions. On évalue alors les performances sur le jeu de test.</p>
-<div class="retain"><b>À retenir.</b> Apprentissage = ajustement des paramètres ; inférence = utilisation du modèle entraîné sur de nouvelles données.</div>
+<p>Utiliser le modèle entraîné sur de nouvelles données.</p>
+<div class="retain"><b>À retenir.</b> Apprentissage = ajustement ; inférence = prédiction.</div>
 ` });
 COURSE.push({ id: 'demarche', t: 'Démarche de résolution', h: `
-<h3>Décomposer le problème</h3>
-<p>Un problème complexe se décompose en <b>sous-problèmes simples</b>. Un système de détection de fraude se décompose en : collecte des transactions, prétraitement, choix d'un modèle, apprentissage, inférence, évaluation.</p>
+<h3>Décomposer</h3>
+<p>Décomposer un problème complexe en sous-problèmes simples.</p>
 <h3>Choisir l'algorithme</h3>
-<table class="ctable"><thead><tr><th>Algorithme</th><th>Type de sortie</th><th>Points forts</th><th>Limites</th></tr></thead><tbody>
-<tr><td><b>k-NN</b></td><td>Classe (ou valeur)</td><td>Simple, aucune hypothèse sur la forme</td><td>Lent à l'inférence, sensible à l'échelle</td></tr>
-<tr><td><b>Régression linéaire multiple</b></td><td>Valeur continue</td><td>Rapide, interprétable, solution analytique</td><td>Suppose une relation linéaire</td></tr>
-<tr><td><b>Réseau de neurones</b></td><td>Classe ou valeur</td><td>Frontières non linéaires complexes</td><td>Coûteux, beaucoup de données, surapprentissage</td></tr>
+<table class="ctable"><thead><tr><th>Algorithme</th><th>Sortie</th><th>Points forts</th><th>Limites</th></tr></thead><tbody>
+<tr><td><b>k-NN</b></td><td>Classe</td><td>Simple</td><td>Lent, sensible à l'échelle</td></tr>
+<tr><td><b>Régression multiple</b></td><td>Valeur</td><td>Rapide, interprétable, analytique</td><td>Suppose relation linéaire</td></tr>
+<tr><td><b>Réseau de neurones</b></td><td>Classe ou valeur</td><td>Frontières non linéaires</td><td>Coûteux, surapprentissage</td></tr>
 </tbody></table>
-<h3>Mettre en œuvre : apprentissage et inférence</h3>
-<ul>
-<li><b>Phase d'apprentissage</b> : on ajuste les paramètres du modèle (poids d'un réseau, coefficients d'une régression) à partir du jeu d'entraînement, en minimisant une fonction coût.</li>
-<li><b>Phase d'inférence</b> : le modèle entraîné est utilisé sur de nouvelles données pour produire des prédictions.</li>
-</ul>
-<p>Le choix des <b>données d'apprentissage</b> est crucial : représentativité, qualité, taille suffisante, séparation entraînement / test.</p>
-<div class="retain"><b>À retenir.</b> Décomposer → choisir l'algorithme → entraîner → inférer.</div>
+<h3>Apprentissage / inférence</h3>
+<div class="retain"><b>À retenir.</b> Décomposer → choisir → entraîner → inférer.</div>
 ` });
-COURSE.push({ id: 'evaluation', t: 'Évaluation d\'un modèle', h: `
-<h3>Matrice de confusion</h3>
+COURSE.push({ id: 'evaluation', t: 'Évaluation', h: `
+<h3>Matrice de confusion (binaire)</h3>
 <table class="ctable"><thead><tr><th></th><th>Réel 0</th><th>Réel 1</th></tr></thead><tbody>
 <tr><td><b>Prédit 0</b></td><td>TN</td><td>FN</td></tr>
 <tr><td><b>Prédit 1</b></td><td>FP</td><td>TP</td></tr>
 </tbody></table>
 <h3>Indicateurs</h3>
 <table class="ctable"><thead><tr><th>Indicateur</th><th>Formule</th></tr></thead><tbody>
-<tr><td>Sensibilité (rappel)</td><td>TP / (TP + FN)</td></tr>
+<tr><td>Sensibilité</td><td>TP / (TP + FN)</td></tr>
 <tr><td>Spécificité</td><td>TN / (TN + FP)</td></tr>
 <tr><td>Précision</td><td>(TP + TN) / total</td></tr>
 </tbody></table>
-<p>Choix : banque → FN = 0 (sensibilité) ; anti-spam → FP = 0 (spécificité).</p>
+<h3>Multi-classes</h3>
+<p>Pour chaque classe C : S<sub>C</sub> = VP<sub>C</sub> / (VP<sub>C</sub> + FN<sub>C</sub>) ; P<sub>C</sub> = VP<sub>C</sub> / (VP<sub>C</sub> + FP<sub>C</sub>).</p>
 <h3>Régression : RMSE</h3>
 <div class="formula">RMSE = √( (1/n) · Σ (y<sub>i</sub> − f(x<sub>i</sub>))² )</div>
 <div class="retain"><b>À retenir.</b> Le bon indicateur dépend de ce qui coûte le plus cher : FN ou FP.</div>
 ` });
-COURSE.push({ id: 'knn', t: 'Méthode des k plus proches voisins', h: `
-<p>Algorithme <b>supervisé</b> et <b>non paramétrique</b> (memory-based) : on classe un nouvel élément par vote majoritaire de ses k voisins.</p>
+COURSE.push({ id: 'knn', t: 'k plus proches voisins', h: `
+<p>Algorithme <b>supervisé</b>, <b>non paramétrique</b> (memory-based).</p>
 <h3>Choix de k</h3>
-<p>Règle d'usage : <b>k < √n</b> où n est le nombre de données étiquetées. On peut aussi tracer la courbe du taux d'erreur en fonction de k.</p>
+<p><b>k < √n</b>.</p>
 <h3>Distances</h3>
-<div class="formula">d<sub>euclidienne</sub>(M, N) = √( (x<sub>2N</sub> − x<sub>2M</sub>)² + (x<sub>1N</sub> − x<sub>1M</sub>)² )</div>
-<div class="formula">d<sub>Manhattan</sub>(M, N) = |x<sub>2N</sub> − x<sub>2M</sub>| + |x<sub>1N</sub> − x<sub>1M</sub>|</div>
-<div class="formula">d<sub>Tchebychev</sub>(M, N) = max( |x<sub>2N</sub> − x<sub>2M</sub>|, |x<sub>1N</sub> − x<sub>1M</sub>| )</div>
-<p>Euclidienne pour des variables quantitatives de même type, Manhattan si les types diffèrent. Normaliser les attributs avant.</p>
-<h3>Scikit-learn</h3>
-<pre class="code">from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-
-model = KNeighborsClassifier(n_neighbors=5)
-X_train, X_test, y_train, y_test = train_test_split(X, y)
-model.fit(X_train, y_train)
-model.score(X_test, y_test)
-predictions = model.predict(X_new)</pre>
-<div class="retain"><b>À retenir.</b> Simple mais lent (parcours de toutes les données à chaque prédiction).</div>
+<div class="formula">d<sub>euclidienne</sub> = √( Δx₁² + Δx₂² )</div>
+<div class="formula">d<sub>Manhattan</sub> = |Δx₁| + |Δx₂|</div>
+<div class="formula">d<sub>Tchebychev</sub> = max( |Δx₁|, |Δx₂| )</div>
+<p>Normaliser les attributs avant calcul.</p>
+<div class="retain"><b>À retenir.</b> Simple mais lent à l'inférence.</div>
 ` });
 COURSE.push({ id: 'regression', t: 'Régression linéaire', h: `
-<h3>Modèle monovariable</h3>
+<h3>Monovariable</h3>
 <div class="formula">f(x) = a·x + b</div>
-<p><b>a</b> = poids (pente), <b>b</b> = biais (ordonnée à l'origine).</p>
-<h3>Modèle multivariable</h3>
-<p>Avec plusieurs variables explicatives :</p>
+<h3>Multivariable</h3>
 <div class="formula">f(x₁, …, x<sub>m</sub>) = a₁·x₁ + … + a<sub>m</sub>·x<sub>m</sub> + b</div>
-<p>Chaque coefficient aᵢ mesure le poids de la variable xᵢ. La résolution se fait par <b>équations normales</b> (solution analytique) ou par <b>descente de gradient</b>.</p>
-<h3>Fonction coût</h3>
+<h3>Coût</h3>
 <div class="formula">J(a, b) = (1 / 2n) · Σ (a·x<sub>i</sub> + b − y<sub>i</sub>)²</div>
-<p>Cette fonction est <b>convexe</b> : un seul minimum global. Visuellement, c'est une <b>cuvette</b> (paraboloïde) — pas plusieurs cuvettes : le nombre de points ne change que la courbure.</p>
+<p><b>Convexe</b> : un seul minimum global. Le nombre de points ne change que la courbure.</p>
 <h3>Descente de gradient</h3>
 <div class="formula">a ← a − α · ∂J/∂a &nbsp;&nbsp; b ← b − α · ∂J/∂b</div>
-<div class="formula">∂J/∂a = (1/n) · Σ x<sub>i</sub>·(a·x<sub>i</sub> + b − y<sub>i</sub>) &nbsp;&nbsp; ∂J/∂b = (1/n) · Σ (a·x<sub>i</sub> + b − y<sub>i</sub>)</div>
 <h3>Rôle de α</h3>
 <ul>
-<li>α trop petit → convergence très lente</li>
-<li>α trop grand → sauts qui alternent, voire divergence</li>
-<li>Ordre de grandeur usuel : 0,001 dans les cas réels</li>
+<li>Trop petit → convergence très lente</li>
+<li>Trop grand → sauts qui alternent, divergence</li>
 </ul>
-<h3>Scikit-learn</h3>
-<pre class="code">from sklearn.linear_model import LinearRegression, SGDRegressor
-
-model = LinearRegression()  # moindres carrés (multivariable)
-# ou SGDRegressor(max_iter=10000, eta0=0.001) pour la descente
-
-model.fit(X_train, y_train)
-model.score(X_test, y_test)
-predictions = model.predict(X_new)</pre>
-<div class="retain"><b>À retenir.</b> Modèle paramétrique, coût convexe, α contrôle la vitesse et la stabilité de la descente. La version multivariable généralise la version monovariable.</div>
+<div class="retain"><b>À retenir.</b> Coût convexe, α contrôle vitesse et stabilité.</div>
 ` });
 COURSE.push({ id: 'reseau', t: 'Réseaux de neurones', h: `
-<h3>Le perceptron</h3>
+<h3>Perceptron</h3>
 <div class="formula">z = Σ w<sub>i</sub>·x<sub>i</sub> + b &nbsp;&nbsp; y = φ(z)</div>
-<p>Un neurone calcule une <b>somme pondérée</b> (linéaire), ajoute un <b>biais</b>, puis applique une <b>fonction d'activation</b> (non linéaire).</p>
 <h3>Fonctions d'activation</h3>
 <table class="ctable"><thead><tr><th>Nom</th><th>Formule</th></tr></thead><tbody>
 <tr><td>Sigmoïde</td><td>g(z) = 1 / (1 + e<sup>−z</sup>)</td></tr>
-<tr><td>Tangente hyperbolique</td><td>g(z) = (e<sup>z</sup> − e<sup>−z</sup>) / (e<sup>z</sup> + e<sup>−z</sup>)</td></tr>
+<tr><td>Tanh</td><td>g(z) = (e<sup>z</sup> − e<sup>−z</sup>) / (e<sup>z</sup> + e<sup>−z</sup>)</td></tr>
 <tr><td>ReLU</td><td>g(z) = max(0, z)</td></tr>
 </tbody></table>
-<h3>Réseau multicouche</h3>
+<h3>Architecture</h3>
 <ul>
-<li>Les neurones sont regroupés en <b>couches</b> ; dans une couche, pas de connexion interne.</li>
-<li>Toutes les sorties d'une couche sont connectées aux entrées de la suivante.</li>
-<li>Une <b>couche cachée</b> permet des frontières de décision non linéaires.</li>
+<li>Couche d'entrée : les variables x<sub>i</sub></li>
+<li>Couches cachées : neurones intermédiaires</li>
+<li>Couche de sortie : la prédiction</li>
+<li>Chaque neurone : <b>poids</b> + <b>biais</b></li>
 </ul>
-<h3>Exemple : XOR</h3>
-<p>Un perceptron simple ne peut pas résoudre XOR (non linéairement séparable). Un réseau à deux neurones cachés y arrive :</p>
-<ul>
-<li>h₁ = σ(k·(x₁ + x₂ − c₁)) avec c₁ ≈ 0,5</li>
-<li>h₂ = σ(k·(x₁ + x₂ − c₂)) avec c₂ ≈ 1,5</li>
-<li>y = σ(K·(h₁ − h₂ − 0,4))</li>
-</ul>
-<h3>Rétro-propagation</h3>
-<p>On propage l'entrée, on calcule l'erreur, puis on met à jour les poids un à un en partant de la fin : c'est la <b>rétro-propagation du gradient</b>.</p>
-<h3>Choix du réseau</h3>
-<p>Deux couches suffisent souvent. Au-delà de 6 à 10 couches, on risque le <b>surapprentissage</b>.</p>
-<h3>Scikit-learn</h3>
-<pre class="code">from sklearn.neural_network import MLPClassifier
-
-NN = MLPClassifier(activation='logistic', solver='sgd', max_iter=10)
-NN.fit(X_train, y_train)
-NN.score(X_test, y_test)
-predictions = NN.predict(X_new)</pre>
-<div class="retain"><b>À retenir.</b> Couches de perceptrons + activation non linéaire + rétro-propagation. Puissant mais coûteux en données et en calcul.</div>
+<h3>Nombre de paramètres</h3>
+<p>Pour un réseau dense avec n_e entrées, n_c couches cachées de n_n neurones, n_s sorties :</p>
+<div class="formula">n_param = n_n·n_e + n_n + (n_c − 1)(n_n² + n_n) + n_s·n_n + n_s</div>
+<h3>Règle empirique des données</h3>
+<p>Pour entraîner un réseau de neurones, on utilise souvent <b>au moins 10× plus d'exemples que de paramètres</b> à apprendre (parfois 30 à 50×). En dessous, risque de <b>surapprentissage</b>.</p>
+<div class="formula">n_données ≳ 10 × n_param</div>
+<h3>Exemple XOR</h3>
+<p>h₁ = σ(k(x₁ + x₂ − c₁)) avec c₁ ≈ 0,5 ; h₂ = σ(k(x₁ + x₂ − c₂)) avec c₂ ≈ 1,5 ; y = σ(K(h₁ − h₂ − 0,4)).</p>
+<h3>Prédiction d'angles</h3>
+<p>Pour prédire un angle θ périodique, il vaut mieux prédire <b>sin θ et cos θ</b> (continus) puis reconstruire θ. On double le nombre de sorties.</p>
+<div class="retain"><b>À retenir.</b> Couches de perceptrons + non-linéarité + rétro-propagation.</div>
 ` });
-COURSE.push({ id: 'gloss', t: 'Vocabulaire', h: `
-<dl class="gloss">
-<dt>Intelligence artificielle</dt><dd>Techniques permettant de simuler l'intelligence humaine.</dd>
-<dt>Machine learning</dt><dd>Modèle d'IA qui apprend seul à partir d'un jeu de données.</dd>
-<dt>Supervisé</dt><dd>À partir de données étiquetées.</dd>
-<dt>Non supervisé</dt><dd>À partir de données non étiquetées.</dd>
-<dt>Renforcement</dt><dd>Agent qui apprend par essais-erreurs et récompense.</dd>
-<dt>Classification</dt><dd>Prédire une classe.</dd>
-<dt>Régression</dt><dd>Prédire une valeur numérique.</dd>
-<dt>Clustering</dt><dd>Regrouper des objets en classes homogènes sans étiquettes.</dd>
-<dt>Surapprentissage</dt><dd>Modèle trop ajusté à l'échantillon d'entraînement.</dd>
-<dt>Matrice de confusion</dt><dd>Tableau TN / FP / FN / TP.</dd>
-<dt>Sensibilité</dt><dd>TP / (TP + FN).</dd>
-<dt>Spécificité</dt><dd>TN / (TN + FP).</dd>
-<dt>Précision</dt><dd>(TP + TN) / total.</dd>
-<dt>RMSE</dt><dd>Racine de l'erreur quadratique moyenne.</dd>
-<dt>Descente de gradient</dt><dd>Algorithme itératif de minimisation du coût.</dd>
-<dt>Hyperparamètre</dt><dd>Paramètre fixé avant l'apprentissage (α, k…).</dd>
-<dt>Perceptron</dt><dd>Neurone artificiel : somme pondérée + activation.</dd>
-<dt>Rétro-propagation</dt><dd>Mise à jour des poids en remontant depuis la sortie.</dd>
-<dt>Non paramétrique</dt><dd>Qui ne se résume pas à un nombre fixe de paramètres (k-NN).</dd>
-<dt>Apprentissage</dt><dd>Phase d'ajustement des paramètres du modèle.</dd>
-<dt>Inférence</dt><dd>Phase d'utilisation du modèle entraîné sur de nouvelles données.</dd>
-<dt>Démarche</dt><dd>Décomposer → choisir l'algorithme → entraîner → inférer.</dd>
-</dl>
-` });
-  COURSE.push({ id: 'backprop', t: 'Rétro-propagation', h: `
+COURSE.push({ id: 'backprop', t: 'Rétro-propagation', h: `
 <h3>Principe</h3>
-<p>Pour entraîner un réseau multicouche, on répète 4 étapes :</p>
 <ol>
-<li><b>Forward propagation</b> : on fait circuler les données de la couche d'entrée vers la sortie.</li>
-<li><b>Fonction coût</b> : on calcule l'erreur E entre la sortie produite et la sortie attendue (ex. E = (y − ŷ)²).</li>
-<li><b>Back-propagation</b> : on calcule ∂E/∂wⱼ pour chaque poids en remontant de la sortie vers l'entrée (règle de composition des dérivées).</li>
-<li><b>Descente de gradient</b> : on met à jour wⱼ ← wⱼ − α·∂E/∂wⱼ, puis on recommence à l'étape 1.</li>
+<li><b>Forward</b> : données de l'entrée vers la sortie.</li>
+<li><b>Fonction coût</b> : E = (y − ŷ)².</li>
+<li><b>Back-propagation</b> : ∂E/∂wⱼ par composition de dérivées.</li>
+<li><b>Descente de gradient</b> : wⱼ ← wⱼ − α·∂E/∂wⱼ.</li>
 </ol>
 <h3>Chaîne de gradients</h3>
 <div class="formula">∂E/∂wⱼ = ∂E/∂ŷ · ∂ŷ/∂h · ∂h/∂f · ∂f/∂wⱼ</div>
 <p>Pour une sigmoïde : σ'(z) = σ(z)·(1 − σ(z)).</p>
-<h3>Exercice type</h3>
-<p>Réseau : 2 entrées (1, x), 2 neurones cachés (σ), 1 sortie identité. Pour (x, y) = (2, 1) et α = 0,1 :</p>
-<pre class="code">f11 = w₁ + w₂·x = −1,5   h11 = σ(−1,5) = 0,1824
-f12 = w₃·x + w₄ = 1,0     h12 = σ(1,0) = 0,7311
+<h3>Application numérique</h3>
+<p>(x, y) = (2, 1), α = 0,1, poids initiaux w₁=0,5, w₂=−1, w₃=−2, w₄=1,5, w₅=1, w₆=1, w₇=−1.</p>
+<pre class="code">f11 = w₁ + w₂·x = −1,5      h11 = σ(−1,5) = 0,1824
+f12 = w₃·x + w₄ = 1,0        h12 = σ(1,0) = 0,7311
 f21 = w₅ + w₆·h11 + w₇·h12 = 0,4513 = ŷ
+y − ŷ = 0,5487
 
 Δw₁ = α(y−ŷ)·w₆·h11(1−h11)      = 0,0082
 Δw₂ = α(y−ŷ)·w₆·h11(1−h11)·x    = 0,0164
-Δw₃ = α(y−ŷ)·w₇·h12(1−h12)·x    = −0,0108 (corrigé)
-Δw₄ = α(y−ŷ)·w₇·h12(1−h12)      = −0,0216 (corrigé)
+Δw₃ = α(y−ŷ)·w₇·h12(1−h12)·x    = −0,0108
+Δw₄ = α(y−ŷ)·w₇·h12(1−h12)      = −0,0216
 Δw₅ = α(y−ŷ)                    = 0,0549
 Δw₆ = α(y−ŷ)·h11                = 0,0100
 Δw₇ = α(y−ŷ)·h12                = 0,0401</pre>
-<div class="retain"><b>À retenir.</b> Forward → coût → back-propagation → gradient descent. La formule Δwⱼ = α(y−ŷ)∂ŷ/∂wⱼ s'applique couche par couche en partant de la sortie.</div>
+<div class="retain"><b>À retenir.</b> Forward → cost → back → gradient descent.</div>
 ` });
 COURSE.push({ id: 'concours', t: 'Exemples de concours', h: `
 <h3>CCINP SI PSI 2025 — friction</h3>
-<p>Régression non linéaire (force en fonction de la vitesse) par <code>MLPRegressor(hidden_layer_sizes=(600,50))</code>. R² = 0,98 (train) et 0,97 (test) ⇒ très bon modèle, pas de surapprentissage. 1481 mesures, 200 pour le test.</p>
+<p>Régression non linéaire par <code>MLPRegressor(hidden_layer_sizes=(600,50))</code>. R² = 0,98 (train) / 0,97 (test). 1481 mesures, 200 test.</p>
 <h3>CCINP SI PSI 2025 — λ(θb)</h3>
-<p>Régression linéaire univariée par <code>LinearRegression</code>. Avantage sur la linéarisation : modèle global valable sur toute la plage. Limite sur [5°, 30°] : la dérivée dλ/dθb varie fortement, le modèle linéaire est moins précis aux basses températures. Kcc = coefficient directeur a.</p>
+<p>Régression linéaire par <code>LinearRegression</code>. Modèle global ; moins précis aux basses températures. Kcc = coefficient directeur.</p>
 <h3>CCINP TSI SI 2025 — substrats</h3>
-<p>Classification (sortie qualitative A/B). Matrice de confusion : A est plus sensible (81,4 %) et plus précis (52,1 %) que B (5,1 % / 17,7 %). L'algorithme identifie bien A mais confond B avec A.</p>
-<div class="retain"><b>À retenir.</b> Les concours testent la capacité à identifier le type d'IA (régression/classification, supervisé, algorithme), à lire du code Scikit-Learn, à calculer les indicateurs et à critiquer un choix de modèle.</div>
+<p>Classification A/B. A plus sensible (81,4 %) et plus précis (52,1 %) que B (5,1 % / 17,7 %).</p>
+<h3>Concours robotique — modèle géométrique inverse</h3>
+<p>Réseau dense n_e → n_c couches de n_n → n_s. Prédiction de sin/cos des angles (continuité) plutôt que θ directement.</p>
+<div class="formula">n_param = n_n·n_e + n_n + (n_c−1)(n_n² + n_n) + n_s·n_n + n_s</div>
+<p>Sans fonction de perte cinématique, l'erreur reconstruite dépasse 5 m. En minimisant <b>ε(θ) = ||f(θ) − X||²</b> (erreur dans l'espace cartésien), la configuration 5 (32×48) donne une erreur < 5 mm avec un temps de calcul raisonnable.</p>
+<p><b>Règle empirique</b> : 10× plus d'exemples que de paramètres (parfois 30-50×).</p>
+<div class="retain"><b>À retenir.</b> Les concours testent : type d'IA, lecture de code Scikit-Learn, calcul des indicateurs, dimensionnement du réseau, critique du modèle.</div>
+` });
+COURSE.push({ id: 'gloss', t: 'Vocabulaire', h: `
+<dl class="gloss">
+<dt>Supervisé</dt><dd>Données étiquetées.</dd>
+<dt>Non supervisé</dt><dd>Sans étiquettes.</dd>
+<dt>Renforcement</dt><dd>Essais-erreurs récompensés.</dd>
+<dt>Classification</dt><dd>Prédire une classe.</dd>
+<dt>Régression</dt><dd>Prédire une valeur.</dd>
+<dt>Clustering</dt><dd>Regrouper sans étiquettes.</dd>
+<dt>Surapprentissage</dt><dd>Trop ajusté à l'entraînement.</dd>
+<dt>Matrice de confusion</dt><dd>TN / FP / FN / TP.</dd>
+<dt>Sensibilité</dt><dd>TP / (TP + FN).</dd>
+<dt>Spécificité</dt><dd>TN / (TN + FP).</dd>
+<dt>Précision</dt><dd>(TP + TN) / total (ou VP/(VP+FP)).</dd>
+<dt>RMSE</dt><dd>Racine de l'erreur quadratique moyenne.</dd>
+<dt>Descente de gradient</dt><dd>Minimisation itérative du coût.</dd>
+<dt>Hyperparamètre</dt><dd>Fixé avant l'apprentissage (α, k, n_n, n_c…).</dd>
+<dt>Perceptron</dt><dd>Somme pondérée + activation.</dd>
+<dt>Rétro-propagation</dt><dd>Mise à jour des poids en remontant la sortie.</dd>
+<dt>Non paramétrique</dt><dd>Sans nombre fixe de paramètres (k-NN).</dd>
+<dt>Apprentissage</dt><dd>Ajustement des paramètres.</dd>
+<dt>Inférence</dt><dd>Utilisation du modèle entraîné.</dd>
+<dt>Démarche</dt><dd>Décomposer → choisir → entraîner → inférer.</dd>
+<dt>MLP</dt><dd>Multi-Layer Perceptron (réseau multicouche).</dd>
+<dt>n_param</dt><dd>Nombre de paramètres à apprendre (poids + biais).</dd>
+<dt>Règle des 10×</dt><dd>Au moins 10 exemples par paramètre pour éviter le surapprentissage.</dd>
+</dl>
 ` });
 
 /* ============ UI ============ */
@@ -2384,6 +2601,7 @@ function renderAct() {
   box.dataset.k = tag;
   box.innerHTML = '';
   const a = ACT[AS.key];
+  if (!a) { box.innerHTML = '<div class="pbody">Aucune activité pour cet atelier.</div>'; return; }
   const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
   box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
   const nq = a.qcm.length;
@@ -2476,18 +2694,23 @@ function openDlg(title, body) {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
 $('#bHelp').addEventListener('click', () => {
-  openDlg('Aide', h('div', { html: '<p><b>Onze ateliers interactifs</b> couvrant le programme officiel de SII CPGE :</p>' +
+  openDlg('Aide', h('div', { html: '<p><b>Douze ateliers interactifs</b> couvrant le programme officiel de SII CPGE :</p>' +
     '<ul><li>1. Types d\'apprentissage</li>' +
     '<li>2. Représentation des données</li>' +
-    '<li>3. Évaluation (binaire + <b>multi-classes CCINP TSI 2025</b>)</li>' +
+    '<li>3. Évaluation (binaire + multi-classes)</li>' +
     '<li>4. k plus proches voisins</li>' +
-    '<li>5. Régression linéaire monovariable</li>' +
-    '<li>6. Régression linéaire multiple</li>' +
+    '<li>5. Régression linéaire monovariable (surface 3D)</li>' +
+    '<li>6. Régression linéaire multiple (plan 3D)</li>' +
     '<li>7. Perceptron interactif</li>' +
-    '<li>8. Réseau multicouche (XOR)</li>' +
-    '<li>9. Démarche de résolution</li>' +
-    '<li>10. <b>Exemples de concours</b> (CCINP SI PSI 2025, CCINP TSI SI 2025)</li>' +
-    '<li>11. <b>Rétro-propagation</b> (exercices corrigés)</li></ul>' +
+    '<li>8. Réseau XOR</li>' +
+    '<li>9. Réseau interactif (nombre d\'entrées / couches / neurones, activation, propagation, nombre de paramètres)</li>' +
+    '<li>10. Démarche de résolution</li>' +
+    '<li>11. Exemples de concours (4 sujets : friction, λ(θb), substrats, robotique)</li>' +
+    '<li>12. Rétro-propagation (exercices corrigés)</li></ul>' +
+    '<h3>Graphiques interactifs</h3><ul>' +
+    '<li><b>Surface J(a,b)</b> : glisser pour tourner.</li>' +
+    '<li><b>Régression multiple</b> : glisser pour tourner le plan.</li>' +
+    '<li><b>Réseau interactif</b> : sliders pour architecture, entrées, poids + nombre de paramètres et règle des 10× données.</li></ul>' +
     '<h3>Vos données</h3><p>Les réponses au QCM sont mémorisées dans ce navigateur uniquement.</p>' }));
 });
 
@@ -2500,6 +2723,7 @@ window.addEventListener('resize', () => {
     else if (UI.cur === 'regmulti') drawRM3D();
     else if (UI.cur === 'perc') drawPerc();
     else if (UI.cur === 'mlp') { drawMLP(); drawActs(); }
+    else if (UI.cur === 'netinter') drawNetInter();
   }, 120);
 });
 
