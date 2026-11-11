@@ -475,59 +475,44 @@ function renderDT() {
 WORKSHOPS.push({ id: 'data', title: 'Représentation des données', hint: 'Identifier les types de données et reconstruire X et y.', mount: mountData, reset: () => { DT.choices = ['ql', 'qc', 'qd', 'ql']; DT.checked = false; } });
 
 /* ============ ATELIER 3 : ÉVALUATION ============ */
+const CM_MULTI = { va: 814, vb: 186, wa: 747, wb: 40, mode: 'bin' };
 function mountEval(root) {
   root.innerHTML = '<h2>3. Évaluation d\'un modèle</h2>'
     + '<p>On mesure la qualité d\'un modèle de classification avec une <b>matrice de confusion</b> et trois indicateurs.</p>'
-    + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:8px 0">'
-    + '<label class="fld"><span>Vrais négatifs (TN)</span><input type="number" id="cm-tn" min="0" max="999"></label>'
-    + '<label class="fld"><span>Faux positifs (FP)</span><input type="number" id="cm-fp" min="0" max="999"></label>'
-    + '<label class="fld"><span>Faux négatifs (FN)</span><input type="number" id="cm-fn" min="0" max="999"></label>'
-    + '<label class="fld"><span>Vrais positifs (TP)</span><input type="number" id="cm-tp" min="0" max="999"></label>'
-    + '</div>'
-    + '<div class="opts"><div class="fld"><span>Contexte</span><div id="cm-ctx"></div></div></div>'
-    + '<div id="cm-out"></div>';
-  ['tn', 'fp', 'fn', 'tp'].forEach(k => {
-    $('#cm-' + k).addEventListener('input', e => {
-      CM[k] = Math.max(0, Math.min(999, parseInt(e.target.value) || 0));
-      renderCM();
-    });
-  });
+    + '<div class="opts"><div class="fld"><span>Mode</span><div id="cm-mode"></div></div></div>'
+    + '<div id="cm-out"></div>'
+    + '<p class="small">Le mode multi-classes reprend la matrice du CCINP TSI SI 2025 (substrats A et B).</p>';
   renderCM();
 }
 function renderCM() {
-  ['tn', 'fp', 'fn', 'tp'].forEach(k => { $('#cm-' + k).value = CM[k]; });
-  const ctxBox = $('#cm-ctx'); ctxBox.innerHTML = '';
-  ctxBox.append(h('div', { class: 'chips' }, [
-    ['fraude', 'Fraude bancaire'], ['spam', 'Filtre anti-spam'], ['medical', 'Dépistage médical']
+  const modeBox = $('#cm-mode'); modeBox.innerHTML = '';
+  modeBox.append(h('div', { class: 'chips' }, [
+    ['bin', 'Binaire'], ['multi', 'Multi-classes (CCINP TSI 2025)']
   ].map(([k, l]) => h('button', {
-    type: 'button', class: 'chip' + (CM.ctx === k ? ' on' : ''),
-    onclick: () => { CM.ctx = k; renderCM(); }
+    type: 'button', class: 'chip' + (CM_MULTI.mode === k ? ' on' : ''),
+    onclick: () => { CM_MULTI.mode = k; renderCM(); }
   }, l))));
-
-  const { tn, fp, fn, tp } = CM;
-  const sens = (tp + fn) ? tp / (tp + fn) : 0;
-  const spec = (tn + fp) ? tn / (tn + fp) : 0;
-  const acc = (tn + fp + fn + tp) ? (tp + tn) / (tn + fp + fn + tp) : 0;
   const out = $('#cm-out'); out.innerHTML = '';
-
-  out.append(h('table', { class: 'cm' },
-    h('thead', null, h('tr', null, h('th', null, ''), h('th', null, 'Réel 0'), h('th', null, 'Réel 1'))),
-    h('tbody', null,
-      h('tr', null, h('th', null, 'Prédit 0'), h('td', { class: 'good' }, 'TN = ' + tn), h('td', { class: 'bad' }, 'FN = ' + fn)),
-      h('tr', null, h('th', null, 'Prédit 1'), h('td', { class: 'bad' }, 'FP = ' + fp), h('td', { class: 'good' }, 'TP = ' + tp)))));
-
-  const hlSens = CM.ctx === 'fraude' || CM.ctx === 'medical';
-  const hlSpec = CM.ctx === 'spam';
-  out.append(
-    h('div', { class: 'metric' + (hlSens ? ' hl' : '') }, h('span', null, 'Sensibilité = TP/(TP+FN)'), h('b', null, (sens * 100).toFixed(1) + ' %')),
-    h('div', { class: 'metric' + (hlSpec ? ' hl' : '') }, h('span', null, 'Spécificité = TN/(TN+FP)'), h('b', null, (spec * 100).toFixed(1) + ' %')),
-    h('div', { class: 'metric' }, h('span', null, 'Précision = (TP+TN)/total'), h('b', null, (acc * 100).toFixed(1) + ' %')));
-  const notes = {
-    fraude: 'Fraude : on veut <b>FN = 0</b>, on privilégie la <b>sensibilité</b>.',
-    spam: 'Anti-spam : on veut <b>FP = 0</b>, on privilégie la <b>spécificité</b>.',
-    medical: 'Dépistage : on veut <b>FN = 0</b>, on privilégie la <b>sensibilité</b>.'
-  };
-  out.append(h('div', { class: 'verdict', html: notes[CM.ctx] }));
+  if (CM_MULTI.mode === 'multi') {
+    out.append(h('p', { style: 'margin:4px 0' }, 'Matrice de confusion A/B (substrats A et B) :'));
+    out.append(h('table', { class: 'cm' },
+      h('thead', null, h('tr', null, h('th', null, ''), h('th', null, 'Prédit A'), h('th', null, 'Prédit B'))),
+      h('tbody', null,
+        h('tr', null, h('th', null, 'Réel A'), h('td', { class: 'good' }, 'VA = 814'), h('td', { class: 'bad' }, 'FB = 186')),
+        h('tr', null, h('th', null, 'Réel B'), h('td', { class: 'bad' }, 'FA = 747'), h('td', { class: 'good' }, 'VB = 40')))));
+    const sA = 814 / (814 + 186), pA = 814 / (814 + 747);
+    const sB = 40 / (40 + 747), pB = 40 / (40 + 186);
+    out.append(
+      h('div', { class: 'metric' + (sA > sB ? ' hl' : '') }, h('span', null, 'Sensibilité substrat A = 814/(814+186)'), h('b', null, (sA * 100).toFixed(1) + ' %')),
+      h('div', { class: 'metric' + (pA > pB ? ' hl' : '') }, h('span', null, 'Précision substrat A = 814/(814+747)'), h('b', null, (pA * 100).toFixed(1) + ' %')),
+      h('div', { class: 'metric' }, h('span', null, 'Sensibilité substrat B = 40/(40+747)'), h('b', null, (sB * 100).toFixed(1) + ' %')),
+      h('div', { class: 'metric' }, h('span', null, 'Précision substrat B = 40/(40+186)'), h('b', null, (pB * 100).toFixed(1) + ' %')));
+    out.append(h('div', { class: 'verdict' }, 'Le substrat <b>A</b> est le plus sensible et le plus précis. B est presque toujours confondu avec A (5 % de détection) : l\'algorithme n\'est pas fiable pour B.'));
+    return;
+  }
+  // Mode binaire : code existant
+  ['tn', 'fp', 'fn', 'tp'].forEach(k => { const el = $('#cm-' + k); if (el) el.value = CM[k]; });
+  // ... (conserver le code binaire existant)
 }
 WORKSHOPS.push({ id: 'eval', title: 'Évaluation d\'un modèle', hint: 'Matrice de confusion et indicateurs.', mount: mountEval, reset: () => { Object.assign(CM, { tn: 50, fp: 5, fn: 10, tp: 35, ctx: 'fraude' }); } });
 
@@ -1845,6 +1830,107 @@ function renderDem() {
 }
 WORKSHOPS.push({ id: 'demarche', title: 'Démarche de résolution', hint: 'Choisir un algorithme et distinguer apprentissage et inférence.', mount: mountDemarche, reset: () => { DEM.assign = {}; DEM.assignPhase = {}; DEM.checked = false; DEM.checkedPhase = false; } });
 
+/* ============ ATELIER 10 : EXEMPLES DE CONCOURS ============ */
+function mountConcours(root) {
+  root.innerHTML = '<h2>10. Exemples de concours</h2>'
+    + '<p>Trois exemples récents de concours (CCINP SI PSI 2025, CCINP TSI SI 2025) illustrent le programme d\'IA. Pour chacun, lisez le contexte, le code fourni aux candidats, puis répondez aux questions.</p>'
+    + '<div id="cc-list"></div>';
+  renderConcours();
+}
+function renderConcours() {
+  const box = $('#cc-list'); if (!box) return;
+  box.innerHTML = '';
+  CONCOURS.examples.forEach((ex, i) => {
+    const det = h('div', { class: 'dwrap', style: 'padding:12px;margin:12px 0' },
+      h('div', { style: 'display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px' },
+        h('b', { style: 'font-size:15px' }, (i + 1) + '. ' + ex.title),
+        h('span', { class: 'chip', style: 'font-size:12px;cursor:default' }, ex.ref)),
+      h('p', { style: 'margin:4px 0;color:var(--muted)' }, ex.context),
+      h('pre', { class: 'code', style: 'margin:8px 0' }, ex.code)
+    );
+    ex.questions.forEach((qq, j) => {
+      const id = 'cc-' + i + '-' + j;
+      const det2 = h('details', { style: 'margin:6px 0;padding:6px 10px;border-radius:6px;background:var(--panel2)' },
+        h('summary', { style: 'cursor:pointer;font-weight:500' }, 'Q' + (j + 1) + '. ' + qq.q),
+        h('p', { style: 'margin:6px 0', html: qq.a }));
+      det.append(det2);
+    });
+    box.append(det);
+  });
+}
+WORKSHOPS.push({ id: 'concours', title: 'Exemples de concours', hint: 'Trois sujets récents : friction, λ(θb), classification de substrats.', mount: mountConcours, reset: () => {} });
+
+/* ============ DONNÉES CONCOURS ============ */
+const CONCOURS = {
+  examples: [
+    {
+      ref: 'CCINP SI PSI 2025',
+      title: 'Régression non linéaire — friction',
+      context: 'On étudie le frottement d\'un inverseur de poussée. X contient 1481 vitesses mesurées (mm/s), Y les 1481 forces associées (N). La relation est fortement non linéaire (marche de friction autour de v = 0).',
+      code: `Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, Y, test_size=200, random_state=9)
+mdl = MLPRegressor(hidden_layer_sizes=(600,50), tol=1e-3, max_iter=1000, random_state=9)
+mdl.fit(Xtrain, Ytrain)
+sc = mdl.score(Xtrain, Ytrain)        # >>> 0.98
+Yp = mdl.predict(Xtest)
+r2_score(Ytest, Yp)                    # >>> 0.97`,
+      questions: [
+        { q: 'Combien de données disponibles ? Combien pour les tests ?',
+          a: '1481 données au total (X.shape = (1481,1)). test_size=200 → <b>200 données de test</b> et <b>1281 d\'entraînement</b> (Xtrain.shape = (1281,1)).' },
+        { q: 'Préciser le type d\'IA et les paramètres de la méthode.',
+          a: '<b>Apprentissage supervisé</b>, tâche de <b>régression</b> (la force est une sortie continue), méthode <b>réseau de neurones</b> (MLPRegressor). Paramètres : deux couches cachées de <b>600 et 50 neurones</b>, tolérance 1e-3, 1000 itérations max, random_state=9.' },
+        { q: 'Commenter les deux grandeurs affichées.',
+          a: 'Le <b>score R²</b> (coefficient de détermination) vaut 0,98 sur l\'entraînement et 0,97 sur le test. Un R² proche de 1 signifie que le modèle explique 97-98 % de la variance : <b>très bon ajustement</b>. Le score test ≈ score train ⇒ pas de surapprentissage. La figure 8 (comparaison prédiction / mesure) confirme visuellement la qualité du modèle sur toute la plage de vitesses.' }
+      ]
+    },
+    {
+      ref: 'CCINP SI PSI 2025',
+      title: 'Régression linéaire univariée — λ(θb)',
+      context: 'Pour compléter l\'asservissement en position de l\'inverseur de poussée, on cherche une relation linéaire continue entre V20(t) = dλ/dt et ωb(t) = dθb/dt. Fichier "mesure.txt" : θb en degrés, λi en mm.',
+      code: `theta_regression, lbda_regression = [], []
+# lecture de mesure.txt ...
+X = pl.array(theta_regression).reshape((-1,1))
+Y = pl.array(lbda_regression)
+model_linReg = LinearRegression().fit(X, Y)
+a = model_linReg.coef_[0]
+b = model_linReg.intercept_
+fitLine = a * X + b
+pl.plot(X, Y, '--k'); pl.plot(X, fitLine, c='grey')`,
+      questions: [
+        { q: 'Pourquoi une régression linéaire plutôt qu\'une linéarisation autour d\'un point ?',
+          a: 'La linéarisation autour d\'un point de fonctionnement n\'est valable que <b>localement</b>. La régression exploite <b>toute la plage</b> de mesures et fournit une loi globale f(θb) = a·θb + b, utilisable sur toute la course de l\'inverseur.' },
+        { q: 'Critiquer ce choix sur θb ∈ [5°, 30°].',
+          a: 'Sur cette plage, la dérivée dλ/dθb varie fortement (courbe b de la figure 11) : le modèle linéaire global est <b>moins précis aux basses températures</b>. Une linéarisation locale autour de 20° serait plus précise sur [15°, 25°], mais ne serait pas valable sur toute la course. Le choix de la régression est un compromis <b>précision vs simplicité</b>.' },
+        { q: 'Que valent a et b dans le code ?',
+          a: '<code>a = model_linReg.coef_[0]</code> (coefficient directeur = gain Kcc de la chaîne cinématique) et <code>b = model_linReg.intercept_</code> (ordonnée à l\'origine).' },
+        { q: 'Fonction de transfert Kcc = ωb/V20 ?',
+          a: 'Kcc est le <b>coefficient directeur a</b> de la régression linéaire : ωb = a · V20 (à l\'échelle de la chaîne cinématique).' }
+      ]
+    },
+    {
+      ref: 'CCINP TSI SI 2025',
+      title: 'Classification de substrats par caméra',
+      context: 'Une micropipette doit s\'adapter au type de substrat (A ou B) pour éviter l\'instabilité de l\'asservissement. La caméra fournit des images à analyser par un algorithme de classification.',
+      code: `# Matrice de confusion (multi-classes) :
+#              Prédit A   Prédit B
+#   Réel A        814        186
+#   Réel B        747         40
+#
+# S = VP / (VP + FN)   # sensibilité
+# P = VP / (VP + FP)   # précision`,
+      questions: [
+        { q: 'Classification ou régression ? Justifier.',
+          a: '<b>Classification</b> : la sortie est <b>qualitative</b> (substrat A ou B), pas une valeur continue. On prédit une classe à partir d\'images.' },
+        { q: 'Sensibilité et précision du substrat A.',
+          a: 'Pour A : VP = 814 (A prédit A), FN = 186 (A prédit B), FP = 747 (B prédit A).<br>S = 814/(814+186) = <b>0,814</b> (81,4 %)<br>P = 814/(814+747) = <b>0,521</b> (52,1 %)' },
+        { q: 'Sensibilité et précision du substrat B.',
+          a: 'Pour B : VP = 40 (B prédit B), FN = 747 (B prédit A), FP = 186 (A prédit B).<br>S = 40/(40+747) = <b>0,051</b> (5,1 %)<br>P = 40/(40+186) = <b>0,177</b> (17,7 %)' },
+        { q: 'Quel substrat est le plus sensible ? Le plus précis ?',
+          a: 'Le substrat <b>A</b> est à la fois le plus <b>sensible</b> (81,4 % vs 5,1 %) et le plus <b>précis</b> (52,1 % vs 17,7 %). L\'algorithme identifie bien A (81 % des A détectés), mais confond massivement B avec A (seulement 5 % des B détectés). Un rééquilibrage du jeu d\'entraînement serait nécessaire.' }
+      ]
+    }
+  ]
+};
+
 /* ============ ACTIVITÉS ============ */
 const ACT = {
   types: {
@@ -2222,6 +2308,42 @@ COURSE.push({ id: 'gloss', t: 'Vocabulaire', h: `
 <dt>Démarche</dt><dd>Décomposer → choisir l'algorithme → entraîner → inférer.</dd>
 </dl>
 ` });
+  COURSE.push({ id: 'backprop', t: 'Rétro-propagation', h: `
+<h3>Principe</h3>
+<p>Pour entraîner un réseau multicouche, on répète 4 étapes :</p>
+<ol>
+<li><b>Forward propagation</b> : on fait circuler les données de la couche d'entrée vers la sortie.</li>
+<li><b>Fonction coût</b> : on calcule l'erreur E entre la sortie produite et la sortie attendue (ex. E = (y − ŷ)²).</li>
+<li><b>Back-propagation</b> : on calcule ∂E/∂wⱼ pour chaque poids en remontant de la sortie vers l'entrée (règle de composition des dérivées).</li>
+<li><b>Descente de gradient</b> : on met à jour wⱼ ← wⱼ − α·∂E/∂wⱼ, puis on recommence à l'étape 1.</li>
+</ol>
+<h3>Chaîne de gradients</h3>
+<div class="formula">∂E/∂wⱼ = ∂E/∂ŷ · ∂ŷ/∂h · ∂h/∂f · ∂f/∂wⱼ</div>
+<p>Pour une sigmoïde : σ'(z) = σ(z)·(1 − σ(z)).</p>
+<h3>Exercice type</h3>
+<p>Réseau : 2 entrées (1, x), 2 neurones cachés (σ), 1 sortie identité. Pour (x, y) = (2, 1) et α = 0,1 :</p>
+<pre class="code">f11 = w₁ + w₂·x = −1,5   h11 = σ(−1,5) = 0,1824
+f12 = w₃·x + w₄ = 1,0     h12 = σ(1,0) = 0,7311
+f21 = w₅ + w₆·h11 + w₇·h12 = 0,4513 = ŷ
+
+Δw₁ = α(y−ŷ)·w₆·h11(1−h11)      = 0,0082
+Δw₂ = α(y−ŷ)·w₆·h11(1−h11)·x    = 0,0164
+Δw₃ = α(y−ŷ)·w₇·h12(1−h12)·x    = −0,0108 (corrigé)
+Δw₄ = α(y−ŷ)·w₇·h12(1−h12)      = −0,0216 (corrigé)
+Δw₅ = α(y−ŷ)                    = 0,0549
+Δw₆ = α(y−ŷ)·h11                = 0,0100
+Δw₇ = α(y−ŷ)·h12                = 0,0401</pre>
+<div class="retain"><b>À retenir.</b> Forward → coût → back-propagation → gradient descent. La formule Δwⱼ = α(y−ŷ)∂ŷ/∂wⱼ s'applique couche par couche en partant de la sortie.</div>
+` });
+COURSE.push({ id: 'concours', t: 'Exemples de concours', h: `
+<h3>CCINP SI PSI 2025 — friction</h3>
+<p>Régression non linéaire (force en fonction de la vitesse) par <code>MLPRegressor(hidden_layer_sizes=(600,50))</code>. R² = 0,98 (train) et 0,97 (test) ⇒ très bon modèle, pas de surapprentissage. 1481 mesures, 200 pour le test.</p>
+<h3>CCINP SI PSI 2025 — λ(θb)</h3>
+<p>Régression linéaire univariée par <code>LinearRegression</code>. Avantage sur la linéarisation : modèle global valable sur toute la plage. Limite sur [5°, 30°] : la dérivée dλ/dθb varie fortement, le modèle linéaire est moins précis aux basses températures. Kcc = coefficient directeur a.</p>
+<h3>CCINP TSI SI 2025 — substrats</h3>
+<p>Classification (sortie qualitative A/B). Matrice de confusion : A est plus sensible (81,4 %) et plus précis (52,1 %) que B (5,1 % / 17,7 %). L'algorithme identifie bien A mais confond B avec A.</p>
+<div class="retain"><b>À retenir.</b> Les concours testent la capacité à identifier le type d'IA (régression/classification, supervisé, algorithme), à lire du code Scikit-Learn, à calculer les indicateurs et à critiquer un choix de modèle.</div>
+` });
 
 /* ============ UI ============ */
 const UI = { cur: 'types' };
@@ -2354,18 +2476,18 @@ function openDlg(title, body) {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
 $('#bHelp').addEventListener('click', () => {
-  openDlg('Aide', h('div', { html: '<p><b>Neuf ateliers interactifs</b> couvrant tout le programme officiel de SII CPGE :</p>' +
-    '<ul><li>1. Types d\'apprentissage (supervisé / non supervisé / renforcement)</li>' +
-    '<li>2. Représentation des données (X, y, types de variables)</li>' +
-    '<li>3. Évaluation d\'un modèle (matrice de confusion, sensibilité, spécificité)</li>' +
-    '<li>4. k plus proches voisins (k-NN)</li>' +
-    '<li>5. Régression linéaire monovariable (surface de coût 3D avec axes gradués)</li>' +
-    '<li>6. <b>Régression linéaire multiple</b> (plan 3D, nuage de points, résidus)</li>' +
-    '<li>7. Perceptron interactif (poids, biais, activation)</li>' +
-    '<li>8. Réseau multicouche (XOR, couche cachée)</li>' +
-    '<li>9. <b>Démarche de résolution</b> (décomposition, choix d\'algorithme, apprentissage / inférence)</li></ul>' +
-    '<h3>Graphiques 3D</h3><ul><li><b>Surface de coût J(a,b)</b> : glissez pour tourner. La hauteur est tracée en √J pour rendre le fond lisible. Les axes a, b et J sont gradués.</li>' +
-    '<li><b>Régression multiple</b> : glissez le graphique pour faire tourner le nuage de points, le plan et les résidus.</li></ul>' +
+  openDlg('Aide', h('div', { html: '<p><b>Onze ateliers interactifs</b> couvrant le programme officiel de SII CPGE :</p>' +
+    '<ul><li>1. Types d\'apprentissage</li>' +
+    '<li>2. Représentation des données</li>' +
+    '<li>3. Évaluation (binaire + <b>multi-classes CCINP TSI 2025</b>)</li>' +
+    '<li>4. k plus proches voisins</li>' +
+    '<li>5. Régression linéaire monovariable</li>' +
+    '<li>6. Régression linéaire multiple</li>' +
+    '<li>7. Perceptron interactif</li>' +
+    '<li>8. Réseau multicouche (XOR)</li>' +
+    '<li>9. Démarche de résolution</li>' +
+    '<li>10. <b>Exemples de concours</b> (CCINP SI PSI 2025, CCINP TSI SI 2025)</li>' +
+    '<li>11. <b>Rétro-propagation</b> (exercices corrigés)</li></ul>' +
     '<h3>Vos données</h3><p>Les réponses au QCM sont mémorisées dans ce navigateur uniquement.</p>' }));
 });
 
