@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Atelier Correcteurs numériques — SII CPGE 1re année</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
+  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;
+  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-ui)}
+button,input,select,textarea{font:inherit;color:inherit}
+.inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+.band{background:var(--bar);border-bottom:1px solid var(--line);flex:none}
+.row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:7px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.01em}
+.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.files{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.sm{padding:3px 8px;font-size:12px}
+:is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;padding:7px 14px;font-weight:500;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.work{flex:1;min-height:0;display:flex;gap:10px;padding-block:10px}
+#stage{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+#hint{flex:none;padding:6px 12px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
+#scroller{flex:1;min-height:0;overflow:auto}
+.phead{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex:none}
+.phead b{font-size:15px}
+.phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.pbody{overflow:auto;padding:12px;flex:1;min-height:0}
+.fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--fg)}
+input[type=range]{width:100%;padding:0;accent-color:var(--accent)}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.small{font-size:12px;color:var(--muted);margin:0 0 9px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:60;max-width:90vw}
+#dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(640px,100%);max-height:88%;display:flex;flex-direction:column}
+.dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlgbox header b{font-size:16px}
+.dlgbox .dbody{padding:14px 16px;overflow:auto}
+.dlgbox h3{margin:14px 0 4px;font-size:14px}.dlgbox p,.dlgbox li{margin:4px 0;font-size:13.5px}
+#act{flex:none;width:clamp(280px,24vw,340px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);min-height:0;max-height:100%}
+#act .pbody{font-size:13.5px}
+.goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:8px 10px;margin:0 0 10px}
+.steps{margin:0 0 10px;padding-left:20px}.steps li{margin-bottom:9px}
+.defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:0 0 12px}.defi p{margin:6px 0}
+.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+fieldset.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px 6px;margin:0 0 10px;min-width:0}
+fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
+.opt{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:6px;cursor:pointer}
+.opt input{margin-top:3px;width:auto;flex:none}
+.opt.good{background:rgba(30,122,46,.15)}.opt.bad{background:rgba(192,40,31,.15)}
+.why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
+.score{font-weight:600;font-size:15px;margin:4px 0 8px}
+#course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
+.ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
+.cwrap{flex:1;min-height:0;display:flex;gap:28px;padding-block:14px}
+.ctoc{flex:none;width:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px}
+.ctoc button:hover{background:var(--panel2)}
+.ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto}
+.cbody{flex:1;min-width:0;overflow:auto;max-width:860px;padding-right:6px}
+.ckick{color:var(--muted);font-size:12.5px;margin:0}
+.cbody h2{font-size:26px;margin:2px 0 12px;text-wrap:balance}
+.cbody h3{font-size:16.5px;margin:22px 0 6px}
+.cbody p,.cbody li{font-size:14.5px;line-height:1.6}
+.cbody ul,.cbody ol{padding-left:22px}.cbody li{margin-bottom:4px}
+.cbody table{display:block;overflow-x:auto;max-width:100%}
+.ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
+.ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.ctable th{background:var(--panel2);font-weight:600}
+.retain{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 12px;margin:16px 0 6px;font-size:14px}
+.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
+pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
+.cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
+#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:980px}
+#ws h2{font-size:24px;margin:0 0 8px;text-wrap:balance}
+#ws h3{font-size:16.5px;margin:24px 0 6px}
+#ws p,#ws li{font-size:14.5px;line-height:1.55}
+#ws .small{font-size:12.5px}
+.opts{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 10px}.opts .fld{margin:0}
+.opts input[type=range]{width:180px;max-width:100%}
+.opts select{width:auto}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.stat{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat span{font-size:12px;color:var(--muted)}.stat b{font-size:14px;font-family:var(--font-mono);overflow-wrap:anywhere}
+.verdict{border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14px;background:var(--panel2);border:1px solid var(--line)}
+.verdict.yes{background:rgba(30,122,46,.15);border-color:var(--ok)}.verdict.no{background:rgba(192,40,31,.13);border-color:var(--bad)}.verdict.warn{background:rgba(154,91,0,.13);border-color:var(--warn)}
+.dwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:8px 0;max-height:340px}
+.dt{border-collapse:collapse;width:100%;font-size:13.5px}
+.dt th,.dt td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.dt thead th{background:var(--panel2);font-weight:600;position:sticky;top:0}
+.dt td.m{font-family:var(--font-mono);font-size:12.5px}
+.dt tr:last-child td{border-bottom:0}
+.plot{width:100%;height:auto;display:block;background:#fff;border-radius:8px}
+.plot-wrap{border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff;margin:8px 0}
+.plot-legend{display:flex;gap:8px 16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:4px 0 2px}
+.plot-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.recur{background:var(--panel2);border-left:3px solid var(--accent);padding:9px 12px;margin:8px 0;font-family:var(--font-mono);font-size:13.5px;overflow-x:auto;white-space:pre}
+@media (max-width:820px){
+  .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
+  #act{position:fixed;left:0;right:0;bottom:0;width:auto;height:70%;max-height:none;border-radius:14px 14px 0 0;z-index:35;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .work{flex-direction:column;gap:8px}
+  .opts input[type=range]{width:150px}
+}
+@media (prefers-reduced-motion:no-preference){.btn{transition:border-color .12s,background .12s}}
+</style></head><body>
+<div id="app">
+  <header class="band"><div class="inner row">
+    <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="12" width="20" height="2" fill="var(--accent)"/><rect x="3" y="6" width="3" height="14" fill="var(--accent)"/><rect x="20" y="6" width="3" height="14" fill="var(--accent)"/><circle cx="9" cy="13" r="2" fill="var(--bad)"/><circle cx="17" cy="13" r="2" fill="var(--ok)"/></svg><span>Correcteurs numériques <small>SII · CPGE 1<sup>re</sup> année</small></span></div>
+    <div class="files">
+      <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
+      <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
+      <button class="btn" id="bHelp" type="button">Aide</button>
+    </div>
+  </div></header>
+  <div class="band" id="modes"><div class="inner row"><div class="seg" id="wsSeg" role="tablist" aria-label="Ateliers"></div></div></div>
+  <main class="inner work" id="work">
+    <section id="stage"><div id="hint"></div><div id="scroller"><div id="ws"></div></div></section>
+    <aside id="act" hidden aria-label="Activité"></aside>
+  </main>
+  <section id="course" hidden aria-label="Cours"></section>
+</div>
+<div id="dlg" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
+  return el;
+}
+const NS = 'http://www.w3.org/2000/svg';
+function sv(tag, attrs, ...kids) {
+  const el = document.createElementNS(NS, tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  for (const k of kids.flat()) if (k != null) el.append(k);
+  return el;
+}
+function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
+const KEYS = { act: 'sii-num-corr-v1' };
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+const WORKSHOPS = [];
+
+/* ---------- utilitaires ---------- */
+const fmt = (v, d) => isFinite(v) ? (+v).toFixed(d == null ? 3 : d).replace('.', ',') : '—';
+const SUPD = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻','+':'⁺'};
+function sup(n) { return String(n).split('').map(c => SUPD[c] || c).join(''); }
+function niceStep(range, target) {
+  const raw = range / target;
+  const exp = Math.floor(Math.log10(raw));
+  const base = Math.pow(10, exp);
+  const m = raw / base;
+  if (m < 1.5) return base;
+  if (m < 3.5) return 2 * base;
+  if (m < 7.5) return 5 * base;
+  return 10 * base;
+}
+function plot(W, H, xr, yr) {
+  const ml = 52, mr = 16, mt = 14, mb = 32;
+  const iw = W - ml - mr, ih = H - mt - mb;
+  const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, class: 'plot' });
+  svg.style.width = '100%'; svg.style.height = 'auto'; svg.style.display = 'block';
+  const toX = x => ml + (x - xr[0]) / (xr[1] - xr[0]) * iw;
+  const toY = y => mt + (yr[1] - y) / (yr[1] - yr[0]) * ih;
+  const g0 = sv('g'); svg.append(g0);
+  const xs = niceStep(xr[1] - xr[0], 6), ys = niceStep(yr[1] - yr[0], 5);
+  for (let x = Math.ceil(xr[0] / xs) * xs; x <= xr[1] + 1e-9; x += xs)
+    g0.append(sv('line', { x1: toX(x), y1: mt, x2: toX(x), y2: mt + ih, stroke: '#e8ebef', 'stroke-width': 1 }));
+  for (let y = Math.ceil(yr[0] / ys) * ys; y <= yr[1] + 1e-9; y += ys)
+    g0.append(sv('line', { x1: ml, y1: toY(y), x2: ml + iw, y2: toY(y), stroke: '#e8ebef', 'stroke-width': 1 }));
+  if (xr[0] <= 0 && xr[1] >= 0) g0.append(sv('line', { x1: toX(0), y1: mt, x2: toX(0), y2: mt + ih, stroke: '#5a6068', 'stroke-width': 1 }));
+  if (yr[0] <= 0 && yr[1] >= 0) g0.append(sv('line', { x1: ml, y1: toY(0), x2: ml + iw, y2: toY(0), stroke: '#5a6068', 'stroke-width': 1 }));
+  for (let x = Math.ceil(xr[0] / xs) * xs; x <= xr[1] + 1e-9; x += xs) {
+    if (Math.abs(x) < xs * 0.01) continue;
+    g0.append(sv('text', { x: toX(x), y: mt + ih + 15, 'text-anchor': 'middle', 'font-size': 11, fill: '#5a6068', 'font-family': 'IBM Plex Mono, monospace' }, String(+x.toFixed(2)).replace('.', ',')));
+  }
+  for (let y = Math.ceil(yr[0] / ys) * ys; y <= yr[1] + 1e-9; y += ys) {
+    if (Math.abs(y) < ys * 0.01) continue;
+    g0.append(sv('text', { x: ml - 5, y: toY(y) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#5a6068', 'font-family': 'IBM Plex Mono, monospace' }, String(+y.toFixed(2)).replace('.', ',')));
+  }
+  g0.append(sv('text', { x: ml + iw, y: mt + ih + 28, 'text-anchor': 'end', 'font-size': 11, fill: '#5a6068' }, 'x'));
+  g0.append(sv('text', { x: ml - 30, y: mt + 10, 'font-size': 11, fill: '#5a6068' }, 'y'));
+  const pg = sv('g'); svg.append(pg);
+  return {
+    svg, toX, toY, g: pg, mt, mb, ml, mr, iw, ih, xr, yr,
+    band(x1, x2, color) {
+      let px1 = Math.max(ml, Math.min(ml + iw, toX(x1)));
+      let px2 = Math.max(ml, Math.min(ml + iw, toX(x2)));
+      if (px2 < px1) [px1, px2] = [px2, px1];
+      if (px2 - px1 < 0.5) return;
+      pg.append(sv('rect', { x: px1, y: mt, width: px2 - px1, height: ih, fill: color || 'rgba(46,109,164,0.10)' }));
+    },
+    curve(f, color, width) {
+      let d = '', started = false;
+      const N = 240;
+      for (let i = 0; i <= N; i++) {
+        const x = xr[0] + (xr[1] - xr[0]) * i / N;
+        let y = f(x);
+        if (!isFinite(y)) { started = false; continue; }
+        if (y < yr[0]) y = yr[0]; if (y > yr[1]) y = yr[1];
+        d += (started ? 'L' : 'M') + toX(x).toFixed(2) + ' ' + toY(y).toFixed(2) + ' ';
+        started = true;
+      }
+      pg.append(sv('path', { d, fill: 'none', stroke: color || '#2e6da4', 'stroke-width': width || 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    },
+    polyline(pts, color, width, dash) {
+      const d = pts.filter(p => p).map((p, i) => (i ? 'L' : 'M') + toX(p[0]).toFixed(2) + ' ' + toY(p[1]).toFixed(2)).join(' ');
+      pg.append(sv('path', { d, fill: 'none', stroke: color || '#1e7a2e', 'stroke-width': width || 2, 'stroke-dasharray': dash || '' }));
+    },
+    point(x, y, color, r, shape) {
+      if (shape === 'square') {
+        pg.append(sv('rect', { x: toX(x) - (r||3), y: toY(y) - (r||3), width: 2*(r||3), height: 2*(r||3), fill: color || '#c0281f', stroke: '#fff', 'stroke-width': 1.2 }));
+      } else {
+        pg.append(sv('circle', { cx: toX(x), cy: toY(y), r: r || 4.5, fill: color || '#c0281f', stroke: '#fff', 'stroke-width': 1.5 }));
+      }
+    },
+    vline(x, color, dash, width) {
+      pg.append(sv('line', { x1: toX(x), y1: mt, x2: toX(x), y2: mt + ih, stroke: color || '#c0281f', 'stroke-width': width || 1.5, 'stroke-dasharray': dash || '4 3' }));
+    },
+    hline(y, color, dash, width) {
+      pg.append(sv('line', { x1: ml, y1: toY(y), x2: ml + iw, y2: toY(y), stroke: color || '#9a5b00', 'stroke-width': width || 1.5, 'stroke-dasharray': dash || '4 3' }));
+    },
+    seg(x1, y1, x2, y2, color, width, dash) {
+      pg.append(sv('line', { x1: toX(x1), y1: toY(y1), x2: toX(x2), y2: toY(y2), stroke: color || '#7b4fc2', 'stroke-width': width || 2, 'stroke-dasharray': dash || '' }));
+    },
+    text(x, y, str, opts) {
+      opts = opts || {};
+      pg.append(sv('text', { x: toX(x), y: toY(y), 'text-anchor': opts.anchor || 'middle', 'font-size': opts.size || 11, fill: opts.color || '#111', 'font-family': 'IBM Plex Mono, monospace', 'font-weight': opts.weight || 500 }, str));
+    }
+  };
+}
+function stats(list) { return h('div', { class: 'gstats' }, list.map(k => h('div', { class: 'stat' }, h('span', { html: k[0] }), h('b', null, k[1])))); }
+function chipsRow(items, cur, cb, label) {
+  return h('div', { class: 'chips', role: 'group', 'aria-label': label || '' }, items.map(it => h('button', { type: 'button', class: 'chip' + (cur === it[0] ? ' on' : ''), 'aria-pressed': cur === it[0] ? 'true' : 'false', onclick: () => cb(it[0]) }, it[1])));
+}
+function codeBlock(src) { return '<h3>Code Python</h3><pre class="code">' + src + '</pre>'; }
+function recurrenceBlock(label, html) { return '<h3>' + label + '</h3><div class="recur">' + html + '</div>'; }
+
+/* ================= Atelier 1 : échantillonnage et quantification ================= */
+const F1 = { f: 1.5, Te: 0.1, bits: 3 };
+function mountF1(root) {
+  root.innerHTML = '<h2>Échantillonnage et quantification</h2>' +
+    '<p>Un signal à temps continu s(t) est <b>échantillonné</b> à la période T<sub>e</sub> (fréquence f<sub>e</sub> = 1/T<sub>e</sub>) : on obtient la suite s[n] = s(n·T<sub>e</sub>). Chaque valeur est ensuite <b>quantifiée</b> sur n bits, ce qui introduit une erreur.</p>' +
+    '<div class="formula">s[n] = s(n·T<sub>e</sub>) &nbsp;&nbsp;·&nbsp;&nbsp; f<sub>e</sub> = 1/T<sub>e</sub> &nbsp;&nbsp;·&nbsp;&nbsp; q = 2A / 2<sup>n</sup> &nbsp;&nbsp;·&nbsp;&nbsp; |e<sub>q</sub>| ≤ q/2</div>' +
+    '<div class="opts"><label class="fld"><span>Fréquence f = <b id="f1-f-out"></b> Hz</span><input type="range" id="f1-f" min="0.2" max="8" step="0.1" aria-label="fréquence"></label>' +
+    '<label class="fld"><span>Période T<sub>e</sub> = <b id="f1-Te-out"></b> s</span><input type="range" id="f1-Te" min="0.02" max="0.5" step="0.01" aria-label="Te"></label>' +
+    '<label class="fld"><span>Bits de quantification n = <b id="f1-bits-out"></b></span><input type="range" id="f1-bits" min="2" max="8" step="1" aria-label="bits"></label></div>' +
+    '<div class="plot-wrap"><div class="plot-legend"><span><i style="background:#2e6da4"></i>signal analogique</span><span><i style="background:#c0281f"></i>échantillons s[n]</span><span><i style="background:#7b4fc2"></i>valeurs quantifiées</span><span><i style="background:rgba(200,200,200,0.8)"></i>niveaux de quantification</span></div><div id="f1-plot"></div></div>' +
+    '<div class="verdict" id="f1-msg" aria-live="polite"></div>' +
+    '<div id="f1-stats"></div>' +
+    recurrenceBlock('Signal à temps discret et quantification', 's[n] = s(n·T<sub>e</sub>)            (échantillonnage)\ns<sub>q</sub>[n] = q · round(s[n]/q)    (quantification)\nq = 2A / 2<sup>n</sup>                   (pas de quantification)') +
+    codeBlock(`import math
+
+def echantillonner(signal, Te, Tmax):
+    """Échantillonne un signal continu sur [0, Tmax] à la période Te."""
+    n = int(Tmax / Te)
+    return [signal(i * Te) for i in range(n + 1)]
+
+def quantifier(xs, A, n_bits):
+    """Quantifie sur n_bits bits dans [-A, A]."""
+    q = 2 * A / (2 ** n_bits)
+    return [round(x / q) * q for x in xs]
+
+# Exemple
+sig = lambda t: math.sin(2 * math.pi * 1.5 * t)
+xs = echantillonner(sig, 0.1, 2.0)
+xs_q = quantifier(xs, 1.0, 3)
+print(xs_q)`);
+  $('#f1-f').value = F1.f; $('#f1-Te').value = F1.Te; $('#f1-bits').value = F1.bits;
+  $('#f1-f').addEventListener('input', e => { F1.f = +e.target.value; drawF1(); });
+  $('#f1-Te').addEventListener('input', e => { F1.Te = +e.target.value; drawF1(); });
+  $('#f1-bits').addEventListener('input', e => { F1.bits = +e.target.value; drawF1(); });
+  drawF1();
+}
+function drawF1() {
+  $('#f1-f-out').textContent = fmt(F1.f, 1);
+  $('#f1-Te-out').textContent = fmt(F1.Te, 2);
+  $('#f1-bits-out').textContent = String(F1.bits);
+  const A = 1, Tmax = 2;
+  const fe = 1 / F1.Te, fN = fe / 2;
+  const nLevels = Math.pow(2, F1.bits);
+  const q = 2 * A / nLevels;
+  const N = Math.floor(Tmax / F1.Te);
+  const samples = [];
+  const quantized = [];
+  for (let n = 0; n <= N; n++) {
+    const t = n * F1.Te;
+    const s = A * Math.sin(2 * Math.PI * F1.f * t);
+    let sq = Math.round(s / q) * q;
+    sq = Math.max(-A, Math.min(A, sq));
+    samples.push({ t, s });
+    quantized.push({ t, sq });
+  }
+  const P = plot(640, 340, [0, Tmax], [-A * 1.15, A * 1.15]);
+  // niveaux de quantification
+  for (let k = -nLevels/2 + 1; k < nLevels/2; k++) {
+    P.hline(k * q, 'rgba(200,200,200,0.6)', '', 0.5);
+  }
+  // signal analogique
+  P.curve(t => A * Math.sin(2 * Math.PI * F1.f * t), '#2e6da4', 1.8);
+  // échantillons (tiges verticales + points)
+  samples.forEach(p => {
+    P.seg(p.t, 0, p.t, p.s, 'rgba(192,40,31,0.35)', 1.2);
+    P.point(p.t, p.s, '#c0281f', 3.5);
+  });
+  // quantifiés
+  quantized.forEach(p => P.point(p.t, p.sq, '#7b4fc2', 4, 'square'));
+  $('#f1-plot').innerHTML = ''; $('#f1-plot').append(P.svg);
+  // statistiques
+  let f_alias = F1.f % fe;
+  if (f_alias > fe / 2) f_alias = fe - f_alias;
+  const aliasing = F1.f > fN;
+  const snr = 6.02 * F1.bits + 1.76;
+  $('#f1-stats').innerHTML = '';
+  $('#f1-stats').append(stats([
+    ['f', fmt(F1.f, 2) + ' Hz'],
+    ['f<sub>e</sub>', fmt(fe, 2) + ' Hz'],
+    ['f<sub>N</sub> = f<sub>e</sub>/2', fmt(fN, 2) + ' Hz'],
+    ['Bits n', String(F1.bits) + ' (' + nLevels + ' niveaux)'],
+    ['Pas q', fmt(q, 4)],
+    ['Erreur max', '±' + fmt(q/2, 4)],
+    ['SNR théorique', fmt(snr, 1) + ' dB']
+  ]));
+  const msg = $('#f1-msg');
+  if (aliasing) {
+    msg.className = 'verdict warn';
+    msg.innerHTML = '<b>Repliement spectral (aliasing) :</b> f = ' + fmt(F1.f, 2) + ' Hz > f<sub>N</sub> = ' + fmt(fN, 2) + ' Hz. Les échantillons semblent décrire un signal de fréquence apparente f<sub>alias</sub> ≈ <b>' + fmt(f_alias, 2) + ' Hz</b>. Il faut augmenter f<sub>e</sub> (diminuer T<sub>e</sub>) pour respecter le théorème de Shannon.';
+  } else if (F1.bits <= 3) {
+    msg.className = 'verdict warn';
+    msg.innerHTML = 'Pas d\'aliasing (f &lt; f<sub>N</sub>), mais avec n = ' + F1.bits + ' bits, la quantification est très grossière : l\'erreur visible est d\'environ ±q/2 = ±' + fmt(q/2, 3) + '.';
+  } else {
+    msg.className = 'verdict yes';
+    msg.innerHTML = 'Conditions respectées : f &lt; f<sub>N</sub> (pas d\'aliasing) et n = ' + F1.bits + ' bits (erreur de quantification ±' + fmt(q/2, 4) + ', SNR ≈ ' + fmt(snr, 1) + ' dB).';
+  }
+}
+
+/* ================= Atelier 2 : correcteur P ================= */
+const F2 = { Kp: 2, K: 1, tau: 1, Te: 0.05, Tmax: 8 };
+function simulateP(Kp, K, tau, Te, Tmax) {
+  const N = Math.floor(Tmax / Te);
+  const ys = [0];
+  let y = 0;
+  for (let n = 0; n < N; n++) {
+    const e = 1 - y;
+    const u = Kp * e;
+    y = y + (Te / tau) * (K * u - y);
+    ys.push(y);
+  }
+  return { ys, N, Te };
+}
+function analyze(ys, Te, r) {
+  const final = ys[ys.length - 1];
+  const err = Math.abs(r - final);
+  let maxY = -Infinity;
+  ys.forEach(v => { if (v > maxY) maxY = v; });
+  const overshoot = Math.max(0, (maxY - r) / r * 100);
+  let settling = -1;
+  for (let i = 0; i < ys.length; i++) {
+    let ok = true;
+    for (let j = i; j < ys.length; j++) { if (Math.abs(ys[j] - r) > 0.02 * r) { ok = false; break; } }
+    if (ok) { settling = i * Te; break; }
+  }
+  return { err, overshoot, settling, final };
+}
+function mountF2(root) {
+  root.innerHTML = '<h2>Correcteur proportionnel (P)</h2>' +
+    '<p>Le correcteur proportionnel applique une action proportionnelle à l\'erreur. C\'est le correcteur le plus simple : il n\'y a pas de mémoire, donc pas besoin de valeur précédente.</p>' +
+    '<div class="formula">u[n] = K<sub>p</sub> · e[n]</div>' +
+    '<div class="opts"><label class="fld"><span>Gain K<sub>p</sub> = <b id="f2-Kp-out"></b></span><input type="range" id="f2-Kp" min="0.2" max="20" step="0.2" aria-label="Kp"></label>' +
+    '<label class="fld"><span>Gain du système K = <b id="f2-K-out"></b></span><input type="range" id="f2-K" min="0.5" max="3" step="0.1" aria-label="K"></label>' +
+    '<label class="fld"><span>Constante de temps τ = <b id="f2-tau-out"></b> s</span><input type="range" id="f2-tau" min="0.2" max="3" step="0.1" aria-label="tau"></label></div>' +
+    '<div class="plot-wrap"><div class="plot-legend"><span><i style="background:#5a6068"></i>consigne</span><span><i style="background:#2e6da4"></i>sortie y(t)</span></div><div id="f2-plot"></div></div>' +
+    '<div class="verdict" id="f2-msg" aria-live="polite"></div>' +
+    '<div id="f2-stats"></div>' +
+    recurrenceBlock('Équation de récurrence du correcteur P', 'u[n] = K<sub>p</sub> · e[n]\n(où e[n] = r[n] − y[n])') +
+    codeBlock(`def correcteur_P(e, Kp):
+    """Correcteur proportionnel : u[n] = Kp · e[n]."""
+    return Kp * e
+
+def simuler_boucle_P(Kp, K, tau, Te, Tmax):
+    """Boucle fermée : correcteur P + système du 1er ordre."""
+    N = int(Tmax / Te)
+    y, ys = 0.0, [0.0]
+    for n in range(N):
+        e = 1.0 - y                  # erreur (consigne = 1)
+        u = correcteur_P(e, Kp)      # commande
+        y = y + (Te / tau) * (K * u - y)  # système
+        ys.append(y)
+    return ys`);
+  $('#f2-Kp').value = F2.Kp; $('#f2-K').value = F2.K; $('#f2-tau').value = F2.tau;
+  $('#f2-Kp').addEventListener('input', e => { F2.Kp = +e.target.value; drawF2(); });
+  $('#f2-K').addEventListener('input', e => { F2.K = +e.target.value; drawF2(); });
+  $('#f2-tau').addEventListener('input', e => { F2.tau = +e.target.value; drawF2(); });
+  drawF2();
+}
+function drawF2() {
+  $('#f2-Kp-out').textContent = fmt(F2.Kp, 1);
+  $('#f2-K-out').textContent = fmt(F2.K, 1);
+  $('#f2-tau-out').textContent = fmt(F2.tau, 1);
+  const R = simulateP(F2.Kp, F2.K, F2.tau, F2.Te, F2.Tmax);
+  const ys = R.ys;
+  const ymax = Math.max(1.1, ...ys);
+  const P = plot(640, 320, [0, F2.Tmax], [0, ymax * 1.08]);
+  P.hline(1, '#5a6068', '6 4', 1.5);
+  P.polyline(ys.map((v, i) => [i * R.Te, v]), '#2e6da4', 2.2);
+  P.point(0, 1, '#5a6068', 3);
+  $('#f2-plot').innerHTML = ''; $('#f2-plot').append(P.svg);
+  const A = analyze(ys, R.Te, 1);
+  const err_theo = 1 / (1 + F2.Kp * F2.K);
+  $('#f2-stats').innerHTML = '';
+  $('#f2-stats').append(stats([
+    ['K<sub>p</sub>', fmt(F2.Kp, 2)],
+    ['K (système)', fmt(F2.K, 2)],
+    ['τ (système)', fmt(F2.tau, 2) + ' s'],
+    ['Erreur statique (simulée)', fmt(A.err, 4)],
+    ['Erreur statique (théorique)', fmt(err_theo, 4)],
+    ['Dépassement', fmt(A.overshoot, 1) + ' %'],
+    ['Temps d\'établissement 2 %', A.settling < 0 ? '> ' + fmt(F2.Tmax, 1) + ' s' : fmt(A.settling, 2) + ' s']
+  ]));
+  const msg = $('#f2-msg');
+  if (A.overshoot > 20) {
+    msg.className = 'verdict warn';
+    msg.innerHTML = 'Avec K<sub>p</sub> = ' + fmt(F2.Kp, 1) + ', le dépassement est de ' + fmt(A.overshoot, 1) + ' %. Un gain trop grand rend le système oscillant, voire instable (pour un ordre supérieur).';
+  } else if (A.err > 0.1) {
+    msg.className = 'verdict warn';
+    msg.innerHTML = 'Erreur statique ' + fmt(A.err, 3) + ' : avec un correcteur P seul, l\'erreur statique ne peut pas être annulée, elle vaut 1/(1+K<sub>p</sub>K) = ' + fmt(err_theo, 3) + '.';
+  } else {
+    msg.className = 'verdict yes';
+    msg.innerHTML = 'Bonne réponse : erreur statique ' + fmt(A.err, 3) + ', dépassement ' + fmt(A.overshoot, 1) + ' %, établissement à ' + fmt(A.settling, 2) + ' s.';
+  }
+}
+
+/* ================= Atelier 3 : correcteur PI ================= */
+const F3 = { Kp: 1, Ki: 2, K: 1, tau: 1, Te: 0.05, Tmax: 10 };
+function simulatePI(Kp, Ki, K, tau, Te, Tmax) {
+  const N = Math.floor(Tmax / Te);
+  const ys = [0], us = [0], es = [1];
+  let y = 0, e_prev = 1, u_prev = 0;
+  for (let n = 0; n < N; n++) {
+    const e = 1 - y;
+    const u = u_prev + Kp * (e - e_prev) + Ki * Te * e;
+    y = y + (Te / tau) * (K * u - y);
+    ys.push(y); us.push(u); es.push(e);
+    e_prev = e; u_prev = u;
+  }
+  return { ys, us, es, N, Te };
+}
+function mountF3(root) {
+  root.innerHTML = '<h2>Correcteur proportionnel intégral (PI)</h2>' +
+    '<p>Le correcteur PI ajoute une action <b>intégrale</b> à l\'action proportionnelle. L\'intégrateur accumule l\'erreur tant qu\'elle n\'est pas nulle : en boucle fermée, il finit par annuler complètement l\'erreur statique.</p>' +
+    '<div class="formula">C(p) = K<sub>p</sub> + K<sub>i</sub>/p</div>' +
+    '<div class="opts"><label class="fld"><span>Gain K<sub>p</sub> = <b id="f3-Kp-out"></b></span><input type="range" id="f3-Kp" min="0" max="5" step="0.1" aria-label="Kp"></label>' +
+    '<label class="fld"><span>Gain K<sub>i</sub> = <b id="f3-Ki-out"></b></span><input type="range" id="f3-Ki" min="0" max="10" step="0.2" aria-label="Ki"></label>' +
+    '<label class="fld"><span>Gain du système K = <b id="f3-K-out"></b></span><input type="range" id="f3-K" min="0.5" max="3" step="0.1" aria-label="K"></label>' +
+    '<label class="fld"><span>Constante de temps τ = <b id="f3-tau-out"></b> s</span><input type="range" id="f3-tau" min="0.2" max="3" step="0.1" aria-label="tau"></label></div>' +
+    '<div class="plot-wrap"><div class="plot-legend"><span><i style="background:#5a6068"></i>consigne</span><span><i style="background:#2e6da4"></i>sortie y(t)</span></div><div id="f3-plot"></div></div>' +
+    '<div class="verdict" id="f3-msg" aria-live="polite"></div>' +
+    '<div id="f3-stats"></div>' +
+    recurrenceBlock('Équation de récurrence du correcteur PI (forme vitesse)', 'u[n] = u[n−1] + K<sub>p</sub>·(e[n] − e[n−1]) + K<sub>i</sub>·T<sub>e</sub>·e[n]\n\n(forme position : u[n] = K<sub>p</sub>·e[n] + K<sub>i</sub>·T<sub>e</sub>·Σ e[k])') +
+    codeBlock(`def correcteur_PI(e, e_prev, u_prev, Kp, Ki, Te):
+    """Correcteur PI en forme vitesse."""
+    return u_prev + Kp * (e - e_prev) + Ki * Te * e
+
+def simuler_boucle_PI(Kp, Ki, K, tau, Te, Tmax):
+    N = int(Tmax / Te)
+    y, e_prev, u_prev = 0.0, 1.0, 0.0
+    ys = [y]
+    for n in range(N):
+        e = 1.0 - y
+        u = correcteur_PI(e, e_prev, u_prev, Kp, Ki, Te)
+        y = y + (Te / tau) * (K * u - y)
+        ys.append(y)
+        e_prev, u_prev = e, u
+    return ys`);
+  $('#f3-Kp').value = F3.Kp; $('#f3-Ki').value = F3.Ki; $('#f3-K').value = F3.K; $('#f3-tau').value = F3.tau;
+  $('#f3-Kp').addEventListener('input', e => { F3.Kp = +e.target.value; drawF3(); });
+  $('#f3-Ki').addEventListener('input', e => { F3.Ki = +e.target.value; drawF3(); });
+  $('#f3-K').addEventListener('input', e => { F3.K = +e.target.value; drawF3(); });
+  $('#f3-tau').addEventListener('input', e => { F3.tau = +e.target.value; drawF3(); });
+  drawF3();
+}
+function drawF3() {
+  $('#f3-Kp-out').textContent = fmt(F3.Kp, 1);
+  $('#f3-Ki-out').textContent = fmt(F3.Ki, 1);
+  $('#f3-K-out').textContent = fmt(F3.K, 1);
+  $('#f3-tau-out').textContent = fmt(F3.tau, 1);
+  const R = simulatePI(F3.Kp, F3.Ki, F3.K, F3.tau, F3.Te, F3.Tmax);
+  const ys = R.ys;
+  const ymax = Math.max(1.1, ...ys);
+  const P = plot(640, 320, [0, F3.Tmax], [0, ymax * 1.08]);
+  P.hline(1, '#5a6068', '6 4', 1.5);
+  P.polyline(ys.map((v, i) => [i * R.Te, v]), '#2e6da4', 2.2);
+  $('#f3-plot').innerHTML = ''; $('#f3-plot').append(P.svg);
+  const A = analyze(ys, R.Te, 1);
+  $('#f3-stats').innerHTML = '';
+  $('#f3-stats').append(stats([
+    ['K<sub>p</sub>', fmt(F3.Kp, 2)],
+    ['K<sub>i</sub>', fmt(F3.Ki, 2)],
+    ['Erreur statique finale', fmt(A.err, 5)],
+    ['Dépassement', fmt(A.overshoot, 1) + ' %'],
+    ['Temps d\'établissement 2 %', A.settling < 0 ? '> ' + fmt(F3.Tmax, 1) + ' s' : fmt(A.settling, 2) + ' s'],
+    ['Valeur finale', fmt(A.final, 4)]
+  ]));
+  const msg = $('#f3-msg');
+  if (F3.Ki < 0.1) {
+    msg.className = 'verdict warn';
+    msg.innerHTML = 'Avec K<sub>i</sub> = 0, le correcteur se réduit à un P : l\'erreur statique n\'est pas annulée.';
+  } else if (A.overshoot > 30) {
+    msg.className = 'verdict warn';
+    msg.innerHTML = 'Le dépassement est important (' + fmt(A.overshoot, 0) + ' %) : un K<sub>i</sub> trop grand rend la réponse oscillante. Réduisez K<sub>i</sub> ou augmentez K<sub>p</sub>.';
+  } else {
+    msg.className = 'verdict yes';
+    msg.innerHTML = 'L\'erreur statique finale est nulle (' + fmt(A.err, 5) + ') : c\'est l\'action intégrale qui élimine le dépassement statique. Dépassement : ' + fmt(A.overshoot, 1) + ' %.';
+  }
+}
+
+/* ================= Atelier 4 : correcteur à avance de phase ================= */
+const F4 = { tau: 0.5, a: 3, K: 1, plantK: 1, plantTau: 1, plantTd: 0.5, Te: 0.05, Tmax: 10 };
+function computePACoeffs(tau, a, K, Te) {
+  const A = 2 * a * tau / Te;
+  const B = 2 * tau / Te;
+  const b0 = K * (1 + A) / (1 + B);
+  const b1 = K * (1 - A) / (1 + B);
+  const a1 = (1 - B) / (1 + B);
+  return { b0, b1, a1, A, B };
+}
+function simulatePAPlant(plantK, plantTau, plantTd, corr, Te, Tmax, mode, KpP) {
+  const N = Math.floor(Tmax / Te);
+  const delayN = Math.max(0, Math.round(plantTd / Te));
+  const uBuf = new Array(N + 1).fill(0);
+  const ys = [0];
+  let y = 0, e_prev = 0, u_prev = 0;
+  for (let n = 0; n < N; n++) {
+    const e = 1 - y;
+    let u;
+    if (mode === 'PA') {
+      u = -corr.a1 * u_prev + corr.b0 * e + corr.b1 * e_prev;
+    } else {
+      u = KpP * e;
+    }
+    uBuf[n] = u;
+    const uDelayed = n >= delayN ? uBuf[n - delayN] : 0;
+    y = y + (Te / plantTau) * (plantK * uDelayed - y);
+    ys.push(y);
+    e_prev = e; u_prev = u;
+  }
+  return { ys, N, Te };
+}
+function bodePACorr(corr) {
+  // C(z) = (b0 + b1·z⁻¹)/(1 + a1·z⁻¹), z⁻¹ = e^{-jωTe}
+  const pts = [];
+  const N = 200;
+  for (let i = 1; i <= N; i++) {
+    const nu = i / N * 0.5;             // f/fe dans ]0, 0.5]
+    const omegaTe = 2 * Math.PI * nu;
+    const zre = Math.cos(omegaTe), zim = -Math.sin(omegaTe);
+    const numRe = corr.b0 + corr.b1 * zre;
+    const numIm = corr.b1 * zim;
+    const denRe = 1 + corr.a1 * zre;
+    const denIm = corr.a1 * zim;
+    const denSq = denRe * denRe + denIm * denIm;
+    const hRe = (numRe * denRe + numIm * denIm) / denSq;
+    const hIm = (numIm * denRe - numRe * denIm) / denSq;
+    const mag = Math.sqrt(hRe * hRe + hIm * hIm);
+    const phase = Math.atan2(hIm, hRe) * 180 / Math.PI;
+    pts.push({ nu, mag, magDB: 20 * Math.log10(mag), phase });
+  }
+  return pts;
+}
+function mountF4(root) {
+  root.innerHTML = '<h2>Correcteur à avance de phase</h2>' +
+    '<p>Le correcteur à avance de phase ajoute de la phase positive autour d\'une fréquence de travail. Il est utilisé pour <b>augmenter la marge de phase</b> et ainsi permettre un gain plus élevé sans déstabiliser.</p>' +
+    '<div class="formula">C(p) = K · (1 + a·τ·p) / (1 + τ·p), &nbsp; a &gt; 1</div>' +
+    '<div class="opts"><label class="fld"><span>Constante τ = <b id="f4-tau-out"></b> s</span><input type="range" id="f4-tau" min="0.1" max="2" step="0.05" aria-label="tau"></label>' +
+    '<label class="fld"><span>Coefficient a = <b id="f4-a-out"></b></span><input type="range" id="f4-a" min="1.2" max="10" step="0.1" aria-label="a"></label>' +
+    '<label class="fld"><span>Gain K = <b id="f4-K-out"></b></span><input type="range" id="f4-K" min="0.5" max="3" step="0.1" aria-label="K"></label>' +
+    '<label class="fld"><span>Retard système T<sub>d</sub> = <b id="f4-Td-out"></b> s</span><input type="range" id="f4-Td" min="0" max="1.5" step="0.05" aria-label="Td"></label>' +
+    '<label class="fld"><span>Constante système τ<sub>s</sub> = <b id="f4-ts-out"></b> s</span><input type="range" id="f4-ts" min="0.3" max="2" step="0.1" aria-label="tau_s"></label></div>' +
+    '<div class="plot-wrap"><div class="plot-legend"><span><i style="background:#7b4fc2"></i>phase du correcteur</span></div><div id="f4-bode"></div></div>' +
+    '<div class="plot-wrap"><div class="plot-legend"><span><i style="background:#5a6068"></i>consigne</span><span><i style="background:#2e6da4"></i>sortie avec correcteur PA</span><span><i style="background:#c0281f"></i>sortie avec P seul (même gain DC)</span></div><div id="f4-plot"></div></div>' +
+    '<div class="verdict" id="f4-msg" aria-live="polite"></div>' +
+    '<div id="f4-stats"></div>' +
+    recurrenceBlock('Équation de récurrence (Tustin)', 'b<sub>0</sub> = K·(1 + 2aτ/T<sub>e</sub>)/(1 + 2τ/T<sub>e</sub>)\nb<sub>1</sub> = K·(1 − 2aτ/T<sub>e</sub>)/(1 + 2τ/T<sub>e</sub>)\na<sub>1</sub> = (1 − 2τ/T<sub>e</sub>)/(1 + 2τ/T<sub>e</sub>)\n\nu[n] = −a<sub>1</sub>·u[n−1] + b<sub>0</sub>·e[n] + b<sub>1</sub>·e[n−1]') +
+    codeBlock(`def correcteur_avance_coeffs(tau, a, K, Te):
+    """Coefficients (b0, b1, a1) du correcteur à avance de phase
+    C(p) = K·(1 + a·τ·p)/(1 + τ·p), discrétisé par Tustin."""
+    A = 2 * a * tau / Te
+    B = 2 * tau / Te
+    b0 = K * (1 + A) / (1 + B)
+    b1 = K * (1 - A) / (1 + B)
+    a1 = (1 - B) / (1 + B)
+    return b0, b1, a1
+
+def correcteur_avance(e, e_prev, u_prev, b0, b1, a1):
+    """Récurrence u[n] = -a1·u[n-1] + b0·e[n] + b1·e[n-1]."""
+    return -a1 * u_prev + b0 * e + b1 * e_prev`);
+  ['tau','a','K','Td','ts'].forEach(k => {
+    const id = '#f4-' + (k === 'ts' ? 'ts' : k);
+    $(id).value = F4[k === 'ts' ? 'plantTau' : k === 'Td' ? 'plantTd' : k];
+  });
+  $('#f4-tau').addEventListener('input', e => { F4.tau = +e.target.value; drawF4(); });
+  $('#f4-a').addEventListener('input', e => { F4.a = +e.target.value; drawF4(); });
+  $('#f4-K').addEventListener('input', e => { F4.K = +e.target.value; drawF4(); });
+  $('#f4-Td').addEventListener('input', e => { F4.plantTd = +e.target.value; drawF4(); });
+  $('#f4-ts').addEventListener('input', e => { F4.plantTau = +e.target.value; drawF4(); });
+  drawF4();
+}
+function drawF4() {
+  $('#f4-tau-out').textContent = fmt(F4.tau, 2);
+  $('#f4-a-out').textContent = fmt(F4.a, 1);
+  $('#f4-K-out').textContent = fmt(F4.K, 1);
+  $('#f4-Td-out').textContent = fmt(F4.plantTd, 2);
+  $('#f4-ts-out').textContent = fmt(F4.plantTau, 2);
+  const corr = computePACoeffs(F4.tau, F4.a, F4.K, F4.Te);
+  // Bode
+  const bode = bodePACorr(corr);
+  const phaseMax = Math.max(...bode.map(p => p.phase));
+  const phaseMin = Math.min(...bode.map(p => p.phase), 0);
+  const P = plot(640, 260, [0, 0.5], [Math.floor(phaseMin / 5) * 5, Math.ceil(phaseMax / 5) * 5 + 2]);
+  P.hline(0, '#5a6068', '', 1);
+  P.polyline(bode.map(p => [p.nu, p.phase]), '#7b4fc2', 2);
+  $('#f4-bode').innerHTML = ''; $('#f4-bode').append(P.svg);
+  // Réponse en boucle fermée
+  const dcGain = (corr.b0 + corr.b1) / (1 + corr.a1);
+  const R_PA = simulatePAPlant(F4.plantK, F4.plantTau, F4.plantTd, corr, F4.Te, F4.Tmax, 'PA');
+  const R_P  = simulatePAPlant(F4.plantK, F4.plantTau, F4.plantTd, corr, F4.Te, F4.Tmax, 'P', dcGain);
+  const ymax = Math.max(1.1, ...R_PA.ys, ...R_P.ys);
+  const P2 = plot(640, 300, [0, F4.Tmax], [0, ymax * 1.08]);
+  P2.hline(1, '#5a6068', '6 4', 1.5);
+  P2.polyline(R_P.ys.map((v, i) => [i * R_P.Te, v]), '#c0281f', 1.8, '5 3');
+  P2.polyline(R_PA.ys.map((v, i) => [i * R_PA.Te, v]), '#2e6da4', 2.2);
+  $('#f4-plot').innerHTML = ''; $('#f4-plot').append(P2.svg);
+  const A_PA = analyze(R_PA.ys, R_PA.Te, 1);
+  const A_P  = analyze(R_P.ys, R_P.Te, 1);
+  // fréquence du maximum de phase
+  let fMax = 0, phaseMaxVal = -Infinity;
+  bode.forEach(p => { if (p.phase > phaseMaxVal) { phaseMaxVal = p.phase; fMax = p.nu; } });
+  $('#f4-stats').innerHTML = '';
+  $('#f4-stats').append(stats([
+    ['a', fmt(F4.a, 2)],
+    ['τ', fmt(F4.tau, 2) + ' s'],
+    ['Gain DC C(1)', fmt(dcGain, 3)],
+    ['Phase max', fmt(phaseMaxVal, 1) + '°'],
+    ['f à phase max (f/f<sub>e</sub>)', fmt(fMax, 3)],
+    ['Dépassement PA', fmt(A_PA.overshoot, 1) + ' %'],
+    ['Dépassement P seul', fmt(A_P.overshoot, 1) + ' %']
+  ]));
+  const msg = $('#f4-msg');
+  if (phaseMaxVal < 10) {
+    msg.className = 'verdict warn';
+    msg.innerHTML = 'Avec a = ' + fmt(F4.a, 1) + ', l\'avance de phase est faible (' + fmt(phaseMaxVal, 1) + '°). Augmentez a pour obtenir plus de phase.';
+  } else if (A_PA.overshoot > A_P.overshoot + 10) {
+    msg.className = 'verdict warn';
+    msg.innerHTML = 'Le correcteur PA donne ici un dépassement (' + fmt(A_PA.overshoot, 1) + ' %) plus important que le P seul. Ajustez a et τ.';
+  } else {
+    msg.className = 'verdict yes';
+    msg.innerHTML = 'Avance de phase maximale : <b>' + fmt(phaseMaxVal, 1) + '°</b> à f/f<sub>e</sub> ≈ ' + fmt(fMax, 3) + '. Le dépassement passe de ' + fmt(A_P.overshoot, 1) + ' % (P seul) à ' + fmt(A_PA.overshoot, 1) + ' % (PA) : la réponse est plus amortie.';
+  }
+}
+
+/* ---------- enregistrement des ateliers ---------- */
+const LABS = [
+  { id: 'f1', title: 'Échantillonnage et quantification', hint: 'Théorème de Shannon, repliement spectral, pas de quantification.', mount: mountF1, leave: () => {}, reset: () => {} },
+  { id: 'f2', title: 'Correcteur P', hint: 'u[n] = Kp·e[n] : effet du gain sur l\'erreur statique et la stabilité.', mount: mountF2, leave: () => {}, reset: () => {} },
+  { id: 'f3', title: 'Correcteur PI', hint: 'u[n] = u[n−1] + Kp·Δe + Ki·Te·e[n] : élimination de l\'erreur statique.', mount: mountF3, leave: () => {}, reset: () => {} },
+  { id: 'f4', title: 'Correcteur à avance de phase', hint: 'C(z) = (b0 + b1·z⁻¹)/(1 + a1·z⁻¹) : apport de phase positive.', mount: mountF4, leave: () => {}, reset: () => {} }
+];
+LABS.forEach(lab => WORKSHOPS.push(lab));
+
+/* ---------- activités ---------- */
+const ACT = {
+  f1: {
+    title: 'Échantillonnage et quantification', level: 'Niveau 1 · Découvrir', time: '25 min', course: 'echantillonnage',
+    goal: 'Comprendre l\'échantillonnage, le théorème de Shannon et la quantification.',
+    steps: [
+      'Laissez f = 1,5 Hz et T<sub>e</sub> = 0,1 s. La condition de Shannon f &lt; f<sub>e</sub>/2 est-elle respectée ? Que voyez-vous sur le graphe ?',
+      'Augmentez f jusqu\'à 6 Hz. À quelle fréquence observe-t-on un repliement ? Quelle est alors la fréquence apparente des échantillons ?',
+      'Réduisez T<sub>e</sub> à 0,05 s puis 0,02 s avec f = 6 Hz. Le repliement disparaît-il ?',
+      'Avec f = 1,5 Hz et T<sub>e</sub> = 0,1 s, passez n de 2 à 8 bits. Comment évolue le pas q ? l\'erreur de quantification ?',
+      'Calculez à la main le SNR théorique pour n = 8 bits. Comparez à l\'affichage.'
+    ],
+    defi: { q: 'On veut échantillonner un signal dont le spectre s\'étend jusqu\'à 100 Hz. Quelle fréquence d\'échantillonnage minimale faut-il choisir ?',
+      a: 'D\'après le théorème de Shannon, il faut f<sub>e</sub> &gt; 2·f<sub>max</sub>, soit <b>f<sub>e</sub> &gt; 200 Hz</b> (T<sub>e</sub> &lt; 5 ms). En pratique, on prend une marge (souvent f<sub>e</sub> = 5 à 10 fois f<sub>max</sub>) pour faciliter le filtrage anti-repliement et la reconstruction.' },
+    qcm: [
+      { q: 'Le théorème de Shannon impose :', o: ['f<sub>e</sub> &gt; f<sub>max</sub>', 'f<sub>e</sub> &gt; 2·f<sub>max</sub>', 'f<sub>e</sub> = f<sub>max</sub>', 'f<sub>e</sub> &lt; f<sub>max</sub>/2'], a: 1, w: 'Il faut échantillonner au moins deux fois par période du signal le plus rapide.' },
+      { q: 'Si f &gt; f<sub>e</sub>/2, il se produit :', o: ['une perte de résolution', 'un repliement spectral (aliasing)', 'une saturation', 'un dépassement'], a: 1, w: 'Les hautes fréquences « remontent » en basses fréquences : c\'est le repliement.' },
+      { q: 'Le pas de quantification sur n bits pour un signal pleine échelle [-A, A] vaut :', o: ['A/n', '2A/2<sup>n</sup>', '2A/(2<sup>n</sup>−1)', 'A·2<sup>n</sup>'], a: 1, w: '2A est la pleine échelle, 2<sup>n</sup> le nombre de niveaux, donc q = 2A/2<sup>n</sup>.' },
+      { q: 'L\'erreur de quantification est majorée par :', o: ['q', 'q/2', 'q/4', '2q'], a: 1, w: 'L\'arrondi au niveau le plus proche donne une erreur au plus égale à la moitié du pas.' },
+      { q: 'Le SNR théorique d\'un convertisseur n bits (signal sinusoïdal pleine échelle) vaut environ :', o: ['3·n dB', '6·n dB', '6,02·n + 1,76 dB', '2<sup>n</sup> dB'], a: 2, w: 'C\'est la formule classique, valable pour un signal sinusoïdal pleine échelle et un bruit de quantification uniforme.' }
+    ]
+  },
+  f2: {
+    title: 'Correcteur P', level: 'Niveau 1 · Découvrir', time: '20 min', course: 'proportionnel',
+    goal: 'Écrire et comprendre l\'équation de récurrence d\'un correcteur P ; analyser son effet sur une boucle fermée.',
+    steps: [
+      'Écrivez l\'équation de récurrence du correcteur P. Y a-t-il une mémoire ?',
+      'Avec K<sub>p</sub> = 1, K = 1, τ = 1 s, observez la réponse. Quelle est l\'erreur statique ?',
+      'Augmentez K<sub>p</sub> jusqu\'à 20. Comment évoluent l\'erreur statique et le temps de réponse ? Le dépassement apparaît-il ?',
+      'Comparez l\'erreur statique simulée à la formule théorique 1/(1+K<sub>p</sub>K).',
+      'Que se passerait-il avec un système du 2e ordre ? (réfléchir, puis tester en changeant mentalement le système)'
+    ],
+    defi: { q: 'Un système G(p) = K/(1+τp) avec K = 2, τ = 1 s est bouclé par un correcteur P de gain K<sub>p</sub>. Quelle erreur statique obtient-on avec K<sub>p</sub> = 4 ? Peut-on l\'annuler ?',
+      a: 'Erreur statique = 1/(1 + K<sub>p</sub>·K) = 1/(1 + 4·2) = <b>1/9 ≈ 0,111</b>. Avec un correcteur P seul, l\'erreur statique ne peut <b>jamais</b> être annulée : il faudrait K<sub>p</sub> → ∞. Il faut ajouter une action intégrale (correcteur PI).' },
+    qcm: [
+      { q: 'L\'équation de récurrence du correcteur P est :', o: ['u[n] = u[n−1] + K<sub>p</sub>·e[n]', 'u[n] = K<sub>p</sub>·e[n]', 'u[n] = K<sub>p</sub>·(e[n] − e[n−1])', 'u[n] = K<sub>p</sub>·Σ e[k]'], a: 1, w: 'Le correcteur P est purement algébrique : pas de mémoire, pas de somme.' },
+      { q: 'Augmenter K<sub>p</sub> dans un correcteur P :', o: ['annule toujours l\'erreur statique', 'réduit l\'erreur statique mais peut déstabiliser', 'n\'a aucun effet', 'augmente l\'erreur statique'], a: 1, w: 'On réduit l\'erreur statique (1/(1+K<sub>p</sub>K)) mais on augmente le gain de boucle, ce qui peut provoquer oscillations ou instabilité.' },
+      { q: 'Avec un correcteur P seul sur un système du 1er ordre, l\'erreur statique vaut :', o: ['0', '1/(1 + K<sub>p</sub>·K)', 'K<sub>p</sub>·K', '∞'], a: 1, w: 'C\'est la formule classique pour un système du 1er ordre en boucle fermée.' },
+      { q: 'Le correcteur P est-il stable intrinsèquement ?', o: ['Oui, toujours', 'Non, il dépend du gain', 'Oui, mais uniquement en boucle ouverte', 'Non, il est toujours instable'], a: 0, w: 'Le correcteur P lui-même n\'a pas de dynamique : il ne peut pas être instable. C\'est la boucle complète (correcteur + système) qui peut le devenir.' }
+    ]
+  },
+  f3: {
+    title: 'Correcteur PI', level: 'Niveau 2 · Comprendre', time: '25 min', course: 'pi',
+    goal: 'Écrire et comprendre l\'équation de récurrence d\'un correcteur PI ; observer l\'élimination de l\'erreur statique.',
+    steps: [
+      'Écrivez l\'équation de récurrence du PI en forme vitesse. Quelle est la différence avec la forme position ?',
+      'Avec K<sub>p</sub> = 1, K<sub>i</sub> = 2, K = 1, τ = 1 s, observez la réponse. L\'erreur statique est-elle nulle ?',
+      'Annulez K<sub>i</sub>. Que constatez-vous sur l\'erreur statique ?',
+      'Augmentez K<sub>i</sub> jusqu\'à 10. Comment évoluent le dépassement et le temps d\'établissement ?',
+      'Réduisez K<sub>p</sub> à 0. Le système reste-t-il stable avec K<sub>i</sub> = 2 ?'
+    ],
+    defi: { q: 'Un correcteur PI a K<sub>p</sub> = 2, K<sub>i</sub> = 5, T<sub>e</sub> = 0,1 s. On applique un échelon e = 1 pendant 4 échantillons, puis e = 0. Quelle est la valeur de u[n] à chaque pas ?',
+      a: 'Forme position : u[n] = K<sub>p</sub>·e[n] + K<sub>i</sub>·T<sub>e</sub>·Σ e[k].<br>Pour e = 1 pendant 4 pas : u[0] = 2 + 5·0,1·1 = 2,5 ; u[1] = 2 + 0,5·2 = 3 ; u[2] = 3,5 ; u[3] = 4.<br>Puis e = 0 : u[4] = 0 + 0,5·4 = 2 ; u[5] = 2 ; u[n] = 2 pour n ≥ 4. L\'intégrateur garde la mémoire de l\'erreur passée : u ne redescend pas à 0.' },
+    qcm: [
+      { q: 'L\'équation de récurrence du PI en forme vitesse est :', o: ['u[n] = K<sub>p</sub>·e[n] + K<sub>i</sub>·e[n−1]', 'u[n] = u[n−1] + K<sub>p</sub>·(e[n]−e[n−1]) + K<sub>i</sub>·T<sub>e</sub>·e[n]', 'u[n] = K<sub>i</sub>·Σ e[k]', 'u[n] = e[n]/K<sub>p</sub>'], a: 1, w: 'C\'est la forme la plus utilisée en pratique (elle évite d\'accumuler explicitement une somme).' },
+      { q: 'Le correcteur PI permet :', o: ['d\'annuler l\'erreur statique en boucle fermée', 'd\'augmenter la fréquence de coupure sans limite', 'de supprimer le bruit', 'de rendre le système toujours stable'], a: 0, w: 'L\'intégrateur accumule tant que e ≠ 0 : en régime permanent, il force e → 0.' },
+      { q: 'Le phénomène d\'« emballement de l\'intégrateur » (windup) se produit :', o: ['quand e = 0', 'quand l\'actionneur sature (u dépasse ses limites physiques)', 'quand K<sub>p</sub> = 0', 'quand T<sub>e</sub> est très grand'], a: 1, w: 'En saturation, l\'intégrateur continue de « charger » alors que l\'actionneur ne peut pas suivre : au retour, la réponse est très dégradée.' },
+      { q: 'Avec un PI, si K<sub>p</sub> = 0, le correcteur devient :', o: ['un P pur', 'un intégrateur pur', 'un dérivateur', 'un filtre passe-haut'], a: 1, w: 'Il ne reste que l\'action intégrale : le correcteur devient un intégrateur pur.' }
+    ]
+  },
+  f4: {
+    title: 'Correcteur à avance de phase', level: 'Niveau 3 · Choisir', time: '30 min', course: 'avance',
+    goal: 'Comprendre et calculer les coefficients d\'un correcteur à avance de phase ; observer son effet sur la réponse en boucle fermée.',
+    steps: [
+      'Écrivez la forme analogique du correcteur à avance de phase. Que valent son gain DC et son gain HF ?',
+      'Observez la courbe de phase en fonction de a. Pour a = 3, quelle est la phase maximale ?',
+      'Faites varier τ. Comment se déplace la fréquence de phase maximale ?',
+      'Comparez les courbes en boucle fermée : correcteur PA (bleu) contre P seul (rouge, même gain DC). Lequel donne le moins de dépassement ?',
+      'Augmentez le retard T<sub>d</sub> du système. Quel correcteur résiste le mieux ?'
+    ],
+    defi: { q: 'Pour un correcteur C(p) = K·(1+aτp)/(1+τp) avec a = 3 et τ = 0,5 s, calculez le gain DC, le gain haute fréquence et la phase maximale.',
+      a: 'Gain DC : C(0) = K. Gain HF : C(∞) = K·a = 3K. Phase maximale : φ<sub>max</sub> = asin((a−1)/(a+1)) = asin(2/4) = asin(0,5) = <b>30°</b>, atteinte à la fréquence ω = 1/√(a·τ²) = 1/(τ√a) ≈ 1,15 rad/s. En pratique, on choisit souvent a compris entre 3 et 10 (phase max entre 30° et 55°).' },
+    qcm: [
+      { q: 'Un correcteur à avance de phase a pour fonction de transfert :', o: ['K·(1 + τp)', 'K·(1 + aτp)/(1 + τp) avec a &gt; 1', 'K/(1 + τp)', 'K·(1 + aτp)/(1 + τp) avec a &lt; 1'], a: 1, w: 'C\'est la forme canonique de l\'avance de phase ; le paramètre a &gt; 1 apporte de la phase positive.' },
+      { q: 'La phase maximale d\'un correcteur à avance de phase vaut :', o: ['asin((a−1)/(a+1))', 'a·π/2', 'atan(a)', '90° quelle que soit a'], a: 0, w: 'C\'est la formule classique ; elle augmente avec a.' },
+      { q: 'En discrétisant par Tustin, l\'équation de récurrence s\'écrit :', o: ['u[n] = b0·e[n]', 'u[n] = −a1·u[n−1] + b0·e[n] + b1·e[n−1]', 'u[n] = b0·e[n] + b1·e[n−1]', 'u[n] = K·e[n]'], a: 1, w: 'La forme discrète fait apparaître u[n−1], d\'où une équation de récurrence (le correcteur a une mémoire).' },
+      { q: 'L\'intérêt principal du correcteur à avance de phase est :', o: ['d\'annuler l\'erreur statique', 'd\'augmenter la marge de phase et donc le gain admissible', 'de filtrer les bruits haute fréquence', 'de supprimer le dépassement'], a: 1, w: 'En ajoutant de la phase positive, il éloigne le point critique -1 dans le plan de Nyquist : on peut alors augmenter le gain sans déstabiliser.' }
+    ]
+  }
+};
+
+/* ---------- cours ---------- */
+const COURSE = [];
+COURSE.push({ id: 'echantillonnage', t: 'Échantillonnage et quantification', h: `
+<p>Un <b>signal à temps discret</b> est une suite de valeurs s[0], s[1], s[2], … obtenues en prélevant un signal continu s(t) à des instants régulièrement espacés.</p>
+<h3>Échantillonnage</h3>
+<div class="formula">s[n] = s(n·T<sub>e</sub>), &nbsp; f<sub>e</sub> = 1/T<sub>e</sub></div>
+<p>T<sub>e</sub> est la <b>période d'échantillonnage</b>, f<sub>e</sub> la <b>fréquence d'échantillonnage</b>. Le signal s[n] ne contient plus que les informations prélevées aux instants n·T<sub>e</sub> : entre deux échantillons, on ne sait rien.</p>
+<h3>Théorème de Shannon-Nyquist</h3>
+<p>Pour pouvoir reconstruire exactement un signal dont le spectre est limité à f<sub>max</sub>, il faut :</p>
+<div class="formula">f<sub>e</sub> &gt; 2·f<sub>max</sub> &nbsp;&nbsp;(ou&nbsp;&nbsp; f<sub>max</sub> &lt; f<sub>N</sub> = f<sub>e</sub>/2)</div>
+<p>f<sub>N</sub> = f<sub>e</sub>/2 est la <b>fréquence de Nyquist</b>. Si f &gt; f<sub>N</sub>, il y a <b>repliement spectral</b> (aliasing) : le signal échantillonné semble décrire une fréquence f<sub>alias</sub> = |f − k·f<sub>e</sub>| (k entier, f<sub>alias</sub> &lt; f<sub>N</sub>). En pratique, on prend f<sub>e</sub> = 5 à 10 fois f<sub>max</sub> pour avoir de la marge.</p>
+<h3>Quantification</h3>
+<p>Sur n bits, un signal d'amplitude maximale A est codé sur 2<sup>n</sup> niveaux, avec un pas :</p>
+<div class="formula">q = 2A / 2<sup>n</sup></div>
+<p>L'erreur de quantification e<sub>q</sub> = s<sub>q</sub>[n] − s[n] est majorée par q/2. Le SNR (rapport signal/bruit) vaut environ :</p>
+<div class="formula">SNR ≈ 6,02·n + 1,76 dB</div>
+<p>Chaque bit supplémentaire ajoute environ 6 dB de dynamique.</p>
+<div class="retain"><b>À retenir.</b> Échantillonnage : f<sub>e</sub> &gt; 2·f<sub>max</sub> (Shannon). Quantification : q = 2A/2<sup>n</sup>, erreur ±q/2, SNR ≈ 6·n dB.</div>` });
+
+COURSE.push({ id: 'proportionnel', t: 'Correcteur proportionnel (P)', h: `
+<p>Le correcteur proportionnel est le plus simple : il délivre une action proportionnelle à l'erreur.</p>
+<h3>Forme analogique</h3>
+<div class="formula">C(p) = K<sub>p</sub></div>
+<h3>Forme discrète et équation de récurrence</h3>
+<p>La discrétisation est immédiate (le correcteur est statique) :</p>
+<div class="formula">C(z) = K<sub>p</sub></div>
+<div class="formula">u[n] = K<sub>p</sub> · e[n]</div>
+<p>Le correcteur P <b>n'a pas de mémoire</b> : la sortie ne dépend que de l'entrée à l'instant courant.</p>
+<h3>Effet en boucle fermée</h3>
+<p>Soit un système G(p) = K/(1+τp) en boucle fermée avec un correcteur P. La fonction de transfert en boucle fermée est :</p>
+<div class="formula">T(p) = K<sub>p</sub>·K / (1 + K<sub>p</sub>·K + τp)</div>
+<p>Pour un échelon, l'<b>erreur statique</b> vaut :</p>
+<div class="formula">ε<sub>s</sub> = 1 / (1 + K<sub>p</sub>·K)</div>
+<ul>
+<li>Augmenter K<sub>p</sub> réduit l'erreur statique et accélère la réponse.</li>
+<li>Mais augmenter le gain peut provoquer oscillations et instabilité (sur un système d'ordre ≥ 2).</li>
+<li>L'erreur statique ne peut jamais être <b>annulée</b> avec un P seul.</li>
+</ul>
+<div class="retain"><b>À retenir.</b> P : u[n] = K<sub>p</sub>·e[n], pas de mémoire. Réduit l'erreur statique mais ne l'annule pas ; risque d'instabilité si K<sub>p</sub> trop grand.</div>` });
+
+COURSE.push({ id: 'pi', t: 'Correcteur proportionnel intégral (PI)', h: `
+<p>Le correcteur PI ajoute une action intégrale à l'action proportionnelle pour annuler l'erreur statique.</p>
+<h3>Forme analogique</h3>
+<div class="formula">C(p) = K<sub>p</sub> + K<sub>i</sub>/p &nbsp;&nbsp;(ou&nbsp;&nbsp; K<sub>p</sub>·(1 + 1/(T<sub>i</sub>p)) avec T<sub>i</sub> = K<sub>p</sub>/K<sub>i</sub>)</div>
+<h3>Forme position</h3>
+<div class="formula">u[n] = K<sub>p</sub>·e[n] + K<sub>i</sub>·T<sub>e</sub>·Σ<sub>k=0</sub><sup>n</sup> e[k]</div>
+<h3>Forme vitesse (récurrence)</h3>
+<p>On différencie la forme position pour éviter une accumulation explicite :</p>
+<div class="formula">u[n] = u[n−1] + K<sub>p</sub>·(e[n] − e[n−1]) + K<sub>i</sub>·T<sub>e</sub>·e[n]</div>
+<p>Cette forme est <b>plus robuste numériquement</b> (pas de grande somme) et c'est celle qu'on utilise en pratique.</p>
+<h3>Effet</h3>
+<ul>
+<li>L'intégrateur accumule tant que e ≠ 0 : en régime permanent, il force <b>e → 0</b>, donc l'erreur statique est <b>nulle</b>.</li>
+<li>Mais l'intégrateur introduit un déphasage de −90° qui peut réduire la marge de phase et provoquer des oscillations.</li>
+<li>Un K<sub>i</sub> trop grand rend la réponse oscillante et lente à stabiliser.</li>
+</ul>
+<h3>Anti-windup (emballement)</h3>
+<p>Si l'actionneur sature (u dépasse u<sub>min</sub> ou u<sub>max</sub>), l'intégrateur continue d'accumuler alors que la sortie ne peut plus suivre. Au retour, la réponse est très dégradée. Deux solutions classiques :</p>
+<ul>
+<li><b>Clamping</b> : bloquer l'intégrateur quand u est saturé (et que e a le même signe que la saturation).</li>
+<li><b>Back-calculation</b> : soustraire la différence (u_saturé − u) au terme intégrateur.</li>
+</ul>
+<div class="retain"><b>À retenir.</b> PI : annule l'erreur statique. Forme vitesse pour l'implémentation. Attention à l'emballement en saturation.</div>` });
+
+COURSE.push({ id: 'avance', t: 'Correcteur à avance de phase', h: `
+<p>Le correcteur à avance de phase ajoute de la phase positive à la boucle ouverte pour augmenter la marge de phase.</p>
+<h3>Forme analogique</h3>
+<div class="formula">C(p) = K · (1 + a·τ·p) / (1 + τ·p), &nbsp; a &gt; 1</div>
+<ul>
+<li>Zéro à p = −1/(a·τ) (haute fréquence) ;</li>
+<li>pôle à p = −1/τ (basse fréquence) ;</li>
+<li>gain DC : C(0) = K ; gain HF : C(∞) = K·a.</li>
+</ul>
+<p>La phase maximale vaut φ<sub>max</sub> = asin((a−1)/(a+1)), atteinte à ω = 1/(τ·√a).</p>
+<h3>Discrétisation par Tustin</h3>
+<p>On remplace p par (2/T<sub>e</sub>)(1−z⁻¹)/(1+z⁻¹). Après calcul :</p>
+<div class="formula">C(z) = (b<sub>0</sub> + b<sub>1</sub>·z⁻¹) / (1 + a<sub>1</sub>·z⁻¹)</div>
+<p>avec :</p>
+<div class="formula">
+b<sub>0</sub> = K·(1 + 2aτ/T<sub>e</sub>)/(1 + 2τ/T<sub>e</sub>)<br>
+b<sub>1</sub> = K·(1 − 2aτ/T<sub>e</sub>)/(1 + 2τ/T<sub>e</sub>)<br>
+a<sub>1</sub> = (1 − 2τ/T<sub>e</sub>)/(1 + 2τ/T<sub>e</sub>)
+</div>
+<h3>Équation de récurrence</h3>
+<div class="formula">u[n] = −a<sub>1</sub>·u[n−1] + b<sub>0</sub>·e[n] + b<sub>1</sub>·e[n−1]</div>
+<p>Le correcteur a une <b>mémoire</b> : la sortie dépend des entrées et de la sortie précédentes.</p>
+<h3>Effet</h3>
+<ul>
+<li>Ajoute de la phase positive autour de f<sub>c</sub> = 1/(2πτ) : la marge de phase augmente, on peut donc <b>augmenter le gain</b> sans déstabiliser.</li>
+<li>Réduit le dépassement en boucle fermée (meilleur amortissement).</li>
+<li>Attention : si a est trop grand, le gain HF augmente et le bruit peut être amplifié.</li>
+</ul>
+<div class="retain"><b>À retenir.</b> PA : u[n] = −a<sub>1</sub>·u[n−1] + b<sub>0</sub>·e[n] + b<sub>1</sub>·e[n−1]. Apporte de la phase positive ; augmente la marge de phase et permet un gain plus élevé.</div>` });
+
+COURSE.push({ id: 'bilan', t: 'Bilan comparatif', h: `
+<table class="ctable"><thead><tr><th>Correcteur</th><th>Équation de récurrence</th><th>Mémoire</th><th>Effet principal</th><th>Limite</th></tr></thead><tbody>
+<tr><td>P</td><td>u[n] = K<sub>p</sub>·e[n]</td><td>non</td><td>Réduit l'erreur statique, accélère</td><td>Erreur jamais nulle ; instable si gain trop grand</td></tr>
+<tr><td>PI</td><td>u[n] = u[n−1] + K<sub>p</sub>·Δe + K<sub>i</sub>T<sub>e</sub>·e[n]</td><td>oui</td><td>Annule l'erreur statique</td><td>Risque d'oscillation, windup en saturation</td></tr>
+<tr><td>PA</td><td>u[n] = −a<sub>1</sub>u[n−1] + b<sub>0</sub>e[n] + b<sub>1</sub>e[n−1]</td><td>oui</td><td>Augmente la marge de phase</td><td>Amplifie le bruit HF ; formule plus complexe</td></tr>
+</tbody></table>
+<h3>Que choisir ?</h3>
+<ul>
+<li><b>Erreur statique trop grande</b> : ajouter une action intégrale (PI).</li>
+<li><b>Système instable ou trop oscillant avec un gain élevé</b> : correcteur à avance de phase.</li>
+<li><b>Bruit haute fréquence</b> : filtrer le signal (passe-bas) avant le correcteur, ou ajouter un pôle de filtrage.</li>
+<li><b>Performance globale</b> : combiner (PI + avance de phase, par exemple).</li>
+</ul>
+<div class="retain"><b>À retenir.</b> Un correcteur numérique se modélise toujours par une <b>équation de récurrence</b> u[n] = f(e[n], e[n−1], …, u[n−1], …). Les coefficients dépendent de la fonction de transfert et de la méthode de discrétisation.</div>` });
+
+COURSE.push({ id: 'gloss', t: 'Vocabulaire', h: `
+<dl class="gloss">
+<dt>Échantillonnage</dt><dd>Prélèvement du signal à intervalles réguliers T<sub>e</sub> ; s[n] = s(n·T<sub>e</sub>).</dd>
+<dt>Quantification</dt><dd>Codage de chaque échantillon sur n bits, avec un pas q = 2A/2<sup>n</sup>.</dd>
+<dt>Théorème de Shannon</dt><dd>f<sub>e</sub> &gt; 2·f<sub>max</sub> pour reconstruire sans perte un signal à spectre limité.</dd>
+<dt>Repliement spectral</dt><dd>Apparition de fausses basses fréquences quand f &gt; f<sub>e</sub>/2.</dd>
+<dt>Équation de récurrence</dt><dd>Relation u[n] = f(e[n], e[n−1], …, u[n−1], …) qui définit un correcteur numérique.</dd>
+<dt>Correcteur P</dt><dd>u[n] = K<sub>p</sub>·e[n] ; action proportionnelle.</dd>
+<dt>Correcteur PI</dt><dd>Ajoute une action intégrale qui annule l'erreur statique.</dd>
+<dt>Correcteur à avance de phase</dt><dd>Ajoute de la phase positive pour augmenter la marge de phase.</dd>
+<dt>Forme position</dt><dd>u[n] = K<sub>p</sub>·e[n] + K<sub>i</sub>·T<sub>e</sub>·Σ e[k].</dd>
+<dt>Forme vitesse</dt><dd>u[n] = u[n−1] + K<sub>p</sub>·Δe + K<sub>i</sub>·T<sub>e</sub>·e[n] ; plus robuste numériquement.</dd>
+<dt>Discrétisation</dt><dd>Passage d'une fonction de transfert continue C(p) à une forme en z (Tustin, Euler, etc.).</dd>
+<dt>Tustin</dt><dd>Transformation bilinéaire p ≈ (2/T<sub>e</sub>)(1−z⁻¹)/(1+z⁻¹).</dd>
+<dt>Erreur statique</dt><dd>Écart entre la consigne et la sortie en régime permanent.</dd>
+<dt>Marge de phase</dt><dd>Marge de stabilité d'un système bouclé ; le correcteur PA l'augmente.</dd>
+<dt>Windup</dt><dd>Emballement de l'intégrateur quand l'actionneur sature.</dd>
+</dl>` });
+
+/* ---------- interface ---------- */
+const UI = { cur: 'f1' };
+const AS = { key: 'f1', tab: 'steps', open: false, st: lsGet(KEYS.act, {}), arm: null };
+const CS = { open: false, id: 'echantillonnage' };
+function actSave() { lsSet(KEYS.act, AS.st); }
+function actState() { return AS.st[AS.key] || (AS.st[AS.key] = { a: {}, checked: false, shown: false }); }
+function actScore(a) { const s = actState(); return a.qcm.filter((q, i) => s.a[i] === q.a).length; }
+function wsById(id) { return WORKSHOPS.find(w => w.id === id) || WORKSHOPS[0]; }
+function renderSeg() {
+  const seg = $('#wsSeg'); seg.innerHTML = '';
+  WORKSHOPS.forEach((w, i) => seg.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': w.id === UI.cur ? 'true' : 'false', 'aria-selected': w.id === UI.cur ? 'true' : 'false', onclick: () => gotoWs(w.id) }, (i + 1) + '. ' + w.title)));
+}
+function mountWs() {
+  const w = wsById(UI.cur), root = $('#ws');
+  $('#hint').textContent = w.hint; root.innerHTML = '';
+  w.mount(root);
+  const sc = $('#scroller'); if (sc) sc.scrollTop = 0;
+}
+function gotoWs(id) {
+  const old = wsById(UI.cur); if (old.leave) old.leave();
+  if (CS.open) { CS.open = false; renderCourse(); }
+  UI.cur = id; AS.key = id; AS.tab = 'steps';
+  renderSeg(); mountWs(); renderAct();
+}
+function renderAct() {
+  const box = $('#act'), btn = $('#bAct');
+  btn.setAttribute('aria-pressed', AS.open ? 'true' : 'false'); btn.classList.toggle('pri', AS.open);
+  box.hidden = !AS.open;
+  if (!AS.open) { box.innerHTML = ''; return; }
+  const oldB = box.querySelector('.pbody'), tag = AS.key + '|' + AS.tab, keep = oldB && box.dataset.k === tag ? oldB.scrollTop : 0;
+  box.dataset.k = tag;
+  box.innerHTML = '';
+  const a = ACT[AS.key];
+  const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
+  box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
+  const nq = a.qcm.length;
+  box.append(h('div', { class: 'tabs', role: 'tablist' },
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'steps' ? 'true' : 'false', onclick: () => { AS.tab = 'steps'; renderAct(); } }, 'Consignes'),
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'qcm' ? 'true' : 'false', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Questions (' + nq + ')')));
+  const body = h('div', { class: 'pbody' });
+  if (AS.tab === 'steps') {
+    body.append(h('p', { class: 'small' }, a.level + ' · environ ' + a.time), h('div', { class: 'goal' }, h('b', null, 'Objectif. '), a.goal));
+    body.append(h('ol', { class: 'steps' }, a.steps.map(s => h('li', { html: s }))));
+    body.append(h('div', { class: 'defi' }, h('b', null, 'Défi'), h('p', { html: a.defi.q }), h('details', null, h('summary', null, 'Voir la réponse'), h('p', { html: a.defi.a }))));
+    if (a.course) body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: () => openCourse(a.course) }, 'Voir le cours : ' + courseSection(a.course).t)));
+    body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: ev => {
+      const b = ev.currentTarget;
+      if (!AS.arm) { b.textContent = 'Confirmer ? Votre travail sera effacé'; AS.arm = setTimeout(() => { b.textContent = 'Recommencer l\'atelier'; AS.arm = null; }, 3500); return; }
+      clearTimeout(AS.arm); AS.arm = null; wsById(UI.cur).reset(); mountWs(); renderAct(); } }, 'Recommencer l\'atelier')));
+    body.append(h('p', null, h('button', { class: 'btn pri', type: 'button', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Passer aux questions')));
+  } else {
+    const s = actState(), show = s.checked || s.shown;
+    a.qcm.forEach((q, i) => {
+      const fs = h('fieldset', { class: 'q' }, h('legend', { html: (i + 1) + '. ' + q.q }));
+      q.o.forEach((o, j) => {
+        const good = show && j === q.a, bad = s.checked && !s.shown && s.a[i] === j && j !== q.a;
+        const inp = h('input', { type: 'radio', name: 'q' + i, checked: show && s.shown ? j === q.a : s.a[i] === j, disabled: show });
+        inp.addEventListener('change', () => { s.a[i] = j; actSave(); renderAct(); });
+        fs.append(h('label', { class: 'opt' + (good ? ' good' : '') + (bad ? ' bad' : '') }, inp, h('span', { html: o + (good ? '  ✓' : '') + (bad ? '  ✗' : '') })));
+      });
+      if (show) { const miss = s.a[i] == null && !s.shown; fs.append(h('p', { class: 'why', html: (miss ? 'Sans réponse. ' : '') + q.w })); }
+      body.append(fs);
+    });
+    const done = Object.keys(s.a).length;
+    body.append(h('p', { class: 'small' }, s.shown ? 'Réponses affichées.' : s.checked ? '' : done + ' réponse(s) sur ' + nq + '.'));
+    if (s.checked && !s.shown) body.append(h('p', { class: 'score' }, 'Score : ' + actScore(a) + ' / ' + nq));
+    const row = h('div', { class: 'files' });
+    if (!show) row.append(h('button', { class: 'btn pri', type: 'button', onclick: () => { s.checked = true; actSave(); renderAct(); } }, 'Corriger'));
+    row.append(h('button', { class: 'btn', type: 'button', onclick: () => { s.shown = true; actSave(); renderAct(); } }, 'Afficher les réponses'));
+    if (show) row.append(h('button', { class: 'btn', type: 'button', onclick: () => { AS.st[AS.key] = { a: {}, checked: false, shown: false }; actSave(); renderAct(); } }, 'Recommencer'));
+    body.append(row);
+  }
+  box.append(body); body.scrollTop = keep;
+}
+function actToggle() { if (CS.open) { CS.open = false; renderCourse(); } AS.open = !AS.open; renderAct(); }
+$('#bAct').addEventListener('click', actToggle);
+
+function courseSection(id) { return COURSE.find(s => s.id === id) || COURSE[0]; }
+function renderCourse() {
+  const box = $('#course'), btn = $('#bCourse'), work = $('#work');
+  btn.setAttribute('aria-pressed', CS.open ? 'true' : 'false'); btn.classList.toggle('pri', CS.open);
+  box.hidden = !CS.open; work.hidden = CS.open; $('#modes').hidden = CS.open;
+  if (!CS.open) { box.innerHTML = ''; return; }
+  box.innerHTML = '';
+  const cur = courseSection(CS.id), idx = COURSE.indexOf(cur);
+  const go = id => { CS.id = id; renderCourse(); };
+  const nav = h('nav', { class: 'ctoc', 'aria-label': 'Sommaire du cours' }, COURSE.map((s, i) => h('button', { type: 'button', class: s.id === cur.id ? 'on' : '', 'aria-current': s.id === cur.id ? 'true' : 'false', onclick: () => go(s.id) }, (i + 1) + '. ' + s.t)));
+  const sel = h('select', { class: 'ctoc-sel', 'aria-label': 'Choisir une section', onchange: e => go(e.target.value) }, COURSE.map((s, i) => h('option', { value: s.id, selected: s.id === cur.id }, (i + 1) + '. ' + s.t)));
+  const art = h('article', { class: 'cbody' });
+  art.append(h('p', { class: 'ckick' }, 'Cours · section ' + (idx + 1) + ' sur ' + COURSE.length), h('h2', null, cur.t), h('div', { html: cur.h }));
+  art.append(h('div', { class: 'cpn' },
+    idx > 0 ? h('button', { class: 'btn', type: 'button', onclick: () => go(COURSE[idx - 1].id) }, '← ' + COURSE[idx - 1].t) : h('span'),
+    idx < COURSE.length - 1 ? h('button', { class: 'btn pri', type: 'button', onclick: () => go(COURSE[idx + 1].id) }, COURSE[idx + 1].t + ' →') : h('span')));
+  const top = h('div', { class: 'ctop' }, h('b', null, 'Cours : correcteurs numériques'), h('button', { class: 'btn pri sm', type: 'button', onclick: () => { CS.open = false; renderCourse(); } }, 'Retour à l\'atelier'));
+  box.append(top, sel, h('div', { class: 'cwrap' }, nav, art));
+  const sc = box.querySelector('.cwrap'); if (sc) sc.scrollTop = 0; box.scrollTop = 0;
+}
+function openCourse(id) { if (id) CS.id = id; CS.open = true; renderCourse(); }
+$('#bCourse').addEventListener('click', () => { CS.open = !CS.open; renderCourse(); });
+
+function closeDlg() { $('#dlg').hidden = true; $('#dlg').innerHTML = ''; }
+function openDlg(title, body) {
+  const d = $('#dlg'); d.innerHTML = ''; d.hidden = false;
+  d.append(h('div', { class: 'dlgbox', role: 'dialog', 'aria-label': title }, h('header', null, h('b', null, title), h('button', { class: 'btn sm', type: 'button', onclick: closeDlg }, 'Fermer')), h('div', { class: 'dbody' }, body)));
+  d.onclick = ev => { if (ev.target === d) closeDlg(); };
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
+$('#bHelp').addEventListener('click', () => {
+  openDlg('Aide', h('div', { html: '<p>Quatre ateliers sur la modélisation des correcteurs numériques du programme SII de CPGE 1<sup>re</sup> année : échantillonnage et quantification, correcteur P, correcteur PI, correcteur à avance de phase.</p>' +
+    '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut.</li><li>Réglez les curseurs (f, T<sub>e</sub>, n, K<sub>p</sub>, K<sub>i</sub>, τ, a…) et observez l\'effet en direct.</li><li>L\'équation de récurrence du correcteur est rappelée sous le graphe.</li><li>Le bouton <b>Activité</b> affiche les consignes, un défi et un QCM avec correction.</li><li>Le bouton <b>Cours</b> détaille chaque correcteur.</li></ul>' +
+    '<h3>Vos données</h3><p>Les réponses au QCM sont mémorisées dans ce navigateur uniquement.</p>' }));
+});
+(function init() { AS.open = !isSmall(); renderSeg(); mountWs(); renderAct(); renderCourse(); })();
+</script>
+</body></html>
