@@ -71,7 +71,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .cab-halo{fill:none;stroke:#ffffff;stroke-width:5.5;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
 .cab.on{stroke:var(--accent);stroke-width:3.6}
 .arr{fill:var(--cable)}.arr.on{fill:var(--accent)}
-.hit{stroke:transparent;stroke-width:14;fill:none;cursor:pointer}
+.hit{stroke:transparent;stroke-width:14;fill:none;cursor:grab}
+.hit:active{cursor:grabbing}
 .port{fill:#fff;stroke:var(--node-stroke);stroke-width:1.6;transition:stroke .1s,stroke-width .1s}
 .mode-link .port{stroke:var(--accent);stroke-width:2.2;cursor:crosshair}
 .mode-link .port:hover{stroke-width:3.4}
@@ -620,8 +621,9 @@ function computeFeedbackRanks() {
   fb.sort((a, b) => b.maxX - a.maxX || a.minX - b.minX);
   fb.forEach((f, i) => feedbackRanks.set(f.l.id, i));
 }
-function route(p1, d1, p2, d2, rank) {
-  rank = rank || 0;
+
+function route(p1, d1, p2, d2, rank, offset) {
+  offset = offset || 0;
   const stub = 22;
   const isFeedback = d1.x > 0 && p2.x < p1.x - 40;
 
@@ -636,14 +638,14 @@ function route(p1, d1, p2, d2, rank) {
         const bb = blockBBox(b);
         if (bb.x2 > minX - 40 && bb.x1 < maxX + 40) detourY = Math.max(detourY, bb.y2 + 30);
       });
-      detourY = Math.min(detourY + rank * 16, 880);
+      detourY = Math.min(detourY + rank * 16, 880) + offset;
     } else {
       detourY = Math.min(p1.y, p2.y) - 50;
       S.blocks.forEach(b => {
         const bb = blockBBox(b);
         if (bb.x2 > minX - 40 && bb.x1 < maxX + 40) detourY = Math.min(detourY, bb.y1 - 30);
       });
-      detourY = Math.max(detourY - rank * 16, 20);
+      detourY = Math.max(detourY - rank * 16, 20) + offset;
     }
     const pts = [p1, { x: p1.x + stub, y: p1.y }, { x: p1.x + stub, y: detourY }];
     if (d2.y !== 0) {
@@ -663,13 +665,34 @@ function route(p1, d1, p2, d2, rank) {
   const pts = [p1, s1];
   const h1 = d1.x !== 0, h2 = d2.x !== 0;
   if (h1 && h2) {
-    if (Math.abs(s1.y - s2.y) < 1) pts.push(s2);
-    else { const mx = (s1.x + s2.x) / 2; pts.push({ x: mx, y: s1.y }, { x: mx, y: s2.y }, s2); }
+    if (Math.abs(s1.y - s2.y) < 1) {
+      if (offset !== 0) {
+        const mx = (s1.x + s2.x) / 2 + offset;
+        pts.push({ x: mx, y: s1.y }, { x: mx, y: s2.y }, s2);
+      } else {
+        pts.push(s2);
+      }
+    } else {
+      const mx = (s1.x + s2.x) / 2 + offset;
+      pts.push({ x: mx, y: s1.y }, { x: mx, y: s2.y }, s2);
+    }
   } else if (!h1 && !h2) {
-    if (Math.abs(s1.x - s2.x) < 1) pts.push(s2);
-    else { const my = (s1.y + s2.y) / 2; pts.push({ x: s1.x, y: my }, { x: s2.x, y: my }, s2); }
-  } else if (h1 && !h2) pts.push({ x: s2.x, y: s1.y }, s2);
-  else pts.push({ x: s1.x, y: s2.y }, s2);
+    if (Math.abs(s1.x - s2.x) < 1) {
+      if (offset !== 0) {
+        const my = (s1.y + s2.y) / 2 + offset;
+        pts.push({ x: s1.x, y: my }, { x: s2.x, y: my }, s2);
+      } else {
+        pts.push(s2);
+      }
+    } else {
+      const my = (s1.y + s2.y) / 2 + offset;
+      pts.push({ x: s1.x, y: my }, { x: s2.x, y: my }, s2);
+    }
+  } else if (h1 && !h2) {
+    pts.push({ x: s2.x + offset, y: s1.y }, s2);
+  } else {
+    pts.push({ x: s1.x, y: s2.y + offset }, s2);
+  }
   pts.push(p2);
   return pts.map(p => [p.x, p.y]);
 }
@@ -679,12 +702,26 @@ function linkPts(l) {
   const pa = portWorld(a, 'out'), pb = portWorld(b, l.port);
   if (!pa || !pb) return null;
   const rank = feedbackRanks.get(l.id) || 0;
-  return route(pa, sideDir(pa.side), pb, sideDir(pb.side), rank);
+  return route(pa, sideDir(pa.side), pb, sideDir(pb.side), rank, l.offset || 0);
 }
 function bText(b, attrs, ...kids) {
   const rot = b.rot || 0;
   if (rot) { const x = attrs.x, y = attrs.y; return sv('text', { ...attrs, transform: `rotate(${-rot},${x},${y})` }, ...kids); }
   return sv('text', attrs, ...kids);
+}
+
+function getLinkDragAxis(l) {
+  const a = blk(l.from), b = blk(l.to);
+  if (!a || !b) return 'y';
+  const pa = portWorld(a, 'out'), pb = portWorld(b, l.port);
+  if (!pa || !pb) return 'y';
+  const d1 = sideDir(pa.side);
+  const isFeedback = d1.x > 0 && pb.x < pa.x - 40;
+  if (isFeedback) return 'y';
+  const h1 = d1.x !== 0, h2 = sideDir(pb.side).x !== 0;
+  if (h1 && h2) return 'x';
+  if (!h1 && !h2) return 'y';
+  return 'x';
 }
 
 /* ---------- dessin ---------- */
@@ -770,7 +807,7 @@ function select(sel) {
 function updHint() {
   let t;
   if (S.tool === 'link') t = S.linkFrom ? `Source : ${blk(S.linkFrom) ? blk(S.linkFrom).name : ''}. Cliquez maintenant le bloc destinataire (Échap pour annuler).` : 'Relier : cliquez d’abord le bloc source, puis le bloc destinataire.';
-  else t = 'Glissez un bloc pour le déplacer. Cliquez-glissez dans le vide pour sélectionner plusieurs blocs (Maj pour ajouter). Sur mobile : glissez dans le vide pour déplacer la vue, pincez à 2 doigts pour zoomer. Ctrl+Z / Ctrl+Y : annuler / rétablir.';
+  else t = 'Glissez un bloc pour le déplacer. Glissez un câble pour ajuster son tracé. Sur mobile : glissez dans le vide pour déplacer la vue, pincez à 2 doigts pour zoomer.';
   $('#hint').textContent = t;
 }
 
@@ -900,7 +937,20 @@ $('#svg').addEventListener('pointerdown', e => {
     }
     e.preventDefault(); return;
   }
-  if (lk) { select({ t: 'l', id: +lk.getAttribute('data-l') }); e.preventDefault(); return; }
+  if (lk) {
+    const l = S.links.find(x => x.id === +lk.getAttribute('data-l'));
+    if (!l) return;
+    select({ t: 'l', id: l.id });
+    drag = {
+      type: 'link-offset',
+      id: l.id,
+      axis: getLinkDragAxis(l),
+      startPt: svgPt(e),
+      startOffset: l.offset || 0,
+      moved: false
+    };
+    e.preventDefault(); return;
+  }
   if (e.pointerType === 'touch') {
     const sc = $('#scroller');
     drag = { type: 'pan', pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, startScrollLeft: sc.scrollLeft, startScrollTop: sc.scrollTop, moved: false };
@@ -937,6 +987,20 @@ window.addEventListener('pointermove', e => {
     }
     draw(); return;
   }
+  if (drag && drag.type === 'link-offset') {
+    const pt = svgPt(e);
+    const dx = pt.x - drag.startPt.x;
+    const dy = pt.y - drag.startPt.y;
+    const delta = drag.axis === 'x' ? dx : dy;
+    if (!drag.moved && Math.abs(delta) > 2) { pushUndo(); drag.moved = true; }
+    if (!drag.moved) return;
+    const l = S.links.find(x => x.id === drag.id);
+    if (l) {
+      l.offset = snap(drag.startOffset + delta);
+      draw();
+    }
+    return;
+  }
   if (drag && drag.type === 'marquee') {
     const pt = svgPt(e); drag.curX = pt.x; drag.curY = pt.y; draw(); return;
   }
@@ -967,6 +1031,7 @@ function endPointer(e) {
   }
   if (!drag) return;
   if (drag.type === 'multi' && drag.moved) { save(); updHint(); }
+  else if (drag.type === 'link-offset' && drag.moved) { save(); }
   else if (drag.type === 'marquee') {
     const r = { x1: Math.min(drag.startX, drag.curX), y1: Math.min(drag.startY, drag.curY), x2: Math.max(drag.startX, drag.curX), y2: Math.max(drag.startY, drag.curY) };
     if (r.x2 - r.x1 > 3 || r.y2 - r.y1 > 3) {
@@ -1092,7 +1157,7 @@ function addBlock(type) {
   save(); select({ t: 'b', id: b.id });
   if (isSmall()) toast(b.name + ' ajouté : glissez-le pour le placer.');
 }
-function lk(a, b, port) { S.links.push({ id: S.nl++, from: a.id, to: b.id, port: port || 0 }); }
+function lk(a, b, port) { S.links.push({ id: S.nl++, from: a.id, to: b.id, port: port || 0, offset: 0 }); }
 
 const EXAMPLES = [
   { t: 'Asservissement du 1er ordre, retour unitaire', d: 'T = H / (1 + H) : le cas le plus simple.', f() {
@@ -1206,14 +1271,20 @@ function propsView(body) {
         h('li', null, 'Ajoutez une Entrée, une Sortie, un Comparateur et les blocs voulus.'),
         h('li', null, 'Reliez avec l’outil « Relier » : source puis destinataire.'),
         h('li', null, 'Sélectionnez plusieurs blocs par rectangle de sélection (souris) ou Maj+clic.'),
-        h('li', null, 'Sur mobile : glissez dans le vide pour déplacer la vue, pincez pour zoomer.'),
+        h('li', null, 'Glissez un câble pour ajuster manuellement son tracé.'),
         h('li', null, 'Cliquez sur Calculer la FTBF.')),
       h('p', { class: 'small' }, 'Les liaisons de retour sont automatiquement détournées sous le schéma, pour que la boucle soit visible.'));
     return;
   }
   if (S.sel.t === 'l') {
     const l = S.links.find(x => x.id === S.sel.id), a = l && blk(l.from), b = l && blk(l.to); if (!l) return;
-    body.append(h('p', null, h('b', null, a.name + ' → ' + b.name), b.type === 'sum' ? ' (' + portName(b, l.port) + ')' : ''), h('button', { class: 'btn del', type: 'button', onclick: delSel }, 'Supprimer la liaison')); return;
+    body.append(
+      h('p', null, h('b', null, a.name + ' → ' + b.name), b.type === 'sum' ? ' (' + portName(b, l.port) + ')' : ''),
+      h('p', { class: 'small' }, 'Astuce : vous pouvez glisser la ligne dans le schéma pour ajuster son tracé.'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { pushUndo(); l.offset = 0; save(); draw(); } }, 'Réinitialiser le tracé'),
+      ' ',
+      h('button', { class: 'btn del', type: 'button', onclick: delSel }, 'Supprimer la liaison')
+    ); return;
   }
   if (!S.sel.ids.size) { S.sel = null; return propsView(body); }
   if (S.sel.ids.size > 1) { renderMultiSel(body); return; }
@@ -1415,6 +1486,7 @@ $('#bHelp').addEventListener('click', () => {
     h('h3', null, 'Souris / clavier'),
     h('ul', null,
       h('li', null, 'Glisser un bloc : déplacer. Glisser dans le vide : rectangle de sélection. Maj+clic : ajouter à la sélection.'),
+      h('li', null, 'Glisser un câble : ajuster son tracé manuellement.'),
       h('li', null, 'Ctrl + molette : zoom. Ctrl + =, Ctrl + −, Ctrl + 0 : zoom +/−/ajuster.'),
       h('li', null, 'Bouton du milieu + glisser : pan.'),
       h('li', null, 'Ctrl+Z / Ctrl+Y : annuler / rétablir. Ctrl+D : dupliquer. Ctrl+A : tout sélectionner.'),
@@ -1451,7 +1523,7 @@ $('#bPanel').addEventListener('click', () => { S.panel = !S.panel; renderPanel()
         signs: Array.isArray(b.signs) ? b.signs : [1, -1],
         p: b.p.map(q => ({ sym: String(q.sym), val: Number.isFinite(+q.val) ? +q.val : 1 }))
       }));
-      S.links = saved.links.map(l => ({ id: +l.id, from: +l.from, to: +l.to, port: +l.port || 0 }));
+      S.links = saved.links.map(l => ({ id: +l.id, from: +l.from, to: +l.to, port: +l.port || 0, offset: +l.offset || 0 }));
       S.nid = Math.max(+saved.nid || 1, ...S.blocks.map(b => b.id + 1)); S.nl = Math.max(+saved.nl || 1, ...S.links.map(l => l.id + 1));
       if (saved.form === 'c') S.form = 'c'; if (saved.vals === 'num') S.vals = 'num'; ok = S.blocks.length > 0;
     }
