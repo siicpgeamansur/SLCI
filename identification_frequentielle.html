@@ -1,0 +1,918 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Atelier Identification fréquentielle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : barre d'outils en haut, onglets d'ateliers, zone de travail blanche, panneau Activité à droite (feuille basse sur téléphone), vue Cours avec sommaire. */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
+  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;--run:#2e8b3a;
+  --node-stroke:#33475b;
+  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-ui)}
+button,input,select,textarea{font:inherit;color:inherit}
+.inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+.band{background:var(--bar);border-bottom:1px solid var(--line);flex:none}
+.row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:7px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.01em}
+.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.files{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.sm{padding:3px 8px;font-size:12px}
+:is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;padding:7px 14px;font-weight:500;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.work{flex:1;min-height:0;display:flex;gap:10px;padding-block:10px}
+#stage{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+#hint{flex:none;padding:6px 12px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
+#scroller{flex:1;min-height:0;overflow:auto}
+.phead{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex:none}
+.phead b{font-size:15px}
+.phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.pbody{overflow:auto;padding:12px;flex:1;min-height:0}
+.fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--fg)}
+input[type=range]{width:100%;padding:0;accent-color:var(--accent)}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.small{font-size:12px;color:var(--muted);margin:0 0 9px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:60;max-width:90vw}
+#dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(640px,100%);max-height:88%;display:flex;flex-direction:column}
+.dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlgbox header b{font-size:16px}
+.dlgbox .dbody{padding:14px 16px;overflow:auto}
+.dlgbox h3{margin:14px 0 4px;font-size:14px}.dlgbox p,.dlgbox li{margin:4px 0;font-size:13.5px}
+#act{flex:none;width:clamp(280px,24vw,340px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);min-height:0;max-height:100%}
+#act .pbody{font-size:13.5px}
+.goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:8px 10px;margin:0 0 10px}
+.steps{margin:0 0 10px;padding-left:20px}.steps li{margin-bottom:9px}
+.defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:0 0 12px}.defi p{margin:6px 0}
+.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+fieldset.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px 6px;margin:0 0 10px;min-width:0}
+fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
+.opt{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:6px;cursor:pointer}
+.opt input{margin-top:3px;width:auto;flex:none}
+.opt.good{background:rgba(30,122,46,.15)}.opt.bad{background:rgba(192,40,31,.15)}
+.why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
+.score{font-weight:600;font-size:15px;margin:4px 0 8px}
+/* cours */
+#course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
+.ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
+.cwrap{flex:1;min-height:0;display:flex;gap:28px;padding-block:14px}
+.ctoc{flex:none;width:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px}
+.ctoc button:hover{background:var(--panel2)}
+.ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto}
+.cbody{flex:1;min-width:0;overflow:auto;max-width:860px;padding-right:6px}
+.ckick{color:var(--muted);font-size:12.5px;margin:0}
+.cbody h2{font-size:26px;margin:2px 0 12px;text-wrap:balance}
+.cbody h3{font-size:16.5px;margin:22px 0 6px}
+.cbody p,.cbody li{font-size:14.5px;line-height:1.6}
+.cbody ul,.cbody ol{padding-left:22px}.cbody li{margin-bottom:4px}
+.cbody table{display:block;overflow-x:auto;max-width:100%}
+.ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
+.ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.ctable th{background:var(--panel2);font-weight:600}
+.retain{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 12px;margin:16px 0 6px;font-size:14px}
+.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
+pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
+.cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
+/* ateliers */
+#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:980px}
+#ws h2{font-size:24px;margin:0 0 8px;text-wrap:balance}
+#ws h3{font-size:16.5px;margin:24px 0 6px}
+#ws p,#ws li{font-size:14.5px;line-height:1.55}
+#ws .small{font-size:12.5px}
+.opts{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 10px}.opts .fld{margin:0}
+.opts input[type=range]{width:200px;max-width:100%}
+.opts input[type=text]{font-family:var(--font-mono);min-width:240px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.stat{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat span{font-size:12px;color:var(--muted)}.stat b{font-size:14px;font-family:var(--font-mono);overflow-wrap:anywhere}
+.verdict{border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14px;background:var(--panel2);border:1px solid var(--line)}
+.verdict.yes{background:rgba(30,122,46,.15);border-color:var(--ok)}.verdict.no{background:rgba(192,40,31,.13);border-color:var(--bad)}.verdict.warn{background:rgba(154,91,0,.13);border-color:var(--warn)}
+.dwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.dt{border-collapse:collapse;width:100%;font-size:13.5px}
+.dt th,.dt td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.dt thead th{background:var(--panel2);font-weight:600}
+.dt td.m{font-family:var(--font-mono);font-size:12.5px}
+.dt tr:last-child td{border-bottom:0}
+/* barres de tri */
+.stagebox{border:1px solid var(--line);border-radius:10px;padding:10px 10px 6px;background:#fff;margin:8px 0}
+.rowname{font-size:12px;color:var(--muted);margin:4px 2px 0}
+.bars{display:flex;align-items:flex-end;gap:4px;height:176px;padding-top:4px}
+.bars.short{height:120px}
+.bcol{flex:1 1 0;max-width:54px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bcol .v{font:600 12px var(--font-mono);margin-bottom:2px}
+.bcol .b{width:100%;border-radius:5px 5px 0 0;background:#9fb4ca;border:1px solid #6f8aa6;min-height:3px}
+.bcol .i{font:11px var(--font-mono);color:var(--muted);margin-top:3px}
+.bcol.sorted .b{background:rgba(30,122,46,.75);border-color:var(--ok)}
+.bcol.scan .b{background:var(--accent);border-color:var(--accent-ink)}
+.bcol.key .b{background:#e8a33a;border-color:var(--warn)}
+.bcol.swap .b{background:#e8a33a;border-color:var(--warn)}
+.bcol.min .b{background:var(--violet);border-color:#52308f}
+.bcol.pivot .b{background:var(--bad);border-color:#8e1d15}
+.bcol.left .b{background:#b9d3ee;border-color:var(--accent)}
+.bcol.right .b{background:#f3d6a6;border-color:var(--warn)}
+.bcol.dim{opacity:.32}
+.bcol.empty .b{background:transparent;border:1px dashed var(--line)}
+.leg{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 6px}
+.leg i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px;border:1px solid #6f8aa6;background:#9fb4ca}
+.leg i.s{background:rgba(30,122,46,.75);border-color:var(--ok)}.leg i.c{background:var(--accent);border-color:var(--accent-ink)}.leg i.k{background:#e8a33a;border-color:var(--warn)}.leg i.m{background:var(--violet);border-color:#52308f}.leg i.p{background:var(--bad);border-color:#8e1d15}
+/* cellules (comptage) */
+.cells{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 4px}
+.cell{width:40px;text-align:center}
+.cell .v{border:1px solid var(--line);border-radius:6px;padding:6px 0;font:600 14px var(--font-mono);background:#fff;min-height:33px}
+.cell .i{font:11px var(--font-mono);color:var(--muted);margin-top:2px}
+.cell.scan .v{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cell.key .v{background:#e8a33a;border-color:var(--warn)}
+.cell.sorted .v{background:rgba(30,122,46,.2);border-color:var(--ok)}
+.cell.zero .v{color:#9aa3ad}
+/* comparaison */
+.cmpr{display:grid;grid-template-columns:120px 1fr 80px;gap:8px;align-items:center;font-size:13px;margin:3px 0}
+.cmpr i{display:block;height:12px;background:var(--accent);border-radius:3px;min-width:2px}
+.cmpr em{font-style:normal;font-family:var(--font-mono);text-align:right}
+.seqr{display:flex;gap:4px;flex-wrap:wrap}
+.card{border:1px solid var(--line);border-radius:6px;padding:2px 7px;font:600 12.5px var(--font-mono);background:#fff}
+.card.t1{border-color:#2e6da4;color:#1b4a76}.card.t2{border-color:#9a5b00;color:#7a4700}.card.t3{border-color:#7b4fc2;color:#52308f}.card.t4{border-color:#1e7a2e;color:#1e7a2e}.card.t5{border-color:#c0281f;color:#8e1d15}.card.t6{border-color:#33475b;color:#33475b}
+@media (max-width:820px){
+  .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
+  #act{position:fixed;left:0;right:0;bottom:0;width:auto;height:70%;max-height:none;border-radius:14px 14px 0 0;z-index:35;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .work{flex-direction:column;gap:8px}
+  .cell{width:30px}.cell .v{font-size:12px}
+  .cmpr{grid-template-columns:90px 1fr 70px}
+  .bcol .v{font-size:11px}
+}
+@media (prefers-reduced-motion:no-preference){.btn{transition:border-color .12s,background .12s}.bcol .b{transition:height .15s}}
+/* ajouts : graphiques, fractions, mesures */
+.plotbox{border:1px solid var(--line);border-radius:10px;background:#fff;margin:8px 0;padding:4px 4px 2px;overflow:hidden}
+.plotbox canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+.plotbox.grab canvas{cursor:grab}
+.plotbox .ptitle{font-size:12px;color:var(--muted);margin:2px 8px}
+.pleg{display:flex;gap:4px 14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 2px 6px}
+.pleg i{display:inline-block;width:18px;height:0;border-top:3px solid #888;vertical-align:middle;margin-right:5px}
+.pleg i.d{border-top-style:dashed}.pleg i.o{width:9px;height:9px;border:0;border-radius:50%;background:#888}
+.tgl{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin:0 12px 6px 0}
+.tgl input{width:auto;margin:0}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 3px;font-size:.92em;line-height:1.25}
+.fr>span:first-child{border-bottom:1px solid currentColor;padding:0 3px}
+.fr>span:last-child{padding:0 3px}
+.math i,.formula i,.kv i,.mi{font-family:'Times New Roman','STIX Two Text',serif;font-style:italic;font-size:1.06em}
+.formula{line-height:1.9}
+.kv{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0}
+.kv td,.kv th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:middle}
+.kv th{background:var(--panel2);font-weight:600}
+.kv td.m,.kv td.n{font-family:var(--font-mono);font-size:12.5px;white-space:nowrap}
+.kv tr.hl td{background:var(--accent-soft)}
+.kv .good{color:var(--ok);font-weight:600}.kv .bad{color:var(--bad);font-weight:600}
+.badge{display:inline-block;border-radius:12px;padding:2px 10px;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--panel2)}
+.badge.ok{background:rgba(30,122,46,.15);border-color:var(--ok);color:var(--ok)}
+.badge.warn{background:rgba(154,91,0,.14);border-color:var(--warn);color:var(--warn)}
+.badge.no{background:rgba(192,40,31,.13);border-color:var(--bad);color:var(--bad)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px 16px;align-items:start}
+.two>*{min-width:0}
+.numin{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin:6px 0}
+.numin .fld{margin:0;width:110px}
+.blk{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 10px;margin:8px 0}
+.blk svg{display:block;max-width:100%;height:auto}
+.sect{border-top:1px solid var(--line);margin-top:22px;padding-top:4px}
+.ctrl{display:flex;gap:6px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 4px}
+.ctrl .fld{margin:0;min-width:160px}
+.ctrl input[type=range]{width:190px;max-width:100%}
+.gauge{height:14px;border-radius:7px;background:linear-gradient(90deg,#2e8b3a 0,#2e8b3a 45%,#e8a33a 62%,#c0281f 80%);position:relative;margin:8px 4px 14px;border:1px solid var(--line)}
+.gauge b{position:absolute;top:-5px;width:4px;height:22px;background:var(--fg);border-radius:2px;transform:translateX(-2px)}
+.gauge u{position:absolute;top:18px;font:11px var(--font-mono);color:var(--muted);text-decoration:none;transform:translateX(-50%)}
+.nom{width:100%;max-width:520px}
+@media (max-width:820px){.ctrl input[type=range]{width:100%}.ctrl .fld{min-width:140px;flex:1 1 140px}}
+</style>
+<div id="app">
+  <header class="band"><div class="inner row">
+    <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 22 C3 9 8 5 14 5 S22 4.5 24 4.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/><path d="M3 22 L13 4" stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="3 2"/><circle cx="9" cy="10.5" r="2.4" fill="var(--bad)"/></svg><span>Atelier Identification fréquentielle <small>Diagrammes de Bode · 1<sup>er</sup> et 2<sup>d</sup> ordre</small></span></div>
+    <div class="files">
+      <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
+      <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
+      <button class="btn" id="bHelp" type="button">Aide</button>
+    </div>
+  </div></header>
+  <div class="band" id="modes"><div class="inner row"><div class="seg" id="wsSeg" role="tablist" aria-label="Ateliers"></div></div></div>
+  <main class="inner work" id="work">
+    <section id="stage"><div id="hint"></div><div id="scroller"><div id="ws"></div></div></section>
+    <aside id="act" hidden aria-label="Activité"></aside>
+  </main>
+  <section id="course" hidden aria-label="Cours"></section>
+</div>
+<div id="dlg" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
+  return el;
+}
+function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
+const KEYS = { act: 'atelier-ident-freq-v1' };
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
+const WORKSHOPS = [];
+const TIMERS = new Set();
+function stopAll() { TIMERS.forEach(f => f()); TIMERS.clear(); }
+
+/* ---------- mathématiques ---------- */
+const EXP = Math.exp, SQ = Math.sqrt, PI = Math.PI;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function nf(v, d) { d = d == null ? 2 : d; let s = (+v).toFixed(d); if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, ''); if (s === '-0') s = '0'; return s.replace('.', ','); }
+const rd = (v, d) => Number((+v).toFixed(d));
+function nfx(v, d) { return (+v).toFixed(d).replace('.', ','); }
+const fr = (a, b) => '<span class="fr"><span>' + a + '</span><span>' + b + '</span></span>';
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function gauss(r) { let u = 0, v = 0; while (u === 0) u = r(); v = r(); return SQ(-2 * Math.log(u)) * Math.cos(2 * PI * v); }
+/* réponses indicielles (échelon unitaire, gain K) */
+function g1(K, T, t) { return t <= 0 ? 0 : K * (1 - EXP(-t / T)); }
+function gT2(K, T1, T2, t) {
+  if (t <= 0) return 0;
+  if (Math.abs(T1 - T2) < 1e-7 * (T1 + T2)) return K * (1 - (1 + t / T1) * EXP(-t / T1));
+  return K * (1 + (T1 * EXP(-t / T1) - T2 * EXP(-t / T2)) / (T2 - T1));
+}
+function g2(K, m, w, t) {
+  if (t <= 0) return 0;
+  if (m < 1) { const wd = w * SQ(1 - m * m); return K * (1 - EXP(-m * w * t) * (Math.cos(wd * t) + m * w / wd * Math.sin(wd * t))); }
+  if (Math.abs(m - 1) < 1e-6) return K * (1 - (1 + w * t) * EXP(-w * t));
+  const r = SQ(m * m - 1); return gT2(K, 1 / (w * (m + r)), 1 / (w * (m - r)), t);
+}
+function gN(K, Ts, t) {
+  if (t <= 0) return 0; const n = Ts.length; let s = 1;
+  for (let i = 0; i < n; i++) { let d = 1; for (let j = 0; j < n; j++) if (j !== i) d *= (Ts[i] - Ts[j]); s -= Math.pow(Ts[i], n - 1) / d * EXP(-t / Ts[i]); }
+  return K * s;
+}
+function lgam(z) { const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5]; let y = z, x = z, tmp = x + 5.5; tmp -= (x + 0.5) * Math.log(tmp); let ser = 1.000000000190015; for (let j = 0; j < 6; j++) ser += c[j] / ++y; return -tmp + Math.log(2.5066282746310005 * ser / x); }
+function gP(a, x) {
+  if (x <= 0) return 0;
+  if (x < a + 1) { let s = 1 / a, d = s, ap = a; for (let i = 0; i < 300; i++) { ap++; d *= x / ap; s += d; if (Math.abs(d) < Math.abs(s) * 1e-13) break; } return s * EXP(-x + a * Math.log(x) - lgam(a)); }
+  let b = x + 1 - a, c = 1e300, d = 1 / b, hh = d;
+  for (let i = 1; i < 300; i++) { const an = -i * (i - a); b += 2; d = an * d + b; if (Math.abs(d) < 1e-300) d = 1e-300; c = b + an / c; if (Math.abs(c) < 1e-300) c = 1e-300; d = 1 / d; const del = d * c; hh *= del; if (Math.abs(del - 1) < 1e-13) break; }
+  return 1 - EXP(-x + a * Math.log(x) - lgam(a)) * hh;
+}
+const gS = (K, n, T, tau, t) => { t -= tau; return t <= 0 ? 0 : K * gP(n, t / T); };
+/* analyse d'une courbe f(t) : point d'inflexion, tangentes */
+function slopeAt(f, t, dt) { const e = dt || 1e-4; return (f(t + e) - f(Math.max(0, t - e))) / (t + e - Math.max(0, t - e)); }
+function inflect(f, tmax) {
+  let best = -1, tb = 0; const N = 1500, e = tmax / 20000;
+  for (let i = 1; i < N; i++) { const t = tmax * i / N, s = (f(t + e) - f(t - e)) / (2 * e); if (s > best) { best = s; tb = t; } }
+  let lo = Math.max(0, tb - tmax / N), hi = tb + tmax / N;
+  for (let k = 0; k < 40; k++) { const m1 = lo + (hi - lo) / 3, m2 = hi - (hi - lo) / 3; const s1 = (f(m1 + e) - f(m1 - e)) / (2 * e), s2 = (f(m2 + e) - f(m2 - e)) / (2 * e); if (s1 < s2) lo = m1; else hi = m2; }
+  tb = (lo + hi) / 2; const sl = (f(tb + e) - f(tb - e)) / (2 * e), si = f(tb);
+  return { ti: tb, si, sl };
+}
+function tangentAt(f, t0, fin, tmax) {
+  const e = tmax / 20000, sl = (f(t0 + e) - f(Math.max(0, t0 - e))) / (t0 + e - Math.max(0, t0 - e)), s0 = f(t0);
+  return { t0, s0, sl, tAxis: t0 - s0 / sl, tAsym: t0 + (fin - s0) / sl };
+}
+function timeAt(f, level, tmax) { let lo = 0, hi = tmax; if (f(hi) < level) return NaN; for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; if (f(m) < level) lo = m; else hi = m; } return (lo + hi) / 2; }
+function rmsErr(f, g, tmax, norm) { let s = 0; const N = 300; for (let i = 0; i <= N; i++) { const t = tmax * i / N, d = f(t) - g(t); s += d * d; } return SQ(s / (N + 1)) / norm * 100; }
+/* méthode de Strejc : rapport Tu/Ta en fonction de l'ordre réel n (T = 1) */
+function strejcPar(n) { if (n <= 1.0000001) return { tu: 0, ta: 1, r: 0 }; const x = n - 1, si = gP(n, x), sl = EXP((n - 1) * Math.log(x) - x - lgam(n)); const tu = x - si / sl, ta = 1 / sl; return { tu, ta, r: tu / ta }; }
+function strejcN(ratio) { let lo = 1, hi = 14; if (ratio <= 0) return 1; if (ratio >= strejcPar(hi).r) return hi; for (let k = 0; k < 50; k++) { const m = (lo + hi) / 2; if (strejcPar(m).r < ratio) lo = m; else hi = m; } return (lo + hi) / 2; }
+const SD_TAB = [[1, 1, 0, 0], [2, 2.718, 0.282, 0.104], [3, 3.695, 0.805, 0.218], [4, 4.463, 1.425, 0.319], [5, 5.119, 2.1, 0.41]];
+
+/* ---------- composant graphique (canvas) ---------- */
+const COL = { ink: '#111111', grid: '#e4e7ec', axis: '#5a6068', blue: '#2e6da4', green: '#2e8b3a', orange: '#d98a12', red: '#c0281f', violet: '#7b4fc2', slate: '#33475b', soft: '#9fb4ca' };
+function Plot(host, o) {
+  const cv = h('canvas', { role: 'img', 'aria-label': o.label || 'Graphique' }); host.append(cv);
+  const ctx = cv.getContext('2d');
+  const P = { cv, ctx, W: 300, H: 300, o: Object.assign({ xmin: 0, xmax: 10, ymin: 0, ymax: 1, xt: 1, yt: 0.2, ml: 46, mr: 14, mt: 22, mb: 34, h: 300, xl: 'Temps (s)', yl: '', grid: true }, o), draw: null, drag: null, hover: null, down: false };
+  P.X = x => P.o.ml + (x - P.o.xmin) / (P.o.xmax - P.o.xmin) * (P.W - P.o.ml - P.o.mr);
+  P.Y = y => P.H - P.o.mb - (y - P.o.ymin) / (P.o.ymax - P.o.ymin) * (P.H - P.o.mt - P.o.mb);
+  P.ix = px => P.o.xmin + (px - P.o.ml) / (P.W - P.o.ml - P.o.mr) * (P.o.xmax - P.o.xmin);
+  P.iy = py => P.o.ymin + (P.H - P.o.mb - py) / (P.H - P.o.mt - P.o.mb) * (P.o.ymax - P.o.ymin);
+  P.set = a => { Object.assign(P.o, a); P.redraw(); };
+  P.resize = () => { const w = Math.max(220, host.clientWidth - 2), hh = P.o.h, d = Math.min(2, window.devicePixelRatio || 1); if (cv.width === Math.round(w * d) && P.H === hh) return; cv.width = Math.round(w * d); cv.height = Math.round(hh * d); cv.style.height = hh + 'px'; P.W = w; P.H = hh; P.redraw(); };
+  P.line = (pts, c, w, dash) => { ctx.save(); ctx.strokeStyle = c || COL.ink; ctx.lineWidth = w || 2; ctx.setLineDash(dash || []); ctx.lineJoin = 'round'; ctx.beginPath(); pts.forEach((p, i) => { const x = P.X(p[0]), y = P.Y(p[1]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.restore(); };
+  P.fn = (f, c, w, dash, a, b) => { const x0 = a == null ? P.o.xmin : a, x1 = b == null ? P.o.xmax : b, N = Math.max(120, Math.round(P.W / 2)), pts = []; for (let i = 0; i <= N; i++) { const t = x0 + (x1 - x0) * i / N; pts.push([t, f(t)]); } P.line(pts, c, w, dash); };
+  P.seg = (x1, y1, x2, y2, c, w, dash) => P.line([[x1, y1], [x2, y2]], c, w, dash);
+  P.dot = (x, y, c, r, ring) => { ctx.save(); ctx.beginPath(); ctx.arc(P.X(x), P.Y(y), r || 5, 0, 2 * PI); ctx.fillStyle = c || COL.red; ctx.fill(); if (ring !== false) { ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); } ctx.restore(); };
+  P.pts = (arr, c, r) => { ctx.save(); ctx.strokeStyle = c || COL.slate; ctx.lineWidth = 1.5; arr.forEach(p => { const x = P.X(p[0]), y = P.Y(p[1]), s = r || 3; ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s); ctx.stroke(); }); ctx.restore(); };
+  P.txt = (s, x, y, c, al, size, px, py) => { ctx.save(); ctx.fillStyle = c || COL.ink; ctx.font = (size || 12) + 'px IBM Plex Sans, system-ui, sans-serif'; ctx.textAlign = al || 'left'; ctx.textBaseline = 'middle'; ctx.fillText(s, P.X(x) + (px || 0), P.Y(y) + (py || 0)); ctx.restore(); };
+  P.arrow = (x1, x2, y, c, label, py) => { const a = P.X(x1), b = P.X(x2), yy = P.Y(y); ctx.save(); ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(a, yy); ctx.lineTo(b, yy); ctx.stroke(); const d = b >= a ? 1 : -1; [[a, 1], [b, -1]].forEach(q => { ctx.beginPath(); ctx.moveTo(q[0], yy); ctx.lineTo(q[0] + 7 * q[1] * d, yy - 4); ctx.lineTo(q[0] + 7 * q[1] * d, yy + 4); ctx.closePath(); ctx.fill(); }); if (label) { ctx.font = '600 12.5px IBM Plex Sans, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(label, (a + b) / 2, yy - 3 + (py || 0)); } ctx.restore(); };
+  P.redraw = () => {
+    const o = P.o, W = P.W, H = P.H; ctx.save(); const d = cv.width / W; ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    ctx.font = '11.5px IBM Plex Sans, system-ui, sans-serif'; ctx.fillStyle = COL.axis; ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+    const nx = Math.floor((o.xmax - o.xmin) / o.xt + 1e-9), ny = Math.floor((o.ymax - o.ymin) / o.yt + 1e-9);
+    for (let i = 0; i <= nx; i++) { const x = o.xmin + i * o.xt, px = Math.round(P.X(x)) + .5; if (o.grid) { ctx.beginPath(); ctx.moveTo(px, o.mt); ctx.lineTo(px, H - o.mb); ctx.stroke(); } ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(o.fx ? o.fx(x) : nf(x, 2), px, H - o.mb + 4); }
+    if (o.logx) { ctx.save(); ctx.strokeStyle = '#eef0f3'; for (let d = Math.floor(o.xmin); d < o.xmax; d++) for (let k = 2; k <= 9; k++) { const xv = d + Math.log10(k); if (xv > o.xmin && xv < o.xmax) { const px = Math.round(P.X(xv)) + .5; ctx.beginPath(); ctx.moveTo(px, o.mt); ctx.lineTo(px, H - o.mb); ctx.stroke(); } } ctx.restore(); }
+    for (let i = 0; i <= ny; i++) { const y = o.ymin + i * o.yt, py = Math.round(P.Y(y)) + .5; if (o.grid) { ctx.beginPath(); ctx.moveTo(o.ml, py); ctx.lineTo(W - o.mr, py); ctx.stroke(); } ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(o.fy ? o.fy(y) : nf(y, 2), o.ml - 5, py); }
+    ctx.strokeStyle = COL.axis; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(o.ml + .5, o.mt); ctx.lineTo(o.ml + .5, H - o.mb + .5); ctx.lineTo(W - o.mr, H - o.mb + .5); ctx.stroke();
+    ctx.fillStyle = COL.axis; ctx.font = '12px IBM Plex Sans, system-ui, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(o.xl, W - o.mr, H - 2);
+    if (o.yl) { ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(o.yl, 6, 3); }
+    ctx.beginPath(); ctx.rect(o.ml, o.mt - 5, W - o.ml - o.mr, H - o.mt - o.mb + 10); ctx.clip();
+    if (P.draw) P.draw(P);
+    ctx.restore();
+  };
+  const pos = ev => { const r = cv.getBoundingClientRect(); const px = (ev.clientX - r.left) * (P.W / r.width), py = (ev.clientY - r.top) * (P.H / r.height); return { px, py, x: P.ix(px), y: P.iy(py) }; };
+  cv.addEventListener('pointerdown', ev => { if (!P.drag) return; P.down = true; try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* ok */ } const p = pos(ev); P.drag(p, 'down'); ev.preventDefault(); });
+  cv.addEventListener('pointermove', ev => { const p = pos(ev); if (P.down && P.drag) { P.drag(p, 'move'); } else if (P.hover) P.hover(p); });
+  const up = ev => { if (P.down) { P.down = false; if (P.drag) P.drag(pos(ev), 'up'); } };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('pointerleave', () => { if (!P.down && P.hover) P.hover(null); });
+  if (window.ResizeObserver) new ResizeObserver(() => P.resize()).observe(host);
+  P.resize(); setTimeout(P.resize, 50);
+  return P;
+}
+function plotBox(title, opts, cls) { const box = h('div', { class: 'plotbox' + (cls ? ' ' + cls : '') }); if (title) box.append(h('div', { class: 'ptitle' }, title)); const host = h('div'); box.append(host); const P = Plot(host, opts); return { box, P }; }
+function pleg(items) { return h('div', { class: 'pleg' }, items.map(it => h('span', null, h('i', { class: it[2] || '', style: 'border-top-color:' + it[0] + ';background:' + (it[2] === 'o' ? it[0] : 'none') }), it[1]))); }
+function nice(v) { const e = Math.pow(10, Math.floor(Math.log10(v))), f = v / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; }
+function niceStep(range, n) { return nice(range / n); }
+/* ---------- aides d'interface ---------- */
+function stats(list) { return h('div', { class: 'gstats' }, list.map(k => h('div', { class: 'stat' }, h('span', null, k[0]), h('b', null, k[1])))); }
+function chipsRow(items, cur, cb, label) { return h('div', { class: 'chips', role: 'group', 'aria-label': label || '' }, items.map(it => h('button', { type: 'button', class: 'chip' + (cur === it[0] ? ' on' : ''), 'aria-pressed': cur === it[0] ? 'true' : 'false', onclick: () => cb(it[0]) }, it[1]))); }
+function sld(o) {
+  const out = h('b'), inp = h('input', { type: 'range', id: o.id, min: o.min, max: o.max, step: o.step, 'aria-label': o.label }), f = o.fmt || (v => nf(v, o.d == null ? 2 : o.d));
+  inp.value = o.val; const upd = () => { out.textContent = f(+inp.value) + (o.unit ? ' ' + o.unit : ''); };
+  inp.addEventListener('input', () => { upd(); o.on(+inp.value); }); upd();
+  const el = h('label', { class: 'fld' }, h('span', null, h('span', { class: 'mi', html: o.label }), ' = ', out), inp);
+  el.set = v => { inp.value = v; upd(); }; el.inp = inp; return el;
+}
+function tgl(label, val, cb) { const i = h('input', { type: 'checkbox' }); i.checked = !!val; i.addEventListener('change', () => cb(i.checked)); return h('label', { class: 'tgl' }, i, label); }
+function verdict(text, kind) { return h('div', { class: 'verdict' + (kind ? ' ' + kind : ''), 'aria-live': 'polite', html: text }); }
+function kvTable(rows, head) { return h('div', { class: 'dwrap' }, h('table', { class: 'kv' }, head ? h('thead', null, h('tr', null, head.map(t => h('th', null, t)))) : null, h('tbody', null, rows.map(r => h('tr', { class: r.hl ? 'hl' : '' }, r.c.map((c, i) => h('td', { class: i > 0 ? 'm' : '', html: c }))))))); }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.k); toast.k = setTimeout(() => { t.hidden = true; }, 2200); }
+function anim(cb, dur) { /* lecture d'une animation : cb(u) avec u de 0 à 1 */
+  let t0 = null, raf = 0, stopped = false; const stop = () => { stopped = true; cancelAnimationFrame(raf); TIMERS.delete(stop); };
+  const step = ts => { if (stopped) return; if (t0 == null) t0 = ts; const u = Math.min(1, (ts - t0) / dur); cb(u); if (u < 1) raf = requestAnimationFrame(step); else stop(); };
+  raf = requestAnimationFrame(step); TIMERS.add(stop); return stop;
+}
+
+/* ---------- outils d'axes ---------- */
+function yAxis(lo, hi) { lo = Math.min(lo, 0); hi = Math.max(hi, 1e-9); const st = niceStep(hi - lo, 5); return { ymin: Math.floor(lo / st + 1e-9) * st, ymax: Math.ceil(hi / st - 1e-9) * st, yt: st }; }
+function xAxis(tm) { const st = niceStep(tm, 8); return { xmin: 0, xmax: Math.max(st, Math.round(tm / st) * st), xt: st }; }
+function sampleNoise(f, tm, N, sd, seed) { const r = rng(seed), out = []; for (let i = 1; i <= N; i++) { const t = tm * i / N; out.push([t, f(t) + sd * gauss(r)]); } return out; }
+
+
+/* ---------- outils de Bode ---------- */
+const dB = x => 20 * Math.log10(x), wOf = x => Math.pow(10, x), DEG = 180 / PI;
+function H1(K, T, w) { return { g: K / SQ(1 + (w * T) ** 2), ph: -Math.atan(w * T) * DEG }; }
+function H2(K, m, w0, w) { const u = w / w0, re = 1 - u * u, im = 2 * m * u; return { g: K / Math.hypot(re, im), ph: -Math.atan2(im, re) * DEG }; }
+function logTick(v) { const w = Math.pow(10, v); return w >= 1 ? String(Math.round(w)) : nf(w, 3); }
+function fmtW(lw) { const w = wOf(lw); return nf(w, w >= 100 ? 0 : w >= 10 ? 1 : 2); }
+function bodePair() {
+  const a = plotBox('Gain G = 20·log|H(jω)|', { h: 250, logx: true, xl: 'ω (rad/s)', yl: 'Gain (dB)', fx: logTick, ml: 54, label: 'Diagramme de Bode : gain' }, 'grab');
+  const p = plotBox('Phase φ = arg H(jω)', { h: 220, logx: true, xl: 'ω (rad/s)', yl: 'Phase (°)', fx: logTick, ml: 54, label: 'Diagramme de Bode : phase' }, 'grab');
+  return { box: h('div', null, a.box, p.box), A: a.P, Ph: p.P };
+}
+function setBode(B, lo, hi, gmin, gmax, phmin) {
+  const gs = niceStep(Math.max(gmax - gmin, 10), 5), g0 = Math.floor(gmin / gs) * gs, g1 = Math.ceil(gmax / gs) * gs, ps = phmin <= -135 ? 45 : 15;
+  B.A.o.xmin = lo; B.A.o.xmax = hi; B.A.o.xt = 1; B.A.o.ymin = g0; B.A.o.ymax = g1 === g0 ? g0 + gs : g1; B.A.o.yt = gs; B.A.o.fy = v => nf(v, 0);
+  B.Ph.o.xmin = lo; B.Ph.o.xmax = hi; B.Ph.o.xt = 1; B.Ph.o.ymin = phmin; B.Ph.o.ymax = 0; B.Ph.o.yt = ps; B.Ph.o.fy = v => nf(v, 0);
+}
+function gRange(fn, lo, hi) { let mn = 1e9, mx = -1e9; for (let i = 0; i <= 160; i++) { const g = dB(fn(wOf(lo + (hi - lo) * i / 160)).g); mn = Math.min(mn, g); mx = Math.max(mx, g); } return [mn - 4, mx + 5]; }
+function bindCursor(B, S, fn, lo, hi) { const mv = (p, ph) => { if (!p || ph === 'up') return; S.cw = clamp(p.x, lo(), hi()); fn(); }; [B.A, B.Ph].forEach(P => { P.drag = mv; P.hover = null; }); }
+function curveG(P, H, lo, hi, c, w, d) { P.fn(x => dB(H(wOf(x)).g), c, w, d, lo, hi); }
+function curveP(P, H, lo, hi, c, w, d) { P.fn(x => H(wOf(x)).ph, c, w, d, lo, hi); }
+function interpLog(arr, x) { if (x <= arr[0][0]) return arr[0][1]; for (let i = 1; i < arr.length; i++) if (x <= arr[i][0]) { const u = (x - arr[i - 1][0]) / (arr[i][0] - arr[i - 1][0]); return arr[i - 1][1] + u * (arr[i][1] - arr[i - 1][1]); } return arr[arr.length - 1][1]; }
+function mkData(H, lo, hi, n, sg, sp, seed) { const r = rng(seed), G = [], Ph = []; for (let i = 0; i < n; i++) { const x = lo + 0.12 + (hi - lo - 0.24) * i / (n - 1), v = H(wOf(x)); G.push([x, dB(v.g) + sg * gauss(r)]); Ph.push([x, v.ph + sp * gauss(r)]); } return { G, Ph }; }
+function errBode(Hr, Hm, lo, hi) { let sg = 0, sp = 0; const N = 120; for (let i = 0; i <= N; i++) { const w = wOf(lo + (hi - lo) * i / N), a = Hr(w), b = Hm(w); sg += (dB(a.g) - dB(b.g)) ** 2; sp += (a.ph - b.ph) ** 2; } return { g: SQ(sg / (N + 1)), p: SQ(sp / (N + 1)) }; }
+
+/* ================= Atelier 1 : principe de la réponse harmonique ================= */
+const F1d = () => ({ sys: 'o1', K: 2, T: 0.2, m: 0.5, w0: 5, lw: 0.7, A1: 1, pts: [], show: true, ph: 0, run: null });
+let F1 = F1d();
+function mountF1(root) {
+  const S = F1, ctl = h('div'), out = h('div'), tb = h('div'), B = bodePair(), te = plotBox('Signaux e(t) et s(t) en régime permanent', { h: 240, yl: 'e(t), s(t)', xl: 't (s)', label: 'Signaux sinusoïdaux' });
+  const LO = -1, HI = 3, Hm = w => S.sys === 'o1' ? H1(S.K, S.T, w) : H2(S.K, S.m, S.w0, w);
+  function draw() {
+    const w = wOf(S.lw), v = Hm(w), Tp = 2 * PI / w, xa = xAxis(3 * Tp), A2 = S.A1 * v.g, dt = -v.ph / DEG / w, ym = nice(Math.max(S.A1, A2) * 1.25);
+    te.P.set({ xmin: 0, xmax: xa.xmax, xt: xa.xt, ymin: -ym, ymax: ym, yt: ym / 2, fx: x => nf(x, 3) });
+    te.P.draw = P => {
+      const th = S.ph, e = t => S.A1 * Math.sin(w * t - th), s = t => A2 * Math.sin(w * t + v.ph / DEG - th);
+      P.seg(0, 0, xa.xmax, 0, COL.soft, 1);
+      P.seg(0, S.A1, xa.xmax, S.A1, COL.slate, 1, [4, 3]); P.seg(0, A2, xa.xmax, A2, COL.blue, 1, [4, 3]);
+      P.txt('A₁ = ' + nfx(S.A1, 2), xa.xmax, S.A1, COL.slate, 'right', 12, -4, -8); P.txt('A₂ = ' + nfx(A2, 3), xa.xmax, A2, COL.blue, 'right', 12, -4, A2 < S.A1 ? 10 : -8);
+      P.fn(e, COL.slate, 2.4); P.fn(s, COL.blue, 2.8);
+      if (!S.run) { const t1 = ((th / w) % Tp + Tp) % Tp + Tp * 0, t2 = t1 + dt; if (t2 < xa.xmax) { P.seg(t1, 0, t1, ym * 0.55, COL.slate, 1.2, [3, 3]); P.seg(t2, 0, t2, ym * 0.55, COL.blue, 1.2, [3, 3]); P.arrow(t1, t2, ym * 0.5, COL.red, 'Δt'); } }
+    };
+    const Gm = dB(A2 / S.A1), phm = -w * dt * DEG;
+    out.innerHTML = '';
+    out.append(stats([['Pulsation ω', nfx(w, 2) + ' rad/s'], ['Fréquence f = ω/2π', nfx(w / 2 / PI, 3) + ' Hz'], ['Amplitude de sortie A₂', nfx(A2, 3)], ['Gain A₂/A₁', nfx(A2 / S.A1, 3)], ['G = 20 log(A₂/A₁)', nfx(Gm, 2) + ' dB'], ['Retard Δt', nfx(dt, 4) + ' s'], ['Déphasage φ = −ω·Δt', nfx(phm, 1) + ' °']]));
+    out.append(verdict('À <b>ω = ' + nfx(w, 2) + ' rad/s</b>, la sortie est ' + (v.g < 1 ? 'atténuée' : 'amplifiée') + ' de ' + nfx(Math.abs(Gm), 1) + ' dB et <b>en retard de ' + nfx(-phm, 1) + '°</b> sur l’entrée. Chaque fréquence testée fournit <b>un point</b> du diagramme de Bode : cliquez sur « Relever ce point » pour le placer, puis changez de fréquence.'));
+    const rg = gRange(Hm, LO, HI), phmin = S.sys === 'o1' ? -90 : -180; setBode(B, LO, HI, rg[0], rg[1], phmin);
+    B.A.draw = P => { if (S.show) curveG(P, Hm, LO, HI, COL.soft, 2.2); P.pts(S.pts.map(q => [q[0], q[1]]), COL.red, 4); P.seg(S.lw, P.o.ymin, S.lw, P.o.ymax, COL.blue, 1.2, [4, 3]); P.dot(S.lw, dB(v.g), COL.blue, 5.5); };
+    B.Ph.draw = P => { if (S.show) curveP(P, Hm, LO, HI, COL.soft, 2.2); P.pts(S.pts.map(q => [q[0], q[2]]), COL.red, 4); P.seg(S.lw, P.o.ymin, S.lw, P.o.ymax, COL.blue, 1.2, [4, 3]); P.dot(S.lw, v.ph, COL.blue, 5.5); };
+    te.P.redraw(); B.A.redraw(); B.Ph.redraw();
+    tb.innerHTML = ''; tb.append(h('p', { class: 'small' }, S.pts.length + ' point(s) relevé(s).'));
+  }
+  const addPt = lw => { const v = Hm(wOf(lw)); if (!S.pts.some(q => Math.abs(q[0] - lw) < 0.01)) S.pts.push([lw, dB(v.g), v.ph]); };
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Système testé'), chipsRow([['o1', 'Premier ordre'], ['o2', 'Second ordre']], S.sys, v => { S.sys = v; S.pts = []; build(); draw(); }, 'Système'))));
+    const sl = [sld({ id: 'f1K', label: 'K', min: 0.5, max: 10, step: 0.1, val: S.K, d: 1, on: v => { S.K = v; draw(); } })];
+    if (S.sys === 'o1') sl.push(sld({ id: 'f1T', label: 'T', min: 0.01, max: 1, step: 0.01, val: S.T, unit: 's', on: v => { S.T = v; draw(); } }));
+    else sl.push(sld({ id: 'f1m', label: 'm', min: 0.1, max: 2, step: 0.05, val: S.m, on: v => { S.m = v; draw(); } }), sld({ id: 'f1w', label: 'ω₀', min: 1, max: 50, step: 1, val: S.w0, d: 0, unit: 'rad/s', on: v => { S.w0 = v; draw(); } }));
+    ctl.append(h('div', { class: 'ctrl' }, sl, h('div', { class: 'fld' }, h('span', { class: 'mi' }, 'Fréquence de l’entrée')), sld({ id: 'f1lw', label: 'ω', min: LO, max: HI, step: 0.01, val: S.lw, fmt: v => fmtW(v), unit: 'rad/s', on: v => { S.lw = v; draw(); } })));
+    ctl.append(h('div', { class: 'ctrl' },
+      h('button', { class: 'btn pri', type: 'button', onclick: () => { addPt(S.lw); draw(); } }, 'Relever ce point sur le Bode'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { stopAll(); S.run = null; const n = 14, start = S.lw; S.pts = []; anim(u => { const k = Math.floor(u * (n - 1) + 1e-9); S.pts = []; for (let i = 0; i <= k; i++) addPt(LO + 0.2 + (HI - LO - 0.4) * i / (n - 1)); S.lw = LO + 0.2 + (HI - LO - 0.4) * k / (n - 1); const s = $('#f1lw'); if (s) { s.value = S.lw; s.dispatchEvent(new Event('input')); } }, 9000); } }, '▶ Balayage automatique'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { S.pts = []; draw(); } }, 'Effacer les points'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { if (S.run) { S.run(); S.run = null; return; } stopAll(); let raf = 0, stopped = false, last = null; const stop = () => { stopped = true; cancelAnimationFrame(raf); TIMERS.delete(stop); S.run = null; draw(); }; const loop = ts => { if (stopped) return; if (last != null) S.ph += (ts - last) / 1000 * wOf(S.lw) * 0.5 * (wOf(S.lw) > 20 ? 20 / wOf(S.lw) : 1); last = ts; te.P.redraw(); raf = requestAnimationFrame(loop); }; S.run = stop; TIMERS.add(stop); raf = requestAnimationFrame(loop); draw(); } }, '⏯ Faire défiler les signaux'),
+      tgl('Courbe théorique', S.show, v => { S.show = v; draw(); })));
+  }
+  root.append(h('h2', null, 'Réponse harmonique : une fréquence, un point de Bode'),
+    h('p', { html: 'On applique en entrée une <b>sinusoïde</b> d’amplitude <i>A₁</i> et de pulsation <i>ω</i>. En régime permanent, la sortie est une sinusoïde de <b>même pulsation</b>, d’amplitude <i>A₂</i> et déphasée. Le <b>gain</b> vaut <i>G = 20 log (A₂/A₁)</i> et le <b>déphasage</b> <i>φ = φ₂ − φ₁ = −ω·Δt</i>. Changez la fréquence et relevez les points un par un : le diagramme de Bode se construit.' }),
+    ctl, te.box, pleg([[COL.slate, 'entrée e(t)'], [COL.blue, 'sortie s(t)'], [COL.red, 'Δt (retard)']]), out, h('div', { class: 'sect' }, h('h3', null, 'Diagramme de Bode relevé'), tb, B.box, pleg([[COL.red, 'points relevés', 'o'], [COL.soft, 'courbe théorique'], [COL.blue, 'fréquence courante']])));
+  build(); draw();
+}
+WORKSHOPS.push({ id: 'f1', title: 'Réponse harmonique', hint: 'Appliquez une sinusoïde, mesurez gain et déphasage, puis relevez des points pour construire le Bode.', mount: mountF1, leave: () => { stopAll(); F1.run = null; }, reset: () => { stopAll(); F1 = F1d(); } });
+
+/* ================= Atelier 2 : premier ordre ================= */
+const F2d = () => ({ mode: 'explore', K: 5, T: 0.05, cw: 1.0, asym: true, mark: true, my: null, seed: 4, res: null, shown: false });
+let F2 = F2d();
+function mountF2(root) {
+  const S = F2, ctl = h('div'), out = h('div'), B = bodePair();
+  function mystery() { const r = rng(S.seed * 17 + 3), K = rd(0.6 + 7 * r(), 1), T = rd(Math.pow(10, -1.8 + 1.8 * r()), 3), c = Math.log10(1 / T), lo = Math.floor(c - 1.6), hi = Math.ceil(c + 1.6); S.my = { K, T, lo, hi, d: mkData(w => H1(K, T, w), lo, hi, 28, 0.3, 1.5, S.seed * 5 + 1) }; S.cw = c - 0.7; S.res = null; S.shown = false; }
+  const rng_ = () => S.mode === 'explore' ? [-1, 3] : [S.my.lo, S.my.hi];
+  function draw() {
+    const [lo, hi] = rng_(); out.innerHTML = '';
+    S.cw = clamp(S.cw, lo, hi);
+    if (S.mode === 'explore') {
+      const K = S.K, T = S.T, c = Math.log10(1 / T), Kd = dB(K), H = w => H1(K, T, w), v = H(wOf(S.cw)), rg = gRange(H, lo, hi);
+      setBode(B, lo, hi, rg[0], rg[1], -90);
+      B.A.draw = P => {
+        if (S.asym) { P.line([[lo, Kd], [c, Kd], [hi, Kd - 20 * (hi - c)]], COL.blue, 1.8, [7, 4]); }
+        if (S.mark) { P.seg(c, P.o.ymin, c, Kd - 3, COL.orange, 1.2, [4, 3]); P.dot(c, Kd - 3, COL.orange, 5); P.txt('−3 dB en ωc = 1/T = ' + nfx(1 / T, 1) + ' rad/s', c, Kd - 3, COL.orange, 'left', 12, 8, 14); P.txt('20 log K = ' + nfx(Kd, 1) + ' dB', lo, Kd, COL.blue, 'left', 12, 6, -10); P.txt('pente −20 dB/décade', c + 0.35, Kd - 20 * 0.35, COL.blue, 'left', 12, 8, -10); }
+        curveG(P, H, lo, hi, COL.ink, 2.8); P.seg(S.cw, P.o.ymin, S.cw, P.o.ymax, COL.red, 1.2, [4, 3]); P.dot(S.cw, dB(v.g), COL.red, 6);
+      };
+      B.Ph.draw = P => {
+        if (S.asym) P.line([[lo, 0], [c, 0], [c, -90], [hi, -90]], COL.blue, 1.8, [7, 4]);
+        if (S.mark) { P.seg(lo, -45, c, -45, COL.orange, 1.2, [4, 3]); P.seg(c, P.o.ymin, c, -45, COL.orange, 1.2, [4, 3]); P.dot(c, -45, COL.orange, 5); P.txt('−45° en ωc', lo, -45, COL.orange, 'left', 12, 6, -10); }
+        curveP(P, H, lo, hi, COL.ink, 2.8); P.seg(S.cw, P.o.ymin, S.cw, P.o.ymax, COL.red, 1.2, [4, 3]); P.dot(S.cw, v.ph, COL.red, 6);
+      };
+      const w = wOf(S.cw), asy = Kd - (S.cw > c ? 20 * (S.cw - c) : 0);
+      out.append(stats([['Curseur ω', nfx(w, 2) + ' rad/s'], ['G(ω)', nfx(dB(v.g), 2) + ' dB'], ['φ(ω)', nfx(v.ph, 1) + ' °'], ['Écart à l’asymptote', nfx(dB(v.g) - asy, 2) + ' dB'], ['ωc = 1/T', nfx(1 / T, 2) + ' rad/s'], ['20 log K', nfx(Kd, 2) + ' dB']]));
+      out.append(verdict('<b>Premier ordre.</b> Pour les basses fréquences, le gain est plat à 20 log K. Après ωc = 1/T, il décroît de <b>−20 dB par décade</b> et la phase passe de 0° à −90°. À ωc exactement, le gain est inférieur de 3 dB à l’asymptote et la phase vaut −45° : <b>déplacez le curseur rouge</b> jusque-là pour le vérifier.', 'yes'));
+    } else {
+      const m = S.my, d = m.d, Kh = Math.pow(10, (d.G[0][1] + d.G[1][1] + d.G[2][1]) / 3 / 20), phc = interpLog(d.Ph, S.cw), gc = interpLog(d.G, S.cw), G0 = (d.G[0][1] + d.G[1][1] + d.G[2][1]) / 3, Th = 1 / wOf(S.cw);
+      const rg = [Math.min(...d.G.map(q => q[1])) - 5, Math.max(...d.G.map(q => q[1])) + 5]; setBode(B, lo, hi, rg[0], rg[1], -90);
+      B.A.draw = P => { P.pts(d.G, COL.slate, 3.5); P.seg(lo, G0, hi, G0, COL.green, 1.2, [6, 4]); P.txt('plateau = ' + nfx(G0, 1) + ' dB', lo, G0, COL.green, 'left', 12, 6, -10); if (S.res) curveG(P, w => H1(S.res.K, S.res.T, w), lo, hi, COL.blue, 2.6); if (S.shown) curveG(P, w => H1(m.K, m.T, w), lo, hi, COL.orange, 2, [7, 4]); P.seg(S.cw, P.o.ymin, S.cw, P.o.ymax, COL.red, 1.2, [4, 3]); P.dot(S.cw, gc, COL.red, 6); };
+      B.Ph.draw = P => { P.pts(d.Ph, COL.slate, 3.5); P.seg(lo, -45, hi, -45, COL.violet, 1.2, [4, 3]); P.txt('−45°', lo, -45, COL.violet, 'left', 12, 6, -10); if (S.res) curveP(P, w => H1(S.res.K, S.res.T, w), lo, hi, COL.blue, 2.6); if (S.shown) curveP(P, w => H1(m.K, m.T, w), lo, hi, COL.orange, 2, [7, 4]); P.seg(S.cw, P.o.ymin, S.cw, P.o.ymax, COL.red, 1.2, [4, 3]); P.dot(S.cw, phc, COL.red, 6); };
+      out.append(stats([['Curseur ω', nfx(wOf(S.cw), 2) + ' rad/s'], ['Phase mesurée', nfx(phc, 1) + ' °'], ['Gain mesuré', nfx(gc, 2) + ' dB'], ['Plateau 20 log K', nfx(G0, 2) + ' dB'], ['K̂ = 10^(plateau/20)', nfx(Kh, 2)], ['T̂ = 1/ω (curseur)', nfx(Th, 4) + ' s']]));
+      out.append(h('div', { class: 'numin' }, h('button', { class: 'btn pri', type: 'button', onclick: () => { S.res = { K: Kh, T: Th }; S.shown = true; draw(); } }, 'Tracer mon modèle et révéler'), h('button', { class: 'btn', type: 'button', onclick: () => { S.seed++; mystery(); draw(); } }, 'Nouveau système')));
+      if (S.res) { const e = errBode(w => H1(m.K, m.T, w), w => H1(S.res.K, S.res.T, w), lo, hi); out.append(verdict('Système réel : <b>K = ' + nfx(m.K, 1) + '</b>, <b>T = ' + nfx(m.T, 3) + ' s</b> (ωc = ' + nfx(1 / m.T, 1) + ' rad/s). Votre modèle : K = ' + nfx(S.res.K, 2) + ', T = ' + nfx(S.res.T, 3) + ' s. Écarts moyens : <b>' + nfx(e.g, 2) + ' dB</b> et <b>' + nfx(e.p, 1) + '°</b>.', e.g < 1 && e.p < 4 ? 'yes' : 'warn')); }
+      else out.append(verdict('Déplacez le curseur rouge jusqu’à la pulsation où la <b>phase vaut −45°</b> (ligne violette) : c’est ωc = 1/T. À cet endroit, le gain mesuré est 3 dB sous le plateau. Le plateau donne K. Puis cliquez sur « Tracer mon modèle ».'));
+    }
+    B.A.redraw(); B.Ph.redraw();
+  }
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Mode'), chipsRow([['explore', 'Explorer le Bode'], ['mystere', 'Identifier un système mystère']], S.mode, v => { S.mode = v; if (v === 'mystere' && !S.my) mystery(); build(); draw(); }, 'Mode'))));
+    if (S.mode === 'explore') ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'f2K', label: 'K', min: 0.5, max: 10, step: 0.1, val: S.K, d: 1, on: v => { S.K = v; draw(); } }), sld({ id: 'f2T', label: 'T', min: 0.01, max: 1, step: 0.01, val: S.T, unit: 's', on: v => { S.T = v; draw(); } }), tgl('Asymptotes', S.asym, v => { S.asym = v; draw(); }), tgl('Repères en ωc', S.mark, v => { S.mark = v; draw(); })));
+  }
+  bindCursor(B, S, () => draw(), () => rng_()[0], () => rng_()[1]);
+  root.append(h('h2', null, 'Réponse fréquentielle du premier ordre'),
+    h('p', { html: 'Pour <i>H(p) = K / (1 + Tp)</i>, la pulsation de coupure est <i>ωc = 1/T</i>. <b>Faites glisser le curseur rouge</b> sur l’un des deux graphiques : il se déplace sur les deux à la fois. Puis identifiez un système mystère à partir de points mesurés.' }),
+    ctl, B.box, pleg([[COL.ink, 'réponse exacte'], [COL.blue, 'asymptotes / modèle identifié', 'd'], [COL.orange, 'repères ωc'], [COL.red, 'curseur']]), out);
+  if (S.mode === 'mystere' && !S.my) mystery();
+  build(); draw();
+}
+WORKSHOPS.push({ id: 'f2', title: 'Premier ordre', hint: 'Faites glisser le curseur sur le Bode : −3 dB et −45° en ωc = 1/T. Puis identifiez un système mystère.', mount: mountF2, leave: stopAll, reset: () => { F2 = F2d(); } });
+
+/* ================= Atelier 3 : second ordre ================= */
+const F3d = () => ({ K: 2, m: 0.4, lw0: 0.7, cw: 0.7, asym: true, mark: true });
+let F3 = F3d();
+function mountF3(root) {
+  const S = F3, ctl = h('div'), out = h('div'), B = bodePair(), pole = plotBox('Pôles de H(p), normalisés par ω₀ (p/ω₀)', { h: 220, xmin: -6, xmax: 1, xt: 1, ymin: -1.5, ymax: 1.5, yt: 0.5, xl: 'partie réelle', yl: 'partie imaginaire', ml: 54, label: 'Plan des pôles', fx: v => nf(v, 0), fy: v => nf(v, 1) });
+  const LO = -1, HI = 3.2;
+  function info() {
+    const m = S.m, w0 = wOf(S.lw0), r = SQ(Math.abs(m * m - 1)); let cas, T1, T2, sup = '';
+    if (Math.abs(m - 1) < 0.004) { cas = 'm = 1 : pôle réel double'; T1 = T2 = 1 / w0; }
+    else if (m > 1) { cas = 'm > 1 : régime apériodique, deux pôles réels'; T1 = 1 / (w0 * (m + r)); T2 = 1 / (w0 * (m - r)); }
+    else if (m >= SQ(2) / 2) cas = 'm compris entre √2/2 et 1 : pôles complexes, pas de résonance';
+    else cas = 'm < √2/2 : pôles complexes, résonance';
+    return { cas, T1, T2, w0, real: m >= 1 - 0.004 };
+  }
+  function draw() {
+    const I = info(), m = S.m, K = S.K, w0 = I.w0, Kd = dB(K), H = w => H2(K, m, w0, w), c = S.lw0, v = H(wOf(S.cw)), rg = gRange(H, LO, HI);
+    S.cw = clamp(S.cw, LO, HI); setBode(B, LO, HI, rg[0], rg[1], -180);
+    B.A.draw = P => {
+      if (S.asym) { if (I.real) { const a = Math.log10(1 / I.T2), b = Math.log10(1 / I.T1); P.line([[LO, Kd], [a, Kd], [b, Kd - 20 * (b - a)], [HI, Kd - 20 * (b - a) - 40 * (HI - b)]], COL.blue, 1.8, [7, 4]); } else P.line([[LO, Kd], [c, Kd], [HI, Kd - 40 * (HI - c)]], COL.blue, 1.8, [7, 4]); }
+      if (S.mark) { const g0 = dB(K / (2 * m)); P.seg(c, P.o.ymin, c, g0, COL.orange, 1.2, [4, 3]); P.dot(c, g0, COL.orange, 5); P.txt('20 log(K/2m) = ' + nfx(g0, 1) + ' dB en ω₀', c, g0, COL.orange, 'left', 12, 8, 14); if (m < SQ(2) / 2) { const wr = w0 * SQ(1 - 2 * m * m), gr = dB(H(wr).g); P.dot(Math.log10(wr), gr, COL.violet, 5); P.txt('résonance : Q = ' + nfx(gr - Kd, 1) + ' dB', Math.log10(wr), gr, COL.violet, 'left', 12, 8, -10); } P.txt('pente −40 dB/décade', HI - 0.1, Kd - 40 * (HI - 0.1 - c) + 6, COL.blue, 'right', 12, 0, -14); }
+      curveG(P, H, LO, HI, COL.ink, 2.8); P.seg(S.cw, P.o.ymin, S.cw, P.o.ymax, COL.red, 1.2, [4, 3]); P.dot(S.cw, dB(v.g), COL.red, 6);
+    };
+    B.Ph.draw = P => {
+      if (S.asym) { if (I.real) { const a = Math.log10(1 / I.T2), b = Math.log10(1 / I.T1); P.line([[LO, 0], [a, 0], [a, -90], [b, -90], [b, -180], [HI, -180]], COL.blue, 1.8, [7, 4]); } else P.line([[LO, 0], [c, 0], [c, -180], [HI, -180]], COL.blue, 1.8, [7, 4]); }
+      if (S.mark) { P.seg(LO, -90, c, -90, COL.orange, 1.2, [4, 3]); P.seg(c, P.o.ymin, c, -90, COL.orange, 1.2, [4, 3]); P.dot(c, -90, COL.orange, 5); P.txt('−90° en ω₀ = ' + nfx(w0, 2) + ' rad/s', LO, -90, COL.orange, 'left', 12, 6, -10); }
+      curveP(P, H, LO, HI, COL.ink, 2.8); P.seg(S.cw, P.o.ymin, S.cw, P.o.ymax, COL.red, 1.2, [4, 3]); P.dot(S.cw, v.ph, COL.red, 6);
+    };
+    pole.P.draw = P => {
+      P.fn(t => 0, COL.soft, 1, [], -6, 1); P.seg(0, -1.5, 0, 1.5, COL.soft, 1); P.line(Array.from({ length: 81 }, (_, i) => [Math.cos(PI * (0.5 + i / 80)), Math.sin(PI * (0.5 + i / 80))]).concat(Array.from({ length: 81 }, (_, i) => [Math.cos(PI * (1 + i / 80)), Math.sin(PI * (1 + i / 80))])), COL.soft, 1.2, [4, 3]);
+      if (m < 1) { const a = -m, b = SQ(1 - m * m); P.dot(a, b, COL.red, 6.5); P.dot(a, -b, COL.red, 6.5); P.seg(0, 0, a, b, COL.red, 1, [3, 3]); P.seg(0, 0, a, -b, COL.red, 1, [3, 3]); } else { const r = SQ(m * m - 1); P.dot(-m - r, 0, COL.red, 6.5); P.dot(-m + r, 0, COL.red, 6.5); }
+      P.txt('cercle de rayon ω₀', -0.05, 1.28, COL.axis, 'right', 11.5);
+    };
+    out.innerHTML = '';
+    const rows = [['Curseur ω', nfx(wOf(S.cw), 2) + ' rad/s'], ['G(ω)', nfx(dB(v.g), 2) + ' dB'], ['φ(ω)', nfx(v.ph, 1) + ' °'], ['Gain initial 20 log K', nfx(Kd, 2) + ' dB'], ['G(ω₀) = 20 log |K/2m|', nfx(dB(K / (2 * m)), 2) + ' dB']];
+    if (S.m > 1.004) rows.push(['T₁ = 1/p₁ , T₂ = 1/p₂', nfx(I.T1, 3) + ' s ; ' + nfx(I.T2, 3) + ' s']);
+    if (m < SQ(2) / 2) { const wr = w0 * SQ(1 - 2 * m * m), Q = 1 / (2 * m * SQ(1 - m * m)); rows.push(['ωr = ω₀√(1 − 2m²)', nfx(wr, 2) + ' rad/s'], ['Q = 1/(2m√(1−m²))', nfx(Q, 2)], ['Q_dB', nfx(dB(Q), 2) + ' dB']); }
+    out.append(h('p', null, 'Cas : ', h('span', { class: 'badge ' + (m < SQ(2) / 2 ? 'no' : m < 1 ? 'warn' : 'ok') }, I.cas)), stats(rows));
+    out.append(verdict(m < SQ(2) / 2 ? 'Les pôles sont complexes conjugués et proches de l’axe imaginaire : le gain <b>dépasse</b> la valeur initiale autour de ωr (surtension Q). Plus m diminue, plus la résonance est forte.' : m < 1 ? 'Pôles complexes conjugués, mais l’amortissement est assez fort pour qu’il n’y ait <b>pas de résonance</b>. La phase passe de 0° à −180° en s’approchant de ω₀.' : 'Pôles réels : le système se comporte comme <b>deux premiers ordres en série</b>. Les asymptotes montrent deux cassures (en 1/T₂ puis en 1/T₁) et la phase reste étagée par −90°. Pour m = 1 les deux cassures sont confondues en ω₀.', 'yes'));
+    B.A.redraw(); B.Ph.redraw(); pole.P.redraw();
+  }
+  let sm = null;
+  function build() {
+    ctl.innerHTML = '';
+    const sM = sld({ id: 'f3m', label: 'm', min: 0.05, max: 3, step: 0.01, val: S.m, on: v => { S.m = v; draw(); } }); sm = sM;
+    ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'f3K', label: 'K', min: 0.5, max: 10, step: 0.1, val: S.K, d: 1, on: v => { S.K = v; draw(); } }), sM, sld({ id: 'f3w', label: 'ω₀', min: -0.3, max: 1.7, step: 0.01, val: S.lw0, fmt: v => fmtW(v), unit: 'rad/s', on: v => { S.lw0 = v; draw(); } }), tgl('Asymptotes', S.asym, v => { S.asym = v; draw(); }), tgl('Repères', S.mark, v => { S.mark = v; draw(); })));
+    ctl.append(h('div', { class: 'ctrl' }, h('button', { class: 'btn pri', type: 'button', onclick: () => { stopAll(); anim(u => { S.m = rd(3 - u * 2.95, 2); sm.set(S.m); draw(); }, 9000); } }, '▶ Faire baisser m de 3 à 0,05'), h('button', { class: 'btn', type: 'button', onclick: () => { stopAll(); S.m = 0.4; sm.set(0.4); draw(); } }, 'm = 0,4'), h('button', { class: 'btn', type: 'button', onclick: () => { stopAll(); S.m = 1; sm.set(1); draw(); } }, 'm = 1'), h('button', { class: 'btn', type: 'button', onclick: () => { stopAll(); S.m = 2; sm.set(2); draw(); } }, 'm = 2')));
+  }
+  bindCursor(B, S, () => draw(), () => LO, () => HI);
+  root.append(h('h2', null, 'Réponse fréquentielle du second ordre'),
+    h('p', { html: 'Pour <i>H(p) = K / (1 + 2m·p/ω₀ + p²/ω₀²)</i>, la pente finale est toujours de <b>−40 dB/décade</b> et la phase va de 0° à −180°. Ce qui change avec <i>m</i> est la façon d’arriver à <i>ω₀</i> : deux cassures séparées, une cassure double, ou une résonance. Lancez l’animation et observez en même temps <b>les pôles</b>.' }),
+    ctl, B.box, pleg([[COL.ink, 'réponse exacte'], [COL.blue, 'asymptotes', 'd'], [COL.orange, 'point en ω₀'], [COL.violet, 'résonance'], [COL.red, 'curseur']]), pole.box, out);
+  build(); draw();
+}
+WORKSHOPS.push({ id: 'f3', title: 'Second ordre', hint: 'Faites baisser m et observez : cassures réelles, cassure double, puis résonance, avec la position des pôles.', mount: mountF3, leave: stopAll, reset: () => { F3 = F3d(); } });
+
+/* ================= Atelier 4 : identifier un second ordre ================= */
+const F4d = () => ({ cas: 'low', my: null, seed: 3, cw: 0, meth: 'phase', res: null, shown: false });
+let F4 = F4d();
+function mountF4(root) {
+  const S = F4, ctl = h('div'), out = h('div'), B = bodePair();
+  const CAS = { low: 'm < √2/2 (résonance)', mid: '√2/2 ≤ m < 1', high: 'm ≥ 1 (apériodique)' };
+  function mystery() {
+    const r = rng(S.seed * 29 + 5), K = rd(1 + 5 * r(), 1), w0 = rd(Math.pow(10, -0.2 + 1.5 * r()), 2), m = S.cas === 'low' ? rd(0.1 + 0.5 * r(), 2) : S.cas === 'mid' ? rd(0.72 + 0.26 * r(), 2) : rd(1.2 + 1.3 * r(), 2), c = Math.log10(w0), lo = Math.floor(c - 1.4), hi = Math.ceil(c + 1.4);
+    S.my = { K, w0, m, lo, hi, d: mkData(w => H2(K, m, w0, w), lo, hi, 36, 0.25, 1.2, S.seed * 11 + 2) }; S.cw = c - 0.4; S.res = null; S.shown = false;
+  }
+  function est() {
+    const d = S.my.d, G0 = (d.G[0][1] + d.G[1][1] + d.G[2][1]) / 3, Kh = Math.pow(10, G0 / 20), x = S.cw, gc = interpLog(d.G, x), phc = interpLog(d.Ph, x), wc = wOf(x);
+    if (S.meth === 'phase') { const m = clamp(Kh / (2 * Math.pow(10, gc / 20)), 0.05, 3); return { K: Kh, w0: wc, m, ok: true, G0, gc, phc }; }
+    const Q = gc - G0, u = Math.pow(10, -Q / 20); if (Q <= 0.3 || u >= 1) return { K: Kh, ok: false, G0, gc, phc, msg: 'Pas de résonance sous le curseur : placez-le au sommet de la bosse (gain au-dessus du plateau).' };
+    const m = SQ((1 - SQ(1 - u * u)) / 2); return { K: Kh, m, w0: wc / SQ(1 - 2 * m * m), ok: true, G0, gc, phc, Q };
+  }
+  function draw() {
+    const M = S.my, d = M.d, lo = M.lo, hi = M.hi, e = est(); S.cw = clamp(S.cw, lo, hi);
+    const rg = [Math.min(...d.G.map(q => q[1])) - 5, Math.max(...d.G.map(q => q[1])) + 5]; setBode(B, lo, hi, rg[0], rg[1], -180);
+    const Hr = w => H2(M.K, M.m, M.w0, w), phc = e.phc, gc = e.gc;
+    B.A.draw = P => { P.pts(d.G, COL.slate, 3.3); P.seg(lo, e.G0, hi, e.G0, COL.green, 1.2, [6, 4]); P.txt('plateau 20 log K = ' + nfx(e.G0, 1) + ' dB', hi, e.G0, COL.green, 'right', 12, -4, -10); if (S.res) curveG(P, w => H2(S.res.K, S.res.m, S.res.w0, w), lo, hi, COL.blue, 2.6); if (S.shown) curveG(P, Hr, lo, hi, COL.orange, 2, [7, 4]); P.seg(S.cw, P.o.ymin, S.cw, P.o.ymax, COL.red, 1.2, [4, 3]); P.dot(S.cw, gc, COL.red, 6); };
+    B.Ph.draw = P => { P.pts(d.Ph, COL.slate, 3.3); P.seg(lo, -90, hi, -90, COL.violet, 1.2, [4, 3]); P.txt('−90°', lo, -90, COL.violet, 'left', 12, 6, -10); if (S.res) curveP(P, w => H2(S.res.K, S.res.m, S.res.w0, w), lo, hi, COL.blue, 2.6); if (S.shown) curveP(P, Hr, lo, hi, COL.orange, 2, [7, 4]); P.seg(S.cw, P.o.ymin, S.cw, P.o.ymax, COL.red, 1.2, [4, 3]); P.dot(S.cw, phc, COL.red, 6); };
+    out.innerHTML = '';
+    out.append(stats([['Curseur ω', nfx(wOf(S.cw), 2) + ' rad/s'], ['Phase mesurée', nfx(phc, 1) + ' °'], ['Gain mesuré', nfx(gc, 2) + ' dB'], ['K̂ (plateau)', nfx(e.K, 2)], ['ω̂₀', e.ok ? nfx(e.w0, 2) + ' rad/s' : '—'], ['m̂', e.ok ? nfx(e.m, 3) : '—']]));
+    out.append(h('div', { class: 'blk', html: S.meth === 'phase' ? '<b>Méthode de la phase −90°.</b> À la pulsation du curseur, si φ = −90°, alors <i>ω₀</i> = ω et le gain vaut <i>20 log |K/2m|</i>, donc <i>m</i> = K / (2·10<sup>G/20</sup>) = ' + (e.ok ? nfx(e.m, 3) : '—') + '.' : '<b>Méthode de la surtension.</b> Au sommet de la bosse, <i>Q<sub>dB</sub> = G<sub>max</sub> − 20 log K</i> = ' + (e.ok ? nfx(e.Q, 2) + ' dB' : '—') + ', puis <i>Q<sub>dB</sub> = −20 log (2m√(1 − m²))</i> donne m, et <i>ω₀ = ω<sub>r</sub> / √(1 − 2m²)</i>.' }));
+    out.append(h('div', { class: 'numin' }, h('button', { class: 'btn pri', type: 'button', onclick: () => { if (!e.ok) { toast(e.msg || 'Déplacez le curseur.'); return; } S.res = { K: e.K, w0: e.w0, m: e.m }; S.shown = true; draw(); } }, 'Tracer mon modèle et révéler'), h('button', { class: 'btn', type: 'button', onclick: () => { S.seed++; mystery(); draw(); } }, 'Nouveau système')));
+    if (S.res) { const er = errBode(Hr, w => H2(S.res.K, S.res.m, S.res.w0, w), lo, hi); out.append(verdict('Système réel : <b>K = ' + nfx(M.K, 1) + ', m = ' + nfx(M.m, 2) + ', ω₀ = ' + nfx(M.w0, 2) + ' rad/s</b>. Votre modèle : K = ' + nfx(S.res.K, 2) + ', m = ' + nfx(S.res.m, 2) + ', ω₀ = ' + nfx(S.res.w0, 2) + '. Écarts moyens : <b>' + nfx(er.g, 2) + ' dB</b> et <b>' + nfx(er.p, 1) + '°</b>.', er.g < 1.2 && er.p < 5 ? 'yes' : 'warn')); }
+    else if (e.msg && S.meth === 'surt') out.append(verdict(e.msg, 'warn'));
+    else out.append(verdict(S.meth === 'phase' ? 'Placez le curseur là où la phase vaut <b>−90°</b> (ligne violette) : lisez alors le gain en ce point et calculez m.' : 'Placez le curseur au <b>sommet de la résonance</b> : on en déduit Q_dB, m puis ω₀.'));
+    B.A.redraw(); B.Ph.redraw();
+  }
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Type de système à identifier'), chipsRow(Object.keys(CAS).map(k => [k, CAS[k]]), S.cas, v => { S.cas = v; if (v !== 'low') S.meth = 'phase'; mystery(); build(); draw(); }, 'Cas')),
+      h('div', { class: 'fld' }, h('span', null, 'Méthode'), chipsRow([['phase', 'Phase −90°'], ['surt', 'Surtension (m < √2/2)']], S.meth, v => { S.meth = v; build(); draw(); }, 'Méthode')), h('button', { class: 'btn', type: 'button', style: 'margin-bottom:9px', onclick: () => { S.seed++; mystery(); draw(); } }, 'Nouveau système')));
+  }
+  bindCursor(B, S, () => draw(), () => S.my.lo, () => S.my.hi);
+  mystery0 = null;
+  root.append(h('h2', null, 'Identifier un second ordre à partir de son Bode'),
+    h('p', { html: 'Voici les mesures (croix) d’un système du second ordre. Démarche du cours : le <b>gain initial</b> donne <i>K</i> ; la <b>phase −90°</b> donne <i>ω₀</i> et le gain en ce point, <i>20 log |K/2m|</i>, donne <i>m</i> ; en cas de résonance, le <b>facteur de surtension</b> donne aussi <i>m</i>. Placez le curseur, calculez, puis comparez avec le système réel.' }),
+    ctl, B.box, pleg([[COL.slate, 'mesures', 'o'], [COL.blue, 'votre modèle'], [COL.orange, 'système réel (révélé)', 'd'], [COL.green, 'plateau', 'd'], [COL.red, 'curseur']]), out);
+  if (!S.my) mystery(); build(); draw();
+}
+let mystery0;
+WORKSHOPS.push({ id: 'f4', title: 'Identifier un second ordre', hint: 'Placez le curseur à la phase −90° ou au sommet de la résonance : K, ω₀ et m s’en déduisent.', mount: mountF4, leave: stopAll, reset: () => { F4 = F4d(); } });
+
+/* ================= Atelier 5 : ajuster à la main ================= */
+const F5d = () => ({ ord: 1, my: null, seed: 8, K: 3, T: 0.1, m: 0.5, w0: 5, shown: false, hd: null });
+let F5 = F5d();
+function mountF5(root) {
+  const S = F5, ctl = h('div'), out = h('div'), B = bodePair();
+  function mystery() { const r = rng(S.seed * 23 + 9), K = rd(1 + 6 * r(), 1), w0 = rd(Math.pow(10, -0.1 + 1.3 * r()), 2), m = S.ord === 1 ? 0 : rd(0.2 + 1.6 * r(), 2), c = Math.log10(w0), lo = Math.floor(c - 1.4), hi = Math.ceil(c + 1.4), H = S.ord === 1 ? (w => H1(K, 1 / w0, w)) : (w => H2(K, m, w0, w)); S.my = { K, w0, m, lo, hi, H, d: mkData(H, lo, hi, 32, 0.25, 1.2, S.seed * 3 + 4) }; S.K = 1.5; S.w0 = Math.pow(10, c + 0.6); S.m = 1; S.shown = false; }
+  const Hu = w => S.ord === 1 ? H1(S.K, 1 / S.w0, w) : H2(S.K, S.m, S.w0, w);
+  function handles() { const M = S.my, c = Math.log10(S.w0), Kd = dB(S.K), hs = [{ id: 'K', P: B.A, x: M.lo + 0.35, y: Kd }, { id: 'w', P: B.A, x: c, y: Kd }, { id: 'wp', P: B.Ph, x: c, y: S.ord === 1 ? -45 : -90 }]; if (S.ord === 2) hs.push({ id: 'm', P: B.A, x: c, y: dB(S.K / (2 * S.m)) }); return hs; }
+  function draw() {
+    const M = S.my, d = M.d, lo = M.lo, hi = M.hi, hs = handles(), er = errBode(Hu, Hu, lo, hi);
+    let sg = 0, sp = 0; d.G.forEach((q, i) => { const v = Hu(wOf(q[0])); sg += (q[1] - dB(v.g)) ** 2; sp += (d.Ph[i][1] - v.ph) ** 2; }); sg = SQ(sg / d.G.length); sp = SQ(sp / d.G.length);
+    const rg = [Math.min(...d.G.map(q => q[1])) - 6, Math.max(...d.G.map(q => q[1])) + 8]; setBode(B, lo, hi, rg[0], rg[1], S.ord === 1 ? -90 : -180);
+    const hd = (P, id) => hs.filter(q => q.P === P).forEach(q => { P.dot(q.x, q.y, q.id === 'm' ? COL.violet : COL.red, 8); P.txt(q.id === 'K' ? 'K' : q.id === 'm' ? 'm' : 'ω', q.x, q.y, '#fff', 'center', 10.5); });
+    B.A.draw = P => { P.pts(d.G, COL.slate, 3.3); if (S.shown) curveG(P, M.H, lo, hi, COL.orange, 2, [7, 4]); curveG(P, Hu, lo, hi, COL.blue, 2.8); hd(P); };
+    B.Ph.draw = P => { P.pts(d.Ph, COL.slate, 3.3); if (S.shown) curveP(P, M.H, lo, hi, COL.orange, 2, [7, 4]); curveP(P, Hu, lo, hi, COL.blue, 2.8); hd(P); };
+    const good = sg < 0.6 && sp < 3;
+    out.innerHTML = '';
+    out.append(stats([['K', nfx(S.K, 2) + ' (' + nfx(dB(S.K), 1) + ' dB)'], [S.ord === 1 ? 'T = 1/ωc' : 'ω₀', S.ord === 1 ? nfx(1 / S.w0, 4) + ' s' : nfx(S.w0, 2) + ' rad/s'], S.ord === 2 ? ['m', nfx(S.m, 2)] : ['ωc', nfx(S.w0, 2) + ' rad/s'], ['Écart quadratique en gain', nfx(sg, 2) + ' dB'], ['Écart quadratique en phase', nfx(sp, 1) + ' °']]));
+    out.append(verdict(good ? 'Excellent ajustement : les écarts sont du niveau du bruit de mesure (≈ 0,25 dB et 1,2°).' + (S.shown ? '' : ' Cliquez sur « Révéler » pour comparer avec le vrai système.') : 'Ajustez : <b>glissez</b> les points ronds. ' + (S.ord === 1 ? 'Le point « K » règle le plateau, le point « ω » règle la cassure (sur le gain comme sur la phase).' : 'Le point « K » règle le gain initial, « ω » règle ω₀ (aussi sur la phase à −90°), et le point violet « m » règle l’amortissement.') + ' Objectif : moins de 0,6 dB et 3°.', good ? 'yes' : ''));
+    if (S.shown) out.append(verdict('Système réel : K = <b>' + nfx(M.K, 1) + '</b>, ' + (S.ord === 1 ? 'ωc = <b>' + nfx(M.w0, 2) + ' rad/s</b>' : 'ω₀ = <b>' + nfx(M.w0, 2) + ' rad/s</b>, m = <b>' + nfx(M.m, 2) + '</b>') + '.'));
+    B.A.redraw(); B.Ph.redraw();
+  }
+  function dragFn(P) { return (p, ph) => {
+    if (ph === 'down') { const hs = handles().filter(q => q.P === P); let best = null, bd = 22; hs.forEach(q => { const dd = Math.hypot(p.px - P.X(q.x), p.py - P.Y(q.y)); if (dd < bd) { bd = dd; best = q.id; } }); S.hd = best; if (!best) return; }
+    if (ph === 'up') { S.hd = null; return; }
+    if (!S.hd) return; const lo = S.my.lo, hi = S.my.hi;
+    if (S.hd === 'K') S.K = clamp(Math.pow(10, p.y / 20), 0.3, 12);
+    else if (S.hd === 'w' || S.hd === 'wp') S.w0 = wOf(clamp(p.x, lo + 0.1, hi - 0.1));
+    else if (S.hd === 'm') S.m = rd(clamp(S.K / (2 * Math.pow(10, p.y / 20)), 0.05, 3), 2);
+    draw();
+  }; }
+  B.A.drag = dragFn(B.A); B.Ph.drag = dragFn(B.Ph);
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Ordre du système mystère'), chipsRow([[1, 'Premier ordre'], [2, 'Second ordre']], S.ord, v => { S.ord = v; mystery(); build(); draw(); }, 'Ordre')),
+      S.ord === 2 ? sld({ id: 'f5m', label: 'm', min: 0.05, max: 3, step: 0.01, val: S.m, on: v => { S.m = v; draw(); } }) : null,
+      h('button', { class: 'btn', type: 'button', style: 'margin-bottom:9px', onclick: () => { S.shown = true; draw(); } }, 'Révéler le système'), h('button', { class: 'btn', type: 'button', style: 'margin-bottom:9px', onclick: () => { S.seed++; mystery(); build(); draw(); } }, 'Nouveau système')));
+  }
+  root.append(h('h2', null, 'Ajuster un modèle à la main sur le Bode'),
+    h('p', { html: 'Sur les mesures d’un système caché, <b>faites glisser les poignées</b> de la courbe bleue pour la superposer aux points : la poignée « K » règle le gain basses fréquences, la poignée « ω » règle la cassure (ou ω₀), la poignée violette « m » règle le gain en ω₀ (donc l’amortissement). Les écarts se mettent à jour en direct.' }),
+    ctl, B.box, pleg([[COL.slate, 'mesures', 'o'], [COL.blue, 'votre modèle'], [COL.orange, 'système réel (révélé)', 'd']]), out);
+  if (!S.my) mystery(); build(); draw();
+}
+WORKSHOPS.push({ id: 'f5', title: 'Ajuster à la main', hint: 'Glissez les poignées de la courbe bleue pour la superposer aux mesures du système caché.', mount: mountF5, leave: stopAll, reset: () => { F5 = F5d(); } });
+
+/* ================= Atelier 6 : temps et fréquence ================= */
+const F6d = () => ({ m: 0.4, lw0: 0.5, K: 1 });
+let F6 = F6d();
+function mountF6(root) {
+  const S = F6, ctl = h('div'), out = h('div'), ps = plotBox('Réponse indicielle (temps)', { h: 290, yl: 's(t)', xl: 't (s)', label: 'Réponse indicielle' }), pb = plotBox('Gain de la réponse fréquentielle', { h: 290, logx: true, yl: 'Gain (dB)', xl: 'ω (rad/s)', fx: logTick, ml: 54, label: 'Gain en fréquence' });
+  let sm = null;
+  function draw() {
+    const m = S.m, w0 = wOf(S.lw0), K = S.K, H = w => H2(K, m, w0, w), f = t => g2(K, m, w0, t), tm = xAxis(clamp(5 / (Math.min(m, 1) * w0), 6 / w0, 80)).xmax, LO = S.lw0 - 1.5, HI = S.lw0 + 1.5;
+    let mx = K; for (let i = 0; i <= 400; i++) mx = Math.max(mx, f(tm * i / 400));
+    ps.P.set(Object.assign({ xmin: 0, xmax: tm, xt: xAxis(tm).xt }, yAxis(0, mx * 1.12)));
+    const d = m < 1 ? EXP(-m * PI / SQ(1 - m * m)) : 0, Kd = dB(K), rg = gRange(H, LO, HI), gs = niceStep(rg[1] - rg[0], 5);
+    pb.P.set({ xmin: LO, xmax: HI, xt: 1, ymin: Math.floor(rg[0] / gs) * gs, ymax: Math.ceil(rg[1] / gs) * gs, yt: gs, fy: v => nf(v, 0) });
+    ps.P.draw = P => { P.seg(0, K, tm, K, COL.green, 1.3, [6, 4]); P.fn(f, COL.ink, 2.8); if (m < 1) { const tp = PI / (w0 * SQ(1 - m * m)); P.dot(tp, K * (1 + d), COL.red, 5.5); P.seg(tp, 0, tp, K * (1 + d), COL.red, 1.2, [4, 3]); P.txt('d = ' + nfx(d * 100, 1) + ' %', tp, K * (1 + d), COL.red, 'left', 12.5, 8, -8); } };
+    const Q = m < SQ(2) / 2 ? 1 / (2 * m * SQ(1 - m * m)) : 1, wr = m < SQ(2) / 2 ? w0 * SQ(1 - 2 * m * m) : null;
+    pb.P.draw = P => { P.seg(LO, Kd, HI, Kd, COL.green, 1.3, [6, 4]); curveG(P, H, LO, HI, COL.ink, 2.8); if (wr) { const gr = dB(H(wr).g); P.dot(Math.log10(wr), gr, COL.red, 5.5); P.seg(Math.log10(wr), Kd, Math.log10(wr), gr, COL.red, 2); P.txt('Q = ' + nfx(dB(Q), 1) + ' dB', Math.log10(wr), gr, COL.red, 'left', 12.5, 8, -8); } };
+    // bande passante à -3 dB
+    let wb = NaN; { let a = LO, b = HI + 1; const tgt = K / SQ(2); if (H(wOf(a)).g > tgt * 0.999) { for (let k = 0; k < 60; k++) { const mid = (a + b) / 2; if (H(wOf(mid)).g > tgt) a = mid; else b = mid; } wb = wOf((a + b) / 2); } }
+    out.innerHTML = '';
+    out.append(stats([['Dépassement indiciel d', m < 1 ? nfx(d * 100, 1) + ' %' : 'aucun'], ['Surtension Q_dB', wr ? nfx(dB(Q), 2) + ' dB' : 'aucune résonance'], ['Bande passante à −3 dB', isFinite(wb) ? nfx(wb, 2) + ' rad/s' : '—'], ['t_r5% ≈ 3/(mω₀)', m < 0.7 ? nfx(3 / (m * w0), 2) + ' s' : '—']]));
+    out.append(verdict(m < SQ(2) / 2 ? 'Le <b>dépassement</b> temporel et la <b>surtension</b> fréquentielle sont deux manifestations du même faible amortissement : m = ' + nfx(m, 2) + ' donne d = ' + nfx(d * 100, 1) + ' % et Q = ' + nfx(dB(Q), 1) + ' dB.' : m < 1 ? 'Ici m ≥ √2/2 : le gain ne présente pas de résonance, alors que la réponse indicielle dépasse encore légèrement (d = ' + nfx(d * 100, 1) + ' %). Pas de surtension ne veut pas dire pas de dépassement.' : 'Pour m ≥ 1, ni dépassement ni résonance : la réponse est apériodique et le gain décroît sans bosse.', 'yes'));
+    ps.P.redraw(); pb.P.redraw();
+  }
+  function build() {
+    ctl.innerHTML = ''; const sM = sld({ id: 'f6m', label: 'm', min: 0.05, max: 2, step: 0.01, val: S.m, on: v => { S.m = v; draw(); } }); sm = sM;
+    ctl.append(h('div', { class: 'ctrl' }, sM, sld({ id: 'f6w', label: 'ω₀', min: -0.3, max: 1.3, step: 0.01, val: S.lw0, fmt: v => fmtW(v), unit: 'rad/s', on: v => { S.lw0 = v; draw(); } }), sld({ id: 'f6K', label: 'K', min: 0.5, max: 5, step: 0.1, val: S.K, d: 1, on: v => { S.K = v; draw(); } }), h('button', { class: 'btn pri', type: 'button', onclick: () => { stopAll(); anim(u => { S.m = rd(1.2 - u * 1.15, 2); sm.set(S.m); draw(); }, 8000); } }, '▶ Faire baisser m')));
+  }
+  root.append(h('h2', null, 'Temps et fréquence : deux regards sur le même système'),
+    h('p', { html: 'Le même second ordre, vu en réponse indicielle (à gauche) et en gain (à droite). Faites varier <i>m</i> : quand l’amortissement baisse, le <b>dépassement</b> apparaît dans le temps et la <b>résonance</b> apparaît en fréquence. Faire varier <i>ω₀</i> accélère la réponse et décale le Bode.' }),
+    ctl, h('div', { class: 'two' }, ps.box, pb.box), out);
+  build(); draw();
+}
+WORKSHOPS.push({ id: 'f6', title: 'Temps et fréquence', hint: 'Faites varier m : la réponse indicielle et le gain montrent dépassement et résonance en parallèle.', mount: mountF6, leave: stopAll, reset: () => { F6 = F6d(); } });
+
+/* ---------- activités ---------- */
+const ACT = {
+  f1: { title: 'Réponse harmonique', level: 'Niveau 1 · Découvrir', time: '20 min', course: 'principe',
+    goal: 'Comprendre comment une sinusoïde en entrée donne un point de Bode : gain en dB et déphasage.',
+    steps: ['Premier ordre (K = 2, T = 0,2 s), ω = 1 rad/s : relevez A₂/A₁ et le retard Δt. Calculez G = 20 log(A₂/A₁) et φ = −ω·Δt.', 'Cliquez sur « Relever ce point », puis recommencez à ω = 5 rad/s (= 1/T). Que valent G et φ ?', 'Lancez le balayage automatique : comment le gain et la phase évoluent-ils quand ω augmente ?', 'Passez au second ordre avec m = 0,2 : à quelle pulsation la sortie est-elle plus grande que l’entrée ?', 'Faites défiler les signaux : quelle est la fréquence de s(t) par rapport à celle de e(t) ?'],
+    defi: { q: 'À ω = 10 rad/s, l’entrée a pour amplitude 2 et la sortie 1,4, avec un retard de 0,02 s. Que valent G et φ ?', a: 'A₂/A₁ = 0,7 donc <b>G = 20 log 0,7 ≈ −3,1 dB</b>. Déphasage : <b>φ = −ω·Δt = −10 × 0,02 = −0,2 rad ≈ −11,5°</b>.' },
+    qcm: [
+      { q: 'Pour un système linéaire stable, que devient une entrée sinusoïdale en régime permanent ?', o: ['Une sinusoïde de même pulsation, d’amplitude et de phase modifiées', 'Une sinusoïde de pulsation double', 'Un signal constant', 'Une exponentielle'], a: 0, w: 'Un système linéaire ne change jamais la fréquence : il modifie l’amplitude et la phase.' },
+      { q: 'Comment calcule-t-on le gain en décibels ?', o: ['20 log (A₂/A₁)', '10 log (A₂ − A₁)', 'A₂ / A₁', '20 ln (A₂ × A₁)'], a: 0, w: 'G = 20 log |A₂/A₁|.' },
+      { q: 'Que signifie un déphasage φ = −45° ?', o: ['La sortie est en retard sur l’entrée', 'La sortie est en avance', 'Le gain est négatif', 'Le système est instable'], a: 0, w: 'φ = φ₂ − φ₁ < 0 : la sortie atteint ses maxima plus tard que l’entrée.' },
+      { q: 'Pourquoi une seule mesure ne suffit-elle pas à tracer un Bode ?', o: ['Chaque fréquence ne fournit qu’un point (gain, phase) : il faut balayer les fréquences', 'Parce que le gain est toujours nul', 'Parce qu’il faut un échelon', 'Parce que la phase est constante'], a: 0, w: 'On répète l’essai pour plusieurs pulsations, souvent réparties sur plusieurs décades.' }] },
+  f2: { title: 'Premier ordre', level: 'Niveau 1 · Découvrir', time: '25 min', course: 'f_ordre1',
+    goal: 'Lire K et ωc = 1/T sur un diagramme de Bode du premier ordre et identifier un système mystère.',
+    steps: ['Mode « Explorer » avec K = 5 et T = 0,05 s : lisez 20 log K sur le gain basses fréquences et ωc = 1/T. Que valent le gain et la phase en ωc ?', 'Déplacez le curseur rouge très au-delà de ωc : quelle est la pente du gain ? la valeur de la phase ?', 'Affichez les asymptotes : quel est l’écart maximal entre la courbe et l’asymptote, et où est-il atteint ?', 'Mode « Système mystère » : placez le curseur à la phase −45°, lisez ωc puis le plateau, tracez votre modèle.'],
+    defi: { q: 'Un Bode présente un gain plat à 14 dB et une phase de −45° à ω = 20 rad/s. Quels sont K et T ?', a: '<b>K = 10<sup>14/20</sup> ≈ 5</b> et <b>T = 1/ωc = 1/20 = 0,05 s</b>.' },
+    qcm: [
+      { q: 'Quelle est la pulsation de coupure d’un premier ordre ?', o: ['ωc = 1/T', 'ωc = T', 'ωc = K/T', 'ωc = 2T'], a: 0, w: 'À ω = 1/T, ωT = 1 : le gain est réduit de 3 dB et la phase vaut −45°.' },
+      { q: 'Quelle est la pente de l’asymptote finale du gain ?', o: ['−20 dB/décade', '−40 dB/décade', '0 dB/décade', '+20 dB/décade'], a: 0, w: 'Pour ω ≫ 1/T, |H| ≈ K/(ωT) : −20 dB par décade.' },
+      { q: 'Entre quelles valeurs la phase varie-t-elle ?', o: ['0° et −90°', '0° et −180°', '−90° et +90°', '0° et −45°'], a: 0, w: 'La phase est −atan(ωT) : de 0° à −90°.' },
+      { q: 'Où l’asymptote initiale coupe-t-elle l’axe des ordonnées ?', o: ['En 20 log K', 'En 0 dB', 'En −3 dB', 'En 20 log T'], a: 0, w: 'Pour les basses fréquences, |H| ≈ K donc G ≈ 20 log K.' }] },
+  f3: { title: 'Second ordre', level: 'Niveau 2 · Comprendre', time: '30 min', course: 'f_ordre2',
+    goal: 'Distinguer les quatre formes du Bode du second ordre selon m et relier la forme à la position des pôles.',
+    steps: ['Fixez m = 2 : repérez les deux cassures et les asymptotes de pente 0, −20 puis −40 dB/décade. Où sont les pôles ?', 'Mettez m = 1 : que deviennent les deux cassures ?', 'Mettez m = 0,8 puis 0,6 : à partir de quelle valeur de m le gain dépasse-t-il le gain initial ?', 'Lancez l’animation de m = 3 à 0,05 : que font les pôles ?', 'Pour m = 0,25, lisez ωr et Q_dB puis comparez avec les formules.'],
+    defi: { q: 'Pour m = 0,25, calculez le facteur de surtension Q (en dB) et la pulsation de résonance ωr en fonction de ω₀.', a: 'Q = 1 / (2m√(1 − m²)) = 1 / (0,5 × 0,968) ≈ 2,07 soit <b>Q_dB ≈ 6,3 dB</b>. <b>ωr = ω₀√(1 − 2m²) = ω₀√0,875 ≈ 0,94 ω₀</b>.' },
+    qcm: [
+      { q: 'Quelle est la pente finale du gain d’un second ordre ?', o: ['−40 dB/décade', '−20 dB/décade', '0 dB/décade', '−60 dB/décade'], a: 0, w: 'Pour ω ≫ ω₀, |H| ≈ K ω₀²/ω² : −40 dB par décade.' },
+      { q: 'À partir de quelle valeur de m le gain présente-t-il une résonance ?', o: ['m < √2/2', 'm < 1', 'm > 1', 'm = 0,5 seulement'], a: 0, w: 'ωr = ω₀√(1 − 2m²) n’existe que si 2m² < 1, soit m < √2/2 ≈ 0,707.' },
+      { q: 'Pour m > 1, H(p) peut s’écrire…', o: ['K / ((1 + T₁p)(1 + T₂p))', 'K / (1 + Tp)²', 'K·e^(−τp)', 'K·p'], a: 0, w: 'Deux pôles réels : deux constantes de temps T₁ et T₂ telles que T₁T₂ = 1/ω₀².' },
+      { q: 'Que vaut la phase à la pulsation propre ω₀ ?', o: ['−90°', '−45°', '−180°', '0°'], a: 0, w: 'En ω₀, la partie réelle de 1 − (ω/ω₀)² s’annule et il reste un terme imaginaire pur : φ = −90°.' }] },
+  f4: { title: 'Identifier un second ordre', level: 'Niveau 3 · Maîtriser', time: '30 min', course: 'f_ident',
+    goal: 'Appliquer la démarche d’identification : K, ω₀ et m à partir des mesures d’un Bode.',
+    steps: ['Type « m < √2/2 » : placez le curseur à la phase −90°, lisez le gain et calculez m. Tracez votre modèle.', 'Recommencez avec la méthode de la surtension : placez le curseur sur le sommet de la bosse. Les deux résultats concordent-ils ?', 'Passez à « √2/2 ≤ m < 1 » : la méthode de la surtension fonctionne-t-elle ? Pourquoi ?', 'Passez à « m ≥ 1 » : retrouvez ω₀ et m avec la méthode de la phase.'],
+    defi: { q: 'Le gain initial vaut 6 dB. À la pulsation où la phase est −90°, on lit 12 dB. Que vaut m ?', a: 'K = 10<sup>6/20</sup> ≈ 2. 20 log(K/2m) = 12 donne K/2m ≈ 3,98 donc <b>m ≈ 2 / (2 × 3,98) ≈ 0,25</b>.' },
+    qcm: [
+      { q: 'Comment obtient-on le gain statique K ?', o: ['À partir du gain initial 20 log |K| en basses fréquences', 'À partir de la pente finale', 'À partir de la phase', 'À partir de la bande passante'], a: 0, w: 'Pour ω → 0, |H| → |K|.' },
+      { q: 'Quelle mesure permet de trouver ω₀ ?', o: ['La pulsation où la phase vaut −90°', 'La pulsation où le gain vaut 0 dB', 'La pente finale', 'Le gain initial'], a: 0, w: 'La phase vaut −90° exactement en ω₀.' },
+      { q: 'Quel gain mesure-t-on en ω₀ ?', o: ['20 log |K/2m|', '20 log |K|', '20 log |2mK|', '−3 dB'], a: 0, w: '|H(jω₀)| = K/(2m), ce qui donne m.' },
+      { q: 'Quand la méthode du facteur de surtension est-elle utilisable ?', o: ['Quand m < √2/2 (il y a une bosse)', 'Toujours', 'Quand m > 1', 'Quand K = 1'], a: 0, w: 'Sans résonance, Q_dB n’est pas mesurable.' }] },
+  f5: { title: 'Ajuster à la main', level: 'Niveau 3 · Maîtriser', time: '20 min', course: 'f_ident',
+    goal: 'Ajuster un modèle sur des mesures bruitées en agissant sur K, ω₀ et m.',
+    steps: ['Premier ordre : placez d’abord K (poignée sur le gain basses fréquences), puis ωc (sur la phase à −45°).', 'Second ordre : réglez K, puis ω₀ sur la phase −90°, puis m avec la poignée violette.', 'Atteignez moins de 0,6 dB et 3° d’écart. Combien de temps faut-il ?', 'Révélez le système : vos paramètres sont-ils proches ?'],
+    defi: { q: 'Pourquoi vaut-il mieux régler d’abord K puis ω₀ puis m, dans cet ordre ?', a: 'Parce que <b>K</b> se lit seul sur le plateau basses fréquences, que <b>ω₀</b> se lit seul sur la phase (−90° ou −45°), et qu’il ne reste alors qu’<b>m</b> à ajuster sur la hauteur du gain en ω₀ ou de la bosse.' },
+    qcm: [
+      { q: 'Quel paramètre déplace verticalement tout le plateau basses fréquences ?', o: ['K', 'ω₀', 'm', 'T seulement'], a: 0, w: 'Le gain initial vaut 20 log K.' },
+      { q: 'Quel paramètre déplace horizontalement la cassure ?', o: ['ω₀ (ou ωc = 1/T)', 'K', 'm', 'Aucun'], a: 0, w: 'La cassure a lieu à ω₀ (second ordre) ou 1/T (premier ordre).' },
+      { q: 'Que règle m pour un second ordre ?', o: ['La hauteur de la bosse (ou le gain en ω₀)', 'La pente finale', 'Le gain initial', 'La phase finale'], a: 0, w: 'La pente finale (−40 dB/décade) et la phase finale (−180°) ne dépendent pas de m.' },
+      { q: 'Pourquoi examiner gain et phase ensemble ?', o: ['Ils doivent être cohérents avec le même modèle', 'Pour doubler le bruit', 'La phase donne K', 'C’est inutile'], a: 0, w: 'Un modèle qui colle au gain mais pas à la phase est inadapté.' }] },
+  f6: { title: 'Temps et fréquence', level: 'Niveau 3 · Maîtriser', time: '20 min', course: 'f_lien',
+    goal: 'Relier dépassement indiciel, résonance et amortissement.',
+    steps: ['Fixez ω₀ = 3 rad/s et faites baisser m : notez d et Q_dB à m = 0,8, 0,5, 0,3, 0,15.', 'À partir de quelle valeur de m la résonance disparaît-elle ? Le dépassement disparaît-il aussi ?', 'Fixez m = 0,5 et doublez ω₀ : que deviennent la bande passante et le temps de réponse ?'],
+    defi: { q: 'Un système a un gain qui ne présente aucune bosse. Peut-on affirmer que sa réponse indicielle ne dépasse pas sa valeur finale ?', a: '<b>Non.</b> Pour √2/2 ≤ m < 1 il n’y a pas de résonance mais la réponse indicielle dépasse encore (par exemple d ≈ 4,3 % pour m = 0,7). Le dépassement disparaît seulement à partir de m = 1.' },
+    qcm: [
+      { q: 'Un faible amortissement se traduit par…', o: ['un fort dépassement et une forte résonance', 'un faible dépassement', 'aucune résonance', 'une pente finale différente'], a: 0, w: 'Quand m diminue, d et Q augmentent ensemble.' },
+      { q: 'Pour m = 0,8, le gain présente-t-il une résonance ?', o: ['Non, car m > √2/2', 'Oui', 'Seulement si K > 1', 'Seulement si ω₀ > 1'], a: 0, w: 'La résonance n’existe que pour m < √2/2.' },
+      { q: 'Si l’on double ω₀ à m constant, la bande passante…', o: ['double environ', 'est divisée par 2', 'ne change pas', 'devient nulle'], a: 0, w: 'Le Bode est simplement décalé vers les hautes fréquences, et le système répond deux fois plus vite.' },
+      { q: 'Quelle formule donne le facteur de surtension ?', o: ['Q = 1 / (2m√(1 − m²))', 'Q = 2m', 'Q = m√(1 − m²)', 'Q = 1/m²'], a: 0, w: 'Q_dB = −20 log (2m√(1 − m²)) pour m < √2/2.' }] }
+};
+
+/* ---------- cours ---------- */
+const COURSE = [];
+COURSE.push({ id: 'principe', t: 'Principe de l’identification fréquentielle', h: `
+<p>On applique, pour une fréquence donnée, une entrée sinusoïdale d’amplitude <i>A₁</i> et de phase <i>φ₁</i> connues. La sortie est une sinusoïde de <b>même fréquence</b>, d’amplitude <i>A₂</i> et de phase <i>φ₂</i>.</p>
+<div class="formula math">Gain : <i>G</i><sub>dB</sub> = 20 log ${fr('A₂', 'A₁')} &nbsp;&nbsp; Déphasage : Δ<i>φ</i> = <i>φ₂</i> − <i>φ₁</i> = −<i>ω</i>·Δ<i>t</i></div>
+<p>En faisant varier la fréquence, on trace le gain et le déphasage en fonction de ω. Ils peuvent être représentés dans le plan de <b>Bode</b>, de Nyquist ou de Black. Cet atelier traite les diagrammes de Bode : abscisse logarithmique en rad/s, gain en dB, phase en degrés.</p>
+<div class="retain"><b>À retenir.</b> Un essai à une fréquence donne un point du Bode. L’identification consiste à relever des points sur plusieurs décades, puis à les superposer à un modèle.</div>` });
+
+COURSE.push({ id: 'f_ordre1', t: 'Réponse fréquentielle : premier ordre', h: `
+<div class="formula math"><i>H(p)</i> = ${fr('S(p)', 'E(p)')} = ${fr('K', '1 + Tp')} &nbsp;; pulsation de coupure <i>ω<sub>c</sub></i> = ${fr('1', 'T')}</div>
+<ul><li>Asymptote initiale (basses fréquences) : elle coupe l’axe des ordonnées en <b>20 log K</b>.</li><li>Asymptote finale (hautes fréquences) : pente <b>−20 dB/décade</b> (on dit aussi pente −1).</li><li>La phase varie de <b>0° à −90°</b> et vaut −45° en <i>ω<sub>c</sub></i>.</li><li>En <i>ω<sub>c</sub></i>, le gain est inférieur de <b>3 dB</b> à l’asymptote initiale : 20 log K − 3 dB.</li></ul>
+<h3>Identification</h3>
+<p><i>K</i> se lit sur le plateau basses fréquences (20 log K) et <i>T</i> = 1/<i>ω<sub>c</sub></i> où <i>ω<sub>c</sub></i> est la pulsation pour laquelle la phase vaut −45° (ou le gain est de 3 dB sous le plateau).</p>
+<div class="retain"><b>À retenir.</b> Premier ordre : plateau 20 log K, cassure en 1/T, pente −20 dB/décade, phase de 0° à −90°.</div>` });
+
+COURSE.push({ id: 'f_ordre2', t: 'Réponse fréquentielle : second ordre', h: `
+<div class="formula math"><i>H(p)</i> = ${fr('K', '1 + ' + fr('2m', 'ω₀') + 'p + ' + fr('p²', 'ω₀²'))}</div>
+<p>Dans tous les cas, l’asymptote finale a une pente de <b>−40 dB/décade</b> (pente −2) et la phase varie de 0° à −180°. La forme dépend de <i>m</i>.</p>
+<h3>m &gt; 1</h3>
+<p><i>H(p)</i> = ${fr('K', '(1 + T₁p)(1 + T₂p)')} avec <i>T₁</i> = −1/<i>p₁</i>, <i>T₂</i> = −1/<i>p₂</i> et <i>T₁T₂</i> = 1/<i>ω₀</i>², où <i>p₁</i> = <i>ω₀</i>(−<i>m</i> − √(<i>m</i>² − 1)) et <i>p₂</i> = <i>ω₀</i>(−<i>m</i> + √(<i>m</i>² − 1)). Deux cassures en 1/<i>T₂</i> puis 1/<i>T₁</i> : pentes 0, −20, puis −40 dB/décade ; phase étagée par −90°.</p>
+<h3>m = 1</h3>
+<p><i>H(p)</i> = ${fr('K', '(1 + T₀p)²')} avec <i>T₀</i> = 1/<i>ω₀</i> : pôle double, une seule cassure en <i>ω₀</i>.</p>
+<h3>√2/2 ≤ m &lt; 1</h3>
+<p>Deux pôles complexes conjugués : <i>p₁,₂</i> = <i>ω₀</i>(−<i>m</i> ∓ j√(1 − <i>m</i>²)). <b>Pas de résonance</b>.</p>
+<h3>0 &lt; m &lt; √2/2</h3>
+<ul><li>Pôles complexes conjugués, <b>résonance</b> à la pulsation <i>ω<sub>r</sub></i> = <i>ω₀</i>√(1 − 2<i>m</i>²).</li><li>Facteur de surtension : <i>Q</i> = ${fr('|H(jω<sub>r</sub>)|', '|H(0)|')} = ${fr('1', '2m√(1 − m²)')}.</li><li>En décibels : <i>Q</i><sub>dB</sub> = 20 log |H(jω<sub>r</sub>)| − 20 log K = −20 log (2<i>m</i>√(1 − <i>m</i>²)).</li></ul>
+<div class="retain"><b>À retenir.</b> Pente finale −40 dB/décade et phase −90° en ω₀ dans tous les cas ; seule la forme autour de ω₀ change avec m.</div>` });
+
+COURSE.push({ id: 'f_ident', t: 'Démarche d’identification d’un second ordre', h: `
+<ol><li>La <b>valeur initiale du gain</b> correspond à 20 log |K| et donne le gain statique <i>K</i>.</li><li>La <b>phase φ = −90°</b> donne la pulsation propre <i>ω₀</i>.</li><li>Le <b>gain en ω₀</b>, égal à 20 log |K/2m|, donne le coefficient d’amortissement <i>m</i> : <i>m</i> = ${fr('K', '2·10<sup>G/20</sup>')}.</li></ol>
+<p>Cette démarche est la même pour m ≥ 1 et pour √2/2 ≤ m &lt; 1.</p>
+<h3>Cas de la résonance (m &lt; √2/2)</h3>
+<ul><li><i>K</i> : valeur initiale du gain.</li><li><i>ω₀</i> : phase −90°.</li><li><i>m</i> : le facteur de surtension <i>Q</i><sub>dB</sub> mesuré sur le sommet de la bosse donne <i>m</i> par <i>Q</i><sub>dB</sub> = −20 log (2<i>m</i>√(1 − <i>m</i>²)), soit <i>m</i>² = (1 − √(1 − <i>u</i>²)) / 2 avec <i>u</i> = 10<sup>−Q<sub>dB</sub>/20</sup>.</li></ul>
+<div class="retain"><b>À retenir.</b> K : plateau ; ω₀ : phase −90° ; m : gain en ω₀ (ou surtension s’il y a une bosse).</div>` });
+
+COURSE.push({ id: 'f_lien', t: 'Lien avec le comportement temporel', h: `
+<table class="ctable"><thead><tr><th>Amortissement</th><th>Bode (gain)</th><th>Réponse indicielle</th></tr></thead><tbody>
+<tr><td>m &lt; √2/2</td><td>Résonance, surtension Q</td><td>Oscillations, fort dépassement</td></tr>
+<tr><td>√2/2 ≤ m &lt; 1</td><td>Pas de résonance</td><td>Léger dépassement</td></tr>
+<tr><td>m ≥ 1</td><td>Gain décroissant sans bosse</td><td>Apériodique, aucun dépassement</td></tr></tbody></table>
+<p>Augmenter <i>ω₀</i> déplace le Bode vers les hautes fréquences et accélère la réponse indicielle. Le dépassement relatif <i>d</i> = e<sup>−mπ/√(1−m²)</sup> ne dépend que de <i>m</i>, comme la surtension <i>Q</i>.</p>
+<div class="retain"><b>À retenir.</b> Les deux approches décrivent le même système : choisir l’essai le plus simple à réaliser et à exploiter (échelon ou balayage sinusoïdal).</div>` });
+
+COURSE.push({ id: 'gloss', t: 'Vocabulaire', h: `
+<dl class="gloss">
+<dt>Réponse harmonique</dt><dd>Réponse en régime permanent à une entrée sinusoïdale.</dd>
+<dt>Diagramme de Bode</dt><dd>Gain en dB et phase en degrés en fonction de ω sur une échelle logarithmique.</dd>
+<dt>Décade</dt><dd>Intervalle de pulsations dont le rapport vaut 10.</dd>
+<dt>Pulsation de coupure</dt><dd>ωc = 1/T pour un premier ordre : gain réduit de 3 dB.</dd>
+<dt>Pulsation propre ω₀</dt><dd>Pulsation où la phase d’un second ordre vaut −90°.</dd>
+<dt>Résonance</dt><dd>Maximum du gain au-dessus de la valeur initiale, pour m &lt; √2/2.</dd>
+<dt>Facteur de surtension Q</dt><dd>Rapport |H(jωr)| / |H(0)|.</dd>
+<dt>Asymptote</dt><dd>Droite vers laquelle tend le tracé réel du gain (pentes multiples de −20 dB/décade).</dd>
+</dl>` });
+/* ---------- interface ---------- */
+const UI = { cur: 'f1' };
+const AS = { key: 'f1', tab: 'steps', open: false, st: lsGet(KEYS.act, {}), arm: null };
+const CS = { open: false, id: 'principe' };
+function actSave() { lsSet(KEYS.act, AS.st); }
+function actState() { return AS.st[AS.key] || (AS.st[AS.key] = { a: {}, checked: false, shown: false }); }
+function actScore(a) { const s = actState(); return a.qcm.filter((q, i) => s.a[i] === q.a).length; }
+function wsById(id) { return WORKSHOPS.find(w => w.id === id) || WORKSHOPS[0]; }
+function renderSeg() {
+  const seg = $('#wsSeg'); seg.innerHTML = '';
+  WORKSHOPS.forEach((w, i) => seg.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': w.id === UI.cur ? 'true' : 'false', 'aria-selected': w.id === UI.cur ? 'true' : 'false', onclick: () => gotoWs(w.id) }, (i + 1) + '. ' + w.title)));
+}
+function mountWs() {
+  const w = wsById(UI.cur), root = $('#ws');
+  $('#hint').textContent = w.hint; root.innerHTML = '';
+  stopAll(); w.mount(root);
+  const sc = $('#scroller'); if (sc) sc.scrollTop = 0;
+}
+function gotoWs(id) {
+  const old = wsById(UI.cur); if (old.leave) old.leave();
+  if (CS.open) { CS.open = false; renderCourse(); }
+  UI.cur = id; AS.key = id; AS.tab = 'steps';
+  renderSeg(); mountWs(); renderAct();
+}
+function renderAct() {
+  const box = $('#act'), btn = $('#bAct');
+  btn.setAttribute('aria-pressed', AS.open ? 'true' : 'false'); btn.classList.toggle('pri', AS.open);
+  box.hidden = !AS.open;
+  if (!AS.open) { box.innerHTML = ''; return; }
+  const oldB = box.querySelector('.pbody'), tag = AS.key + '|' + AS.tab, keep = oldB && box.dataset.k === tag ? oldB.scrollTop : 0;
+  box.dataset.k = tag;
+  box.innerHTML = '';
+  const a = ACT[AS.key];
+  const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
+  box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
+  const nq = a.qcm.length;
+  box.append(h('div', { class: 'tabs', role: 'tablist' },
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'steps' ? 'true' : 'false', onclick: () => { AS.tab = 'steps'; renderAct(); } }, 'Consignes'),
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'qcm' ? 'true' : 'false', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Questions (' + nq + ')')));
+  const body = h('div', { class: 'pbody' });
+  if (AS.tab === 'steps') {
+    body.append(h('p', { class: 'small' }, a.level + ' · environ ' + a.time), h('div', { class: 'goal' }, h('b', null, 'Objectif. '), a.goal));
+    body.append(h('ol', { class: 'steps' }, a.steps.map(s => h('li', { html: s }))));
+    body.append(h('div', { class: 'defi' }, h('b', null, 'Défi'), h('p', { html: a.defi.q }), h('details', null, h('summary', null, 'Voir la réponse'), h('p', { html: a.defi.a }))));
+    if (a.course) body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: () => openCourse(a.course) }, 'Voir le cours : ' + courseSection(a.course).t)));
+    body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: ev => {
+      const b = ev.currentTarget;
+      if (!AS.arm) { b.textContent = 'Confirmer ? Votre travail sera effacé'; AS.arm = setTimeout(() => { b.textContent = 'Recommencer l’atelier'; AS.arm = null; }, 3500); return; }
+      clearTimeout(AS.arm); AS.arm = null; wsById(UI.cur).reset(); mountWs(); renderAct(); } }, 'Recommencer l’atelier')));
+    body.append(h('p', null, h('button', { class: 'btn pri', type: 'button', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Passer aux questions')));
+  } else {
+    const s = actState(), show = s.checked || s.shown;
+    a.qcm.forEach((q, i) => {
+      const fs = h('fieldset', { class: 'q' }, h('legend', null, (i + 1) + '. ' + q.q));
+      q.o.forEach((o, j) => {
+        const good = show && j === q.a, bad = s.checked && !s.shown && s.a[i] === j && j !== q.a;
+        const inp = h('input', { type: 'radio', name: 'q' + i, checked: show && s.shown ? j === q.a : s.a[i] === j, disabled: show });
+        inp.addEventListener('change', () => { s.a[i] = j; actSave(); renderAct(); });
+        fs.append(h('label', { class: 'opt' + (good ? ' good' : '') + (bad ? ' bad' : '') }, inp, h('span', null, o + (good ? '  ✓' : '') + (bad ? '  ✗' : ''))));
+      });
+      if (show) { const miss = s.a[i] == null && !s.shown; fs.append(h('p', { class: 'why' }, (miss ? 'Sans réponse. ' : '') + q.w)); }
+      body.append(fs);
+    });
+    const done = Object.keys(s.a).length;
+    body.append(h('p', { class: 'small' }, s.shown ? 'Réponses affichées.' : s.checked ? '' : done + ' réponse(s) sur ' + nq + '.'));
+    if (s.checked && !s.shown) body.append(h('p', { class: 'score' }, 'Score : ' + actScore(a) + ' / ' + nq));
+    const row = h('div', { class: 'files' });
+    if (!show) row.append(h('button', { class: 'btn pri', type: 'button', onclick: () => { s.checked = true; actSave(); renderAct(); } }, 'Corriger'));
+    row.append(h('button', { class: 'btn', type: 'button', onclick: () => { s.shown = true; actSave(); renderAct(); } }, 'Afficher les réponses'));
+    if (show) row.append(h('button', { class: 'btn', type: 'button', onclick: () => { AS.st[AS.key] = { a: {}, checked: false, shown: false }; actSave(); renderAct(); } }, 'Recommencer'));
+    body.append(row);
+  }
+  box.append(body); body.scrollTop = keep;
+}
+function actToggle() { if (CS.open) { CS.open = false; renderCourse(); } AS.open = !AS.open; renderAct(); }
+$('#bAct').addEventListener('click', actToggle);
+
+function courseSection(id) { return COURSE.find(s => s.id === id) || COURSE[0]; }
+function renderCourse() {
+  const box = $('#course'), btn = $('#bCourse'), work = $('#work');
+  btn.setAttribute('aria-pressed', CS.open ? 'true' : 'false'); btn.classList.toggle('pri', CS.open);
+  box.hidden = !CS.open; work.hidden = CS.open; $('#modes').hidden = CS.open;
+  if (!CS.open) { box.innerHTML = ''; if (UI.mounted) { mountWs(); } return; }
+  stopAll();
+  box.innerHTML = '';
+  const cur = courseSection(CS.id), idx = COURSE.indexOf(cur);
+  const go = id => { CS.id = id; renderCourse(); };
+  const nav = h('nav', { class: 'ctoc', 'aria-label': 'Sommaire du cours' }, COURSE.map((s, i) => h('button', { type: 'button', class: s.id === cur.id ? 'on' : '', 'aria-current': s.id === cur.id ? 'true' : 'false', onclick: () => go(s.id) }, (i + 1) + '. ' + s.t)));
+  const sel = h('select', { class: 'ctoc-sel', 'aria-label': 'Choisir une section', onchange: e => go(e.target.value) }, COURSE.map((s, i) => h('option', { value: s.id, selected: s.id === cur.id }, (i + 1) + '. ' + s.t)));
+  const art = h('article', { class: 'cbody' });
+  art.append(h('p', { class: 'ckick' }, 'Cours · section ' + (idx + 1) + ' sur ' + COURSE.length), h('h2', null, cur.t), h('div', { class: 'math', html: cur.h }));
+  art.append(h('div', { class: 'cpn' },
+    idx > 0 ? h('button', { class: 'btn', type: 'button', onclick: () => go(COURSE[idx - 1].id) }, '← ' + COURSE[idx - 1].t) : h('span'),
+    idx < COURSE.length - 1 ? h('button', { class: 'btn pri', type: 'button', onclick: () => go(COURSE[idx + 1].id) }, COURSE[idx + 1].t + ' →') : h('span')));
+  const top = h('div', { class: 'ctop' }, h('b', null, 'Cours : l’identification fréquentielle'), h('button', { class: 'btn pri sm', type: 'button', onclick: () => { CS.open = false; renderCourse(); } }, 'Retour à l’atelier'));
+  box.append(top, sel, h('div', { class: 'cwrap' }, nav, art));
+  const sc = box.querySelector('.cwrap'); if (sc) sc.scrollTop = 0; box.scrollTop = 0;
+}
+function openCourse(id) { if (id) CS.id = id; CS.open = true; renderCourse(); }
+$('#bCourse').addEventListener('click', () => { CS.open = !CS.open; renderCourse(); });
+
+function closeDlg() { $('#dlg').hidden = true; $('#dlg').innerHTML = ''; }
+function openDlg(title, body) {
+  const d = $('#dlg'); d.innerHTML = ''; d.hidden = false;
+  d.append(h('div', { class: 'dlgbox', role: 'dialog', 'aria-label': title }, h('header', null, h('b', null, title), h('button', { class: 'btn sm', type: 'button', onclick: closeDlg }, 'Fermer')), h('div', { class: 'dbody' }, body)));
+  d.onclick = ev => { if (ev.target === d) closeDlg(); };
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
+$('#bHelp').addEventListener('click', () => {
+  openDlg('Aide', h('div', { html: '<p>Six ateliers sur l’identification fréquentielle (diagrammes de Bode) des systèmes du premier et du second ordre : réponse harmonique, premier ordre, second ordre, identification, ajustement manuel, lien temps-fréquence.</p>' +
+    '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut.</li><li>Faites glisser les <b>curseurs</b> pour changer le système, et les <b>points rouges ou bleus</b> sur les graphiques pour déplacer P, les curseurs de mesure ou le temps.</li><li>Dans les modes « système mystère », mesurez sur la courbe, entrez vos valeurs puis révélez le système réel.</li><li>Le bouton <b>Activité</b> affiche les consignes, un défi et un QCM avec correction.</li><li>Le bouton <b>Cours</b> rappelle les méthodes.</li></ul>' +
+    '<h3>Vos données</h3><p>Les réponses au QCM sont mémorisées dans ce navigateur uniquement.</p><p class="small">Contenu d’après « Identification expérimentale de la fonction de transfert des systèmes de premier et second ordre » (L. Abdellaoui, IPEST).</p>' }));
+});
+(function init() { AS.open = !isSmall(); renderSeg(); mountWs(); renderAct(); renderCourse(); UI.mounted = true; })();
+</script>
+
+
+</body></html>
