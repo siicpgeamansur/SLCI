@@ -1,0 +1,1270 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Atelier Identification temporelle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : barre d'outils en haut, onglets d'ateliers, zone de travail blanche, panneau Activité à droite (feuille basse sur téléphone), vue Cours avec sommaire. */
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
+  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;--run:#2e8b3a;
+  --node-stroke:#33475b;
+  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-ui)}
+button,input,select,textarea{font:inherit;color:inherit}
+.inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+.band{background:var(--bar);border-bottom:1px solid var(--line);flex:none}
+.row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:7px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.01em}
+.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.files{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.sm{padding:3px 8px;font-size:12px}
+:is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;padding:7px 14px;font-weight:500;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.work{flex:1;min-height:0;display:flex;gap:10px;padding-block:10px}
+#stage{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+#hint{flex:none;padding:6px 12px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
+#scroller{flex:1;min-height:0;overflow:auto}
+.phead{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex:none}
+.phead b{font-size:15px}
+.phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.pbody{overflow:auto;padding:12px;flex:1;min-height:0}
+.fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--fg)}
+input[type=range]{width:100%;padding:0;accent-color:var(--accent)}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.small{font-size:12px;color:var(--muted);margin:0 0 9px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:60;max-width:90vw}
+#dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(640px,100%);max-height:88%;display:flex;flex-direction:column}
+.dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlgbox header b{font-size:16px}
+.dlgbox .dbody{padding:14px 16px;overflow:auto}
+.dlgbox h3{margin:14px 0 4px;font-size:14px}.dlgbox p,.dlgbox li{margin:4px 0;font-size:13.5px}
+#act{flex:none;width:clamp(280px,24vw,340px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);min-height:0;max-height:100%}
+#act .pbody{font-size:13.5px}
+.goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:8px 10px;margin:0 0 10px}
+.steps{margin:0 0 10px;padding-left:20px}.steps li{margin-bottom:9px}
+.defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:0 0 12px}.defi p{margin:6px 0}
+.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+fieldset.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px 6px;margin:0 0 10px;min-width:0}
+fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
+.opt{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:6px;cursor:pointer}
+.opt input{margin-top:3px;width:auto;flex:none}
+.opt.good{background:rgba(30,122,46,.15)}.opt.bad{background:rgba(192,40,31,.15)}
+.why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
+.score{font-weight:600;font-size:15px;margin:4px 0 8px}
+/* cours */
+#course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
+.ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
+.cwrap{flex:1;min-height:0;display:flex;gap:28px;padding-block:14px}
+.ctoc{flex:none;width:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px}
+.ctoc button:hover{background:var(--panel2)}
+.ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto}
+.cbody{flex:1;min-width:0;overflow:auto;max-width:860px;padding-right:6px}
+.ckick{color:var(--muted);font-size:12.5px;margin:0}
+.cbody h2{font-size:26px;margin:2px 0 12px;text-wrap:balance}
+.cbody h3{font-size:16.5px;margin:22px 0 6px}
+.cbody p,.cbody li{font-size:14.5px;line-height:1.6}
+.cbody ul,.cbody ol{padding-left:22px}.cbody li{margin-bottom:4px}
+.cbody table{display:block;overflow-x:auto;max-width:100%}
+.ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
+.ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.ctable th{background:var(--panel2);font-weight:600}
+.retain{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 12px;margin:16px 0 6px;font-size:14px}
+.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
+pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
+.cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
+/* ateliers */
+#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:980px}
+#ws h2{font-size:24px;margin:0 0 8px;text-wrap:balance}
+#ws h3{font-size:16.5px;margin:24px 0 6px}
+#ws p,#ws li{font-size:14.5px;line-height:1.55}
+#ws .small{font-size:12.5px}
+.opts{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 10px}.opts .fld{margin:0}
+.opts input[type=range]{width:200px;max-width:100%}
+.opts input[type=text]{font-family:var(--font-mono);min-width:240px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.stat{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat span{font-size:12px;color:var(--muted)}.stat b{font-size:14px;font-family:var(--font-mono);overflow-wrap:anywhere}
+.verdict{border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14px;background:var(--panel2);border:1px solid var(--line)}
+.verdict.yes{background:rgba(30,122,46,.15);border-color:var(--ok)}.verdict.no{background:rgba(192,40,31,.13);border-color:var(--bad)}.verdict.warn{background:rgba(154,91,0,.13);border-color:var(--warn)}
+.dwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.dt{border-collapse:collapse;width:100%;font-size:13.5px}
+.dt th,.dt td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.dt thead th{background:var(--panel2);font-weight:600}
+.dt td.m{font-family:var(--font-mono);font-size:12.5px}
+.dt tr:last-child td{border-bottom:0}
+/* barres de tri */
+.stagebox{border:1px solid var(--line);border-radius:10px;padding:10px 10px 6px;background:#fff;margin:8px 0}
+.rowname{font-size:12px;color:var(--muted);margin:4px 2px 0}
+.bars{display:flex;align-items:flex-end;gap:4px;height:176px;padding-top:4px}
+.bars.short{height:120px}
+.bcol{flex:1 1 0;max-width:54px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bcol .v{font:600 12px var(--font-mono);margin-bottom:2px}
+.bcol .b{width:100%;border-radius:5px 5px 0 0;background:#9fb4ca;border:1px solid #6f8aa6;min-height:3px}
+.bcol .i{font:11px var(--font-mono);color:var(--muted);margin-top:3px}
+.bcol.sorted .b{background:rgba(30,122,46,.75);border-color:var(--ok)}
+.bcol.scan .b{background:var(--accent);border-color:var(--accent-ink)}
+.bcol.key .b{background:#e8a33a;border-color:var(--warn)}
+.bcol.swap .b{background:#e8a33a;border-color:var(--warn)}
+.bcol.min .b{background:var(--violet);border-color:#52308f}
+.bcol.pivot .b{background:var(--bad);border-color:#8e1d15}
+.bcol.left .b{background:#b9d3ee;border-color:var(--accent)}
+.bcol.right .b{background:#f3d6a6;border-color:var(--warn)}
+.bcol.dim{opacity:.32}
+.bcol.empty .b{background:transparent;border:1px dashed var(--line)}
+.leg{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 6px}
+.leg i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px;border:1px solid #6f8aa6;background:#9fb4ca}
+.leg i.s{background:rgba(30,122,46,.75);border-color:var(--ok)}.leg i.c{background:var(--accent);border-color:var(--accent-ink)}.leg i.k{background:#e8a33a;border-color:var(--warn)}.leg i.m{background:var(--violet);border-color:#52308f}.leg i.p{background:var(--bad);border-color:#8e1d15}
+/* cellules (comptage) */
+.cells{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 4px}
+.cell{width:40px;text-align:center}
+.cell .v{border:1px solid var(--line);border-radius:6px;padding:6px 0;font:600 14px var(--font-mono);background:#fff;min-height:33px}
+.cell .i{font:11px var(--font-mono);color:var(--muted);margin-top:2px}
+.cell.scan .v{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cell.key .v{background:#e8a33a;border-color:var(--warn)}
+.cell.sorted .v{background:rgba(30,122,46,.2);border-color:var(--ok)}
+.cell.zero .v{color:#9aa3ad}
+/* comparaison */
+.cmpr{display:grid;grid-template-columns:120px 1fr 80px;gap:8px;align-items:center;font-size:13px;margin:3px 0}
+.cmpr i{display:block;height:12px;background:var(--accent);border-radius:3px;min-width:2px}
+.cmpr em{font-style:normal;font-family:var(--font-mono);text-align:right}
+.seqr{display:flex;gap:4px;flex-wrap:wrap}
+.card{border:1px solid var(--line);border-radius:6px;padding:2px 7px;font:600 12.5px var(--font-mono);background:#fff}
+.card.t1{border-color:#2e6da4;color:#1b4a76}.card.t2{border-color:#9a5b00;color:#7a4700}.card.t3{border-color:#7b4fc2;color:#52308f}.card.t4{border-color:#1e7a2e;color:#1e7a2e}.card.t5{border-color:#c0281f;color:#8e1d15}.card.t6{border-color:#33475b;color:#33475b}
+@media (max-width:820px){
+  .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
+  #act{position:fixed;left:0;right:0;bottom:0;width:auto;height:70%;max-height:none;border-radius:14px 14px 0 0;z-index:35;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .work{flex-direction:column;gap:8px}
+  .cell{width:30px}.cell .v{font-size:12px}
+  .cmpr{grid-template-columns:90px 1fr 70px}
+  .bcol .v{font-size:11px}
+}
+@media (prefers-reduced-motion:no-preference){.btn{transition:border-color .12s,background .12s}.bcol .b{transition:height .15s}}
+/* ajouts : graphiques, fractions, mesures */
+.plotbox{border:1px solid var(--line);border-radius:10px;background:#fff;margin:8px 0;padding:4px 4px 2px;overflow:hidden}
+.plotbox canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+.plotbox.grab canvas{cursor:grab}
+.plotbox .ptitle{font-size:12px;color:var(--muted);margin:2px 8px}
+.pleg{display:flex;gap:4px 14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 2px 6px}
+.pleg i{display:inline-block;width:18px;height:0;border-top:3px solid #888;vertical-align:middle;margin-right:5px}
+.pleg i.d{border-top-style:dashed}.pleg i.o{width:9px;height:9px;border:0;border-radius:50%;background:#888}
+.tgl{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin:0 12px 6px 0}
+.tgl input{width:auto;margin:0}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 3px;font-size:.92em;line-height:1.25}
+.fr>span:first-child{border-bottom:1px solid currentColor;padding:0 3px}
+.fr>span:last-child{padding:0 3px}
+.math i,.formula i,.kv i,.mi{font-family:'Times New Roman','STIX Two Text',serif;font-style:italic;font-size:1.06em}
+.formula{line-height:1.9}
+.kv{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0}
+.kv td,.kv th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:middle}
+.kv th{background:var(--panel2);font-weight:600}
+.kv td.m,.kv td.n{font-family:var(--font-mono);font-size:12.5px;white-space:nowrap}
+.kv tr.hl td{background:var(--accent-soft)}
+.kv .good{color:var(--ok);font-weight:600}.kv .bad{color:var(--bad);font-weight:600}
+.badge{display:inline-block;border-radius:12px;padding:2px 10px;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--panel2)}
+.badge.ok{background:rgba(30,122,46,.15);border-color:var(--ok);color:var(--ok)}
+.badge.warn{background:rgba(154,91,0,.14);border-color:var(--warn);color:var(--warn)}
+.badge.no{background:rgba(192,40,31,.13);border-color:var(--bad);color:var(--bad)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px 16px;align-items:start}
+.two>*{min-width:0}
+.numin{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin:6px 0}
+.numin .fld{margin:0;width:110px}
+.blk{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 10px;margin:8px 0}
+.blk svg{display:block;max-width:100%;height:auto}
+.sect{border-top:1px solid var(--line);margin-top:22px;padding-top:4px}
+.ctrl{display:flex;gap:6px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 4px}
+.ctrl .fld{margin:0;min-width:160px}
+.ctrl input[type=range]{width:190px;max-width:100%}
+.gauge{height:14px;border-radius:7px;background:linear-gradient(90deg,#2e8b3a 0,#2e8b3a 45%,#e8a33a 62%,#c0281f 80%);position:relative;margin:8px 4px 14px;border:1px solid var(--line)}
+.gauge b{position:absolute;top:-5px;width:4px;height:22px;background:var(--fg);border-radius:2px;transform:translateX(-2px)}
+.gauge u{position:absolute;top:18px;font:11px var(--font-mono);color:var(--muted);text-decoration:none;transform:translateX(-50%)}
+.nom{width:100%;max-width:520px}
+@media (max-width:820px){.ctrl input[type=range]{width:100%}.ctrl .fld{min-width:140px;flex:1 1 140px}}
+</style>
+<div id="app">
+  <header class="band"><div class="inner row">
+    <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><path d="M3 22 C3 9 8 5 14 5 S22 4.5 24 4.5" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/><path d="M3 22 L13 4" stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="3 2"/><circle cx="9" cy="10.5" r="2.4" fill="var(--bad)"/></svg><span>Atelier Identification temporelle <small>Systèmes du 1<sup>er</sup> et du 2<sup>d</sup> ordre</small></span></div>
+    <div class="files">
+      <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
+      <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
+      <button class="btn" id="bHelp" type="button">Aide</button>
+    </div>
+  </div></header>
+  <div class="band" id="modes"><div class="inner row"><div class="seg" id="wsSeg" role="tablist" aria-label="Ateliers"></div></div></div>
+  <main class="inner work" id="work">
+    <section id="stage"><div id="hint"></div><div id="scroller"><div id="ws"></div></div></section>
+    <aside id="act" hidden aria-label="Activité"></aside>
+  </main>
+  <section id="course" hidden aria-label="Cours"></section>
+</div>
+<div id="dlg" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
+  return el;
+}
+function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
+const KEYS = { act: 'atelier-ident-temp-v1' };
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
+const WORKSHOPS = [];
+const TIMERS = new Set();
+function stopAll() { TIMERS.forEach(f => f()); TIMERS.clear(); }
+
+/* ---------- mathématiques ---------- */
+const EXP = Math.exp, SQ = Math.sqrt, PI = Math.PI;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function nf(v, d) { d = d == null ? 2 : d; let s = (+v).toFixed(d); if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, ''); if (s === '-0') s = '0'; return s.replace('.', ','); }
+const rd = (v, d) => Number((+v).toFixed(d));
+function nfx(v, d) { return (+v).toFixed(d).replace('.', ','); }
+const fr = (a, b) => '<span class="fr"><span>' + a + '</span><span>' + b + '</span></span>';
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function gauss(r) { let u = 0, v = 0; while (u === 0) u = r(); v = r(); return SQ(-2 * Math.log(u)) * Math.cos(2 * PI * v); }
+/* réponses indicielles (échelon unitaire, gain K) */
+function g1(K, T, t) { return t <= 0 ? 0 : K * (1 - EXP(-t / T)); }
+function gT2(K, T1, T2, t) {
+  if (t <= 0) return 0;
+  if (Math.abs(T1 - T2) < 1e-7 * (T1 + T2)) return K * (1 - (1 + t / T1) * EXP(-t / T1));
+  return K * (1 + (T1 * EXP(-t / T1) - T2 * EXP(-t / T2)) / (T2 - T1));
+}
+function g2(K, m, w, t) {
+  if (t <= 0) return 0;
+  if (m < 1) { const wd = w * SQ(1 - m * m); return K * (1 - EXP(-m * w * t) * (Math.cos(wd * t) + m * w / wd * Math.sin(wd * t))); }
+  if (Math.abs(m - 1) < 1e-6) return K * (1 - (1 + w * t) * EXP(-w * t));
+  const r = SQ(m * m - 1); return gT2(K, 1 / (w * (m + r)), 1 / (w * (m - r)), t);
+}
+function gN(K, Ts, t) {
+  if (t <= 0) return 0; const n = Ts.length; let s = 1;
+  for (let i = 0; i < n; i++) { let d = 1; for (let j = 0; j < n; j++) if (j !== i) d *= (Ts[i] - Ts[j]); s -= Math.pow(Ts[i], n - 1) / d * EXP(-t / Ts[i]); }
+  return K * s;
+}
+function lgam(z) { const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5]; let y = z, x = z, tmp = x + 5.5; tmp -= (x + 0.5) * Math.log(tmp); let ser = 1.000000000190015; for (let j = 0; j < 6; j++) ser += c[j] / ++y; return -tmp + Math.log(2.5066282746310005 * ser / x); }
+function gP(a, x) {
+  if (x <= 0) return 0;
+  if (x < a + 1) { let s = 1 / a, d = s, ap = a; for (let i = 0; i < 300; i++) { ap++; d *= x / ap; s += d; if (Math.abs(d) < Math.abs(s) * 1e-13) break; } return s * EXP(-x + a * Math.log(x) - lgam(a)); }
+  let b = x + 1 - a, c = 1e300, d = 1 / b, hh = d;
+  for (let i = 1; i < 300; i++) { const an = -i * (i - a); b += 2; d = an * d + b; if (Math.abs(d) < 1e-300) d = 1e-300; c = b + an / c; if (Math.abs(c) < 1e-300) c = 1e-300; d = 1 / d; const del = d * c; hh *= del; if (Math.abs(del - 1) < 1e-13) break; }
+  return 1 - EXP(-x + a * Math.log(x) - lgam(a)) * hh;
+}
+const gS = (K, n, T, tau, t) => { t -= tau; return t <= 0 ? 0 : K * gP(n, t / T); };
+/* analyse d'une courbe f(t) : point d'inflexion, tangentes */
+function slopeAt(f, t, dt) { const e = dt || 1e-4; return (f(t + e) - f(Math.max(0, t - e))) / (t + e - Math.max(0, t - e)); }
+function inflect(f, tmax) {
+  let best = -1, tb = 0; const N = 1500, e = tmax / 20000;
+  for (let i = 1; i < N; i++) { const t = tmax * i / N, s = (f(t + e) - f(t - e)) / (2 * e); if (s > best) { best = s; tb = t; } }
+  let lo = Math.max(0, tb - tmax / N), hi = tb + tmax / N;
+  for (let k = 0; k < 40; k++) { const m1 = lo + (hi - lo) / 3, m2 = hi - (hi - lo) / 3; const s1 = (f(m1 + e) - f(m1 - e)) / (2 * e), s2 = (f(m2 + e) - f(m2 - e)) / (2 * e); if (s1 < s2) lo = m1; else hi = m2; }
+  tb = (lo + hi) / 2; const sl = (f(tb + e) - f(tb - e)) / (2 * e), si = f(tb);
+  return { ti: tb, si, sl };
+}
+function tangentAt(f, t0, fin, tmax) {
+  const e = tmax / 20000, sl = (f(t0 + e) - f(Math.max(0, t0 - e))) / (t0 + e - Math.max(0, t0 - e)), s0 = f(t0);
+  return { t0, s0, sl, tAxis: t0 - s0 / sl, tAsym: t0 + (fin - s0) / sl };
+}
+function timeAt(f, level, tmax) { let lo = 0, hi = tmax; if (f(hi) < level) return NaN; for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; if (f(m) < level) lo = m; else hi = m; } return (lo + hi) / 2; }
+function rmsErr(f, g, tmax, norm) { let s = 0; const N = 300; for (let i = 0; i <= N; i++) { const t = tmax * i / N, d = f(t) - g(t); s += d * d; } return SQ(s / (N + 1)) / norm * 100; }
+/* méthode de Strejc : rapport Tu/Ta en fonction de l'ordre réel n (T = 1) */
+function strejcPar(n) { if (n <= 1.0000001) return { tu: 0, ta: 1, r: 0 }; const x = n - 1, si = gP(n, x), sl = EXP((n - 1) * Math.log(x) - x - lgam(n)); const tu = x - si / sl, ta = 1 / sl; return { tu, ta, r: tu / ta }; }
+function strejcN(ratio) { let lo = 1, hi = 14; if (ratio <= 0) return 1; if (ratio >= strejcPar(hi).r) return hi; for (let k = 0; k < 50; k++) { const m = (lo + hi) / 2; if (strejcPar(m).r < ratio) lo = m; else hi = m; } return (lo + hi) / 2; }
+const SD_TAB = [[1, 1, 0, 0], [2, 2.718, 0.282, 0.104], [3, 3.695, 0.805, 0.218], [4, 4.463, 1.425, 0.319], [5, 5.119, 2.1, 0.41]];
+
+/* ---------- composant graphique (canvas) ---------- */
+const COL = { ink: '#111111', grid: '#e4e7ec', axis: '#5a6068', blue: '#2e6da4', green: '#2e8b3a', orange: '#d98a12', red: '#c0281f', violet: '#7b4fc2', slate: '#33475b', soft: '#9fb4ca' };
+function Plot(host, o) {
+  const cv = h('canvas', { role: 'img', 'aria-label': o.label || 'Graphique' }); host.append(cv);
+  const ctx = cv.getContext('2d');
+  const P = { cv, ctx, W: 300, H: 300, o: Object.assign({ xmin: 0, xmax: 10, ymin: 0, ymax: 1, xt: 1, yt: 0.2, ml: 46, mr: 14, mt: 22, mb: 34, h: 300, xl: 'Temps (s)', yl: '', grid: true }, o), draw: null, drag: null, hover: null, down: false };
+  P.X = x => P.o.ml + (x - P.o.xmin) / (P.o.xmax - P.o.xmin) * (P.W - P.o.ml - P.o.mr);
+  P.Y = y => P.H - P.o.mb - (y - P.o.ymin) / (P.o.ymax - P.o.ymin) * (P.H - P.o.mt - P.o.mb);
+  P.ix = px => P.o.xmin + (px - P.o.ml) / (P.W - P.o.ml - P.o.mr) * (P.o.xmax - P.o.xmin);
+  P.iy = py => P.o.ymin + (P.H - P.o.mb - py) / (P.H - P.o.mt - P.o.mb) * (P.o.ymax - P.o.ymin);
+  P.set = a => { Object.assign(P.o, a); P.redraw(); };
+  P.resize = () => { const w = Math.max(220, host.clientWidth - 2), hh = P.o.h, d = Math.min(2, window.devicePixelRatio || 1); if (cv.width === Math.round(w * d) && P.H === hh) return; cv.width = Math.round(w * d); cv.height = Math.round(hh * d); cv.style.height = hh + 'px'; P.W = w; P.H = hh; P.redraw(); };
+  P.line = (pts, c, w, dash) => { ctx.save(); ctx.strokeStyle = c || COL.ink; ctx.lineWidth = w || 2; ctx.setLineDash(dash || []); ctx.lineJoin = 'round'; ctx.beginPath(); pts.forEach((p, i) => { const x = P.X(p[0]), y = P.Y(p[1]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.restore(); };
+  P.fn = (f, c, w, dash, a, b) => { const x0 = a == null ? P.o.xmin : a, x1 = b == null ? P.o.xmax : b, N = Math.max(120, Math.round(P.W / 2)), pts = []; for (let i = 0; i <= N; i++) { const t = x0 + (x1 - x0) * i / N; pts.push([t, f(t)]); } P.line(pts, c, w, dash); };
+  P.seg = (x1, y1, x2, y2, c, w, dash) => P.line([[x1, y1], [x2, y2]], c, w, dash);
+  P.dot = (x, y, c, r, ring) => { ctx.save(); ctx.beginPath(); ctx.arc(P.X(x), P.Y(y), r || 5, 0, 2 * PI); ctx.fillStyle = c || COL.red; ctx.fill(); if (ring !== false) { ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); } ctx.restore(); };
+  P.pts = (arr, c, r) => { ctx.save(); ctx.strokeStyle = c || COL.slate; ctx.lineWidth = 1.5; arr.forEach(p => { const x = P.X(p[0]), y = P.Y(p[1]), s = r || 3; ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s); ctx.stroke(); }); ctx.restore(); };
+  P.txt = (s, x, y, c, al, size, px, py) => { ctx.save(); ctx.fillStyle = c || COL.ink; ctx.font = (size || 12) + 'px IBM Plex Sans, system-ui, sans-serif'; ctx.textAlign = al || 'left'; ctx.textBaseline = 'middle'; ctx.fillText(s, P.X(x) + (px || 0), P.Y(y) + (py || 0)); ctx.restore(); };
+  P.arrow = (x1, x2, y, c, label, py) => { const a = P.X(x1), b = P.X(x2), yy = P.Y(y); ctx.save(); ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(a, yy); ctx.lineTo(b, yy); ctx.stroke(); const d = b >= a ? 1 : -1; [[a, 1], [b, -1]].forEach(q => { ctx.beginPath(); ctx.moveTo(q[0], yy); ctx.lineTo(q[0] + 7 * q[1] * d, yy - 4); ctx.lineTo(q[0] + 7 * q[1] * d, yy + 4); ctx.closePath(); ctx.fill(); }); if (label) { ctx.font = '600 12.5px IBM Plex Sans, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(label, (a + b) / 2, yy - 3 + (py || 0)); } ctx.restore(); };
+  P.redraw = () => {
+    const o = P.o, W = P.W, H = P.H; ctx.save(); const d = cv.width / W; ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    ctx.font = '11.5px IBM Plex Sans, system-ui, sans-serif'; ctx.fillStyle = COL.axis; ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+    const nx = Math.floor((o.xmax - o.xmin) / o.xt + 1e-9), ny = Math.floor((o.ymax - o.ymin) / o.yt + 1e-9);
+    for (let i = 0; i <= nx; i++) { const x = o.xmin + i * o.xt, px = Math.round(P.X(x)) + .5; if (o.grid) { ctx.beginPath(); ctx.moveTo(px, o.mt); ctx.lineTo(px, H - o.mb); ctx.stroke(); } ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(o.fx ? o.fx(x) : nf(x, 2), px, H - o.mb + 4); }
+    for (let i = 0; i <= ny; i++) { const y = o.ymin + i * o.yt, py = Math.round(P.Y(y)) + .5; if (o.grid) { ctx.beginPath(); ctx.moveTo(o.ml, py); ctx.lineTo(W - o.mr, py); ctx.stroke(); } ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(o.fy ? o.fy(y) : nf(y, 2), o.ml - 5, py); }
+    ctx.strokeStyle = COL.axis; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(o.ml + .5, o.mt); ctx.lineTo(o.ml + .5, H - o.mb + .5); ctx.lineTo(W - o.mr, H - o.mb + .5); ctx.stroke();
+    ctx.fillStyle = COL.axis; ctx.font = '12px IBM Plex Sans, system-ui, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(o.xl, W - o.mr, H - 2);
+    if (o.yl) { ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(o.yl, 6, 3); }
+    ctx.beginPath(); ctx.rect(o.ml, o.mt, W - o.ml - o.mr, H - o.mt - o.mb); ctx.clip();
+    if (P.draw) P.draw(P);
+    ctx.restore();
+  };
+  const pos = ev => { const r = cv.getBoundingClientRect(); const px = (ev.clientX - r.left) * (P.W / r.width), py = (ev.clientY - r.top) * (P.H / r.height); return { px, py, x: P.ix(px), y: P.iy(py) }; };
+  cv.addEventListener('pointerdown', ev => { if (!P.drag) return; P.down = true; try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* ok */ } const p = pos(ev); P.drag(p, 'down'); ev.preventDefault(); });
+  cv.addEventListener('pointermove', ev => { const p = pos(ev); if (P.down && P.drag) { P.drag(p, 'move'); } else if (P.hover) P.hover(p); });
+  const up = ev => { if (P.down) { P.down = false; if (P.drag) P.drag(pos(ev), 'up'); } };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('pointerleave', () => { if (!P.down && P.hover) P.hover(null); });
+  if (window.ResizeObserver) new ResizeObserver(() => P.resize()).observe(host);
+  P.resize(); setTimeout(P.resize, 50);
+  return P;
+}
+function plotBox(title, opts, cls) { const box = h('div', { class: 'plotbox' + (cls ? ' ' + cls : '') }); if (title) box.append(h('div', { class: 'ptitle' }, title)); const host = h('div'); box.append(host); const P = Plot(host, opts); return { box, P }; }
+function pleg(items) { return h('div', { class: 'pleg' }, items.map(it => h('span', null, h('i', { class: it[2] || '', style: 'border-top-color:' + it[0] + ';background:' + (it[2] === 'o' ? it[0] : 'none') }), it[1]))); }
+function nice(v) { const e = Math.pow(10, Math.floor(Math.log10(v))), f = v / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; }
+function niceStep(range, n) { return nice(range / n); }
+/* ---------- aides d'interface ---------- */
+function stats(list) { return h('div', { class: 'gstats' }, list.map(k => h('div', { class: 'stat' }, h('span', null, k[0]), h('b', null, k[1])))); }
+function chipsRow(items, cur, cb, label) { return h('div', { class: 'chips', role: 'group', 'aria-label': label || '' }, items.map(it => h('button', { type: 'button', class: 'chip' + (cur === it[0] ? ' on' : ''), 'aria-pressed': cur === it[0] ? 'true' : 'false', onclick: () => cb(it[0]) }, it[1]))); }
+function sld(o) {
+  const out = h('b'), inp = h('input', { type: 'range', id: o.id, min: o.min, max: o.max, step: o.step, 'aria-label': o.label }), f = o.fmt || (v => nf(v, o.d == null ? 2 : o.d));
+  inp.value = o.val; const upd = () => { out.textContent = f(+inp.value) + (o.unit ? ' ' + o.unit : ''); };
+  inp.addEventListener('input', () => { upd(); o.on(+inp.value); }); upd();
+  const el = h('label', { class: 'fld' }, h('span', null, h('span', { class: 'mi', html: o.label }), ' = ', out), inp);
+  el.set = v => { inp.value = v; upd(); }; el.inp = inp; return el;
+}
+function tgl(label, val, cb) { const i = h('input', { type: 'checkbox' }); i.checked = !!val; i.addEventListener('change', () => cb(i.checked)); return h('label', { class: 'tgl' }, i, label); }
+function verdict(text, kind) { return h('div', { class: 'verdict' + (kind ? ' ' + kind : ''), 'aria-live': 'polite', html: text }); }
+function kvTable(rows, head) { return h('div', { class: 'dwrap' }, h('table', { class: 'kv' }, head ? h('thead', null, h('tr', null, head.map(t => h('th', null, t)))) : null, h('tbody', null, rows.map(r => h('tr', { class: r.hl ? 'hl' : '' }, r.c.map((c, i) => h('td', { class: i > 0 ? 'm' : '', html: c }))))))); }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.k); toast.k = setTimeout(() => { t.hidden = true; }, 2200); }
+function anim(cb, dur) { /* lecture d'une animation : cb(u) avec u de 0 à 1 */
+  let t0 = null, raf = 0, stopped = false; const stop = () => { stopped = true; cancelAnimationFrame(raf); TIMERS.delete(stop); };
+  const step = ts => { if (stopped) return; if (t0 == null) t0 = ts; const u = Math.min(1, (ts - t0) / dur); cb(u); if (u < 1) raf = requestAnimationFrame(step); else stop(); };
+  raf = requestAnimationFrame(step); TIMERS.add(stop); return stop;
+}
+
+/* ---------- outils d'axes ---------- */
+function yAxis(lo, hi) { lo = Math.min(lo, 0); hi = Math.max(hi, 1e-9); const st = niceStep(hi - lo, 5); return { ymin: Math.floor(lo / st + 1e-9) * st, ymax: Math.ceil(hi / st - 1e-9) * st, yt: st }; }
+function xAxis(tm) { const st = niceStep(tm, 8); return { xmin: 0, xmax: Math.max(st, Math.round(tm / st) * st), xt: st }; }
+function sampleNoise(f, tm, N, sd, seed) { const r = rng(seed), out = []; for (let i = 1; i <= N; i++) { const t = tm * i / N; out.push([t, f(t) + sd * gauss(r)]); } return out; }
+
+/* ================= Atelier 1 : signaux d'entrée ================= */
+const S1d = () => ({ inp: 'echelon', sys: 'ordre1', K: 2, T: 1.5, m: 0.4, w0: 2, A: 1, B: 1, cur: 2 });
+let S1 = S1d();
+function mount1(root) {
+  const S = S1;
+  const g = () => S.sys === 'ordre1' ? (t => g1(S.K, S.T, t)) : (t => g2(S.K, S.m, S.w0, t));
+  const tmRaw = () => S.sys === 'ordre1' ? Math.max(6, 6 * S.T) : clamp(8 / (Math.min(S.m, 1) * S.w0), 6, 30);
+  const ctl = h('div'), diag = h('div', { class: 'blk' }), info = h('div'), stat = h('div');
+  const pe = plotBox('Entrée e(t)', { h: 170, yl: 'e(t)', label: 'Signal d’entrée' }), ps = plotBox('Sortie s(t) du système', { h: 260, yl: 's(t)', label: 'Signal de sortie' });
+  let R = null;
+  function compute() {
+    const xa = xAxis(tmRaw()), tm = xa.xmax, N = 600, dt = tm / N, G = g(), ts = [], e = [], s = []; let I = 0, gp = 0;
+    for (let i = 0; i <= N; i++) {
+      const t = i * dt, gv = G(t); ts.push(t);
+      if (S.inp === 'echelon') s.push(S.A * gv);
+      else if (S.inp === 'rampe') { if (i > 0) I += (gp + gv) / 2 * dt; s.push(S.B * I); }
+      else { const ep = dt * 0.01; s.push(S.A * (G(t + ep) - G(t)) / ep); }
+      gp = gv;
+    }
+    const emax = S.inp === 'rampe' ? S.B * tm : S.A;
+    R = { xa, tm, N, dt, ts, s, ey: yAxis(0, emax * 1.15), sy: yAxis(Math.min(0, ...s), Math.max(...s) * 1.12) };
+  }
+  const eAt = t => S.inp === 'echelon' ? S.A : S.inp === 'rampe' ? S.B * t : 0;
+  const sAt = t => { const i = clamp(Math.round(t / R.dt), 0, R.N); return R.s[i]; };
+  function draw() {
+    compute(); S.cur = clamp(S.cur, 0, R.tm);
+    pe.P.set(Object.assign({}, R.xa, { ymin: R.ey.ymin, ymax: R.ey.ymax, yt: R.ey.yt }));
+    ps.P.set(Object.assign({}, R.xa, { ymin: R.sy.ymin, ymax: R.sy.ymax, yt: R.sy.yt }));
+    info.innerHTML = ''; stat.innerHTML = '';
+    const txt = { dirac: 'E(p) = 1', echelon: 'E(p) = A/p', rampe: 'E(p) = B/p²' }[S.inp];
+    const H = S.sys === 'ordre1' ? 'H(p) = K / (1 + Tp)' : 'H(p) = K / (1 + 2m·p/ω₀ + p²/ω₀²)';
+    const msg = { dirac: 'La réponse à une impulsion est la <b>dérivée</b> de la réponse indicielle. L’impulsion idéale est irréalisable : on envoie en pratique un créneau très bref.', echelon: 'La réponse indicielle est la plus utilisée : un échelon est facile à produire, et la sortie finale vaut K·A (système stable).', rampe: 'La réponse à une rampe est l’<b>intégrale</b> de la réponse indicielle : elle finit par suivre la rampe avec un écart de traînage (pente K·B).' }[S.inp];
+    info.append(verdict('<b>' + txt + '</b> et S(p) = H(p)·E(p) avec ' + H + '.<br>' + msg));
+    stat.append(stats([['Instant t', nfx(S.cur, 2) + ' s'], ['e(t)', S.inp === 'dirac' ? 'impulsion en t = 0' : nfx(eAt(S.cur), 2)], ['s(t)', nfx(sAt(S.cur), 3)]]));
+  }
+  ps.P.draw = P => {
+    const t = S.cur; P.line(R.ts.map((x, i) => [x, R.s[i]]), COL.blue, 2.6);
+    if (S.inp === 'echelon') P.seg(0, S.K * S.A, R.tm, S.K * S.A, COL.green, 1.4, [6, 4]);
+    P.seg(t, P.o.ymin, t, P.o.ymax, COL.red, 1.2, [4, 3]); P.dot(t, sAt(t), COL.red, 5);
+  };
+  pe.P.draw = P => {
+    const t = S.cur;
+    if (S.inp === 'echelon') P.line([[0, 0], [0, S.A], [R.tm, S.A]], COL.slate, 2.6);
+    else if (S.inp === 'rampe') P.line([[0, 0], [R.tm, S.B * R.tm]], COL.slate, 2.6);
+    else { P.seg(0, 0, 0, S.A, COL.slate, 3); P.dot(0, S.A, COL.slate, 5, false); P.txt('aire = ' + nfx(S.A, 1), 0, S.A * 0.55, COL.slate, 'left', 12, 10); P.seg(0, 0, R.tm, 0, COL.slate, 2.6); }
+    P.seg(t, P.o.ymin, t, P.o.ymax, COL.red, 1.2, [4, 3]); if (S.inp !== 'dirac') P.dot(t, eAt(t), COL.red, 5);
+  };
+  const hov = p => { if (p) { S.cur = clamp(p.x, 0, R.tm); pe.P.redraw(); ps.P.redraw(); stat.innerHTML = ''; stat.append(stats([['Instant t', nfx(S.cur, 2) + ' s'], ['e(t)', S.inp === 'dirac' ? 'impulsion en t = 0' : nfx(eAt(S.cur), 2)], ['s(t)', nfx(sAt(S.cur), 3)]])); } };
+  [pe.P, ps.P].forEach(P => { P.hover = hov; P.drag = (p, ph) => { if (ph !== 'up') hov(p); }; });
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' },
+      h('div', { class: 'fld' }, h('span', null, 'Signal d’entrée'), chipsRow([['dirac', 'Impulsion de Dirac'], ['echelon', 'Échelon'], ['rampe', 'Rampe']], S.inp, v => { S.inp = v; build(); draw(); }, 'Entrée')),
+      h('div', { class: 'fld' }, h('span', null, 'Système'), chipsRow([['ordre1', 'Premier ordre'], ['ordre2', 'Second ordre']], S.sys, v => { S.sys = v; build(); draw(); }, 'Système'))));
+    const sl = [sld({ id: 'a1K', label: 'K', min: 0.5, max: 4, step: 0.1, val: S.K, d: 1, on: v => { S.K = v; draw(); } })];
+    if (S.sys === 'ordre1') sl.push(sld({ id: 'a1T', label: 'T', min: 0.3, max: 3, step: 0.1, val: S.T, d: 1, unit: 's', on: v => { S.T = v; draw(); } }));
+    else sl.push(sld({ id: 'a1m', label: 'm', min: 0.1, max: 2, step: 0.05, val: S.m, on: v => { S.m = v; draw(); } }), sld({ id: 'a1w', label: 'ω₀', min: 0.5, max: 5, step: 0.1, val: S.w0, d: 1, unit: 'rad/s', on: v => { S.w0 = v; draw(); } }));
+    if (S.inp === 'rampe') sl.push(sld({ id: 'a1B', label: 'B (pente)', min: 0.2, max: 3, step: 0.1, val: S.B, d: 1, on: v => { S.B = v; draw(); } }));
+    else sl.push(sld({ id: 'a1A', label: S.inp === 'dirac' ? 'aire' : 'A', min: 0.2, max: 3, step: 0.1, val: S.A, d: 1, on: v => { S.A = v; draw(); } }));
+    ctl.append(h('div', { class: 'ctrl' }, sl, h('button', { class: 'btn pri', type: 'button', id: 'a1play', onclick: () => { stopAll(); anim(u => { S.cur = u * R.tm; pe.P.redraw(); ps.P.redraw(); }, 5000); } }, '▶ Lecture')));
+  }
+  diag.innerHTML = '<svg viewBox="0 0 560 70" width="560" role="img" aria-label="Schéma chaîne ouverte"><text x="6" y="28" font-size="13" fill="#111">Entrée e(t)</text><line x1="86" y1="40" x2="190" y2="40" stroke="#33475b" stroke-width="2"/><polygon points="198,40 188,35 188,45" fill="#33475b"/><rect x="200" y="14" width="160" height="52" rx="6" fill="#dcebf8" stroke="#2e6da4" stroke-width="2"/><text x="280" y="37" text-anchor="middle" font-size="14" font-weight="600" fill="#1b4a76">Système</text><text x="280" y="55" text-anchor="middle" font-size="13" fill="#1b4a76">H(p) inconnue</text><line x1="360" y1="40" x2="466" y2="40" stroke="#33475b" stroke-width="2"/><polygon points="474,40 464,35 464,45" fill="#33475b"/><text x="480" y="28" font-size="13" fill="#111">Sortie s(t)</text><text x="86" y="62" font-size="11.5" fill="#5a6068">connue</text><text x="400" y="62" font-size="11.5" fill="#5a6068">enregistrée puis analysée</text></svg>';
+  root.append(h('h2', null, 'Chaîne ouverte : choisir le signal d’entrée'),
+    h('p', { html: 'En <b>identification en chaîne ouverte</b>, on envoie au système un signal d’entrée connu et on enregistre sa sortie. Choisissez l’entrée et le système, puis <b>promenez la souris</b> (ou le doigt) sur les courbes ou lancez la lecture pour comparer e(t) et s(t).' }),
+    diag, ctl, h('div', { class: 'plotbox', style: 'display:none' }), pe.box, ps.box,
+    pleg([[COL.slate, 'entrée e(t)'], [COL.blue, 'sortie s(t)'], [COL.green, 'valeur finale K·A', 'd'], [COL.red, 'curseur']]), stat, info);
+  build(); draw();
+}
+WORKSHOPS.push({ id: 's1', title: 'Signaux d’entrée', hint: 'Choisissez un signal d’entrée (impulsion, échelon, rampe) et observez la sortie du système.', mount: mount1, leave: stopAll, reset: () => { S1 = S1d(); } });
+
+/* ================= Atelier 2 : premier ordre ================= */
+const S2d = () => ({ mode: 'explore', K: 2, T: 1.5, A: 1, tp: 1.2, tang: true, rep: true, orig: false, my: null, mp: 1.2, shown: false, res: null, seed: 11 });
+let S2 = S2d();
+function mount2(root) {
+  const S = S2, host = h('div'), ctl = h('div'), out = h('div'), pl = plotBox('Réponse indicielle s(t)', { h: 340, yl: 's(t)', label: 'Réponse du premier ordre' }, 'grab');
+  const f = () => (t => S.A * g1(S.K, S.T, t));
+  function mystery() { const r = rng(S.seed); S.my = { K: rd(0.8 + 2.6 * r(), 1), T: rd(0.6 + 2.4 * r(), 1) }; S.my.A = 1; S.my.tm = xAxis(6.5 * S.my.T).xmax; S.my.pts = sampleNoise(t => g1(S.my.K, S.my.T, t), S.my.tm, 120, 0.012 * S.my.K, S.seed * 7 + 3); S.mp = S.my.T * 0.6; S.shown = false; S.res = null; }
+  function myEst() { // estimation à partir des points bruités
+    const m = S.my, pts = m.pts, fin = pts.slice(-12).reduce((a, p) => a + p[1], 0) / 12, w = m.tm * 0.06, loc = pts.filter(p => Math.abs(p[0] - S.mp) <= w);
+    let sl = 0, s0 = 0; if (loc.length >= 3) { const n = loc.length, mx = loc.reduce((a, p) => a + p[0], 0) / n, my = loc.reduce((a, p) => a + p[1], 0) / n; let sxx = 0, sxy = 0; loc.forEach(p => { sxx += (p[0] - mx) ** 2; sxy += (p[0] - mx) * (p[1] - my); }); sl = sxy / sxx; s0 = my + sl * (S.mp - mx); }
+    const tint = S.mp + (fin - s0) / sl, T = tint - S.mp;
+    let t63 = NaN; for (let i = 1; i < pts.length; i++) if (pts[i][1] >= 0.632 * fin) { t63 = pts[i][0]; break; }
+    return { fin, sl, s0, tint, T, t63, K: fin / m.A };
+  }
+  function draw() {
+    out.innerHTML = '';
+    if (S.mode === 'explore') {
+      const K = S.K, T = S.T, A = S.A, KA = K * A, tm = xAxis(6.5 * T).xmax, ya = yAxis(0, KA * 1.2);
+      pl.P.set(Object.assign({ xmax: tm, xmin: 0 }, { xt: xAxis(tm).xt }, ya)); S.tp = clamp(S.tp, 0, tm * 0.95);
+      const tg = tangentAt(f(), S.tp, KA, tm);
+      pl.P.draw = P => {
+        P.seg(0, KA, tm, KA, COL.green, 1.4, [6, 4]); P.txt('K·A = ' + nfx(KA, 2), tm, KA, COL.green, 'right', 12, -4, -9);
+        if (S.rep) { P.seg(0, 0.632 * KA, T, 0.632 * KA, COL.violet, 1.2, [3, 3]); P.seg(T, 0, T, 0.632 * KA, COL.violet, 1.2, [3, 3]); P.dot(T, 0.632 * KA, COL.violet, 4.5); P.txt('63 % en t = T', T, 0.632 * KA, COL.violet, 'left', 12, 8, 12); P.seg(3 * T, 0, 3 * T, 0.95 * KA, COL.orange, 1.2, [3, 3]); P.dot(3 * T, 0.95 * KA, COL.orange, 4.5); P.txt('95 % en t = 3T', 3 * T, 0.95 * KA, COL.orange, 'left', 12, 8, 14); }
+        if (S.orig) { P.seg(0, 0, T, KA, COL.soft, 1.8); P.seg(T, 0, T, KA, COL.soft, 1.2, [3, 3]); }
+        P.fn(f(), COL.ink, 2.8);
+        if (S.tang) { P.seg(tg.tAxis, 0, tg.tAsym + (tg.tAsym - tg.t0) * 0.15, tg.s0 + tg.sl * (tg.tAsym + (tg.tAsym - tg.t0) * 0.15 - tg.t0), COL.red, 1.8); P.seg(tg.tAsym, 0, tg.tAsym, KA, COL.red, 1.2, [3, 3]); P.arrow(tg.t0, tg.tAsym, 0.06 * KA, COL.red, 'T'); P.seg(tg.t0, 0, tg.t0, tg.s0, COL.red, 1.2, [3, 3]); }
+        P.dot(S.tp, tg.s0, COL.red, 7);
+      };
+      pl.P.drag = (p) => { S.tp = clamp(p.x, 0, tm * 0.95); draw(); };
+      pl.P.hover = null;
+      out.append(stats([['Point P : t', nfx(S.tp, 2) + ' s'], ['Tangente en P coupe l’asymptote à', nfx(tg.tAsym, 2) + ' s'], ['t_asym − t_P', nfx(tg.tAsym - S.tp, 2) + ' s'], ['T (réel)', nfx(T, 2) + ' s'], ['s(T) / KA', nfx(g1(1, T, T), 3)], ['s(3T) / KA', nfx(g1(1, T, 3 * T), 3)], ['t_r5% ≈ 3T', nfx(3 * T, 2) + ' s']]));
+      out.append(verdict('<b>Propriété du premier ordre.</b> Quel que soit le point P que vous déplacez sur la courbe, la tangente en P coupe l’asymptote finale à l’abscisse <b>t<sub>P</sub> + T</b> : la flèche rouge mesure toujours T = ' + nfx(T, 2) + ' s. La tangente à l’origine (case « tangente à l’origine ») coupe l’asymptote en t = T.', 'yes'));
+      pl.P.redraw();
+    } else {
+      const m = S.my, e = myEst(), tm = m.tm, KA = m.K * m.A, ya = yAxis(0, KA * 1.25);
+      pl.P.set(Object.assign({ xmin: 0, xmax: tm, xt: xAxis(tm).xt }, ya));
+      const mod = S.res;
+      pl.P.draw = P => {
+        P.pts(m.pts, COL.slate, 2.4);
+        P.seg(0, e.fin, tm, e.fin, COL.green, 1.3, [6, 4]);
+        if (S.tang) { const x2 = e.tint + (e.tint - S.mp) * 0.15; P.seg(e.tint - e.s0 / e.sl, 0, x2, e.s0 + e.sl * (x2 - S.mp), COL.red, 1.8); P.seg(e.tint, 0, e.tint, e.fin, COL.red, 1.2, [3, 3]); P.arrow(S.mp, e.tint, 0.06 * KA, COL.red, 'T̂'); }
+        if (S.rep && isFinite(e.t63)) { P.seg(0, 0.632 * e.fin, e.t63, 0.632 * e.fin, COL.violet, 1.2, [3, 3]); P.seg(e.t63, 0, e.t63, 0.632 * e.fin, COL.violet, 1.2, [3, 3]); P.dot(e.t63, 0.632 * e.fin, COL.violet, 4.5); }
+        if (mod) P.fn(t => g1(mod.K, mod.T, t), COL.blue, 2.6);
+        if (S.shown) P.fn(t => g1(m.K, m.T, t), COL.orange, 2, [7, 4]);
+        P.dot(S.mp, e.s0, COL.red, 7);
+      };
+      pl.P.drag = p => { S.mp = clamp(p.x, 0, tm * 0.9); draw(); };
+      const row = [['Gain K̂ = plateau / A', nfx(e.K, 2)], ['T̂ (tangente en P)', nfx(e.T, 2) + ' s'], ['T̂ (méthode des 63 %)', isFinite(e.t63) ? nfx(e.t63, 2) + ' s' : '—'], ['t_r5% / 3', nfx(e.T, 2) + ' s']];
+      out.append(stats(row));
+      const kin = h('div', { class: 'numin' }, h('label', { class: 'fld' }, h('span', null, 'Votre K'), h('input', { type: 'number', id: 'myK', step: '0.01', value: nfx(e.K, 2).replace(',', '.') })), h('label', { class: 'fld' }, h('span', null, 'Votre T (s)'), h('input', { type: 'number', id: 'myT', step: '0.01', value: nfx(e.T, 2).replace(',', '.') })),
+        h('button', { class: 'btn pri', type: 'button', onclick: () => { const K = parseFloat($('#myK').value), T = parseFloat($('#myT').value); if (!(K > 0 && T > 0)) { toast('Entrez K et T strictement positifs.'); return; } S.res = { K, T }; S.shown = true; draw(); } }, 'Tracer mon modèle et révéler'),
+        h('button', { class: 'btn', type: 'button', onclick: () => { S.seed = S.seed + 1; mystery(); draw(); } }, 'Nouveau système'));
+      out.append(kin);
+      if (mod) { const err = rmsErr(t => g1(m.K, m.T, t), t => g1(mod.K, mod.T, t), tm, m.K); out.append(verdict('Système réel : <b>K = ' + nfx(m.K, 1) + '</b> et <b>T = ' + nfx(m.T, 1) + ' s</b>. Votre modèle (bleu) s’écarte de la réponse réelle (orange) de <b>' + nfx(err, 1) + ' % de K</b> en moyenne quadratique.' + (err < 2 ? ' Excellente identification.' : err < 6 ? ' Identification correcte : essayez de déplacer P plus tôt sur la courbe.' : ' Écart important : déplacez P là où la pente est forte, avant 1,5·T.'), err < 6 ? 'yes' : 'warn')); }
+      else out.append(verdict('Déplacez P sur les mesures : tant que P est dans la montée, T̂ est stable. Plus P approche de l’asymptote, plus la pente est faible et plus le bruit fausse T̂. Entrez ensuite vos valeurs pour tracer votre modèle.'));
+      pl.P.redraw();
+    }
+  }
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Mode'), chipsRow([['explore', 'Explorer les propriétés'], ['mystere', 'Identifier un système mystère']], S.mode, v => { S.mode = v; if (v === 'mystere' && !S.my) mystery(); build(); draw(); }, 'Mode'))));
+    if (S.mode === 'explore') ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'p2K', label: 'K', min: 0.5, max: 4, step: 0.1, val: S.K, d: 1, on: v => { S.K = v; draw(); } }), sld({ id: 'p2T', label: 'T', min: 0.4, max: 4, step: 0.1, val: S.T, d: 1, unit: 's', on: v => { S.T = v; draw(); } }), sld({ id: 'p2A', label: 'A', min: 0.5, max: 3, step: 0.1, val: S.A, d: 1, on: v => { S.A = v; draw(); } })));
+    ctl.append(h('div', null, tgl('Tangente en P', S.tang, v => { S.tang = v; draw(); }), tgl('Repères 63 % / 95 %', S.rep, v => { S.rep = v; draw(); }), S.mode === 'explore' ? tgl('Tangente à l’origine', S.orig, v => { S.orig = v; draw(); }) : null));
+  }
+  root.append(h('h2', null, 'Réponse indicielle du premier ordre'),
+    h('p', { html: 'Pour <i>H(p) = K / (1 + Tp)</i> et un échelon d’amplitude <i>A</i>, la sortie est <i>s(t) = K·A·(1 − e<sup>−t/T</sup>)</i>. <b>Faites glisser le point rouge P</b> le long de la courbe : la tangente en P coupe toujours l’asymptote une durée T plus loin.' }),
+    ctl, pl.box, pleg([[COL.ink, 'réponse s(t)'], [COL.red, 'tangente en P'], [COL.green, 'asymptote', 'd'], [COL.violet, '63 %'], [COL.orange, '95 %']]), out);
+  if (S.mode === 'mystere' && !S.my) mystery();
+  build(); draw();
+}
+WORKSHOPS.push({ id: 's2', title: 'Premier ordre', hint: 'Faites glisser le point P sur la courbe : la tangente coupe l’asymptote à t + T. Puis identifiez un système mystère.', mount: mount2, leave: stopAll, reset: () => { S2 = S2d(); } });
+
+/* ================= Atelier 3 : second ordre pseudo-périodique ================= */
+const S3d = () => ({ mode: 'explore', K: 1, m: 0.5, w0: 1, env: true, cur: 3.6, my: null, seed: 5, res: null, shown: false });
+let S3 = S3d();
+function mount3(root) {
+  const S = S3, ctl = h('div'), out = h('div'), pl = plotBox('Réponse indicielle s(t) du second ordre', { h: 360, yl: 's(t)', label: 'Réponse pseudo-périodique' }, 'grab');
+  function mystery() { const r = rng(S.seed * 31 + 7), m = 0.2 + 0.55 * r(), w = 0.6 + 2.4 * r(), K = 0.8 + 1.4 * r(); S.my = { K: rd(K, 1), m: rd(m, 2), w0: rd(w, 2) }; const tm = xAxis(5.5 / (S.my.m * S.my.w0)).xmax; S.my.tm = tm; S.my.pts = sampleNoise(t => g2(S.my.K, S.my.m, S.my.w0, t), tm, 160, 0.006 * S.my.K, S.seed * 13 + 1); S.cur = Math.PI / (S.my.w0 * SQ(1 - S.my.m ** 2)) * 0.7; S.res = null; S.shown = false; }
+  const peak = (K, m, w) => { const wd = w * SQ(1 - m * m), tp = PI / wd, d = EXP(-m * PI / SQ(1 - m * m)); return { wd, tp, d, smax: K * (1 + d) }; };
+  function draw() {
+    out.innerHTML = '';
+    if (S.mode === 'explore') {
+      const { K, m, w0 } = S, pk = peak(K, m, w0), tm = xAxis(clamp(5.5 / (m * w0), 4, 60)).xmax, ya = yAxis(0, K * (1 + pk.d) * 1.1);
+      pl.P.set(Object.assign({ xmin: 0, xmax: tm, xt: xAxis(tm).xt }, ya)); S.cur = clamp(S.cur, 0, tm);
+      const f = t => g2(K, m, w0, t), sq = SQ(1 - m * m);
+      pl.P.draw = P => {
+        if (S.env) { P.fn(t => K * (1 + EXP(-m * w0 * t) / sq), COL.soft, 1.4, [5, 4]); P.fn(t => K * (1 - EXP(-m * w0 * t) / sq), COL.soft, 1.4, [5, 4]); }
+        P.seg(0, K, tm, K, COL.green, 1.4, [6, 4]); P.txt('KA = ' + nfx(K, 2), tm, K, COL.green, 'right', 12, -4, 10);
+        P.seg(0, pk.smax, pk.tp, pk.smax, COL.red, 1.3, [4, 3]); P.seg(pk.tp, 0, pk.tp, pk.smax, COL.red, 1.3, [4, 3]); P.dot(pk.tp, pk.smax, COL.red, 5);
+        P.txt('s_max = ' + nfx(pk.smax, 2), 0, pk.smax, COL.red, 'left', 12, 6, -9); P.txt('T/2 = ' + nfx(pk.tp, 2) + ' s', pk.tp, 0, COL.red, 'left', 12, 6, -10);
+        P.fn(f, COL.ink, 2.8);
+        P.seg(S.cur, P.o.ymin, S.cur, P.o.ymax, COL.blue, 1.2, [4, 3]); P.dot(S.cur, f(S.cur), COL.blue, 6);
+      };
+      pl.P.drag = p => { S.cur = clamp(p.x, 0, tm); draw(); };
+      const T = 2 * pk.tp, tr = m < 0.7 ? 3 / (m * w0) : NaN;
+      out.append(stats([['Curseur : t', nfx(S.cur, 2) + ' s'], ['s(t)', nfx(f(S.cur), 3)], ['ω = ω₀√(1−m²)', nfx(pk.wd, 3) + ' rad/s'], ['Pseudo-période T = 2π/ω', nfx(T, 2) + ' s'], ['Temps de pic = T/2', nfx(pk.tp, 2) + ' s'], ['Dépassement d = e^(−mπ/√(1−m²))', nfx(pk.d * 100, 1) + ' %'], ['t_r5% ≈ 3/(mω₀)', isFinite(tr) ? nfx(tr, 2) + ' s' : 'm ≥ 0,7 : non valable']]));
+      out.append(verdict('Augmentez <b>m</b> : le dépassement <i>d</i> diminue et les oscillations s’éteignent plus vite. Augmentez <b>ω₀</b> : la courbe se comprime dans le temps sans changer sa forme. Pour m = 0,5 on lit d ≈ 16 % : c’est l’exemple du cours.', 'yes'));
+    } else {
+      const m = S.my, tm = m.tm, ya = yAxis(0, m.K * 1.5), pts = m.pts, fin = pts.slice(-15).reduce((a, p) => a + p[1], 0) / 15, f = t => { const i = clamp(Math.round(t / (tm / 160)) - 1, 0, 159); return pts[i][1]; };
+      pl.P.set(Object.assign({ xmin: 0, xmax: tm, xt: xAxis(tm).xt }, ya)); S.cur = clamp(S.cur, 0, tm);
+      const sm = f(S.cur), d = (sm - fin) / fin;
+      let est = null; if (d > 0.002) { const ld = Math.log(d), mm = SQ(ld * ld / (ld * ld + PI * PI)), T = 2 * S.cur, w0 = 2 * PI / (T * SQ(1 - mm * mm)); est = { m: mm, w0, K: fin }; }
+      pl.P.draw = P => {
+        P.pts(pts.filter((p, i) => i % 1 === 0), COL.slate, 2.2); P.seg(0, fin, tm, fin, COL.green, 1.3, [6, 4]);
+        P.seg(0, sm, S.cur, sm, COL.red, 1.2, [4, 3]); P.seg(S.cur, 0, S.cur, sm, COL.red, 1.2, [4, 3]);
+        if (S.res) P.fn(t => g2(S.res.K, S.res.m, S.res.w0, t), COL.blue, 2.6);
+        if (S.shown) P.fn(t => g2(m.K, m.m, m.w0, t), COL.orange, 2, [7, 4]);
+        P.dot(S.cur, sm, COL.red, 7);
+      };
+      pl.P.drag = p => { S.cur = clamp(p.x, 0, tm); draw(); };
+      out.append(stats([['Curseur : t = T/2 ?', nfx(S.cur, 2) + ' s'], ['s_max lu', nfx(sm, 3)], ['KA (plateau)', nfx(fin, 3)], ['d = (s_max − KA)/KA', nfx(d, 3)], ['m = √(ln²d / (ln²d + π²))', est ? nfx(est.m, 3) : '—'], ['ω₀ = 2π / (T√(1−m²))', est ? nfx(est.w0, 3) + ' rad/s' : '—']]));
+      out.append(h('div', { class: 'numin' }, h('button', { class: 'btn pri', type: 'button', onclick: () => { if (!est) { toast('Placez le curseur sur le premier dépassement (s > KA).'); return; } S.res = est; S.shown = true; draw(); } }, 'Utiliser ces valeurs et révéler'), h('button', { class: 'btn', type: 'button', onclick: () => { S.seed++; mystery(); draw(); } }, 'Nouveau système')));
+      if (S.res) { const err = rmsErr(t => g2(m.K, m.m, m.w0, t), t => g2(S.res.K, S.res.m, S.res.w0, t), tm, m.K); out.append(verdict('Système réel : <b>K = ' + nfx(m.K, 1) + '</b>, <b>m = ' + nfx(m.m, 2) + '</b>, <b>ω₀ = ' + nfx(m.w0, 2) + ' rad/s</b>. Identifié : K = ' + nfx(S.res.K, 2) + ', m = ' + nfx(S.res.m, 2) + ', ω₀ = ' + nfx(S.res.w0, 2) + '. Écart moyen : <b>' + nfx(err, 1) + ' % de K</b>.', err < 4 ? 'yes' : 'warn')); }
+      else out.append(verdict('Déplacez le curseur rouge jusqu’au <b>sommet du premier dépassement</b> : il fournit à la fois s_max (donc d et m) et le temps de pic T/2 (donc ω₀). Puis cliquez sur « Utiliser ces valeurs ».'));
+    }
+    pl.P.redraw();
+  }
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Mode'), chipsRow([['explore', 'Explorer m et ω₀'], ['mystere', 'Identifier un système mystère']], S.mode, v => { S.mode = v; if (v === 'mystere' && !S.my) mystery(); build(); draw(); }, 'Mode'))));
+    if (S.mode === 'explore') ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'p3K', label: 'K', min: 0.5, max: 3, step: 0.1, val: S.K, d: 1, on: v => { S.K = v; draw(); } }), sld({ id: 'p3m', label: 'm', min: 0.05, max: 0.95, step: 0.01, val: S.m, on: v => { S.m = v; draw(); } }), sld({ id: 'p3w', label: 'ω₀', min: 0.4, max: 4, step: 0.05, val: S.w0, unit: 'rad/s', on: v => { S.w0 = v; draw(); } })), h('div', null, tgl('Enveloppes exponentielles', S.env, v => { S.env = v; draw(); })));
+  }
+  root.append(h('h2', null, 'Second ordre pseudo-périodique (m < 1)'),
+    h('p', { html: 'La sortie oscille autour de <i>KA</i> avant de se stabiliser. Le <b>premier dépassement</b> relatif <i>d = e<sup>−mπ/√(1−m²)</sup></i> ne dépend que de <i>m</i>, et l’instant du pic vaut <i>T/2 = π / (ω₀√(1−m²))</i>. Faites varier les curseurs, puis identifiez un système à partir de sa seule courbe.' }),
+    ctl, pl.box, pleg([[COL.ink, 's(t)'], [COL.soft, 'enveloppes', 'd'], [COL.green, 'asymptote KA', 'd'], [COL.red, 'premier dépassement'], [COL.blue, 'curseur / modèle identifié'], [COL.orange, 'système réel (révélé)', 'd']]), out);
+  if (S.mode === 'mystere' && !S.my) mystery();
+  build(); draw();
+}
+WORKSHOPS.push({ id: 's3', title: 'Second ordre pseudo-périodique', hint: 'Mesurez le premier dépassement et le temps de pic pour retrouver m et ω₀.', mount: mount3, leave: stopAll, reset: () => { S3 = S3d(); } });
+
+/* ================= Atelier 4 : apériodique, méthodes graphiques ================= */
+const S4d = () => ({ T1: 1, T2: 10, meth: 'm2', tp: 15, shown: true });
+let S4 = S4d();
+function ratioAlpha(a) { if (a > 0.9999) return 1.3591; const ti = a / (1 - a) * Math.log(1 / a); return 1 / (1 - gT2(1, a, 1, ti)); }
+function alphaFromRatio(r) { let lo = 1e-4, hi = 1; if (r <= ratioAlpha(lo)) return lo; if (r >= 1.3591) return NaN; for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; if (ratioAlpha(m) < r) lo = m; else hi = m; } return (lo + hi) / 2; }
+function mount4(root) {
+  const S = S4, ctl = h('div'), out = h('div'), pl = plotBox('Réponse indicielle d’un système apériodique', { h: 360, yl: 's(t) / KA', label: 'Méthodes graphiques' }, 'grab');
+  const METH = { m1: 'Méthode 1 : T₂ dominante (tangente après l’inflexion)', m2: 'Méthode 2 : tangente au point d’inflexion', m3: 'Méthode 3 : T_A / T_B et abaque', m5: 'Méthode 5 : tangente après 63 %' };
+  function draw() {
+    const a = Math.min(S.T1, S.T2), b = Math.max(S.T1, S.T2), f = t => gT2(1, a, b, t), tm = xAxis(6.2 * b + a).xmax, ya = yAxis(0, 1.15), inf = inflect(f, tm), t63 = timeAt(f, 0.632, tm);
+    pl.P.set(Object.assign({ xmin: 0, xmax: tm, xt: xAxis(tm).xt }, ya));
+    const needP = S.meth === 'm1' || S.meth === 'm5', tpmin = S.meth === 'm1' ? inf.ti : t63; S.tp = clamp(S.tp, tpmin, tm * 0.8);
+    let est = null, steps = [], ok = true, warn = '';
+    const tgI = tangentAt(f, inf.ti, 1, tm), tgP = tangentAt(f, S.tp, 1, tm);
+    if (S.meth === 'm1') { const T2e = tgP.tAsym - S.tp, s3 = f(S.tp), T1e = T2e * (1 - EXP(-S.tp / T2e) / (1 - s3)); est = { T1: T1e, T2: T2e }; steps = ['Étape 1 : tangente en P (t<sub>P</sub> = ' + nfx(S.tp, 1) + ' s, après l’inflexion).', 'Étape 2 : intersection avec l’asymptote : T₂ ≈ ' + nfx(T2e, 2) + ' s.', 'Étape 3 : t₃ = t<sub>P</sub>, s(t₃) = ' + nfx(s3, 3) + ' donc T₁ ≈ T₂·(1 − e<sup>−t₃/T₂</sup> / (1 − s(t₃)/KA)) = ' + nfx(T1e, 2) + ' s.']; if (b / a < 4) warn = 'T₁ et T₂ sont proches : l’hypothèse T₁ ≪ T₂ n’est pas vérifiée, la méthode devient peu précise.'; }
+    if (S.meth === 'm2') { est = { T1: tgI.tAxis, T2: tgI.tAsym - tgI.tAxis }; steps = ['Étape 1 : tangente au point d’inflexion (t = ' + nfx(inf.ti, 2) + ' s).', 'Étape 2 : intersection avec l’axe des abscisses : T₁ ≈ ' + nfx(est.T1, 2) + ' s.', 'Étape 3 : intersection avec l’asymptote : T₁ + T₂ ≈ ' + nfx(tgI.tAsym, 2) + ' s, soit T₂ ≈ ' + nfx(est.T2, 2) + ' s.']; if (b / a < 4) warn = 'T₁ et T₂ sont proches : la méthode 2 suppose T₁ ≪ T₂.'; }
+    if (S.meth === 'm5') { const T2e = tgP.tAsym - S.tp; est = { T1: t63 - T2e, T2: T2e }; steps = ['Étape 1 : tangente en P, pris après 63 % de la valeur finale (t<sub>P</sub> = ' + nfx(S.tp, 1) + ' s).', 'Étape 2 : intersection avec l’asymptote : T₂ ≈ ' + nfx(T2e, 2) + ' s.', 'Étape 3 : temps pour atteindre 63 % : t₆₃ = ' + nfx(t63, 2) + ' s ≈ T₁ + T₂, donc T₁ ≈ ' + nfx(est.T1, 2) + ' s.']; if (b / a < 3) warn = 'T₁ et T₂ sont trop proches pour que le premier ordre s’applique à partir de 63 %.'; }
+    let m3 = null;
+    if (S.meth === 'm3') { const TA = tgI.tAsym - tgI.tAxis, TB = tgI.tAsym - inf.ti, r = TA / TB, al = alphaFromRatio(r); m3 = { TA, TB, r, al }; if (isNaN(al)) { ok = false; warn = 'T_A / T_B = ' + nfx(r, 3) + ' dépasse 1,36 : la méthode 3 n’est pas applicable (m < 1 ou plus de deux constantes).'; } else { const T = TB / (1 + al); est = { T1: al * T, T2: T }; m3.T = T; m3.m = (1 + al) / (2 * SQ(al)); m3.w0 = 1 / (T * SQ(al)); steps = ['Étape 1 : tangente au point d’inflexion : T_A = ' + nfx(TA, 2) + ' s, T_B = ' + nfx(TB, 2) + ' s.', 'Étape 2 : T_A / T_B = ' + nfx(r, 3) + ' ; on lit dans l’abaque α = ' + nfx(al, 3) + '.', 'Étape 3 : T = T_B / (1 + α) = ' + nfx(T, 2) + ' s, donc T₁ = αT = ' + nfx(al * T, 2) + ' s ; m = (1 + α) / (2√α) = ' + nfx(m3.m, 2) + ' ; ω₀ = 1 / (T√α) = ' + nfx(m3.w0, 3) + ' rad/s.']; } }
+    if (est && (est.T1 <= 0.001 || est.T2 <= 0.001)) { est.T1 = Math.max(est.T1, 0.001); warn = (warn ? warn + ' ' : '') + 'T₁ estimée négative ou nulle : on la ramène à une valeur très petite.'; }
+    const g = est ? (t => est.T1 < 0.01 * est.T2 ? g1(1, est.T2, t) : gT2(1, est.T1, est.T2, t)) : null;
+    pl.P.draw = P => {
+      P.seg(0, 1, tm, 1, COL.green, 1.4, [6, 4]); P.txt('KA = 1', tm, 1, COL.green, 'right', 12, -4, -9);
+      if (S.shown && g) P.fn(g, COL.blue, 2.6, [7, 4]);
+      P.fn(f, COL.ink, 2.8);
+      const tgx = (tg, c) => { const x2 = tg.tAsym + (tg.tAsym - tg.t0) * 0.12, x1 = Math.min(tg.tAxis, tg.t0) - tm * 0.03; P.seg(x1, tg.s0 + tg.sl * (x1 - tg.t0), x2, tg.s0 + tg.sl * (x2 - tg.t0), c, 1.8); P.seg(tg.tAsym, 0, tg.tAsym, 1, c, 1.2, [3, 3]); };
+      if (S.meth === 'm2' || S.meth === 'm3') { tgx(tgI, COL.red); P.dot(inf.ti, inf.si, COL.green, 6); P.txt('inflexion', inf.ti, inf.si, COL.green, 'left', 12, 9, 12); P.seg(tgI.tAxis, 0, tgI.tAxis, 0.12, COL.red, 1.2, [3, 3]);
+        if (S.meth === 'm2') { P.arrow(0, tgI.tAxis, 0.05, COL.violet, 'T₁'); P.arrow(0, tgI.tAsym, 0.12, COL.orange, 'T₁+T₂'); }
+        else { P.arrow(tgI.tAxis, tgI.tAsym, 0.05, COL.violet, 'T_A'); P.seg(inf.ti, 0, inf.ti, inf.si, COL.orange, 1.2, [3, 3]); P.arrow(inf.ti, tgI.tAsym, 0.14, COL.orange, 'T_B'); } }
+      if (S.meth === 'm1' || S.meth === 'm5') { tgx(tgP, COL.red); P.arrow(S.tp, tgP.tAsym, 0.06, COL.violet, 'T₂'); P.seg(S.tp, 0, S.tp, tgP.s0, COL.red, 1.2, [3, 3]); if (S.meth === 'm5') { P.seg(0, 0.632, t63, 0.632, COL.orange, 1.2, [4, 3]); P.seg(t63, 0, t63, 0.632, COL.orange, 1.2, [4, 3]); P.dot(t63, 0.632, COL.orange, 5); P.arrow(0, t63, 0.16, COL.orange, 'T₁+T₂'); } else { P.seg(0, tgP.s0, S.tp, tgP.s0, COL.orange, 1.2, [4, 3]); P.txt('s(t₃) = ' + nfx(tgP.s0, 2), 0, tgP.s0, COL.orange, 'left', 12, 6, -9); } P.dot(S.tp, tgP.s0, COL.red, 7); }
+    };
+    pl.P.box = null; pl.P.drag = needP ? (p => { S.tp = clamp(p.x, tpmin, tm * 0.8); draw(); }) : null;
+    pl.box.classList.toggle('grab', needP);
+    out.innerHTML = '';
+    out.append(h('div', { class: 'blk' }, h('b', null, METH[S.meth]), h('ol', { class: 'steps', style: 'margin:6px 0 0' }, steps.map(s => h('li', { html: s })))));
+    if (est && ok) { const err = rmsErr(f, g, tm, 1); out.append(kvTable([{ c: ['T₁', nfx(a, 2) + ' s', nfx(est.T1, 2) + ' s'] }, { c: ['T₂', nfx(b, 2) + ' s', nfx(est.T2, 2) + ' s'] }, { c: ['Écart moyen des courbes', '', nfx(err, 2) + ' % de KA'], hl: true }], ['Constante', 'Réelle', 'Identifiée']));
+      if (S.meth === 'm3') out.append(stats([['α', nfx(m3.al, 3)], ['T = T_B/(1+α)', nfx(m3.T, 2) + ' s'], ['m', nfx(m3.m, 2)], ['ω₀', nfx(m3.w0, 3) + ' rad/s']]));
+      out.append(verdict((warn ? warn + ' ' : '') + 'Le modèle identifié (bleu pointillé) ' + (err < 2 ? 'colle à la courbe réelle.' : err < 6 ? 'reste proche de la courbe réelle.' : 's’écarte nettement de la courbe réelle.'), warn ? 'warn' : err < 6 ? 'yes' : 'warn')); }
+    else out.append(verdict(warn || 'Pas de résultat.', 'no'));
+    pl.P.redraw();
+  }
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Méthode'), chipsRow([['m1', 'Méthode 1'], ['m2', 'Méthode 2'], ['m3', 'Méthode 3'], ['m5', 'Méthode 5']], S.meth, v => { S.meth = v; build(); draw(); }, 'Méthode'))));
+    ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'p4a', label: 'T₁ réelle', min: 0.2, max: 8, step: 0.1, val: S.T1, d: 1, unit: 's', on: v => { S.T1 = v; draw(); } }), sld({ id: 'p4b', label: 'T₂ réelle', min: 1, max: 20, step: 0.5, val: S.T2, d: 1, unit: 's', on: v => { S.T2 = v; draw(); } }), tgl('Afficher le modèle identifié', S.shown, v => { S.shown = v; draw(); })));
+  }
+  root.append(h('h2', null, 'Second ordre apériodique (m ≥ 1) : méthodes graphiques'),
+    h('p', { html: 'Un système apériodique a deux constantes de temps <i>T₁</i> et <i>T₂</i> : <i>H(p) = K / ((1 + T₁p)(1 + T₂p))</i>. Réglez le système réel avec les curseurs, choisissez une méthode du cours et regardez la <b>construction graphique</b> se tracer. Pour les méthodes 1 et 5, <b>déplacez le point P</b> : le résultat dépend de son choix.' }),
+    ctl, pl.box, pleg([[COL.ink, 'réponse réelle'], [COL.blue, 'modèle identifié', 'd'], [COL.red, 'tangente'], [COL.green, 'asymptote', 'd']]), out);
+  build(); draw();
+}
+WORKSHOPS.push({ id: 's4', title: 'Apériodique : graphique', hint: 'Choisissez T₁ et T₂, puis appliquez les méthodes 1, 2, 3 ou 5 : la construction se trace sur la courbe.', mount: mount4, leave: stopAll, reset: () => { S4 = S4d(); } });
+
+/* ================= Atelier 5 : méthode analytique ================= */
+const S5d = () => ({ T1: 2, T2: 5, T: 2, t1: 6, t2: 12, noise: 0, seed: 3 });
+let S5 = S5d();
+function mount5(root) {
+  const S = S5, ctl = h('div'), out = h('div'), pl = plotBox('Points exploités par la méthode analytique', { h: 330, yl: 's(t)', label: 'Méthode analytique' });
+  function solve() {
+    const f = t => gT2(1, S.T1, S.T2, t), r = rng(S.seed), nz = Array.from({ length: 6 }, () => gauss(r) * S.noise / 100);
+    const ts = [S.t1, S.t2, S.t1 - S.T, S.t2 - S.T, S.t1 - 2 * S.T, S.t2 - 2 * S.T], names = ['t₁', 't₂', 't₁ − T', 't₂ − T', 't₁ − 2T', 't₂ − 2T'];
+    const bad = ts.findIndex(t => t < 0);
+    const res = { f, ts, names, ok: true };
+    if (bad >= 0) { res.ok = false; res.msg = names[bad] + ' est négatif : on ne connaît pas la courbe avant t = 0. Diminuez T ou augmentez t₁ et t₂.'; return res; }
+    if (S.t2 <= S.t1) { res.ok = false; res.msg = 'Il faut t₂ > t₁.'; return res; }
+    res.s = ts.map((t, i) => f(t) + nz[i]); res.z = res.s.map(v => 1 - v);
+    const z = res.z; res.x1 = z[2] / z[0]; res.x2 = z[3] / z[1]; res.y1 = z[4] / z[0]; res.y2 = z[5] / z[1];
+    if (Math.abs(res.x2 - res.x1) < 1e-9) { res.ok = false; res.msg = 'x₂ = x₁ : la pente de la droite est indéterminée. Choisissez t₁ et t₂ plus écartés.'; return res; }
+    const a = (res.y2 - res.y1) / (res.x2 - res.x1), b = res.y2 - a * res.x2; res.a1 = -a; res.a2 = -b; res.D = res.a1 * res.a1 - 4 * res.a2;
+    if (res.D < 0) { res.ok = false; res.msg = 'Discriminant négatif (Δ = ' + nfx(res.D, 3) + ') : pas de racines réelles. Les mesures sont trop bruitées ou mal choisies.'; return res; }
+    res.X1 = (-res.a1 - SQ(res.D)) / 2; res.X2 = (-res.a1 + SQ(res.D)) / 2;
+    if (res.X1 <= 1 || res.X2 <= 1) { res.ok = false; res.msg = 'Une racine X est ≤ 1 (X₁ = ' + nfx(res.X1, 3) + ', X₂ = ' + nfx(res.X2, 3) + ') : T / ln X n’a pas de sens. Les mesures sont trop imprécises.'; return res; }
+    const Ta = S.T / Math.log(res.X1), Tb = S.T / Math.log(res.X2); res.Te = [Math.min(Ta, Tb), Math.max(Ta, Tb)]; res.Ta = Ta; res.Tb = Tb; return res;
+  }
+  function draw() {
+    const R = solve(), a = Math.min(S.T1, S.T2), b = Math.max(S.T1, S.T2), tm = xAxis(Math.max(6 * b, S.t2 * 1.3)).xmax;
+    pl.P.set(Object.assign({ xmin: 0, xmax: tm, xt: xAxis(tm).xt }, yAxis(0, 1.12)));
+    const g = R.ok ? (t => gT2(1, R.Te[0], R.Te[1], t)) : null;
+    pl.P.draw = P => {
+      P.seg(0, 1, tm, 1, COL.green, 1.3, [6, 4]);
+      R.ts.forEach((t, i) => { if (t >= 0 && t <= tm) { const col = i % 2 === 0 ? COL.violet : COL.orange; P.seg(t, 0, t, R.s ? R.s[i] : R.f(t), col, 1.1, [3, 3]); if (R.s) P.dot(t, R.s[i], col, 5); P.txt(R.names[i], t, 0, col, 'center', 11, 0, -9); } });
+      P.fn(R.f, COL.ink, 2.6); if (g) P.fn(g, COL.blue, 2.4, [7, 4]);
+    };
+    out.innerHTML = '';
+    if (!R.ok) { if (R.s === undefined) { /* pas de valeurs */ } out.append(verdict(R.msg, 'no')); pl.P.redraw(); return; }
+    out.append(kvTable([
+      { c: ['s(t₁) · s(t₂)', nfx(R.s[0], 4), nfx(R.s[1], 4)] }, { c: ['s(t₁−T) · s(t₂−T)', nfx(R.s[2], 4), nfx(R.s[3], 4)] }, { c: ['s(t₁−2T) · s(t₂−2T)', nfx(R.s[4], 4), nfx(R.s[5], 4)] },
+      { c: ['x = z(t−T) / z(t)', nfx(R.x1, 4), nfx(R.x2, 4)] }, { c: ['y = z(t−2T) / z(t)', nfx(R.y1, 4), nfx(R.y2, 4)] }], ['Mesures (z = KA − s)', 'avec t₁', 'avec t₂']));
+    out.append(h('div', { class: 'blk math', html: 'Droite y = −a₁·x − a₂ : <b>a₁ = ' + nfx(R.a1, 3) + '</b>, <b>a₂ = ' + nfx(R.a2, 3) + '</b>.<br>Polynôme X² + a₁X + a₂ = 0 : Δ = ' + nfx(R.D, 3) + ', X₁ = ' + nfx(R.X1, 3) + ', X₂ = ' + nfx(R.X2, 3) + '.<br><b>T₁ (la plus petite) = T / ln X = ' + nfx(R.Te[0], 3) + ' s</b>, <b>T₂ (la plus grande) = T / ln X = ' + nfx(R.Te[1], 3) + ' s</b>' }));
+    const e1 = Math.abs(R.Te[0] - a) / a * 100, e2 = Math.abs(R.Te[1] - b) / b * 100, err = rmsErr(R.f, g, tm, 1);
+    out.append(kvTable([{ c: ['Constante la plus petite', nfx(a, 2) + ' s', nfx(R.Te[0], 2) + ' s', nfx(e1, 1) + ' %'] }, { c: ['Constante la plus grande', nfx(b, 2) + ' s', nfx(R.Te[1], 2) + ' s', nfx(e2, 1) + ' %'] }], ['', 'Réelle', 'Identifiée', 'Erreur relative']));
+    out.append(verdict(S.noise === 0 ? 'Sans bruit, la méthode retrouve exactement T₁ et T₂ : elle est exacte mais délicate. Montez le <b>bruit de mesure</b> à 1 ou 2 % pour voir à quel point elle est sensible aux erreurs de lecture.' : 'Avec ' + nfx(S.noise, 1) + ' % de bruit sur les lectures, l’écart moyen des courbes est de ' + nfx(err, 2) + ' % de KA, mais les constantes de temps peuvent être mal estimées : les différences x₂ − x₁ amplifient le bruit.', S.noise === 0 || e1 + e2 < 15 ? 'yes' : 'warn'));
+    pl.P.redraw();
+  }
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'p5a', label: 'T₁ réelle', min: 0.5, max: 6, step: 0.1, val: S.T1, d: 1, unit: 's', on: v => { S.T1 = v; draw(); } }), sld({ id: 'p5b', label: 'T₂ réelle', min: 1, max: 10, step: 0.1, val: S.T2, d: 1, unit: 's', on: v => { S.T2 = v; draw(); } }), sld({ id: 'p5n', label: 'bruit de mesure', min: 0, max: 3, step: 0.1, val: S.noise, d: 1, unit: '%', on: v => { S.noise = v; draw(); } })));
+    ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'p5T', label: 'T (pas)', min: 0.5, max: 8, step: 0.1, val: S.T, d: 1, unit: 's', on: v => { S.T = v; draw(); } }), sld({ id: 'p5t1', label: 't₁', min: 1, max: 20, step: 0.5, val: S.t1, d: 1, unit: 's', on: v => { S.t1 = v; draw(); } }), sld({ id: 'p5t2', label: 't₂', min: 2, max: 30, step: 0.5, val: S.t2, d: 1, unit: 's', on: v => { S.t2 = v; draw(); } }),
+      h('button', { class: 'btn', type: 'button', onclick: () => { Object.assign(S, { T1: 2, T2: 5, T: 2, t1: 6, t2: 12, noise: 0 }); build(); draw(); } }, 'Exemple du cours'), h('button', { class: 'btn', type: 'button', onclick: () => { S.seed++; draw(); } }, 'Nouveau tirage du bruit')));
+  }
+  root.append(h('h2', null, 'Méthode analytique (méthode 4)'),
+    h('p', { html: 'On pose <i>z(t) = KA − s(t)</i> et on prélève la réponse en six instants : <i>t₁, t₁−T, t₁−2T, t₂, t₂−T, t₂−2T</i>. Les rapports <i>x</i> et <i>y</i> se placent sur une droite dont on tire <i>a₁</i> et <i>a₂</i>, puis les racines de <i>X² + a₁X + a₂ = 0</i> donnent <i>T₁ = T / ln X₁</i> et <i>T₂ = T / ln X₂</i>. Réglez les instants de mesure et le bruit.' }),
+    ctl, pl.box, pleg([[COL.ink, 'réponse réelle'], [COL.blue, 'modèle identifié', 'd'], [COL.violet, 'mesures en t₁', 'o'], [COL.orange, 'mesures en t₂', 'o']]), out);
+  build(); draw();
+}
+WORKSHOPS.push({ id: 's5', title: 'Méthode analytique', hint: 'Choisissez T, t₁ et t₂ : la méthode calcule T₁ et T₂ sans tracé. Ajoutez du bruit pour tester sa robustesse.', mount: mount5, leave: stopAll, reset: () => { S5 = S5d(); } });
+
+/* ================= Atelier 6 : modèles avec retard ================= */
+const S6d = () => ({ Ta: 0.2, Tb: 0.5, Tc: 1, tau0: 0, K: 1, meth: 'strejc', cur: null });
+let S6 = S6d();
+const M6 = { strejc: 'Strejc', sd: 'Strejc-Davoust', broida: 'Broïda', dlf: 'De La Fuente' };
+function mount6(root) {
+  const S = S6, ctl = h('div'), out = h('div'), tab = h('div'), pl = plotBox('Réponse réelle et modèle identifié', { h: 360, yl: 's(t)', label: 'Modèles avec retard' });
+  function analyse() {
+    const Ts = [S.Ta, S.Tb, S.Tc].sort((x, y) => x - y); for (let i = 1; i < 3; i++) if (Ts[i] - Ts[i - 1] < 0.003) Ts[i] = Ts[i - 1] + 0.003;
+    const K = S.K, f = t => gN(K, Ts, t - S.tau0), tm = xAxis(4.8 * (Ts[0] + Ts[1] + Ts[2]) + 1.5 * S.tau0).xmax, inf = inflect(f, tm), tg = tangentAt(f, inf.ti, K, tm);
+    const Tu = tg.tAxis, Tas = tg.tAsym - tg.tAxis, ratio = Tu / Tas, M = {};
+    const n = strejcN(ratio), sp = strejcPar(n); M.strejc = { n, T: Tas / sp.ta, tau: 0, label: 'n = ' + nfx(n, 2) + ', T = ' + nfx(Tas / sp.ta, 3) + ' s' }; M.strejc.g = t => gS(K, M.strejc.n, M.strejc.T, 0, t);
+    let ns = SD_TAB[0]; SD_TAB.forEach(r => { if (r[3] <= ratio + 1e-12) ns = r; }); const Tsd = Tas / ns[1], Tucor = ns[2] * Tsd, tausd = Math.max(0, Tu - Tucor); M.sd = { n: ns[0], T: Tsd, tau: tausd, Tucor, label: 'n = ' + ns[0] + ', T = ' + nfx(Tsd, 3) + ' s, τ = ' + nfx(tausd, 3) + ' s' }; M.sd.g = t => gS(K, M.sd.n, M.sd.T, M.sd.tau, t);
+    const b1 = timeAt(f, 0.28 * K, tm), b2 = timeAt(f, 0.40 * K, tm), Tb = 5.5 * (b2 - b1), taub = Math.max(0, 2.8 * b1 - 1.8 * b2); M.broida = { t1: b1, t2: b2, T: Tb, tau: taub, label: 'T = ' + nfx(Tb, 3) + ' s, τ = ' + nfx(taub, 3) + ' s' }; M.broida.g = t => g1(K, Tb, t - taub);
+    const d1 = timeAt(f, 0.27 * K, tm), d2 = timeAt(f, 0.73 * K, tm), Td = d2 - d1, taud = Math.max(0, 1.31 * d1 - 0.31 * d2); M.dlf = { t1: d1, t2: d2, T: Td, tau: taud, label: 'T = ' + nfx(Td, 3) + ' s, τ = ' + nfx(taud, 3) + ' s' }; M.dlf.g = t => g1(K, Td, t - taud);
+    Object.keys(M).forEach(k => { M[k].err = rmsErr(f, M[k].g, tm, K); });
+    return { Ts, K, f, tm, inf, tg, Tu, Tas, ratio, M };
+  }
+  function draw() {
+    const A = analyse(), m = A.M[S.meth];
+    pl.P.set(Object.assign({ xmin: 0, xmax: A.tm, xt: xAxis(A.tm).xt }, yAxis(0, A.K * 1.15)));
+    if (S.cur == null) S.cur = A.tm * 0.3; S.cur = clamp(S.cur, 0, A.tm);
+    pl.P.draw = P => {
+      const K = A.K; P.seg(0, K, A.tm, K, COL.green, 1.3, [6, 4]); P.txt('ΔS = KA = ' + nfx(K, 2), A.tm, K, COL.green, 'right', 12, -4, -9);
+      P.fn(m.g, COL.blue, 2.6, [7, 4]); P.fn(A.f, COL.ink, 2.8);
+      if (S.meth === 'strejc' || S.meth === 'sd') { const tg = A.tg, x2 = tg.tAsym + (tg.tAsym - tg.t0) * 0.1, x1 = tg.tAxis - A.tm * 0.03; P.seg(x1, tg.s0 + tg.sl * (x1 - tg.t0), x2, tg.s0 + tg.sl * (x2 - tg.t0), COL.red, 1.8); P.dot(A.inf.ti, A.inf.si, COL.green, 6); P.seg(tg.tAsym, 0, tg.tAsym, K, COL.red, 1.2, [3, 3]); P.arrow(0, tg.tAxis, 0.07 * K, COL.violet, 'Tu'); P.arrow(tg.tAxis, tg.tAsym, 0.07 * K, COL.orange, 'Ta'); }
+      else { const lv = S.meth === 'broida' ? [0.28, 0.40] : [0.27, 0.73], tt = [m.t1, m.t2]; lv.forEach((l, i) => { P.seg(0, l * K, tt[i], l * K, i ? COL.orange : COL.violet, 1.3, [4, 3]); P.seg(tt[i], 0, tt[i], l * K, i ? COL.orange : COL.violet, 1.3, [4, 3]); P.dot(tt[i], l * K, i ? COL.orange : COL.violet, 5); P.txt('t' + (i + 1) + ' = ' + nfx(tt[i], 2), tt[i], 0, i ? COL.orange : COL.violet, 'left', 12, 5, -10); }); }
+      P.seg(S.cur, P.o.ymin, S.cur, P.o.ymax, COL.slate, 1, [3, 3]); P.dot(S.cur, A.f(S.cur), COL.slate, 4.5);
+    };
+    pl.P.hover = p => { if (p) { S.cur = clamp(p.x, 0, A.tm); pl.P.redraw(); const el = $('#cur6'); if (el) el.textContent = 't = ' + nfx(S.cur, 2) + ' s, s = ' + nfx(A.f(S.cur), 3) + ' (' + nfx(A.f(S.cur) / A.K * 100, 1) + ' % de ΔS)'; } };
+    pl.P.drag = (p, ph) => { if (ph !== 'up') pl.P.hover(p); };
+    tab.innerHTML = '';
+    const rows = Object.keys(M6).map(k => ({ hl: k === S.meth, c: [M6[k], A.M[k].n != null ? nfx(A.M[k].n, k === 'strejc' ? 2 : 0) : '1', nfx(A.M[k].T, 3) + ' s', nfx(A.M[k].tau, 3) + ' s', nfx(A.M[k].err, 2) + ' %'] }));
+    tab.append(kvTable(rows, ['Méthode', 'Ordre n', 'T', 'Retard τ', 'Écart moyen']));
+    const best = Object.keys(M6).reduce((a, k) => A.M[k].err < A.M[a].err ? k : a, 'strejc');
+    const how = { strejc: 'Tu = ' + nfx(A.Tu, 3) + ' s, Ta = ' + nfx(A.Tas, 3) + ' s, Tu/Ta = ' + nfx(A.ratio, 3) + ' : le nomogramme (ici calculé) donne n = ' + nfx(m.n, 2) + ', puis T = Ta / (Ta/T).', sd: 'Tu/Ta = ' + nfx(A.ratio, 3) + ' : on retient le plus grand entier n du tableau dont le rapport ne dépasse pas cette valeur, n = ' + m.n + '. Alors T = Ta/(Ta/T) = ' + nfx(m.T, 3) + ' s, Tu corrigé = ' + nfx(m.Tucor, 3) + ' s et τ = Tu − Tu_cor = ' + nfx(m.tau, 3) + ' s.', broida: 't₁ (28 % de ΔS) = ' + nfx(m.t1, 3) + ' s, t₂ (40 %) = ' + nfx(m.t2, 3) + ' s : T = 5,5 (t₂ − t₁) = ' + nfx(m.T, 3) + ' s, τ = 2,8 t₁ − 1,8 t₂ = ' + nfx(2.8 * m.t1 - 1.8 * m.t2, 3) + ' s.', dlf: 't₁ (27 % de ΔS) = ' + nfx(m.t1, 3) + ' s, t₂ (73 %) = ' + nfx(m.t2, 3) + ' s : T = t₂ − t₁ = ' + nfx(m.T, 3) + ' s, τ = 1,31 t₁ − 0,31 t₂ = ' + nfx(1.31 * m.t1 - 0.31 * m.t2, 3) + ' s.' }[S.meth];
+    out.innerHTML = ''; out.append(verdict('<b>' + M6[S.meth] + '.</b> ' + how + ' Meilleur ajustement ici : <b>' + M6[best] + '</b>.', 'yes'));
+    pl.P.redraw();
+  }
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Méthode d’identification'), chipsRow(Object.keys(M6).map(k => [k, M6[k]]), S.meth, v => { S.meth = v; build(); draw(); }, 'Méthode'))));
+    ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'p6a', label: 'T<sub>a</sub>', min: 0.05, max: 2, step: 0.05, val: S.Ta, unit: 's', on: v => { S.Ta = v; draw(); } }), sld({ id: 'p6b', label: 'T<sub>b</sub>', min: 0.05, max: 3, step: 0.05, val: S.Tb, unit: 's', on: v => { S.Tb = v; draw(); } }), sld({ id: 'p6c', label: 'T<sub>c</sub>', min: 0.05, max: 4, step: 0.05, val: S.Tc, unit: 's', on: v => { S.Tc = v; draw(); } }), sld({ id: 'p6d', label: 'retard pur', min: 0, max: 1.5, step: 0.05, val: S.tau0, unit: 's', on: v => { S.tau0 = v; draw(); } }), sld({ id: 'p6K', label: 'K', min: 0.5, max: 3, step: 0.1, val: S.K, d: 1, on: v => { S.K = v; draw(); } })));
+  }
+  root.append(h('h2', null, 'Modèles avec retard : Strejc, Broïda, De La Fuente'),
+    h('p', { html: 'Le système réel est ici un <b>troisième ordre</b> <i>K·e<sup>−τp</sup> / ((1 + T<sub>a</sub>p)(1 + T<sub>b</sub>p)(1 + T<sub>c</sub>p))</i>. Aucune des quatre méthodes ne le connaît : elles le <b>résument</b> par un modèle plus simple (ordre <i>n</i>, constante <i>T</i>, retard <i>τ</i>) à partir de mesures sur la courbe. Changez de méthode et comparez les écarts.' }),
+    ctl, pl.box, h('p', { class: 'small', id: 'cur6' }, 'Survolez la courbe pour lire t et s(t).'), pleg([[COL.ink, 'système réel'], [COL.blue, 'modèle identifié', 'd'], [COL.red, 'tangente à l’inflexion'], [COL.green, 'asymptote', 'd']]), out, tab);
+  build(); draw();
+}
+WORKSHOPS.push({ id: 's6', title: 'Strejc et Broïda', hint: 'Un même système, quatre modèles : comparez les méthodes de Strejc, Strejc-Davoust, Broïda et De La Fuente.', mount: mount6, leave: stopAll, reset: () => { S6 = S6d(); } });
+
+/* ================= Atelier 7 : recalage numérique ================= */
+function NM(f, x0, lo, hi) {
+  const n = x0.length, cl = x => x.map((v, i) => clamp(v, lo[i], hi[i]));
+  let S = [cl(x0)]; for (let i = 0; i < n; i++) { const x = S[0].slice(), d = (hi[i] - lo[i]) * 0.08; x[i] = clamp(x[i] + d, lo[i], hi[i]); if (x[i] === S[0][i]) x[i] -= d; S.push(x); }
+  let F = S.map(f);
+  const mv = (a, b, t) => cl(a.map((v, j) => v + t * (b[j] - v)));
+  return {
+    best() { let k = 0; F.forEach((v, i) => { if (v < F[k]) k = i; }); return { x: S[k], J: F[k] }; },
+    spread() { const m = Math.min(...F), M = Math.max(...F); return M - m; },
+    step() {
+      const idx = [...F.keys()].sort((a, b) => F[a] - F[b]); S = idx.map(i => S[i]); F = idx.map(i => F[i]);
+      const c = Array(n).fill(0); for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) c[j] += S[i][j] / n;
+      const w = S[n], xr = mv(c, w, -1), fr = f(xr);
+      if (fr < F[0]) { const xe = mv(c, w, -2), fe = f(xe); if (fe < fr) { S[n] = xe; F[n] = fe; } else { S[n] = xr; F[n] = fr; } }
+      else if (fr < F[n - 1]) { S[n] = xr; F[n] = fr; }
+      else { const xc = fr < F[n] ? mv(c, xr, 0.5) : mv(c, w, 0.5), fc = f(xc); if (fc < Math.min(fr, F[n])) { S[n] = xc; F[n] = fc; } else { for (let i = 1; i <= n; i++) { S[i] = mv(S[0], S[i], 0.5); F[i] = f(S[i]); } } }
+      return this.best();
+    }
+  };
+}
+const DS7 = { ap: { name: 'Apériodique (m > 1)', t: [0.98, 8.19, 1.19, 6.82, 0.3], x0: [0.9, 8, 0.7, 5, -0.5] }, ps: { name: 'Pseudo-périodique (m < 1)', t: [0.99, 9.57, 0.55, 6.65, 0.0], x0: [0.9, 8, 0.7, 5, -0.5] } };
+const mod7 = (x, t) => g2(x[1], x[2], x[3], t - x[0]) + x[4];
+const S7d = () => ({ ds: 'ap', x: null, run: false, it: 0, J0: null, hist: [] });
+let S7 = S7d();
+function mount7(root) {
+  const S = S7, ctl = h('div'), sl = h('div'), out = h('div'), pl = plotBox('Mesures et modèle', { h: 340, xl: 't (s)', yl: 's(t)', label: 'Recalage de modèle' });
+  const data = () => { const d = DS7[S.ds], r = rng(S.ds === 'ap' ? 21 : 22), pts = []; for (let i = 1; i <= 29; i++) { const t = i * 0.1; pts.push([t, mod7(d.t, t) + 0.12 * gauss(r)]); } return pts; };
+  let pts = data(), stopRun = null, nm = null;
+  const J = x => pts.reduce((a, p) => a + (p[1] - mod7(x, p[0])) ** 2, 0);
+  const lo = [0.3, 1, 0.1, 0.5, -1.5], hi = [2, 15, 3, 20, 1.5], NAMES = ['retard τ', 'K', 'm', 'ω₀', 'offset'];
+  function init() { pts = data(); S.x = DS7[S.ds].x0.slice(); S.it = 0; S.hist = []; S.J0 = J(S.x); if (stopRun) stopRun(); stopRun = null; S.run = false; nm = null; }
+  const sliders = [];
+  function draw(skipSl) {
+    const ymax = S.ds === 'ap' ? 10 : 12;
+    pl.P.set({ xmin: 0, xmax: 3, xt: 0.5, ymin: -1, ymax, yt: 2, fx: v => nf(v, 1), fy: v => nf(v, 0) });
+    pl.P.draw = P => { P.fn(t => mod7(DS7[S.ds].x0, t), COL.red, 2.2, null, 0, 3); P.pts(pts, COL.slate, 3.2); P.fn(t => mod7(S.x, t), COL.ink, 2.8, null, 0, 3); };
+    if (!skipSl) { sl.innerHTML = ''; sl.append(h('div', { class: 'ctrl' }, [0, 1, 2, 3, 4].map(i => { const s = sld({ id: 'p7' + i, label: NAMES[i], min: lo[i], max: hi[i], step: i === 2 ? 0.01 : 0.01, val: S.x[i], d: 2, on: v => { S.x[i] = v; draw(true); } }); sliders[i] = s; return s; }))); }
+    else sliders.forEach((s, i) => s && s.set(S.x[i]));
+    const j = J(S.x), rm = SQ(j / pts.length);
+    out.innerHTML = '';
+    out.append(stats([['Critère J = Σ (mesure − modèle)²', nfx(j, 3)], ['Écart quadratique moyen', nfx(rm, 3)], ['J avant recalage', nfx(S.J0, 1)], ['Itérations', String(S.it)]]));
+    const bar = Math.min(100, Math.max(2, (1 - Math.log(j / 1) / Math.log(S.J0 / 1)) * 100)); // progression indicative
+    const best = S.it > 0 && S.it < 5000 && !S.run;
+    const tr = DS7[S.ds].t;
+    out.append(verdict(S.run ? 'Recalage en cours… le modèle noir se rapproche des mesures.' : j < 1.2 ? 'Bon ajustement : J est de l’ordre du bruit de mesure (σ = 0,12 donne J ≈ ' + nfx(0.12 * 0.12 * pts.length, 2) + '). Valeurs de référence : τ = ' + nfx(tr[0], 2) + ', K = ' + nfx(tr[1], 2) + ', m = ' + nfx(tr[2], 2) + ', ω₀ = ' + nfx(tr[3], 2) + ', offset = ' + nfx(tr[4], 2) + '.' : 'Réglez les curseurs à la main pour faire descendre J, ou laissez l’ordinateur le faire. Le modèle rouge est le point de départ de l’algorithme.', j < 1.2 ? 'yes' : ''));
+    pl.P.redraw();
+  }
+  function auto() {
+    if (S.run) { if (stopRun) stopRun(); stopRun = null; S.run = false; draw(true); build(); return; }
+    nm = NM(J, S.x.slice(), lo, hi); S.run = true; build();
+    let frames = 0; const stop = () => { S.run = false; cancelAnimationFrame(raf); TIMERS.delete(stop); };
+    let raf = 0; const loop = () => { if (!S.run) return; for (let k = 0; k < 4; k++) { const b = nm.step(); S.x = b.x.slice(); S.it++; } frames++; draw(true); if (nm.spread() < 1e-7 || S.it > 1200) { stop(); stopRun = null; build(); draw(true); return; } raf = requestAnimationFrame(loop); };
+    stopRun = stop; TIMERS.add(stop); raf = requestAnimationFrame(loop);
+  }
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Jeu de mesures'), chipsRow(Object.keys(DS7).map(k => [k, DS7[k].name]), S.ds, v => { S.ds = v; init(); build(); draw(); }, 'Jeu de mesures')),
+      h('button', { class: 'btn pri', type: 'button', onclick: auto }, S.run ? '■ Arrêter' : '▶ Recaler automatiquement'),
+      h('button', { class: 'btn', type: 'button', onclick: () => { init(); build(); draw(); } }, 'Revenir au modèle de départ')));
+  }
+  root.append(h('h2', null, 'Recalage numérique d’un modèle (méthode 10)'),
+    h('p', { html: 'On dispose de <b>mesures</b> (croix) d’un système du second ordre avec retard et décalage. Le <b>recalage</b> cherche les cinq paramètres <i>(τ, K, m, ω₀, offset)</i> qui minimisent <i>J = Σ(mesure − modèle)²</i>. Essayez d’abord à la main avec les curseurs, puis lancez l’algorithme (Nelder-Mead) et regardez le modèle converger.' }),
+    ctl, pl.box, pleg([[COL.slate, 'points de mesure', 'o'], [COL.red, 'modèle avant recalage'], [COL.ink, 'modèle courant']]), sl, out);
+  if (!S.x) init(); else pts = data();
+  build(); draw();
+}
+WORKSHOPS.push({ id: 's7', title: 'Recalage numérique', hint: 'Ajustez le modèle à la main, puis laissez l’algorithme minimiser l’écart avec les mesures.', mount: mount7, leave: stopAll, reset: () => { S7 = S7d(); } });
+
+/* ================= Atelier 8 : oscillations libres ================= */
+const S8d = () => ({ m: 1, k: 100, v: 1, k1: 1, N: 4, cur: 0, meas: null });
+let S8 = S8d();
+function mount8(root) {
+  const S = S8, ctl = h('div'), out = h('div'), reg = h('div'), ctl2 = h('div');
+  const spring = plotBox('Système masse-ressort-amortisseur', { h: 150, xmin: -2.4, xmax: 2.4, ymin: 0, ymax: 1, xt: 1, yt: 1, ml: 10, mr: 10, mt: 6, mb: 6, grid: false, xl: '', fx: () => '', fy: () => '', label: 'Animation du ressort' });
+  const tr = plotBox('Position x(t) après lâcher à x(0) = X₀', { h: 300, yl: 'x(t) / X₀', label: 'Oscillations libres' }, 'grab');
+  const par = () => { const w0 = SQ(S.k / S.m), z = S.v / (2 * SQ(S.k * S.m)), wn = w0 * SQ(Math.max(1e-6, 1 - z * z)); return { w0, z, wn, Tn: 2 * PI / wn }; };
+  const xf = (z, w0, wn) => t => t < 0 ? 1 : EXP(-z * w0 * t) * (Math.cos(wn * t) + z * w0 / wn * Math.sin(wn * t));
+  let tm = 5;
+  function draw() {
+    const p = par(); tm = xAxis(clamp(4.5 / (p.z * p.w0), 6 * p.Tn, 40 * p.Tn)).xmax; if (p.z >= 1) tm = xAxis(5 / p.w0).xmax;
+    S.cur = clamp(S.cur, 0, tm); const f = xf(Math.min(p.z, 0.999), p.w0, p.wn);
+    const kmax = Math.floor(tm / p.Tn); S.k1 = clamp(S.k1, 0, Math.max(0, kmax - 1)); const Nmax = Math.max(1, kmax - S.k1); S.N = clamp(S.N, 1, Nmax);
+    tr.P.set({ xmin: 0, xmax: tm, xt: xAxis(tm).xt, ymin: -1, ymax: 1, yt: 0.5, fx: v => nf(v, 2) });
+    const t1 = S.k1 * p.Tn, t2 = (S.k1 + S.N) * p.Tn, s1 = f(t1), s2 = f(t2);
+    tr.P.draw = P => {
+      P.seg(0, 0, tm, 0, COL.soft, 1);
+      P.fn(t => EXP(-p.z * p.w0 * t), COL.soft, 1.3, [5, 4]); P.fn(t => -EXP(-p.z * p.w0 * t), COL.soft, 1.3, [5, 4]);
+      P.fn(f, COL.ink, 2.4);
+      for (let k = 0; k * p.Tn <= tm; k++) P.dot(k * p.Tn, f(k * p.Tn), (k === S.k1 || k === S.k1 + S.N) ? COL.red : COL.soft, (k === S.k1 || k === S.k1 + S.N) ? 6 : 3.5, false);
+      if (t2 <= tm) { P.seg(t1, s1, t1, 0, COL.red, 1.2, [3, 3]); P.seg(t2, s2, t2, 0, COL.red, 1.2, [3, 3]); P.arrow(t1, t2, -0.12, COL.red, 'N·T = ' + nfx(t2 - t1, 2) + ' s'); P.txt('s(T₁)', t1, s1, COL.red, 'left', 11.5, 7, -8); P.txt('s(T₂)', t2, s2, COL.red, 'left', 11.5, 7, -8); }
+      P.seg(S.cur, -1, S.cur, 1, COL.blue, 1.2, [4, 3]); P.dot(S.cur, f(S.cur), COL.blue, 5);
+    };
+    spring.P.draw = P => {
+      const c = f(S.cur) * 0.9, bx = c + 0.5, bl = bx - 0.45, wl = -2.25; P.seg(wl, 0.15, wl, 0.85, COL.slate, 4);
+      const n = 16, pts = [[wl, 0.62]]; for (let i = 0; i < n; i++) pts.push([wl + (bl - wl) * (i + 0.5) / n, 0.62 + (i % 2 ? -0.1 : 0.1)]); pts.push([bl, 0.62]); P.line(pts, COL.slate, 2);
+      P.seg(wl, 0.28, bl - 0.35, 0.28, COL.slate, 2); P.seg(bl - 0.35, 0.2, bl - 0.35, 0.36, COL.slate, 2); P.seg(bl - 0.55, 0.28, bl, 0.28, COL.slate, 2);
+      const x1 = bl, x2 = bl + 0.9; P.line([[x1, 0.15], [x2, 0.15], [x2, 0.85], [x1, 0.85], [x1, 0.15]], COL.blue, 2.4);
+      P.txt('m', (x1 + x2) / 2, 0.5, COL.blue, 'center', 15); P.txt('k', wl + 0.9, 0.9, COL.slate, 'center', 13); P.txt('v', wl + 0.9, 0.1, COL.slate, 'center', 13);
+      P.seg(0.5 - 0.45 + 0.9 * 0 + 0.45 - 0.9 * 0, 0.02, 0.5, 0.02, COL.soft, 1);
+    };
+    const scrub = q => { if (q) { S.cur = clamp(q.x, 0, tm); tr.P.redraw(); spring.P.redraw(); } };
+    tr.P.hover = scrub; tr.P.drag = (q, ph) => { if (ph !== 'up') scrub(q); };
+    out.innerHTML = '';
+    const valid = p.z < 0.2 && kmax >= 2, ratio = s1 / s2, zest = Math.log(ratio) / (2 * PI * S.N), West = 2 * PI / ((t2 - t1) / S.N);
+    out.append(stats([['ω₀ = √(k/m)', nfx(p.w0, 2) + ' rad/s'], ['z = v / (2√(km))', nfx(p.z, 3)], ['Pseudo-période mesurée', nfx(p.Tn, 3) + ' s'], ['s(T₁) / s(T₂)', t2 <= tm && isFinite(ratio) ? nfx(ratio, 3) : '—'], ['z identifié = ln(s(T₁)/s(T₂)) / (2πN)', t2 <= tm && isFinite(zest) ? nfx(zest, 4) : '—'], ['ω₀ ≈ ω identifié', t2 <= tm ? nfx(West, 3) + ' rad/s' : '—']]));
+    out.append(h('p', null, 'Validité : ', h('span', { class: 'badge ' + (p.z <= 0.1 ? 'ok' : p.z < 0.2 ? 'warn' : 'no') }, p.z <= 0.1 ? 'z ≤ 0,1 : plus de 5 oscillations, la méthode s’applique' : p.z < 0.2 ? 'z entre 0,1 et 0,2 : peu d’oscillations, précision réduite' : 'z trop grand : trop peu d’oscillations visibles')));
+    out.append(verdict(p.z < 1 ? 'Le décrément logarithmique relie deux sommets séparés de <b>N</b> pseudo-périodes : <b>z = ln(s(T₁)/s(T₂)) / (2πN)</b>. Prendre N plus grand rend le calcul plus précis car le rapport s(T₁)/s(T₂) s’écarte davantage de 1. Z réel : ' + nfx(p.z, 4) + '.' : 'Système suramorti : il n’oscille plus, cette méthode ne s’applique pas.', p.z < 0.2 ? 'yes' : 'warn'));
+    spring.P.redraw(); tr.P.redraw();
+    // section masses ajoutées
+    reg.innerHTML = '';
+    if (S.meas) {
+      const M = S.meas, n = M.mi.length, mx = M.mi.reduce((a, b) => a + b) / n, my = M.y.reduce((a, b) => a + b) / n; let sxx = 0, sxy = 0; M.mi.forEach((x, i) => { sxx += (x - mx) ** 2; sxy += (x - mx) * (M.y[i] - my); }); const a = sxy / sxx, b0 = my - a * mx, kE = 1 / a, mE = kE * b0, vE = 2 * Math.abs(M.z) * SQ(kE * mE);
+      const rp = plotBox('Droite 1/ω₀² en fonction de la masse ajoutée mᵢ', { h: 260, xl: 'mᵢ (kg)', yl: '1/ω₀² (s²)', xmin: 0, xmax: nice(Math.max(...M.mi) * 1.1), xt: nice(Math.max(...M.mi) * 1.1) / 5, ymin: 0, ymax: nice(Math.max(...M.y) * 1.15), yt: nice(Math.max(...M.y) * 1.15) / 5, fx: v => nf(v, 2), fy: v => nf(v, 3), ml: 58, label: 'Régression' });
+      rp.P.draw = P => { P.fn(x => b0 + a * x, COL.blue, 2.4); P.pts(M.mi.map((x, i) => [x, M.y[i]]), COL.red, 5); P.dot(0, b0, COL.green, 5); };
+      reg.append(rp.box, kvTable(M.mi.map((x, i) => ({ c: [nfx(x, 2) + ' kg', nfx(M.w[i], 3) + ' rad/s', nfx(M.y[i], 5) + ' s²'] })), ['Masse ajoutée mᵢ', 'ω₀ mesurée', '1/ω₀²']),
+        kvTable([{ c: ['Raideur k = 1/a', nfx(S.k, 1) + ' N/m', nfx(kE, 1) + ' N/m'] }, { c: ['Masse m = k·b', nfx(S.m, 3) + ' kg', nfx(mE, 3) + ' kg'] }, { c: ['Frottement v = 2z√(km)', nfx(S.v, 3) + ' N·s/m', nfx(vE, 3) + ' N·s/m'] }], ['Paramètre', 'Réel', 'Identifié']));
+      reg.append(verdict('La pente <i>a = 1/k</i> et l’ordonnée à l’origine <i>b = m/k</i> de la droite fournissent <b>k</b> et <b>m</b>. Le frottement vient ensuite du décrément logarithmique : <i>v = 2z√(km)</i>.', 'yes'));
+    } else reg.append(verdict('Cliquez sur « Mesurer avec des masses ajoutées » : on relâche le système avec 5 masses différentes, on mesure ω₀ à chaque fois (avec 0,5 % d’incertitude) et on trace 1/ω₀² en fonction de la masse ajoutée.'));
+  }
+  function measure() { const r = rng(77 + Math.round(S.k + S.m * 10)), p = par(); const mi = [0, 0.25, 0.5, 0.75, 1].map(x => rd(x * S.m, 3)), w = [], y = []; mi.forEach(x => { const m2 = S.m + x, w0 = SQ(S.k / m2), z = S.v / (2 * SQ(S.k * m2)), wn = w0 * SQ(Math.max(1e-6, 1 - z * z)), wm = wn * (1 + 0.005 * gauss(r)); w.push(wm); y.push(1 / (wm * wm)); }); S.meas = { mi, w, y, z: p.z }; draw(); }
+  function build() {
+    ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'p8m', label: 'masse m', min: 0.2, max: 3, step: 0.05, val: S.m, unit: 'kg', on: v => { S.m = v; S.meas = null; draw(); } }), sld({ id: 'p8k', label: 'raideur k', min: 20, max: 300, step: 5, val: S.k, d: 0, unit: 'N/m', on: v => { S.k = v; S.meas = null; draw(); } }), sld({ id: 'p8v', label: 'frottement v', min: 0.02, max: 4, step: 0.02, val: S.v, unit: 'N·s/m', on: v => { S.v = v; S.meas = null; draw(); } })));
+    ctl.append(h('div', { class: 'ctrl' }, sld({ id: 'p8k1', label: 'rang du premier sommet', min: 0, max: 10, step: 1, val: S.k1, d: 0, on: v => { S.k1 = v; draw(); } }), sld({ id: 'p8N', label: 'N (périodes entre les sommets)', min: 1, max: 12, step: 1, val: S.N, d: 0, on: v => { S.N = v; draw(); } }),
+      h('button', { class: 'btn pri', type: 'button', onclick: () => { stopAll(); anim(u => { S.cur = u * tm; tr.P.redraw(); spring.P.redraw(); }, 7000); } }, '▶ Lâcher la masse')));
+  }
+  root.append(h('h2', null, 'Identification en oscillations libres'),
+    h('p', { html: 'On écarte la masse de sa position d’équilibre puis on la <b>relâche</b>. Si l’on voit plus de 5 oscillations (<i>z ≤ 0,1</i>), la <b>décroissance des sommets</b> donne le coefficient d’amortissement <i>z</i> et la <b>période</b> donne <i>ω₀ ≈ ω</i>. Réglez le système, lancez le lâcher, puis choisissez deux sommets.' }),
+    ctl, spring.box, tr.box, pleg([[COL.ink, 'x(t)'], [COL.soft, 'enveloppe e^(−zω₀t)', 'd'], [COL.red, 'sommets utilisés T₁ et T₂', 'o'], [COL.blue, 'instant courant']]), out,
+    h('div', { class: 'sect' }, h('h3', null, 'Identifier k, m et v avec des masses ajoutées'), h('p', { html: 'Comme <i>ω₀ = √(k/(m + mᵢ))</i>, on a <i>1/ω₀² = (m + mᵢ)/k</i> : une droite en <i>mᵢ</i>.' }), h('div', { class: 'ctrl' }, h('button', { class: 'btn pri', type: 'button', onclick: measure }, 'Mesurer avec des masses ajoutées')), reg));
+  build(); draw();
+}
+WORKSHOPS.push({ id: 's8', title: 'Oscillations libres', hint: 'Lâchez la masse, choisissez deux sommets et calculez le décrément logarithmique. Puis identifiez k, m et v.', mount: mount8, leave: stopAll, reset: () => { S8 = S8d(); } });
+
+/* ================= Atelier 9 : chaîne fermée ================= */
+const PRESET9 = [{ K: 1.02, T: [0.9, 0.4, 0.15] }, { K: 2, T: [1, 0.5, 0.25] }, { K: 1.5, T: [0.6, 0.6, 0.3] }];
+const S9d = () => ({ sys: 0, K: 1.02, T: [0.9, 0.4, 0.15], kp1: 0.8, A: 10, kp2: 6, tab: 1, cap: null, seed: 1 });
+let S9 = S9d();
+function simCL(K, T, Kp, A, tm) {
+  const dt = Math.min(0.004, tm / 3000), N = Math.round(tm / dt), a = T[0], b = T[1], c = T[2]; let x = [0, 0, 0]; const out = [[0, 0]];
+  const d = x => { const u = Kp * (A - x[2]); return [(K * u - x[0]) / a, (x[0] - x[1]) / b, (x[1] - x[2]) / c]; };
+  for (let i = 1; i <= N; i++) {
+    const k1 = d(x), k2 = d(x.map((v, j) => v + dt / 2 * k1[j])), k3 = d(x.map((v, j) => v + dt / 2 * k2[j])), k4 = d(x.map((v, j) => v + dt * k3[j]));
+    x = x.map((v, j) => v + dt / 6 * (k1[j] + 2 * k2[j] + 2 * k3[j] + k4[j])); if (i % 2 === 0 || i === N) out.push([i * dt, x[2]]);
+    if (Math.abs(x[2]) > 1e6) break;
+  }
+  return out;
+}
+function peaksOf(y) { const p = []; for (let i = 1; i < y.length - 1; i++) if (y[i][1] > y[i - 1][1] && y[i][1] >= y[i + 1][1]) p.push(y[i]); return p; }
+function nStrejc(KKpc) { if (KKpc <= 1) return NaN; const f = n => 1 / Math.pow(Math.cos(PI / n), n); let lo = 2.0001, hi = 60; if (KKpc > f(lo)) return lo; for (let k = 0; k < 60; k++) { const m = (lo + hi) / 2; if (f(m) > KKpc) lo = m; else hi = m; } return (lo + hi) / 2; }
+function mount9(root) {
+  const S = S9, ctl = h('div'), o1 = h('div'), o2 = h('div'), o3 = h('div');
+  const p1 = plotBox('Essai 1 : réponse en boucle fermée avec un gain Kp faible', { h: 280, yl: 's(t)', label: 'Essai 1' }), p2 = plotBox('Essai 2 : montée progressive du gain Kp', { h: 320, yl: 's(t)', label: 'Essai 2' }), p3 = plotBox('Comparaison avec la réponse indicielle réelle en boucle ouverte', { h: 300, yl: 's(t)', label: 'Comparaison' });
+  const crit = () => { const [a, b, c] = S.T, Kpc = ((a + b) * (b + c) * (c + a) / (a * b * c)) / S.K, wosc = SQ((a + b + c) / (a * b * c)); return { Kpc, wosc, Tosc: 2 * PI / wosc }; };
+  function draw1() {
+    const sumT = S.T[0] + S.T[1] + S.T[2], tm = xAxis(14 * sumT / (1 + S.K * S.kp1) + 4 * sumT).xmax, sim = simCL(S.K, S.T, S.kp1, S.A, tm), yend = sim[sim.length - 1][1], es = S.A - yend, Kh = (S.A - es) / (S.kp1 * es);
+    p1.P.set(Object.assign({ xmin: 0, xmax: tm, xt: xAxis(tm).xt }, yAxis(0, Math.max(S.A * 1.15, Math.max(...sim.map(q => q[1])) * 1.1))));
+    p1.P.draw = P => { P.seg(0, S.A, tm, S.A, COL.green, 1.5, [6, 4]); P.txt('consigne A = ' + nfx(S.A, 0), tm, S.A, COL.green, 'right', 12, -4, -9); P.line(sim, COL.ink, 2.6); P.seg(0, yend, tm, yend, COL.soft, 1.2, [4, 3]); P.seg(tm * 0.85, yend, tm * 0.85, S.A, COL.red, 2); P.txt('εs = ' + nfx(es, 2), tm * 0.85, (yend + S.A) / 2, COL.red, 'right', 12.5, -6); };
+    S.Kh = Kh; o1.innerHTML = '';
+    o1.append(stats([['Écart statique εs lu', nfx(es, 3)], ['K = (A − εs) / (Kp·εs)', nfx(Kh, 3)], ['K réel', nfx(S.K, 3)]]));
+    o1.append(verdict('Le système est <b>naturellement stable</b> (la mesure ne rejoint pas la consigne). Le gain statique identifié est <b>K ≈ ' + nfx(Kh, 2) + '</b> pour une valeur réelle de ' + nfx(S.K, 2) + '. Un gain Kp faible évite d’approcher l’instabilité.', 'yes'));
+    p1.P.redraw();
+  }
+  function draw2() {
+    const cr = crit(), tm = xAxis(clamp(22 * cr.Tosc, 6, 40)).xmax, A = S.A, Kp = S.kp2, rho = Kp / cr.Kpc, sim = simCL(S.K, S.T, Kp, A, tm);
+    const mx = Math.min(Math.max(...sim.map(q => q[1])), 8 * A), mn = Math.max(Math.min(...sim.map(q => q[1])), -6 * A);
+    p2.P.set(Object.assign({ xmin: 0, xmax: tm, xt: xAxis(tm).xt }, yAxis(mn, mx * 1.08)));
+    const pk = peaksOf(sim.filter(q => q[0] > tm * 0.4)), Tm = pk.length >= 2 ? pk[pk.length - 1][0] - pk[pk.length - 2][0] : NaN, sustained = Math.abs(rho - 1) < 0.03;
+    p2.P.draw = P => { P.seg(0, A, tm, A, COL.green, 1.4, [6, 4]); P.line(sim.filter(q => Math.abs(q[1]) < 1e5), sustained ? COL.green : rho > 1 ? COL.red : COL.ink, 2.4); if (pk.length >= 2 && sustained) { const a = pk[pk.length - 2], b = pk[pk.length - 1]; P.arrow(a[0], b[0], a[1] * 0.35 + 0.0, COL.violet, 'T_osc'); P.dot(a[0], a[1], COL.violet, 5); P.dot(b[0], b[1], COL.violet, 5); } };
+    const pos = clamp(rho / 2 * 100, 0, 100);
+    o2.innerHTML = '';
+    o2.append(h('p', null, 'État : ', h('span', { class: 'badge ' + (sustained ? 'ok' : rho > 1 ? 'no' : 'warn') }, sustained ? 'oscillation entretenue : limite de stabilité' : rho > 1 ? 'instable : les oscillations grandissent' : 'stable : les oscillations s’amortissent')));
+    o2.append(stats([['Gain Kp réglé', nfx(Kp, 2)], ['T_osc mesurée (derniers sommets)', isFinite(Tm) ? nfx(Tm, 3) + ' s' : '—'], ['ω_osc = 2π / T_osc', isFinite(Tm) ? nfx(2 * PI / Tm, 2) + ' rad/s' : '—']]));
+    o2.append(h('div', { class: 'ctrl' }, h('button', { class: 'btn pri', type: 'button', onclick: () => { if (!sustained || !isFinite(Tm)) { toast('Réglez Kp jusqu’à obtenir une oscillation entretenue (courbe verte).'); return; } S.cap = { Kpc: Kp, Tosc: Tm }; draw3(); toast('Mesures enregistrées : Kpc = ' + nfx(Kp, 2) + ', T_osc = ' + nfx(Tm, 2) + ' s'); } }, 'Enregistrer Kpc et T_osc'), h('button', { class: 'btn', type: 'button', onclick: () => { stopAll(); S.kp2 = rd(cr.Kpc * 0.3, 2); const k0 = S.kp2, k1 = cr.Kpc; build(); anim(u => { S.kp2 = rd(k0 + (k1 - k0) * u, 2); const s = $('#p9k2'); if (s) { s.value = S.kp2; s.dispatchEvent(new Event('input')); } }, 5000); } }, '▶ Faire monter Kp automatiquement')));
+    o2.append(verdict('Augmentez <b>Kp</b> jusqu’à ce que l’amplitude des oscillations reste constante : le système est alors à la <b>limite de stabilité</b> (marges nulles). Le gain est le gain critique <i>Kpc</i> et la période des oscillations est <i>T_osc</i>.'));
+    p2.P.redraw();
+  }
+  function draw3() {
+    o3.innerHTML = '';
+    if (!S.cap) { o3.append(verdict('Enregistrez d’abord Kpc et T_osc (essai 2), puis revenez ici : les modèles de Strejc et de Broïda se calculent et se comparent au vrai système.')); p3.P.set({ xmin: 0, xmax: 10, ymin: 0, ymax: 1.2, yt: 0.2, xt: 1 }); p3.P.draw = null; p3.P.redraw(); return; }
+    const { Kpc, Tosc } = S.cap, K = S.Kh || S.K, KK = K * Kpc, n = nStrejc(KK), Ts = Tosc * Math.tan(PI / n) / (2 * PI), q = SQ(KK * KK - 1), Tb = Tosc / (2 * PI) * q, tb = Tosc / (2 * PI) * (PI - Math.atan(q));
+    const sumT = S.T[0] + S.T[1] + S.T[2], tm = xAxis(5.5 * sumT + 1).xmax, real = t => gN(S.K, S.T.slice().sort((x, y) => x - y).map((v, i) => v + i * 1e-3), t);
+    const gs = t => K * gP(n, t / Ts), gb = t => g1(K, Tb, t - tb);
+    p3.P.set(Object.assign({ xmin: 0, xmax: tm, xt: xAxis(tm).xt }, yAxis(0, K * 1.2)));
+    p3.P.draw = P => { P.seg(0, K, tm, K, COL.green, 1.2, [6, 4]); P.fn(gs, COL.blue, 2.4); P.fn(gb, COL.orange, 2.4); P.fn(real, COL.ink, 2.8); };
+    const es = rmsErr(real, gs, tm, S.K), eb = rmsErr(real, gb, tm, S.K);
+    o3.append(kvTable([{ c: ['K·Kpc', nfx(KK, 2), '', ''] }, { c: ['Modèle de Strejc', 'n = ' + nfx(n, 2) + ' ; T = ' + nfx(Ts, 3) + ' s', 'τ = 0', nfx(es, 1) + ' %'] }, { c: ['Modèle de Broïda', 'T = ' + nfx(Tb, 3) + ' s', 'τ = ' + nfx(tb, 3) + ' s', nfx(eb, 1) + ' %'] }], ['', 'Paramètres', 'Retard', 'Écart moyen']));
+    o3.append(verdict('Formules : Strejc <i>K·Kpc = 1 / cos<sup>n</sup>(π/n)</i>, <i>T = T_osc·tan(π/n) / 2π</i> ; Broïda <i>T = (T_osc/2π)·√((K·Kpc)² − 1)</i>, <i>τ = (T_osc/2π)(π − atan√((K·Kpc)² − 1))</i>. Ici ' + (es < eb ? '<b>Strejc</b>' : '<b>Broïda</b>') + ' reproduit mieux la réponse réelle.', 'yes'));
+    p3.P.redraw();
+  }
+  function setSys(i) { S.sys = i; S.K = PRESET9[i].K; S.T = PRESET9[i].T.slice(); S.cap = null; const cr = crit(); S.kp2 = rd(cr.Kpc * 0.5, 2); build(); redrawAll(); }
+  function rnd() { const r = rng(1000 + (S.seed++)); S.sys = -1; S.K = rd(0.8 + 1.7 * r(), 2); S.T = [rd(0.4 + 0.9 * r(), 2), rd(0.2 + 0.5 * r(), 2), rd(0.08 + 0.3 * r(), 2)]; S.cap = null; S.kp2 = rd(crit().Kpc * 0.5, 2); build(); redrawAll(); }
+  function redrawAll() { draw1(); draw2(); draw3(); }
+  function build() {
+    const cr = crit(); ctl.innerHTML = '';
+    ctl.append(h('div', { class: 'ctrl' }, h('div', { class: 'fld' }, h('span', null, 'Système inconnu (caché)'), chipsRow([[0, 'Système A'], [1, 'Système B'], [2, 'Système C']], S.sys, v => setSys(v), 'Système')), h('button', { class: 'btn', type: 'button', onclick: rnd }, 'Système au hasard')));
+    o1.parentNode && null;
+    S.rangeMax = Math.max(2, rd(cr.Kpc * 2, 1));
+  }
+  const ess1 = h('div'), ess2 = h('div'), cmp = h('div');
+  function buildCtrl() {
+    ess1.innerHTML = ''; ess1.append(h('div', { class: 'ctrl' }, sld({ id: 'p9k1', label: 'Kp (faible)', min: 0.2, max: 2, step: 0.05, val: S.kp1, on: v => { S.kp1 = v; draw1(); } }), sld({ id: 'p9A', label: 'amplitude A', min: 2, max: 20, step: 1, val: S.A, d: 0, on: v => { S.A = v; redrawAll(); } })));
+    ess2.innerHTML = ''; ess2.append(h('div', { class: 'ctrl' }, sld({ id: 'p9k2', label: 'Kp', min: 0.2, max: S.rangeMax, step: 0.05, val: S.kp2, on: v => { S.kp2 = v; draw2(); } })));
+  }
+  const origBuild = build; build = function () { origBuild(); buildCtrl(); };
+  root.append(h('h2', null, 'Identification temporelle en chaîne fermée'),
+    h('p', { html: 'Quand le système ne peut pas fonctionner seul en boucle ouverte, on le <b>boucle</b> avec un correcteur proportionnel de gain <i>Kp</i>. Deux essais suffisent : (1) un petit <i>Kp</i> pour mesurer le <b>gain statique</b> ; (2) un <i>Kp</i> croissant jusqu’à la <b>limite de stabilité</b>, qui donne le gain critique <i>Kpc</i> et la période <i>T_osc</i>. Le système est caché : à vous de le découvrir.' }),
+    h('div', { class: 'blk' }, h('div', { html: '<svg viewBox="0 0 600 90" width="600" role="img" aria-label="Boucle fermée"><circle cx="70" cy="40" r="14" fill="#fff" stroke="#33475b" stroke-width="2"/><line x1="60" y1="30" x2="80" y2="50" stroke="#33475b" stroke-width="2"/><line x1="80" y1="30" x2="60" y2="50" stroke="#33475b" stroke-width="2"/><text x="6" y="30" font-size="12.5">e(t)</text><line x1="22" y1="40" x2="54" y2="40" stroke="#33475b" stroke-width="2"/><line x1="84" y1="40" x2="150" y2="40" stroke="#33475b" stroke-width="2"/><rect x="150" y="18" width="110" height="44" rx="6" fill="#eef1f5" stroke="#33475b" stroke-width="2"/><text x="205" y="45" text-anchor="middle" font-size="14">Kp (réglable)</text><line x1="260" y1="40" x2="330" y2="40" stroke="#33475b" stroke-width="2"/><rect x="330" y="18" width="130" height="44" rx="6" fill="#dcebf8" stroke="#2e6da4" stroke-width="2"/><text x="395" y="45" text-anchor="middle" font-size="14" font-weight="600" fill="#1b4a76">H(p) inconnue</text><line x1="460" y1="40" x2="560" y2="40" stroke="#33475b" stroke-width="2"/><text x="565" y="45" font-size="12.5">s(t)</text><polyline points="510,40 510,80 70,80 70,54" fill="none" stroke="#33475b" stroke-width="2"/><text x="78" y="70" font-size="11">−</text></svg>' })),
+    ctl, h('h3', null, '1. Essai 1 : gain statique'), ess1, p1.box, o1,
+    h('div', { class: 'sect' }, h('h3', null, '2. Essai 2 : limite de stabilité'), ess2, p2.box, pleg([[COL.ink, 's(t) stable'], [COL.green, 'oscillation entretenue'], [COL.red, 'instable'], [COL.violet, 'T_osc']]), o2),
+    h('div', { class: 'sect' }, h('h3', null, '3. Modèles de Strejc et de Broïda'), p3.box, pleg([[COL.ink, 'système réel (boucle ouverte)'], [COL.blue, 'Strejc'], [COL.orange, 'Broïda']]), o3));
+  build(); redrawAll();
+}
+WORKSHOPS.push({ id: 's9', title: 'Chaîne fermée', hint: 'Bouclez le système, montez le gain jusqu’aux oscillations entretenues, puis identifiez Strejc et Broïda.', mount: mount9, leave: stopAll, reset: () => { S9 = S9d(); } });
+
+/* ---------- activités ---------- */
+const ACT = {
+  s1: { title: 'Signaux d’entrée', level: 'Niveau 1 · Découvrir', time: '15 min', course: 'approches',
+    goal: 'Distinguer l’impulsion, l’échelon et la rampe, et relier la sortie du système à chacune de ces entrées.',
+    steps: ['Choisissez l’échelon avec le premier ordre (K = 2, T = 1,5 s, A = 1). Promenez la souris sur la courbe : vers quelle valeur tend s(t) ?', 'Passez à l’impulsion de Dirac. Comparez la forme de s(t) avec la réponse à l’échelon : que remarquez-vous au départ de la courbe ?', 'Choisissez la rampe : la sortie finit-elle par suivre l’entrée ? Avec quel écart ?', 'Passez au second ordre avec m = 0,3 et refaites les trois essais. Quelle entrée fait le mieux apparaître les oscillations ?'],
+    defi: { q: 'Un premier ordre de gain K = 2 et de constante T = 1,5 s reçoit un échelon A = 3. Quelle est la valeur finale de la sortie et que vaut s(T) ?', a: 'Valeur finale <b>K·A = 6</b>. À t = T, la sortie vaut 63 % de la valeur finale : s(T) ≈ 0,632 × 6 ≈ <b>3,8</b>.' },
+    qcm: [
+      { q: 'Que représente la réponse à une impulsion de Dirac pour un système linéaire ?', o: ['L’intégrale de la réponse indicielle', 'La dérivée de la réponse indicielle', 'La réponse indicielle multipliée par A', 'Une droite'], a: 1, w: 'L’impulsion est la dérivée de l’échelon : la réponse impulsionnelle est la dérivée de la réponse indicielle.' },
+      { q: 'Quelle est la transformée de Laplace d’un échelon d’amplitude A ?', o: ['A', 'A/p', 'A/p²', '1'], a: 1, w: 'E(p) = A/p. L’impulsion donne 1 et la rampe de pente B donne B/p².' },
+      { q: 'Quelle entrée a pour transformée de Laplace B/p² ?', o: ['Une impulsion', 'Un échelon', 'Une rampe de pente B', 'Un sinus'], a: 2, w: 'La rampe e(t) = B·t·u(t) a pour transformée B/p².' },
+      { q: 'Pourquoi l’échelon est-il l’entrée la plus utilisée en identification ?', o: ['Il est simple à produire et la valeur finale donne directement K·A', 'Il ne perturbe jamais le système', 'Il donne directement m', 'L’impulsion n’existe pas en théorie'], a: 0, w: 'Un échelon se réalise facilement (on ferme un interrupteur) et la sortie finale fournit le gain statique.' }] },
+  s2: { title: 'Premier ordre', level: 'Niveau 1 · Découvrir', time: '25 min', course: 'ordre1',
+    goal: 'Maîtriser les propriétés de la réponse indicielle du premier ordre et identifier K et T à partir d’une courbe.',
+    steps: ['Mode « Explorer » : déplacez le point P. Que vaut la distance horizontale entre P et le point où la tangente coupe l’asymptote ? Changez T et vérifiez.', 'Affichez les repères 63 % et 95 % : à quels instants sont-ils atteints ?', 'Affichez la tangente à l’origine : où coupe-t-elle l’asymptote ?', 'Mode « Système mystère » : placez P tôt sur la montée, relevez K̂ et T̂, entrez-les et révélez le système.', 'Recommencez avec P tout près de l’asymptote. Que devient la précision de T̂ ? Pourquoi ?'],
+    defi: { q: 'Pour un échelon A = 2, la sortie se stabilise à 6 et atteint 3,8 à t = 1,5 s. Quels sont K et T ?', a: 'Gain : <b>K = 6 / 2 = 3</b>. 3,8 ≈ 63 % de 6 : <b>T ≈ 1,5 s</b>.' },
+    qcm: [
+      { q: 'Quelle fraction de la valeur finale la sortie atteint-elle à t = T ?', o: ['37 %', '63 %', '95 %', '100 %'], a: 1, w: 's(T) = KA(1 − e⁻¹) ≈ 0,63·KA.' },
+      { q: 'Quel est le temps de réponse à 5 % d’un premier ordre ?', o: ['T', '2T', '3T environ', '5T'], a: 2, w: 's(3T) ≈ 0,95·KA : t_r5% ≈ 3T.' },
+      { q: 'Où la tangente en un point quelconque P (abscisse t) coupe-t-elle l’asymptote finale ?', o: ['En t', 'En t + T', 'En 2t', 'En T'], a: 1, w: 'Propriété caractéristique du premier ordre : l’intersection a lieu en t + T, quel que soit P.' },
+      { q: 'Pourquoi choisir P tôt sur la courbe pour mesurer T ?', o: ['La pente y est forte, donc la tangente est moins sensible au bruit', 'La courbe y est plus lisse', 'T y est plus petit', 'Le gain y est plus précis'], a: 0, w: 'Près de l’asymptote la pente est presque nulle : une petite erreur sur la tangente décale beaucoup l’intersection.' }] },
+  s3: { title: 'Second ordre pseudo-périodique', level: 'Niveau 2 · Comprendre', time: '30 min', course: 'ordre2ps',
+    goal: 'Relier m et ω₀ au premier dépassement et au temps de pic, puis identifier un système du second ordre oscillant.',
+    steps: ['Mode « Explorer » : réglez m = 0,5 et ω₀ = 1. Relevez d, le temps de pic et la pseudo-période. Comparez au cours.', 'Faites varier m de 0,1 à 0,9 : comment évolue d ? Pour quelle valeur de m le dépassement devient-il quasi nul ?', 'Faites varier ω₀ : que change-t-il dans la forme de la courbe ? dans l’échelle de temps ?', 'Mode « Système mystère » : placez le curseur sur le sommet du premier dépassement, puis utilisez ces valeurs. Comparez au système réel.'],
+    defi: { q: 'Un système de gain unitaire dépasse sa valeur finale à 1,2 pour un pic atteint à t = 2 s. Déterminez m et ω₀.', a: 'd = 0,2 donc <b>m = √(ln²d / (ln²d + π²)) ≈ 0,46</b>. T/2 = 2 s donne T = 4 s et <b>ω₀ = 2π / (T√(1 − m²)) ≈ 1,77 rad/s</b>.' },
+    qcm: [
+      { q: 'De quoi dépend le premier dépassement relatif d ?', o: ['De m seulement', 'De ω₀ seulement', 'De m et de ω₀', 'De K'], a: 0, w: 'd = exp(−mπ / √(1 − m²)) : il ne dépend que de m.' },
+      { q: 'Quel est le temps du premier pic ?', o: ['π / ω₀', 'π / (ω₀√(1 − m²))', '2π / ω₀', '3 / (mω₀)'], a: 1, w: 't_pic = T/2 = π/ω, avec la pseudo-pulsation ω = ω₀√(1 − m²).' },
+      { q: 'Quand m augmente (en restant inférieur à 1), le dépassement…', o: ['augmente', 'diminue', 'ne change pas', 'devient négatif'], a: 1, w: 'Plus l’amortissement est fort, plus le dépassement est faible.' },
+      { q: 'Comment obtient-on K lorsque l’échelon a une amplitude A ?', o: ['K = s_max / A', 'K = valeur finale / A', 'K = ω₀ / A', 'K = m·A'], a: 1, w: 'La valeur finale vaut K·A.' }] },
+  s4: { title: 'Apériodique : graphique', level: 'Niveau 2 · Comprendre', time: '35 min', course: 'aperiodique',
+    goal: 'Appliquer les méthodes graphiques 1, 2, 3 et 5 à un système apériodique et repérer leurs limites de validité.',
+    steps: ['Prenez T₁ = 1 s et T₂ = 10 s. Méthode 2 : relevez T₁ et T₂ identifiés. Quelle est l’erreur ?', 'Rapprochez T₁ de T₂ (T₁ = 6 s). Que devient la qualité de la méthode 2 ? Pourquoi ?', 'Méthode 1 : déplacez P. Comment évolue T₁ estimé quand P s’éloigne de l’inflexion ?', 'Méthode 3 : essayez T₁ = 5, T₂ = 10, puis T₁ = 1, T₂ = 20. Que se passe-t-il si T_A/T_B dépasse 1,36 ?', 'Méthode 5 : choisissez un point P après les 63 %. Comparez le résultat à la méthode 1.'],
+    defi: { q: 'Avec T_A ≈ 8,2 s, T_B ≈ 6,2 s et α ≈ 0,4 lu sur l’abaque, déterminez T, T₁, m et ω₀.', a: '<b>T = T_B / (1 + α) = 6,2 / 1,4 ≈ 4,4 s</b>, T₁ = αT ≈ 1,8 s, <b>m = (1 + α) / (2√α) ≈ 1,1</b> et <b>ω₀ = 1 / (T√α) ≈ 0,36 rad/s</b>.' },
+    qcm: [
+      { q: 'Méthode 2 : que donne l’intersection de la tangente d’inflexion avec l’axe des abscisses ?', o: ['T₂', 'T₁', 'T₁ + T₂', 'ω₀'], a: 1, w: 'Avec l’axe des temps on lit T₁ ; avec l’asymptote on lit T₁ + T₂.' },
+      { q: 'Dans quelle condition la méthode 1 est-elle fiable ?', o: ['T₁ ≫ T₂', 'T₁ ≪ T₂', 'T₁ = T₂', 'm < 1'], a: 1, w: 'Il faut que T₂ domine : après l’inflexion, la réponse ressemble à celle d’un premier ordre de constante T₂.' },
+      { q: 'Quelle est la condition d’application de la méthode 3 ?', o: ['T_A < 1,36 T_B', 'T_A > 1,36 T_B', 'T_A = T_B', 'T_B = 0'], a: 0, w: 'Le rapport T_A/T_B vaut au plus 1,36 pour un système à deux constantes de temps réelles.' },
+      { q: 'Méthode 5 : comment obtient-on T₁ ?', o: ['T₁ = t₆₃ − T₂', 'T₁ = T₂ / 2', 'T₁ = 3T₂', 'T₁ = t₆₃ + T₂'], a: 0, w: 'Le temps pour atteindre 63 % vaut environ T₁ + T₂.' }] },
+  s5: { title: 'Méthode analytique', level: 'Niveau 3 · Maîtriser', time: '30 min', course: 'analytique',
+    goal: 'Appliquer la méthode analytique (méthode 4) et mesurer sa sensibilité au bruit.',
+    steps: ['Cliquez sur « Exemple du cours » : vérifiez que T₁ = 2 s et T₂ = 5 s sont retrouvées sans bruit.', 'Augmentez le bruit à 1 %, puis 2 % : comment varient les constantes identifiées ? la courbe reste-t-elle proche ?', 'Changez T, t₁ et t₂ : quels choix rendent la méthode plus robuste ?', 'Mettez T = 8 s avec t₁ = 6 s : que se passe-t-il ? Pourquoi ?'],
+    defi: { q: 'Avec T = 2 s, on trouve X₁ = e ≈ 2,718 et X₂ = e^0,4 ≈ 1,492. Quelles sont T₁ et T₂ ?', a: 'T₁ = T / ln X₁ = 2 / 1 = <b>2 s</b> et T₂ = T / ln X₂ = 2 / 0,4 = <b>5 s</b>.' },
+    qcm: [
+      { q: 'Quelle fonction introduit-on dans la méthode analytique ?', o: ['z(t) = s(t) − KA', 'z(t) = KA − s(t)', 'z(t) = s(t)/KA', 'z(t) = ds/dt'], a: 1, w: 'z(t) = KA − s(t) est une somme d’exponentielles décroissantes.' },
+      { q: 'Comment déduit-on T₁ et T₂ des racines X ?', o: ['T = X · ln T', 'Tᵢ = T / ln Xᵢ', 'Tᵢ = T · Xᵢ', 'Tᵢ = ln Xᵢ'], a: 1, w: 'Xᵢ = e^(T/Tᵢ), donc Tᵢ = T / ln Xᵢ.' },
+      { q: 'Quel est le principal défaut de cette méthode ?', o: ['Elle exige un tracé de tangente précis', 'Elle est très sensible aux erreurs de lecture', 'Elle ne marche que pour m < 1', 'Elle suppose T₁ ≪ T₂'], a: 1, w: 'Elle utilise des rapports et des différences de valeurs voisines : le bruit est amplifié.' },
+      { q: 'Quelle contrainte portent les instants t₁ et t₂ ?', o: ['t₁ − 2T ≥ 0 et t₂ − 2T ≥ 0', 't₁ = t₂', 'T > t₁', 'Aucune'], a: 0, w: 'On doit connaître la courbe en t − T et t − 2T, donc ces instants ne peuvent pas être négatifs.' }] },
+  s6: { title: 'Strejc et Broïda', level: 'Niveau 3 · Maîtriser', time: '35 min', course: 'retard',
+    goal: 'Comparer les modèles de Strejc, Strejc-Davoust, Broïda et De La Fuente sur un même système.',
+    steps: ['Gardez le système par défaut (0,2 s, 0,5 s, 1 s, sans retard). Parcourez les quatre méthodes et relevez l’écart moyen de chacune.', 'Ajoutez un retard pur de 0,5 s : quelles méthodes s’adaptent le mieux ?', 'Mettez T_a = T_b = T_c = 0,5 s : quel ordre n trouve Strejc ?', 'Rendez les trois constantes très différentes (0,05 s, 0,3 s, 3 s). Quelle méthode reste la plus fiable ?'],
+    defi: { q: 'On mesure T_u = 0,3 s et T_a = 2,2 s. Avec le tableau de Strejc-Davoust, déterminez n, T et τ.', a: 'T_u/T_a ≈ 0,136 : le plus grand n dont le rapport ne dépasse pas cette valeur est <b>n = 2</b>. <b>T = 2,2 / 2,718 ≈ 0,81 s</b>, T_u corrigé = 0,282 T ≈ 0,23 s, donc <b>τ ≈ 0,07 s</b>.' },
+    qcm: [
+      { q: 'Quel modèle utilise la méthode de Strejc ?', o: ['K / (1 + Tp)ⁿ avec n réel', 'K·e^(−τp) / (1 + Tp)', 'K / (1 + 2mp/ω₀ + p²/ω₀²)', 'K·p'], a: 0, w: 'Strejc : K/(1+Tp)ⁿ, avec n non entier lu sur le nomogramme.' },
+      { q: 'Que change la méthode de Strejc-Davoust ?', o: ['Elle impose n entier et ajoute un retard τ', 'Elle utilise deux tangentes', 'Elle supprime T', 'Elle fonctionne en chaîne fermée'], a: 0, w: 'Le temps mort permet de conserver un ordre n entier.' },
+      { q: 'Méthode de Broïda : à quels niveaux de ΔS mesure-t-on t₁ et t₂ ?', o: ['10 % et 90 %', '28 % et 40 %', '63 % et 95 %', '50 % et 100 %'], a: 1, w: 't₁ à 0,28 ΔS et t₂ à 0,40 ΔS ; T = 5,5 (t₂ − t₁) et τ = 2,8 t₁ − 1,8 t₂.' },
+      { q: 'Méthode de De La Fuente : T = ?', o: ['t₂ − t₁', '5,5 (t₂ − t₁)', 't₂ / t₁', 't₁ + t₂'], a: 0, w: 'Avec t₁ à 27 % et t₂ à 73 % : T = t₂ − t₁ et τ = 1,31 t₁ − 0,31 t₂.' }] },
+  s7: { title: 'Recalage numérique', level: 'Niveau 3 · Maîtriser', time: '25 min', course: 'recalage',
+    goal: 'Comprendre le recalage d’un modèle par minimisation d’un critère et ses limites.',
+    steps: ['Jeu « Apériodique » : ajustez à la main les cinq curseurs pour faire descendre J. Quel paramètre influence le plus J ?', 'Revenez au modèle de départ puis lancez le recalage automatique. Combien d’itérations faut-il ?', 'Passez au jeu « Pseudo-périodique » et recommencez. Retrouvez-vous m < 1 ?', 'Après recalage, J est-il nul ? Pourquoi ?'],
+    defi: { q: 'Pourquoi ne peut-on pas obtenir J = 0 sur des mesures réelles, même avec le bon modèle ?', a: 'Parce que les mesures contiennent du <b>bruit</b> : l’écart résiduel est de l’ordre de σ² par point. Un J trop faible signalerait même un modèle surajusté.' },
+    qcm: [
+      { q: 'Quel critère minimise le recalage ?', o: ['La somme des écarts au carré entre mesures et modèle', 'Le nombre de paramètres', 'Le temps de réponse', 'L’écart maximal des pentes'], a: 0, w: 'J = Σ (mesure − modèle)².' },
+      { q: 'Combien de paramètres sont recalés dans l’exemple ?', o: ['2', '3', '5', '10'], a: 2, w: 'Retard, gain K, coefficient m, pulsation ω₀ et offset.' },
+      { q: 'Pourquoi le point de départ de l’algorithme est-il important ?', o: ['Un mauvais départ peut conduire à un minimum local', 'Il fixe le nombre de mesures', 'Il détermine le bruit', 'Il n’a aucune importance'], a: 0, w: 'Les algorithmes locaux convergent vers le minimum le plus proche du point de départ.' },
+      { q: 'Quel est l’avantage du recalage par rapport aux méthodes graphiques ?', o: ['Il exploite tous les points mesurés', 'Il ne demande aucun modèle', 'Il supprime le bruit', 'Il est exact'], a: 0, w: 'Les méthodes graphiques n’utilisent que quelques points particuliers.' }] },
+  s8: { title: 'Oscillations libres', level: 'Niveau 3 · Maîtriser', time: '30 min', course: 'libres',
+    goal: 'Identifier z et ω₀ d’un système peu amorti à partir de sa réponse libre, puis k, m et v d’un système masse-ressort.',
+    steps: ['Lâchez la masse avec m = 1 kg, k = 100 N/m, v = 1 N·s/m. Combien d’oscillations voyez-vous ? La méthode s’applique-t-elle ?', 'Choisissez deux sommets séparés de N = 4 périodes. Relevez z identifié et comparez à z réel. Prenez N = 1 puis N = 8.', 'Augmentez le frottement v jusqu’à z = 0,2. Que devient la validité de la méthode ?', 'Cliquez sur « Mesurer avec des masses ajoutées » : retrouvez-vous k, m et v ?'],
+    defi: { q: 'Deux sommets séparés de N = 5 périodes valent 1 et 0,5. Que vaut z ?', a: '<b>z = ln(1 / 0,5) / (2π × 5) = 0,693 / 31,4 ≈ 0,022</b> : système très peu amorti.' },
+    qcm: [
+      { q: 'À partir de quel amortissement la méthode des oscillations libres est-elle applicable ?', o: ['z ≤ 0,1 environ (plus de 5 oscillations)', 'z ≥ 1', 'z = 0,7', 'Pour tout z'], a: 0, w: 'Il faut plusieurs oscillations bien visibles, ce qui correspond à un amortissement faible.' },
+      { q: 'Quelle formule donne z par le décrément logarithmique ?', o: ['z = ln(s(T₁)/s(T₂)) / (2πN)', 'z = 2πN / ln(s(T₁)/s(T₂))', 'z = s(T₁) / s(T₂)', 'z = N / 2π'], a: 0, w: 'Deux sommets séparés de N périodes : ln(s(T₁)/s(T₂)) ≈ 2πN·z.' },
+      { q: 'Pourquoi peut-on écrire ω₀ ≈ ω ?', o: ['Parce que z ≪ 1 donc √(1 − z²) ≈ 1', 'Parce que m = 1', 'Parce que k = 1', 'Ce n’est pas possible'], a: 0, w: 'ω = ω₀√(1 − z²) ≈ ω₀ si z est petit.' },
+      { q: 'Que représente la pente de la droite 1/ω₀² en fonction de mᵢ ?', o: ['1/k', 'k', 'm', 'v'], a: 0, w: '1/ω₀² = m/k + mᵢ/k : pente 1/k et ordonnée à l’origine m/k.' }] },
+  s9: { title: 'Chaîne fermée', level: 'Niveau 3 · Maîtriser', time: '35 min', course: 'ferme',
+    goal: 'Identifier un système en chaîne fermée : gain statique, gain critique, période d’oscillation, puis modèles de Strejc et de Broïda.',
+    steps: ['Essai 1 : réglez un petit Kp et lisez l’écart statique εs. Calculez K = (A − εs)/(Kp·εs) et comparez avec K réel.', 'Changez Kp : K identifié change-t-il ? Pourquoi ?', 'Essai 2 : montez Kp jusqu’à une courbe verte (oscillation entretenue). Enregistrez Kpc et T_osc.', 'Observez la comparaison : quel modèle ajuste le mieux ? Changez de système et recommencez.'],
+    defi: { q: 'Avec A = 10 et Kp = 0,8, on lit εs = 5,5. Que vaut K ?', a: '<b>K = (10 − 5,5) / (0,8 × 5,5) ≈ 1,02</b>.' },
+    qcm: [
+      { q: 'Quelle relation donne le gain statique K à l’essai 1 ?', o: ['K = (A − εs)/(Kp·εs)', 'K = A·Kp', 'K = εs/A', 'K = Kp/εs'], a: 0, w: 'En régime permanent s = K·Kp·A/(1 + K·Kp) donc εs = A/(1 + K·Kp).' },
+      { q: 'Que vérifie le système à la limite de stabilité ?', o: ['|Kpc·H(jω_osc)| = 1 et arg = −180°', '|Kpc·H| = 0', 'arg = 0°', 'Kpc = 0'], a: 0, w: 'Les marges de gain et de phase sont nulles.' },
+      { q: 'Comment calcule-t-on la pulsation d’oscillation ?', o: ['ω_osc = 2π / T_osc', 'ω_osc = T_osc / 2π', 'ω_osc = Kpc', 'ω_osc = 1 / K'], a: 0, w: 'T_osc est la période mesurée sur la courbe.' },
+      { q: 'Quel est l’avantage de l’identification en chaîne fermée ?', o: ['Elle s’applique à un système naturellement instable ou qu’on ne peut pas laisser en boucle ouverte', 'Elle ne demande aucune mesure', 'Elle donne m directement', 'Elle supprime le bruit'], a: 0, w: 'Le correcteur stabilise ou contraint le système pendant l’essai.' }] }
+};
+
+/* ---------- cours ---------- */
+const COURSE = [];
+COURSE.push({ id: 'approches', t: 'Approches et signaux d’entrée', h: `
+<p>Deux approches expérimentales permettent d’identifier la fonction de transfert d’un système : l’<b>identification temporelle</b> (la sortie est enregistrée en fonction du temps) et l’identification fréquentielle (gain et déphasage en fonction de la fréquence). Cet atelier traite l’identification temporelle.</p>
+<h3>Chaîne ouverte et chaîne fermée</h3>
+<ul><li><b>Chaîne ouverte</b> : le système n’est pas asservi. On envoie un signal d’entrée connu e(t) et on enregistre la sortie s(t).</li><li><b>Chaîne fermée</b> : un régulateur asservit le système pendant l’essai.</li></ul>
+<h3>Signaux d’entrée usuels</h3>
+<table class="ctable"><thead><tr><th>Signal</th><th>e(t)</th><th>E(p)</th></tr></thead><tbody>
+<tr><td>Impulsion de Dirac</td><td>δ(t)</td><td>1</td></tr>
+<tr><td>Échelon d’amplitude A</td><td>A·u(t)</td><td>${fr('A', 'p')}</td></tr>
+<tr><td>Rampe de pente B</td><td>B·t·u(t)</td><td>${fr('B', 'p²')}</td></tr></tbody></table>
+<div class="retain"><b>À retenir.</b> On envoie un signal connu, on enregistre la sortie, puis on en déduit les paramètres du modèle. L’échelon est le signal le plus utilisé.</div>` });
+
+COURSE.push({ id: 'ordre1', t: 'Premier ordre', h: `
+<div class="formula math"><i>H(p)</i> = ${fr('S(p)', 'E(p)')} = ${fr('K', '1 + Tp')} &nbsp;; pour <i>E(p)</i> = ${fr('A', 'p')} : <i>s(t)</i> = <i>KA</i>(1 − e<sup>−t/T</sup>)</div>
+<ul><li><i>s(T)</i> ≈ 0,63·<i>KA</i> et <i>s(3T)</i> ≈ 0,95·<i>KA</i> ; temps de réponse à 5 % : <i>t<sub>r5%</sub></i> ≈ 3<i>T</i>.</li><li>La tangente à l’origine coupe l’asymptote finale en <i>t</i> = <i>T</i>.</li><li><b>Propriété</b> : en tout point P d’abscisse <i>t</i>, la tangente coupe l’asymptote finale à l’abscisse <i>t</i> + <i>T</i>.</li></ul>
+<h3>Identification</h3>
+<ul><li><i>K</i> = valeur finale / <i>A</i>.</li><li><i>T</i> : abscisse à 63 % de la valeur finale, ou construction de la tangente en un point P situé dans la montée.</li></ul>
+<div class="retain"><b>À retenir.</b> Un seul paramètre dynamique T : 63 % en T, 95 % en 3T, et la tangente en P coupe l’asymptote en t + T.</div>` });
+
+COURSE.push({ id: 'ordre2ps', t: 'Second ordre pseudo-périodique (m < 1)', h: `
+<div class="formula math"><i>H(p)</i> = ${fr('K', '1 + ' + fr('2m', 'ω₀') + 'p + ' + fr('p²', 'ω₀²'))}</div>
+<ul><li>Sortie : <i>s(t)</i> = <i>KA</i>(1 − ${fr('e<sup>−mω₀t</sup>', '√(1−m²)')} sin(<i>ωt</i> + φ)).</li><li>Pseudo-pulsation : <i>ω</i> = ${fr('2π', 'T')} = <i>ω₀</i>√(1 − <i>m</i>²), avec <i>T</i> la pseudo-période lue sur la courbe.</li><li>Premier dépassement relatif : <i>d</i> = ${fr('s<sub>max</sub> − KA', 'KA')} = e<sup>−mπ/√(1−m²)</sup>.</li><li>Coefficient d’amortissement : <i>m</i> = √${fr('(ln d)²', '(ln d)² + π²')}.</li><li>Temps de pic : <i>t<sub>pic</sub></i> = <i>T</i>/2 = ${fr('π', 'ω₀√(1 − m²)')}.</li><li>Temps de réponse à 5 % (<i>m</i> &lt; 0,7) : <i>t<sub>r5%</sub></i> ≈ ${fr('3', 'mω₀')}.</li></ul>
+<h3>Exemple du cours</h3>
+<p><i>s<sub>max</sub></i> = 1,16 et <i>KA</i> = 1 donnent <i>d</i> ≈ 0,16, donc <i>m</i> = 0,5. Avec <i>T</i> = 7,2 s : <i>ω₀</i> = 1 rad/s. <i>H(p)</i> ≈ 1 / (1 + p + p²).</p>
+<div class="retain"><b>À retenir.</b> d donne m, le temps de pic donne ω₀, la valeur finale donne K.</div>` });
+
+COURSE.push({ id: 'aperiodique', t: 'Second ordre apériodique (m ≥ 1)', h: `
+<div class="formula math"><i>H(p)</i> = ${fr('K', '(1 + T₁p)(1 + T₂p)')} &nbsp;; <i>s(t)</i> = <i>KA</i>(1 + ${fr('T₁', 'T₂ − T₁')} e<sup>−t/T₁</sup> − ${fr('T₂', 'T₂ − T₁')} e<sup>−t/T₂</sup>)</div>
+<p>La courbe présente un point d’inflexion. Plusieurs méthodes donnent <i>T₁</i> et <i>T₂</i>.</p>
+<h3>Méthode 1 : T₂ dominante</h3>
+<p>Si <i>T₁</i> ≪ <i>T₂</i>, on trace la tangente en un point P après l’inflexion : <i>T₂</i> est la distance entre l’abscisse de P et l’intersection avec l’asymptote. Puis <i>T₁</i> ≈ <i>T₂</i>(1 − ${fr('e<sup>−t₃/T₂</sup>', '1 − s(t₃)/KA')}).</p>
+<h3>Méthode 2 : tangente à l’inflexion</h3>
+<p>L’intersection de la tangente avec l’axe des abscisses donne <i>T₁</i> ; l’intersection avec l’asymptote donne <i>T₁</i> + <i>T₂</i>.</p>
+<h3>Méthode 3 : T<sub>A</sub> &lt; 1,36 T<sub>B</sub></h3>
+<p>Modèle <i>K / ((1 + Tp)(1 + αTp))</i>. On mesure <i>T<sub>A</sub></i> et <i>T<sub>B</sub></i> avec la tangente d’inflexion, on lit α sur l’abaque <i>T<sub>A</sub>/T<sub>B</sub></i> = f(α), puis <i>T</i> = ${fr('T<sub>B</sub>', '1 + α')}, <i>m</i> = ${fr('1 + α', '2√α')} et <i>ω₀</i> = ${fr('1', 'T√α')}.</p>
+<h3>Méthode 5 : tangente après 63 %</h3>
+<p>La tangente en un point P situé après 63 % donne <i>T₂</i> ; le temps pour atteindre 63 % vaut environ <i>T₁</i> + <i>T₂</i>, d’où <i>T₁</i>.</p>
+<div class="retain"><b>À retenir.</b> Ces méthodes supposent une constante dominante, sauf la méthode 3 qui traite aussi des constantes proches (T<sub>A</sub>/T<sub>B</sub> &lt; 1,36).</div>` });
+
+COURSE.push({ id: 'analytique', t: 'Méthode analytique (méthode 4)', h: `
+<p>Elle évite tout tracé de tangente. On introduit <i>z(t)</i> = <i>KA</i> − <i>s(t)</i> et on choisit des temps <i>T</i>, <i>t₁</i>, <i>t₂</i> tels que la courbe soit connue en <i>t₁</i>, <i>t₂</i>, <i>t₁−T</i>, <i>t₂−T</i>, <i>t₁−2T</i>, <i>t₂−2T</i>.</p>
+<ol><li>Calculer <i>x₁</i> = ${fr('z(t₁−T)', 'z(t₁)')}, <i>x₂</i> = ${fr('z(t₂−T)', 'z(t₂)')}, <i>y₁</i> = ${fr('z(t₁−2T)', 'z(t₁)')}, <i>y₂</i> = ${fr('z(t₂−2T)', 'z(t₂)')}.</li><li>la droite passant par les points (<i>x₁, y₁</i>) et (<i>x₂, y₂</i>) a pour pente <i>a</i> = ${fr('y₂ − y₁', 'x₂ − x₁')} et pour ordonnée à l’origine <i>b</i> = <i>y₂</i> − <i>a·x₂</i> ; on pose <i>a₁</i> = −<i>a</i> et <i>a₂</i> = −<i>b</i>.</li><li>Résoudre <i>X² + a₁X + a₂ = 0</i> (racines <i>X₁</i>, <i>X₂</i>).</li><li><i>T₁</i> = ${fr('T', 'ln X₁')} et <i>T₂</i> = ${fr('T', 'ln X₂')}.</li></ol>
+<h3>Justification</h3>
+<p><i>z(t)</i> est de la forme α·e<sup>−t/T₁</sup> + β·e<sup>−t/T₂</sup>. Elle vérifie <i>z(t−2T) + a₁ z(t−T) + a₂ z(t)</i> = 0 avec <i>a₁</i> = −(e<sup>T/T₁</sup> + e<sup>T/T₂</sup>) et <i>a₂</i> = e<sup>T/T₁</sup>·e<sup>T/T₂</sup>. Les nombres e<sup>T/T₁</sup> et e<sup>T/T₂</sup> sont donc les racines de <i>X² + a₁X + a₂</i>.</p>
+<div class="retain"><b>À retenir.</b> Méthode sans tracé mais sensible aux erreurs de mesure : à utiliser avec des données peu bruitées.</div>` });
+
+COURSE.push({ id: 'retard', t: 'Modèles avec retard : Strejc, Broïda, De La Fuente', h: `
+<h3>Strejc</h3>
+<p>Modèle <i>H(p)</i> = ${fr('K', '(1 + Tp)<sup>n</sup>')}, avec <i>K</i> = ΔS/A. On trace la tangente à l’inflexion, on mesure <i>T<sub>u</sub></i> et <i>T<sub>a</sub></i>, puis on déduit <i>n</i> (non entier) et <i>T</i> du nomogramme à partir de <i>T<sub>u</sub>/T<sub>a</sub></i>.</p>
+<h3>Strejc-Davoust</h3>
+<p>Modèle <i>H(p)</i> = ${fr('K e<sup>−τp</sup>', '(1 + Tp)<sup>n</sup>')} avec <i>n</i> entier : on choisit l’entier dont le rapport <i>T<sub>u</sub>/T<sub>a</sub></i> du tableau ne dépasse pas la valeur mesurée.</p>
+<table class="ctable"><thead><tr><th>n</th><th>T<sub>a</sub>/T</th><th>T<sub>u</sub>/T</th><th>T<sub>u</sub>/T<sub>a</sub></th></tr></thead><tbody><tr><td>1</td><td>1</td><td>0</td><td>0</td></tr><tr><td>2</td><td>2,718</td><td>0,282</td><td>0,104</td></tr><tr><td>3</td><td>3,695</td><td>0,805</td><td>0,218</td></tr><tr><td>4</td><td>4,463</td><td>1,425</td><td>0,319</td></tr><tr><td>5</td><td>5,119</td><td>2,100</td><td>0,410</td></tr></tbody></table>
+<p>La colonne <i>T<sub>a</sub>/T</i> donne <i>T</i> ; la colonne <i>T<sub>u</sub>/T</i> donne <i>T<sub>u_cor</sub></i> ; le temps mort est <i>τ</i> = <i>T<sub>u</sub></i> − <i>T<sub>u_cor</sub></i>.</p>
+<h3>Broïda</h3>
+<p>Modèle ${fr('K e<sup>−τp</sup>', '1 + Tp')}. On mesure <i>t₁</i> à 0,28 ΔS et <i>t₂</i> à 0,40 ΔS : <i>T</i> = 5,5 (<i>t₂</i> − <i>t₁</i>) et <i>τ</i> = 2,8 <i>t₁</i> − 1,8 <i>t₂</i>.</p>
+<h3>De La Fuente</h3>
+<p>Même modèle. <i>t₁</i> à 0,27 ΔS et <i>t₂</i> à 0,73 ΔS : <i>T</i> = <i>t₂</i> − <i>t₁</i> et <i>τ</i> = 1,31 <i>t₁</i> − 0,31 <i>t₂</i>.</p>
+<div class="retain"><b>À retenir.</b> Pour un système d’ordre élevé, on le modélise par un ordre n ou un premier ordre avec retard : les méthodes de Broïda et De La Fuente n’exigent que deux points de la courbe.</div>` });
+
+COURSE.push({ id: 'recalage', t: 'Recalage numérique (méthode 10)', h: `
+<p>Elle identifie un second ordre avec retard et offset à partir des mesures, en <b>minimisant l’écart</b> entre les points expérimentaux et ceux du modèle :</p>
+<div class="formula math"><i>J</i>(<i>τ, K, m, ω₀</i>, offset) = Σ<sub>i</sub> (<i>s<sub>mes</sub></i>(<i>t<sub>i</sub></i>) − [<i>s<sub>mod</sub></i>(<i>t<sub>i</sub></i> − <i>τ</i>) + offset])²</div>
+<p>On part d’un jeu de paramètres initiaux et on laisse un algorithme (par exemple <code>scipy.optimize.minimize</code>) modifier les paramètres, dans des bornes, jusqu’à ce que <i>J</i> ne diminue plus.</p>
+<pre class="code">res = minimize(cout, x0, bounds=bnds)   # x0 = [retard, K, z, om0, offset]
+x = res.x</pre>
+<div class="retain"><b>À retenir.</b> Le recalage exploite tous les points mais dépend du point de départ et des bornes.</div>` });
+
+COURSE.push({ id: 'libres', t: 'Oscillations libres', h: `
+<p>Pour un système peu amorti (<i>z</i> ≲ 0,1, plus de 5 oscillations visibles), on impose un déplacement initial et on relâche. La sortie est <i>s(t)</i> = e<sup>−zω₀t</sup>·C·cos(ω<sub>n</sub>t + φ) avec <i>ω<sub>n</sub></i> = <i>ω₀</i>√(1 − <i>z</i>²).</p>
+<h3>Décrément logarithmique</h3>
+<p>Pour deux sommets séparés de <i>N</i> périodes : ${fr('s(T₁)', 's(T₂)')} = e<sup>−zω₀(T₁−T₂)</sup> donc <i>z</i> = ${fr('1', 'ω₀(T₂ − T₁)')} ln ${fr('s(T₁)', 's(T₂)')} ≈ ${fr('1', '2πN')} ln ${fr('s(T₁)', 's(T₂)')}. Comme <i>z</i> ≪ 1, <i>ω₀</i> ≈ <i>ω<sub>n</sub></i>.</p>
+<h3>Application au système masse-ressort-amortisseur</h3>
+<p><i>m ẍ + v ẋ + k x</i> = 0 donne <i>K</i> = 1/<i>k</i>, <i>ω₀</i> = √(<i>k</i>/<i>m</i>) et <i>z</i> = ${fr('v', '2√(km)')}. En ajoutant des masses <i>m<sub>i</sub></i> : ${fr('1', 'ω₀²')} = ${fr('m', 'k')} + ${fr('1', 'k')} <i>m<sub>i</sub></i> = <i>a·m<sub>i</sub></i> + <i>b</i>. On en déduit <i>k</i> = 1/<i>a</i>, <i>m</i> = <i>k·b</i>, puis <i>v</i> = 2<i>z</i>√(<i>km</i>).</p>
+<div class="retain"><b>À retenir.</b> Les sommets donnent z, la période donne ω₀ ; une régression sur des masses ajoutées donne k et m.</div>` });
+
+COURSE.push({ id: 'ferme', t: 'Identification en chaîne fermée', h: `
+<p>Deux essais avec un correcteur proportionnel <i>Kp</i>.</p>
+<h3>Essai 1 : gain statique</h3>
+<ul><li>Petit gain <i>Kp</i> (1 ou 0,5), échelon d’amplitude <i>A</i>.</li><li>Si un écart statique ε<sub>s</sub> apparaît, le système est naturellement stable de gain <i>K</i> = ${fr('A − ε<sub>s</sub>', 'Kp·ε<sub>s</sub>')}.</li><li>Si l’écart est nul, il contient une ou deux intégrations : on applique une rampe de pente <i>a</i>. Si l’écart de vitesse ε<sub>v</sub> est non nul, il y a une seule intégration et <i>K</i> = ${fr('a', 'Kp·ε<sub>v</sub>')}.</li></ul>
+<h3>Essai 2 : limite de stabilité</h3>
+<p>On augmente <i>Kp</i> jusqu’à des oscillations entretenues : gain critique <i>Kp<sub>c</sub></i>, période <i>T<sub>osc</sub></i>, <i>ω<sub>osc</sub></i> = 2π/<i>T<sub>osc</sub></i>. Alors |<i>Kp<sub>c</sub> H(jω<sub>osc</sub>)</i>| = 1 et arg = −180°.</p>
+<h3>Modèles</h3>
+<ul><li><b>Strejc</b> : <i>H</i> = ${fr('K', '(1 + Tp)<sup>n</sup>')}, <i>K·Kp<sub>c</sub></i> = ${fr('1', 'cos<sup>n</sup>(π/n)')}, <i>T</i> = ${fr('T<sub>osc</sub> tan(π/n)', '2π')}.</li><li><b>Broïda</b> : <i>H</i> = ${fr('K e<sup>−τp</sup>', '1 + Tp')}, <i>T</i> = ${fr('T<sub>osc</sub>', '2π')}√((<i>K·Kp<sub>c</sub></i>)² − 1), <i>τ</i> = ${fr('T<sub>osc</sub>', '2π')}(π − atan √((<i>K·Kp<sub>c</sub></i>)² − 1)).</li></ul>
+<div class="retain"><b>À retenir.</b> Deux essais : K au petit gain, puis Kpc et Tosc à la limite de stabilité. L’essai se fait en boucle fermée, donc sans laisser le système s’emballer.</div>` });
+
+COURSE.push({ id: 'bilan', t: 'Quelle méthode choisir ?', h: `
+<table class="ctable"><thead><tr><th>Situation</th><th>Méthode</th></tr></thead><tbody>
+<tr><td>Premier ordre</td><td>63 % de la valeur finale ou tangente</td></tr>
+<tr><td>Second ordre oscillant (m &lt; 1)</td><td>Premier dépassement et temps de pic</td></tr>
+<tr><td>Apériodique avec T₂ dominante</td><td>Méthodes 1, 2 ou 5</td></tr>
+<tr><td>Apériodique à constantes proches</td><td>Méthode 3 (T<sub>A</sub> &lt; 1,36 T<sub>B</sub>) ou méthode 4</td></tr>
+<tr><td>Système d’ordre élevé avec retard</td><td>Strejc, Strejc-Davoust, Broïda, De La Fuente</td></tr>
+<tr><td>Données nombreuses et bruitées</td><td>Recalage numérique</td></tr>
+<tr><td>Système peu amorti</td><td>Oscillations libres</td></tr>
+<tr><td>Système instable ou à stabiliser</td><td>Chaîne fermée</td></tr></tbody></table>
+<div class="retain"><b>À retenir.</b> Il n’existe pas de méthode universelle : le choix dépend de l’allure de la courbe, du bruit, des essais possibles et de la précision demandée.</div>` });
+
+COURSE.push({ id: 'gloss', t: 'Vocabulaire', h: `
+<dl class="gloss">
+<dt>Identification</dt><dd>Détermination des paramètres d’un modèle à partir de mesures.</dd>
+<dt>Réponse indicielle</dt><dd>Réponse du système à un échelon.</dd>
+<dt>Constante de temps</dt><dd>Durée caractéristique T d’un premier ordre : 63 % de la valeur finale en t = T.</dd>
+<dt>Gain statique K</dt><dd>Rapport sortie / entrée en régime permanent.</dd>
+<dt>Pseudo-période</dt><dd>Période des oscillations amorties d’un système m &lt; 1.</dd>
+<dt>Dépassement</dt><dd>Écart relatif maximal au-dessus de la valeur finale.</dd>
+<dt>Temps mort (retard)</dt><dd>Durée pendant laquelle la sortie ne réagit pas à l’entrée.</dd>
+<dt>Point d’inflexion</dt><dd>Point de pente maximale de la réponse indicielle.</dd>
+<dt>Décrément logarithmique</dt><dd>Logarithme du rapport de deux sommets successifs.</dd>
+<dt>Gain critique Kpc</dt><dd>Gain proportionnel qui entretient des oscillations en boucle fermée.</dd>
+<dt>Recalage</dt><dd>Ajustement des paramètres d’un modèle pour minimiser l’écart avec les mesures.</dd>
+</dl>` });
+
+/* ---------- interface ---------- */
+const UI = { cur: 's1' };
+const AS = { key: 's1', tab: 'steps', open: false, st: lsGet(KEYS.act, {}), arm: null };
+const CS = { open: false, id: 'approches' };
+function actSave() { lsSet(KEYS.act, AS.st); }
+function actState() { return AS.st[AS.key] || (AS.st[AS.key] = { a: {}, checked: false, shown: false }); }
+function actScore(a) { const s = actState(); return a.qcm.filter((q, i) => s.a[i] === q.a).length; }
+function wsById(id) { return WORKSHOPS.find(w => w.id === id) || WORKSHOPS[0]; }
+function renderSeg() {
+  const seg = $('#wsSeg'); seg.innerHTML = '';
+  WORKSHOPS.forEach((w, i) => seg.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': w.id === UI.cur ? 'true' : 'false', 'aria-selected': w.id === UI.cur ? 'true' : 'false', onclick: () => gotoWs(w.id) }, (i + 1) + '. ' + w.title)));
+}
+function mountWs() {
+  const w = wsById(UI.cur), root = $('#ws');
+  $('#hint').textContent = w.hint; root.innerHTML = '';
+  stopAll(); w.mount(root);
+  const sc = $('#scroller'); if (sc) sc.scrollTop = 0;
+}
+function gotoWs(id) {
+  const old = wsById(UI.cur); if (old.leave) old.leave();
+  if (CS.open) { CS.open = false; renderCourse(); }
+  UI.cur = id; AS.key = id; AS.tab = 'steps';
+  renderSeg(); mountWs(); renderAct();
+}
+function renderAct() {
+  const box = $('#act'), btn = $('#bAct');
+  btn.setAttribute('aria-pressed', AS.open ? 'true' : 'false'); btn.classList.toggle('pri', AS.open);
+  box.hidden = !AS.open;
+  if (!AS.open) { box.innerHTML = ''; return; }
+  const oldB = box.querySelector('.pbody'), tag = AS.key + '|' + AS.tab, keep = oldB && box.dataset.k === tag ? oldB.scrollTop : 0;
+  box.dataset.k = tag;
+  box.innerHTML = '';
+  const a = ACT[AS.key];
+  const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
+  box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
+  const nq = a.qcm.length;
+  box.append(h('div', { class: 'tabs', role: 'tablist' },
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'steps' ? 'true' : 'false', onclick: () => { AS.tab = 'steps'; renderAct(); } }, 'Consignes'),
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'qcm' ? 'true' : 'false', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Questions (' + nq + ')')));
+  const body = h('div', { class: 'pbody' });
+  if (AS.tab === 'steps') {
+    body.append(h('p', { class: 'small' }, a.level + ' · environ ' + a.time), h('div', { class: 'goal' }, h('b', null, 'Objectif. '), a.goal));
+    body.append(h('ol', { class: 'steps' }, a.steps.map(s => h('li', { html: s }))));
+    body.append(h('div', { class: 'defi' }, h('b', null, 'Défi'), h('p', { html: a.defi.q }), h('details', null, h('summary', null, 'Voir la réponse'), h('p', { html: a.defi.a }))));
+    if (a.course) body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: () => openCourse(a.course) }, 'Voir le cours : ' + courseSection(a.course).t)));
+    body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: ev => {
+      const b = ev.currentTarget;
+      if (!AS.arm) { b.textContent = 'Confirmer ? Votre travail sera effacé'; AS.arm = setTimeout(() => { b.textContent = 'Recommencer l’atelier'; AS.arm = null; }, 3500); return; }
+      clearTimeout(AS.arm); AS.arm = null; wsById(UI.cur).reset(); mountWs(); renderAct(); } }, 'Recommencer l’atelier')));
+    body.append(h('p', null, h('button', { class: 'btn pri', type: 'button', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Passer aux questions')));
+  } else {
+    const s = actState(), show = s.checked || s.shown;
+    a.qcm.forEach((q, i) => {
+      const fs = h('fieldset', { class: 'q' }, h('legend', null, (i + 1) + '. ' + q.q));
+      q.o.forEach((o, j) => {
+        const good = show && j === q.a, bad = s.checked && !s.shown && s.a[i] === j && j !== q.a;
+        const inp = h('input', { type: 'radio', name: 'q' + i, checked: show && s.shown ? j === q.a : s.a[i] === j, disabled: show });
+        inp.addEventListener('change', () => { s.a[i] = j; actSave(); renderAct(); });
+        fs.append(h('label', { class: 'opt' + (good ? ' good' : '') + (bad ? ' bad' : '') }, inp, h('span', null, o + (good ? '  ✓' : '') + (bad ? '  ✗' : ''))));
+      });
+      if (show) { const miss = s.a[i] == null && !s.shown; fs.append(h('p', { class: 'why' }, (miss ? 'Sans réponse. ' : '') + q.w)); }
+      body.append(fs);
+    });
+    const done = Object.keys(s.a).length;
+    body.append(h('p', { class: 'small' }, s.shown ? 'Réponses affichées.' : s.checked ? '' : done + ' réponse(s) sur ' + nq + '.'));
+    if (s.checked && !s.shown) body.append(h('p', { class: 'score' }, 'Score : ' + actScore(a) + ' / ' + nq));
+    const row = h('div', { class: 'files' });
+    if (!show) row.append(h('button', { class: 'btn pri', type: 'button', onclick: () => { s.checked = true; actSave(); renderAct(); } }, 'Corriger'));
+    row.append(h('button', { class: 'btn', type: 'button', onclick: () => { s.shown = true; actSave(); renderAct(); } }, 'Afficher les réponses'));
+    if (show) row.append(h('button', { class: 'btn', type: 'button', onclick: () => { AS.st[AS.key] = { a: {}, checked: false, shown: false }; actSave(); renderAct(); } }, 'Recommencer'));
+    body.append(row);
+  }
+  box.append(body); body.scrollTop = keep;
+}
+function actToggle() { if (CS.open) { CS.open = false; renderCourse(); } AS.open = !AS.open; renderAct(); }
+$('#bAct').addEventListener('click', actToggle);
+
+function courseSection(id) { return COURSE.find(s => s.id === id) || COURSE[0]; }
+function renderCourse() {
+  const box = $('#course'), btn = $('#bCourse'), work = $('#work');
+  btn.setAttribute('aria-pressed', CS.open ? 'true' : 'false'); btn.classList.toggle('pri', CS.open);
+  box.hidden = !CS.open; work.hidden = CS.open; $('#modes').hidden = CS.open;
+  if (!CS.open) { box.innerHTML = ''; if (UI.mounted) { mountWs(); } return; }
+  stopAll();
+  box.innerHTML = '';
+  const cur = courseSection(CS.id), idx = COURSE.indexOf(cur);
+  const go = id => { CS.id = id; renderCourse(); };
+  const nav = h('nav', { class: 'ctoc', 'aria-label': 'Sommaire du cours' }, COURSE.map((s, i) => h('button', { type: 'button', class: s.id === cur.id ? 'on' : '', 'aria-current': s.id === cur.id ? 'true' : 'false', onclick: () => go(s.id) }, (i + 1) + '. ' + s.t)));
+  const sel = h('select', { class: 'ctoc-sel', 'aria-label': 'Choisir une section', onchange: e => go(e.target.value) }, COURSE.map((s, i) => h('option', { value: s.id, selected: s.id === cur.id }, (i + 1) + '. ' + s.t)));
+  const art = h('article', { class: 'cbody' });
+  art.append(h('p', { class: 'ckick' }, 'Cours · section ' + (idx + 1) + ' sur ' + COURSE.length), h('h2', null, cur.t), h('div', { class: 'math', html: cur.h }));
+  art.append(h('div', { class: 'cpn' },
+    idx > 0 ? h('button', { class: 'btn', type: 'button', onclick: () => go(COURSE[idx - 1].id) }, '← ' + COURSE[idx - 1].t) : h('span'),
+    idx < COURSE.length - 1 ? h('button', { class: 'btn pri', type: 'button', onclick: () => go(COURSE[idx + 1].id) }, COURSE[idx + 1].t + ' →') : h('span')));
+  const top = h('div', { class: 'ctop' }, h('b', null, 'Cours : l’identification temporelle'), h('button', { class: 'btn pri sm', type: 'button', onclick: () => { CS.open = false; renderCourse(); } }, 'Retour à l’atelier'));
+  box.append(top, sel, h('div', { class: 'cwrap' }, nav, art));
+  const sc = box.querySelector('.cwrap'); if (sc) sc.scrollTop = 0; box.scrollTop = 0;
+}
+function openCourse(id) { if (id) CS.id = id; CS.open = true; renderCourse(); }
+$('#bCourse').addEventListener('click', () => { CS.open = !CS.open; renderCourse(); });
+
+function closeDlg() { $('#dlg').hidden = true; $('#dlg').innerHTML = ''; }
+function openDlg(title, body) {
+  const d = $('#dlg'); d.innerHTML = ''; d.hidden = false;
+  d.append(h('div', { class: 'dlgbox', role: 'dialog', 'aria-label': title }, h('header', null, h('b', null, title), h('button', { class: 'btn sm', type: 'button', onclick: closeDlg }, 'Fermer')), h('div', { class: 'dbody' }, body)));
+  d.onclick = ev => { if (ev.target === d) closeDlg(); };
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
+$('#bHelp').addEventListener('click', () => {
+  openDlg('Aide', h('div', { html: '<p>Neuf ateliers sur l’identification temporelle des systèmes du premier et du second ordre : signaux d’entrée, premier ordre, second ordre pseudo-périodique, apériodique, méthode analytique, modèles avec retard, recalage numérique, oscillations libres et chaîne fermée.</p>' +
+    '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut.</li><li>Faites glisser les <b>curseurs</b> pour changer le système, et les <b>points rouges ou bleus</b> sur les graphiques pour déplacer P, les curseurs de mesure ou le temps.</li><li>Dans les modes « système mystère », mesurez sur la courbe, entrez vos valeurs puis révélez le système réel.</li><li>Le bouton <b>Activité</b> affiche les consignes, un défi et un QCM avec correction.</li><li>Le bouton <b>Cours</b> rappelle les méthodes.</li></ul>' +
+    '<h3>Vos données</h3><p>Les réponses au QCM sont mémorisées dans ce navigateur uniquement.</p><p class="small">Contenu d’après « Identification expérimentale de la fonction de transfert des systèmes de premier et second ordre » (L. Abdellaoui, IPEST).</p>' }));
+});
+(function init() { AS.open = !isSmall(); renderSeg(); mountWs(); renderAct(); renderCourse(); UI.mounted = true; })();
+</script>
+
+
+</body></html>
