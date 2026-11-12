@@ -21,9 +21,10 @@ Aucune installation : chaque outil s'ouvre directement dans le navigateur.
 | Outil | Description |
 |---|---|
 | [Réponse temporelle du second ordre et abaques](https://siicpgeamansur.github.io/SLCI/abaques_reponse_echelon_unitaire.html) | Visualiser le lien entre les abaques et la réponse d'un système du second ordre à un échelon unitaire. |
-| [Identification temporelle](https://siicpgeamansur.github.io/SLCI/identification_temporelle.html) | Identification d’une FT (1er et 2nd ordre) en fonction d’une réponse temporelle. |
+| [Identification temporelle](https://siicpgeamansur.github.io/SLCI/identification_temporelle.html) | Identification temporelle d’une FT (1er et 2nd ordre) en fonction d’une réponse temporelle. |
 | [Calcul FTBF](https://siicpgeamansur.github.io/SLCI/calcul_ftbf.html) | Calculer les FTBF de différentes fonctions de transfert. |
 | [Diagramme de Bode](https://siicpgeamansur.github.io/SLCI/Bode.html) | Tracer le diagramme de Bode d'un produit de fonctions de transfert et lire les marges de stabilité (gain et phase). |
+| [Identification fréquentielle](https://siicpgeamansur.github.io/SLCI/identification_frequentielle.html) | Identification frequentielle d’une FT (1er et 2nd ordre) en fonction d’une réponse temporelle. |
 | [Correcteurs P, PI et PID](https://siicpgeamansur.github.io/SLCI/asservissement_P_PI_PID.html) | Observer l'effet des correcteurs proportionnel, intégral et dérivé sur un asservissement. |
 | [Correcteurs SLCI : vision physique](https://siicpgeamansur.github.io/SLCI/correcteurs_SLCI_vision_physique.html) | Comprendre ce que fait chaque correcteur (P, I, PI, PD, PID, avance de phase) sur la stabilité, la précision et la rapidité. Simulateur avec réponse temporelle, dérivée de l'erreur, contribution de chaque action à la commande et Bode de la FTBO avec marges. Inclut les démarches de réglage pas à pas, un quiz, un mode examen chronométré et un exercice type concours sur le PI. Thème clair ou sombre. |
 | [Réglages de correcteurs](https://siicpgeamansur.github.io/SLCI/reglage_correcteurs.html) | Méthodes de réglage des différents type de correcteur. |
