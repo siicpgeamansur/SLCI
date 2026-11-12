@@ -85,6 +85,9 @@ button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .tile .l{font-size:.74rem;color:var(--muted)}
 .tile .v{font-family:var(--mono);font-size:1.12rem;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .tile .v.bad{color:var(--rev)}
+/* Réserve 2 lignes pour la tuile d'erreur : son texte passe de « 0 pas (0,0°) » à « +1 pas (11,3°) »
+   sans faire varier la hauteur de la ligne de grille (donc du panneau). */
+.tile.tr .v{min-height:3em;min-height:2lh}
 
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 0;font-size:.82rem;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
@@ -484,11 +487,12 @@ function setH(id,s){if(cache['h'+id]!==s){cache['h'+id]=s;$(id).innerHTML=s;}}
 function info(){
   var n=S.n,m=M(),sc=sec(),th=mod(S.phi-aA,360),st=S.st;
   var errv=S.valid?((S.Nread-st+m/2+m)%m)-m/2:0;
-  setT('rW',S.valid?bin(S.cread,n):'hors tension');
+  setT('rW',S.valid?bin(S.cread,n):'—');
   setT('rN',S.valid?String(S.Nread):'—');
   setT('rA',S.valid?fmt(S.Nread*sc,2)+' °':'—');
   setT('rR',fmt(th,1)+' °');
-  setT('rE',S.valid?(errv===0?'0 pas':(errv>0?'+':'')+errv+' pas ('+fmt(errv*sc,1)+'°)'):'—');
+  /* Erreur toujours au même format, y compris à 0 : « 0 pas (0,0°) », « +1 pas (11,3°) »… */
+  setT('rE',S.valid?((errv>0?'+':'')+errv+' pas ('+fmt(errv*sc,1)+'°)'):'—');
   var bad=S.valid&&errv!==0;
   if(cache.bad!==bad){cache.bad=bad;$('rE').className='v'+(bad?' bad':'');}
   var html='',j,T0=tok().bl;
