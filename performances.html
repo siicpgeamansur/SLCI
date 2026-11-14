@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Performances des SLCI — Précision, rapidité, stabilité</title>
+<title>Performances des SLCI — Précision · Rapidité · Stabilité</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -38,17 +38,33 @@ button,input,select{font:inherit;color:inherit}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
 .work{display:flex;gap:14px;align-items:flex-start;padding:14px max(16px,env(safe-area-inset-left,0px)) 40px;max-width:1500px;margin:0 auto}
 #stage{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden}
-#hint{flex:none;padding:7px 14px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
+#hint{padding:7px 14px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
 #ws{padding:16px 18px 28px}
 #ws h2{font-size:23px;margin:0 0 8px;text-wrap:balance}
 #ws h3{font-size:16.5px;margin:24px 0 6px}
 #ws p,#ws li{font-size:14.5px;line-height:1.55}
-#act{width:clamp(280px,26vw,370px);flex:none;border:1px solid var(--line);border-radius:12px;background:var(--panel);position:sticky;top:96px;overflow:hidden}
-#act .phead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+#act{width:clamp(300px,26vw,390px);flex:none;border:1px solid var(--line);border-radius:12px;background:var(--panel);position:sticky;top:96px;overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
+#act .phead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);flex:none}
 #act .phead b{font-size:15px}
 #act .phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#act .pbody{padding:12px 14px;font-size:13.5px;max-height:calc(100vh - 190px);overflow:auto}
+#act .pbody{padding:12px 14px;font-size:13.5px;overflow:auto;flex:1;min-height:0}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none;background:var(--panel)}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
 .goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 11px;margin:0 0 10px}
+.steps{margin:0 0 10px;padding-left:20px}
+.steps li{margin-bottom:9px;font-size:13.5px}
+.defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:10px 0}
+.defi p{margin:6px 0}
+.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+fieldset.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px 6px;margin:0 0 10px;min-width:0}
+fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%;font-size:13.5px}
+.opt{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:13px}
+.opt input{margin-top:3px;width:auto;flex:none}
+.opt.good{background:rgba(30,122,46,.15)}
+.opt.bad{background:rgba(192,40,31,.15)}
+.why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
+.score{font-weight:600;font-size:15px;margin:4px 0 8px}
 .verdict{border-radius:8px;padding:9px 12px;margin:12px 0 6px;font-size:13.8px;background:var(--panel2);border:1px solid var(--line)}
 .verdict.yes{background:rgba(30,122,46,.13);border-color:var(--ok)}
 .verdict.no{background:rgba(192,40,31,.12);border-color:var(--bad)}
@@ -96,21 +112,56 @@ table.kv tr.hl td{background:var(--accent-soft)}
 .badge.warn{background:rgba(154,91,0,.14);border-color:var(--warn);color:var(--warn)}
 .badge.no{background:rgba(192,40,31,.13);border-color:var(--bad);color:var(--bad)}
 #dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
-.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(640px,100%);max-height:88%;display:flex;flex-direction:column}
+.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(680px,100%);max-height:88%;display:flex;flex-direction:column}
 .dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
 .dlgbox header b{font-size:16px}
 .dlgbox .dbody{padding:14px 16px;overflow:auto}
 .dlgbox h3{margin:14px 0 4px;font-size:14px}
 .dlgbox p,.dlgbox li{font-size:13.5px}
-.sub{color:var(--muted);font-size:12.5px}
-i.v{font-family:'Times New Roman','STIX Two Text',serif;font-style:italic;font-size:1.05em}
+/* ---------- cours ---------- */
+#course{background:var(--bg);min-height:100vh}
+.ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
+.cwrap{display:flex;gap:28px;padding-block:14px;max-width:1200px;margin:0 auto}
+.ctoc{flex:none;width:250px;position:sticky;top:60px;align-self:flex-start;max-height:calc(100vh - 80px);overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px;border-radius:0}
+.ctoc button:hover{background:var(--panel2)}
+.ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.cbody{flex:1;min-width:0;max-width:860px}
+.ckick{color:var(--muted);font-size:12.5px;margin:0}
+.cbody h2{font-size:26px;margin:2px 0 12px}
+.cbody h3{font-size:16.5px;margin:22px 0 6px}
+.cbody p,.cbody li{font-size:14.5px;line-height:1.6}
+.cbody ul,.cbody ol{padding-left:22px}
+.cbody li{margin-bottom:4px}
+.cbody table{display:block;overflow-x:auto;max-width:100%}
+.ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
+.ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.ctable th{background:var(--panel2);font-weight:600}
+.retain{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 12px;margin:16px 0 6px;font-size:14px}
+.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
+pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
+.gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}
+.gloss dt{font-weight:600}
+.gloss dd{margin:0}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 3px;font-size:.92em;line-height:1.25}
+.fr>span:first-child{border-bottom:1px solid currentColor;padding:0 3px}
+.fr>span:last-child{padding:0 3px}
+.math i,.formula i,.mi{font-family:'Times New Roman','STIX Two Text',serif;font-style:italic;font-size:1.06em}
 @media (max-width:900px){
   .work{flex-direction:column}
-  #act{width:100%;position:static}
+  #act{width:100%;position:static;max-height:none}
   #act .pbody{max-height:none}
   .ctrl .fld{min-width:140px;flex:1 1 140px}
   .ctrl input[type=range]{width:100%}
   #ws{padding:14px 12px 24px}
+  .ctoc{display:none}
+  .ctoc-sel{display:block}
+  .cwrap{flex-direction:column;padding-top:8px}
+  .gloss{grid-template-columns:1fr}
+  .gloss dd{margin-bottom:6px}
 }
 @media (prefers-reduced-motion:no-preference){.btn,.chip{transition:border-color .12s,background .12s}}
 </style>
@@ -126,19 +177,23 @@ i.v{font-family:'Times New Roman','STIX Two Text',serif;font-style:italic;font-s
     <span>Performances des SLCI <small>Précision · Rapidité · Stabilité</small></span>
   </div>
   <div class="files">
+    <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
+    <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
     <button class="btn" id="bHelp" type="button">Aide</button>
   </div>
 </div></header>
 
-<div class="band" id="modes"><div class="inner row"><div class="seg" id="tabs" role="tablist" aria-label="Performances"></div></div></div>
+<div class="band" id="modes"><div class="inner row"><div class="seg" id="tabs" role="tablist" aria-label="Performance"></div></div></div>
 
 <main class="work" id="work">
   <section id="stage">
     <div id="hint"></div>
     <div id="ws"></div>
   </section>
-  <aside id="act" aria-label="Analyse"></aside>
+  <aside id="act" hidden aria-label="Activité"></aside>
 </main>
+
+<section id="course" hidden aria-label="Cours"></section>
 
 <div id="dlg" hidden></div>
 
@@ -147,93 +202,78 @@ i.v{font-family:'Times New Roman','STIX Two Text',serif;font-style:italic;font-s
 /* ===================== outils ===================== */
 const $ = (s,r)=>(r||document).querySelector(s);
 function h(tag, attrs, ...kids){
-  const el = document.createElement(tag);
+  const el=document.createElement(tag);
   if (attrs) for (const [k,v] of Object.entries(attrs)){
     if (v===false||v==null) continue;
-    if (k==='class') el.className = v;
-    else if (k==='html') el.innerHTML = v;
-    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    if (k==='class') el.className=v;
+    else if (k==='html') el.innerHTML=v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2),v);
     else if (v===true) el.setAttribute(k,'');
     else el.setAttribute(k,v);
   }
-  for (const k of kids.flat()) if (k!=null && k!==false) el.append(k.nodeType?k:document.createTextNode(k));
+  for (const k of kids.flat()) if (k!=null&&k!==false) el.append(k.nodeType?k:document.createTextNode(k));
   return el;
 }
+const isSmall=()=>{try{return window.matchMedia('(max-width:900px)').matches;}catch(e){return false;}};
+const KEYS={act:'slci-perf-qcm-v1'};
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function nf(v,d){ d=d==null?2:d; let s=(+v).toFixed(d); if(s.indexOf('.')>=0) s=s.replace(/0+$/,'').replace(/\.$/,''); if(s==='-0') s='0'; return s.replace('.',','); }
-function nfs(v,d){ if(v===Infinity) return '∞'; if(v===-Infinity) return '−∞'; if(!isFinite(v)||isNaN(v)) return '—'; return nf(v,d==null?2:d); }
+function nf(v,d){d=d==null?2:d;let s=(+v).toFixed(d);if(s.indexOf('.')>=0)s=s.replace(/0+$/,'').replace(/\.$/,'');if(s==='-0')s='0';return s.replace('.',',');}
+function nfs(v,d){if(v===Infinity)return '∞';if(v===-Infinity)return '−∞';if(!isFinite(v)||isNaN(v))return '—';return nf(v,d==null?2:d);}
 const PI=Math.PI, SQ=Math.sqrt;
+const fr=(a,b)=>'<span class="fr"><span>'+a+'</span><span>'+b+'</span></span>';
 
-/* ===================== polynômes (degré décroissant) ===================== */
-function pmul(a,b){
-  const r=new Array(a.length+b.length-1).fill(0);
-  for(let i=0;i<a.length;i++) for(let j=0;j<b.length;j++) r[i+j]+=a[i]*b[j];
-  return r;
-}
-function padd(a,b){
-  const n=Math.max(a.length,b.length), r=new Array(n).fill(0);
-  for(let i=0;i<a.length;i++) r[n-a.length+i]+=a[i];
-  for(let i=0;i<b.length;i++) r[n-b.length+i]+=b[i];
-  return r;
-}
-function pevalC(p,re,im){ let sr=0,si=0; for(const c of p){ const nr=sr*re-si*im+c, ni=sr*im+si*re; sr=nr; si=ni; } return [sr,si]; }
-
-function tf2ss(num, den){
-  const d0 = den[0]||1;
-  let n1 = num.map(v=>v/d0), d1 = den.map(v=>v/d0), D = 0;
-  if (n1.length === d1.length){ D = n1[0]; n1 = n1.map((v,i)=>v-D*d1[i]).slice(1); }
-  const n = d1.length-1;
-  while (n1.length < n) n1.unshift(0);
-  if (n1.length > n) n1 = n1.slice(n1.length-n);
-  const A=[], B=new Array(n).fill(0), C=n1.slice().reverse();
-  for (let i=0;i<n;i++){ const row=new Array(n).fill(0); if (i<n-1) row[i+1]=1; A.push(row); }
-  for (let j=0;j<n;j++) A[n-1][j] = -d1[n-j];
+/* ===================== polynômes ===================== */
+function pmul(a,b){const r=new Array(a.length+b.length-1).fill(0);for(let i=0;i<a.length;i++)for(let j=0;j<b.length;j++)r[i+j]+=a[i]*b[j];return r;}
+function padd(a,b){const n=Math.max(a.length,b.length),r=new Array(n).fill(0);for(let i=0;i<a.length;i++)r[n-a.length+i]+=a[i];for(let i=0;i<b.length;i++)r[n-b.length+i]+=b[i];return r;}
+function pevalC(p,re,im){let sr=0,si=0;for(const c of p){const nr=sr*re-si*im+c,ni=sr*im+si*re;sr=nr;si=ni;}return [sr,si];}
+function tf2ss(num,den){
+  const d0=den[0]||1;let n1=num.map(v=>v/d0),d1=den.map(v=>v/d0),D=0;
+  if (n1.length===d1.length){D=n1[0];n1=n1.map((v,i)=>v-D*d1[i]).slice(1);}
+  const n=d1.length-1;while(n1.length<n)n1.unshift(0);if(n1.length>n)n1=n1.slice(n1.length-n);
+  const A=[],B=new Array(n).fill(0),C=n1.slice().reverse();
+  for (let i=0;i<n;i++){const row=new Array(n).fill(0);if(i<n-1)row[i+1]=1;A.push(row);}
+  for (let j=0;j<n;j++)A[n-1][j]=-d1[n-j];
   B[n-1]=1;
   return {n,A,B,C,D};
 }
-function simulateSS(ss, uf, tmax, N, x0){
+function simulateSS(ss,uf,tmax,N,x0){
   const {n,A,B,C,D}=ss;
-  let x = x0 ? x0.slice() : new Array(n).fill(0);
-  const dt = tmax/N, out = [];
-  const f = (xx,u)=>{
-    const dx = new Array(n).fill(0);
-    for (let i=0;i<n;i++){ let s=B[i]*u; for(let j=0;j<n;j++) s+=A[i][j]*xx[j]; dx[i]=s; }
-    return dx;
-  };
+  let x=x0?x0.slice():new Array(n).fill(0);
+  const dt=tmax/N,out=[];
+  const f=(xx,u)=>{const dx=new Array(n).fill(0);for(let i=0;i<n;i++){let s=B[i]*u;for(let j=0;j<n;j++)s+=A[i][j]*xx[j];dx[i]=s;}return dx;};
   for (let k=0;k<=N;k++){
-    const t = k*dt;
-    let y = D*uf(t); for (let i=0;i<n;i++) y += C[i]*x[i];
+    const t=k*dt;let y=D*uf(t);for(let i=0;i<n;i++)y+=C[i]*x[i];
     out.push([t,y]);
     const k1=f(x,uf(t));
-    const x2=x.map((v,i)=>v+dt/2*k1[i]), k2=f(x2,uf(t+dt/2));
-    const x3=x.map((v,i)=>v+dt/2*k2[i]), k3=f(x3,uf(t+dt/2));
-    const x4=x.map((v,i)=>v+dt*k3[i]),   k4=f(x4,uf(t+dt));
-    x = x.map((v,i)=>v+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
-    if (!isFinite(x[0])) break;
+    const x2=x.map((v,i)=>v+dt/2*k1[i]),k2=f(x2,uf(t+dt/2));
+    const x3=x.map((v,i)=>v+dt/2*k2[i]),k3=f(x3,uf(t+dt/2));
+    const x4=x.map((v,i)=>v+dt*k3[i]),k4=f(x4,uf(t+dt));
+    x=x.map((v,i)=>v+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
+    if (!isFinite(x[0]))break;
   }
   return out;
 }
 function roots(p){
-  let q=p.slice();
-  while (q.length>1 && Math.abs(q[0])<1e-12) q.shift();
-  const n=q.length-1; if (n<1) return [];
+  let q=p.slice();while(q.length>1&&Math.abs(q[0])<1e-12)q.shift();
+  const n=q.length-1;if(n<1)return [];
   const a=q.map(v=>v/q[0]);
-  let z=[]; for(let i=0;i<n;i++){ const ang=2*PI*i/n+0.4; z.push({re:0.9*Math.cos(ang), im:0.9*Math.sin(ang)}); }
-  for (let it=0; it<300; it++){
-    let mx=0; const nz=[];
+  let z=[];for(let i=0;i<n;i++){const ang=2*PI*i/n+0.4;z.push({re:0.9*Math.cos(ang),im:0.9*Math.sin(ang)});}
+  for (let it=0;it<300;it++){
+    let mx=0;const nz=[];
     for (let i=0;i<n;i++){
-      const zi=z[i];
-      let sr=0,si=0;
-      for (const c of a){ const nr=sr*zi.re-si*zi.im+c, ni=sr*zi.im+si*zi.re; sr=nr; si=ni; }
+      const zi=z[i];let sr=0,si=0;
+      for (const c of a){const nr=sr*zi.re-si*zi.im+c,ni=sr*zi.im+si*zi.re;sr=nr;si=ni;}
       let dr=1,di=0;
-      for (let j=0;j<n;j++){ if(j===i) continue; const ar=zi.re-z[j].re, ai=zi.im-z[j].im; const nr=dr*ar-di*ai, ni=dr*ai+di*ar; dr=nr; di=ni; }
+      for (let j=0;j<n;j++){if(j===i)continue;const ar=zi.re-z[j].re,ai=zi.im-z[j].im;const nr=dr*ar-di*ai,ni=dr*ai+di*ar;dr=nr;di=ni;}
       const dd=dr*dr+di*di;
-      if (dd<1e-300){ nz.push(zi); continue; }
-      const qr=(sr*dr+si*di)/dd, qi=(si*dr-sr*di)/dd;
+      if (dd<1e-300){nz.push(zi);continue;}
+      const qr=(sr*dr+si*di)/dd,qi=(si*dr-sr*di)/dd;
       mx=Math.max(mx,Math.hypot(qr,qi));
-      nz.push({re:zi.re-qr, im:zi.im-qi});
+      nz.push({re:zi.re-qr,im:zi.im-qi});
     }
-    z=nz; if (mx<1e-11) break;
+    z=nz;if(mx<1e-11)break;
   }
   return z;
 }
@@ -241,99 +281,82 @@ function roots(p){
 /* ===================== graphique ===================== */
 const COL={ink:'#111111',grid:'#e4e7ec',axis:'#5a6068',blue:'#2e6da4',green:'#2e8b3a',orange:'#d98a12',red:'#c0281f',violet:'#7b4fc2',slate:'#33475b',soft:'#9fb4ca'};
 function Plot(host,o){
-  const cv=h('canvas',{role:'img','aria-label':o.label||'Graphique'}); host.append(cv);
+  const cv=h('canvas',{role:'img','aria-label':o.label||'Graphique'});host.append(cv);
   const ctx=cv.getContext('2d');
   const P={cv,ctx,W:300,H:300,o:Object.assign({xmin:0,xmax:10,ymin:0,ymax:1,xt:1,yt:0.2,ml:52,mr:16,mt:20,mb:36,h:300,xl:'',yl:'',grid:true},o),draw:null};
   P.X=x=>P.o.ml+(x-P.o.xmin)/(P.o.xmax-P.o.xmin)*(P.W-P.o.ml-P.o.mr);
   P.Y=y=>P.H-P.o.mb-(y-P.o.ymin)/(P.o.ymax-P.o.ymin)*(P.H-P.o.mt-P.o.mb);
   P.set=a=>{Object.assign(P.o,a);P.redraw();};
   P.resize=()=>{
-    const w=Math.max(220,host.clientWidth-2), hh=P.o.h, d=Math.min(2,window.devicePixelRatio||1);
-    if (cv.width===Math.round(w*d)&&P.H===hh) return;
-    cv.width=Math.round(w*d); cv.height=Math.round(hh*d); cv.style.height=hh+'px';
-    P.W=w; P.H=hh; P.redraw();
+    const w=Math.max(220,host.clientWidth-2),hh=P.o.h,d=Math.min(2,window.devicePixelRatio||1);
+    if (cv.width===Math.round(w*d)&&P.H===hh)return;
+    cv.width=Math.round(w*d);cv.height=Math.round(hh*d);cv.style.height=hh+'px';
+    P.W=w;P.H=hh;P.redraw();
   };
   P.line=(pts,c,w,dash)=>{
-    if (!pts||pts.length<2) return;
-    ctx.save(); ctx.strokeStyle=c||COL.ink; ctx.lineWidth=w||2; ctx.setLineDash(dash||[]);
-    ctx.lineJoin='round'; ctx.lineCap='round'; ctx.beginPath();
+    if (!pts||pts.length<2)return;
+    ctx.save();ctx.strokeStyle=c||COL.ink;ctx.lineWidth=w||2;ctx.setLineDash(dash||[]);
+    ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();
     let started=false;
     for (const p of pts){
-      if (!isFinite(p[0])||!isFinite(p[1])){ started=false; continue; }
-      const x=P.X(p[0]), y=P.Y(p[1]);
-      if (!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y);
+      if (!isFinite(p[0])||!isFinite(p[1])){started=false;continue;}
+      const x=P.X(p[0]),y=P.Y(p[1]);
+      if (!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
     }
-    ctx.stroke(); ctx.restore();
+    ctx.stroke();ctx.restore();
   };
   P.fn=(f,c,w,dash,a,b)=>{
-    const x0=a==null?P.o.xmin:a, x1=b==null?P.o.xmax:b, N=Math.max(140,Math.round(P.W/1.5)), pts=[];
-    for (let i=0;i<=N;i++){ const t=x0+(x1-x0)*i/N; pts.push([t,f(t)]); }
+    const x0=a==null?P.o.xmin:a,x1=b==null?P.o.xmax:b,N=Math.max(140,Math.round(P.W/1.5)),pts=[];
+    for (let i=0;i<=N;i++){const t=x0+(x1-x0)*i/N;pts.push([t,f(t)]);}
     P.line(pts,c,w,dash);
   };
   P.seg=(x1,y1,x2,y2,c,w,dash)=>P.line([[x1,y1],[x2,y2]],c,w,dash);
   P.dot=(x,y,c,r)=>{
-    if (!isFinite(x)||!isFinite(y)) return;
-    ctx.save(); ctx.beginPath(); ctx.arc(P.X(x),P.Y(y),r||5,0,2*PI);
-    ctx.fillStyle=c||COL.red; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); ctx.restore();
-  };
-  P.pts=(arr,c,r)=>{
-    ctx.save(); ctx.strokeStyle=c||COL.slate; ctx.lineWidth=1.7;
-    arr.forEach(p=>{ if(!isFinite(p[0])||!isFinite(p[1])) return;
-      const x=P.X(p[0]), y=P.Y(p[1]), s=r||4;
-      ctx.beginPath(); ctx.moveTo(x-s,y-s); ctx.lineTo(x+s,y+s); ctx.moveTo(x+s,y-s); ctx.lineTo(x-s,y+s); ctx.stroke(); });
-    ctx.restore();
+    if (!isFinite(x)||!isFinite(y))return;
+    ctx.save();ctx.beginPath();ctx.arc(P.X(x),P.Y(y),r||5,0,2*PI);
+    ctx.fillStyle=c||COL.red;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();ctx.restore();
   };
   P.txt=(s,x,y,c,al,size,px,py)=>{
-    if (!isFinite(x)||!isFinite(y)) return;
-    ctx.save(); ctx.fillStyle=c||COL.ink; ctx.font=(size||12)+'px "IBM Plex Sans", system-ui, sans-serif';
-    ctx.textAlign=al||'left'; ctx.textBaseline='middle';
-    ctx.fillText(s,P.X(x)+(px||0),P.Y(y)+(py||0)); ctx.restore();
-  };
-  P.arrow=(x1,x2,y,c,label)=>{
-    const a=P.X(x1), b=P.X(x2), yy=P.Y(y);
-    if (!isFinite(a)||!isFinite(b)||!isFinite(yy)) return;
-    ctx.save(); ctx.strokeStyle=c; ctx.fillStyle=c; ctx.lineWidth=1.8;
-    ctx.beginPath(); ctx.moveTo(a,yy); ctx.lineTo(b,yy); ctx.stroke();
-    const d = b>=a?1:-1;
-    [[a,1],[b,-1]].forEach(q=>{ ctx.beginPath(); ctx.moveTo(q[0],yy); ctx.lineTo(q[0]+7*q[1]*d,yy-4); ctx.lineTo(q[0]+7*q[1]*d,yy+4); ctx.closePath(); ctx.fill(); });
-    if (label){ ctx.font='600 12px "IBM Plex Sans", system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(label,(a+b)/2,yy-4); }
-    ctx.restore();
+    if (!isFinite(x)||!isFinite(y))return;
+    ctx.save();ctx.fillStyle=c||COL.ink;ctx.font=(size||12)+'px "IBM Plex Sans", system-ui, sans-serif';
+    ctx.textAlign=al||'left';ctx.textBaseline='middle';
+    ctx.fillText(s,P.X(x)+(px||0),P.Y(y)+(py||0));ctx.restore();
   };
   P.redraw=()=>{
-    const o=P.o, W=P.W, H=P.H;
-    ctx.save(); const d=cv.width/W; ctx.setTransform(d,0,0,d,0,0);
-    ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-    ctx.font='11.5px "IBM Plex Sans", system-ui, sans-serif'; ctx.fillStyle=COL.axis; ctx.strokeStyle=COL.grid; ctx.lineWidth=1;
-    const nx=Math.floor((o.xmax-o.xmin)/o.xt+1e-9), ny=Math.floor((o.ymax-o.ymin)/o.yt+1e-9);
+    const o=P.o,W=P.W,H=P.H;
+    ctx.save();const d=cv.width/W;ctx.setTransform(d,0,0,d,0,0);
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+    ctx.font='11.5px "IBM Plex Sans", system-ui, sans-serif';ctx.fillStyle=COL.axis;ctx.strokeStyle=COL.grid;ctx.lineWidth=1;
+    const nx=Math.floor((o.xmax-o.xmin)/o.xt+1e-9),ny=Math.floor((o.ymax-o.ymin)/o.yt+1e-9);
     for (let i=0;i<=nx;i++){
-      const x=o.xmin+i*o.xt, px=Math.round(P.X(x))+.5;
-      if (o.grid){ ctx.beginPath(); ctx.moveTo(px,o.mt); ctx.lineTo(px,H-o.mb); ctx.stroke(); }
-      ctx.textAlign='center'; ctx.textBaseline='top';
+      const x=o.xmin+i*o.xt,px=Math.round(P.X(x))+.5;
+      if (o.grid){ctx.beginPath();ctx.moveTo(px,o.mt);ctx.lineTo(px,H-o.mb);ctx.stroke();}
+      ctx.textAlign='center';ctx.textBaseline='top';
       ctx.fillText(o.fx?o.fx(x):nf(x,2),px,H-o.mb+5);
     }
     for (let i=0;i<=ny;i++){
-      const y=o.ymin+i*o.yt, py=Math.round(P.Y(y))+.5;
-      if (o.grid){ ctx.beginPath(); ctx.moveTo(o.ml,py); ctx.lineTo(W-o.mr,py); ctx.stroke(); }
-      ctx.textAlign='right'; ctx.textBaseline='middle';
+      const y=o.ymin+i*o.yt,py=Math.round(P.Y(y))+.5;
+      if (o.grid){ctx.beginPath();ctx.moveTo(o.ml,py);ctx.lineTo(W-o.mr,py);ctx.stroke();}
+      ctx.textAlign='right';ctx.textBaseline='middle';
       ctx.fillText(o.fy?o.fy(y):nf(y,2),o.ml-6,py);
     }
-    ctx.strokeStyle=COL.axis; ctx.lineWidth=1.4; ctx.beginPath();
-    ctx.moveTo(o.ml+.5,o.mt); ctx.lineTo(o.ml+.5,H-o.mb+.5); ctx.lineTo(W-o.mr,H-o.mb+.5); ctx.stroke();
-    ctx.fillStyle=COL.axis; ctx.font='12px "IBM Plex Sans", system-ui, sans-serif';
-    ctx.textAlign='right'; ctx.textBaseline='bottom'; if (o.xl) ctx.fillText(o.xl,W-o.mr,H-3);
-    if (o.yl){ ctx.textAlign='left'; ctx.textBaseline='top'; ctx.fillText(o.yl,7,3); }
-    ctx.beginPath(); ctx.rect(o.ml,o.mt,W-o.ml-o.mr,H-o.mt-o.mb); ctx.clip();
-    if (P.draw) P.draw(P);
+    ctx.strokeStyle=COL.axis;ctx.lineWidth=1.4;ctx.beginPath();
+    ctx.moveTo(o.ml+.5,o.mt);ctx.lineTo(o.ml+.5,H-o.mb+.5);ctx.lineTo(W-o.mr,H-o.mb+.5);ctx.stroke();
+    ctx.fillStyle=COL.axis;ctx.font='12px "IBM Plex Sans", system-ui, sans-serif';
+    ctx.textAlign='right';ctx.textBaseline='bottom';if(o.xl)ctx.fillText(o.xl,W-o.mr,H-3);
+    if (o.yl){ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(o.yl,7,3);}
+    ctx.beginPath();ctx.rect(o.ml,o.mt,W-o.ml-o.mr,H-o.mt-o.mb);ctx.clip();
+    if (P.draw)P.draw(P);
     ctx.restore();
   };
-  if (window.ResizeObserver) new ResizeObserver(()=>P.resize()).observe(host);
-  P.resize(); setTimeout(P.resize,50);
+  if (window.ResizeObserver)new ResizeObserver(()=>P.resize()).observe(host);
+  P.resize();setTimeout(P.resize,50);
   return P;
 }
 function plotBox(title,opts){
   const box=h('div',{class:'plotbox'});
-  if (title) box.append(h('div',{class:'ptitle'},title));
-  const host=h('div'); box.append(host);
+  if (title)box.append(h('div',{class:'ptitle'},title));
+  const host=h('div');box.append(host);
   const P=Plot(host,opts);
   return {box,P};
 }
@@ -341,146 +364,139 @@ function pleg(items){
   return h('div',{class:'pleg'},items.map(it=>h('span',null,
     h('i',{class:it[2]||'',style:'border-top-color:'+it[0]+';background:'+(it[2]==='o'?it[0]:'none')}),it[1])));
 }
-function nice(v){ const e=Math.pow(10,Math.floor(Math.log10(v))), f=v/e; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e; }
-function niceStep(r,n){ return nice(r/n); }
-function xAxis(tm){ const st=niceStep(tm,8); return {xmin:0,xmax:tm,xt:st}; }
+function nice(v){const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;}
+function niceStep(r,n){return nice(r/n);}
+function xAxis(tm){const st=niceStep(tm,8);return {xmin:0,xmax:tm,xt:st};}
 function yAxisFor(lo,hi){
-  if (!isFinite(lo)) lo=0; if (!isFinite(hi)) hi=1;
-  if (hi-lo<1e-9){ hi=lo+1; }
+  if (!isFinite(lo))lo=0;if(!isFinite(hi))hi=1;
+  if (hi-lo<1e-9){hi=lo+1;}
   const st=niceStep(hi-lo,5);
-  return {ymin:Math.floor(lo/st)*st, ymax:Math.ceil(hi/st)*st, yt:st};
+  return {ymin:Math.floor(lo/st)*st,ymax:Math.ceil(hi/st)*st,yt:st};
 }
-function stats(list){ return h('div',{class:'gstats'},list.map(k=>h('div',{class:'stat'},h('span',null,k[0]),h('b',null,k[1])))); }
+function stats(list){return h('div',{class:'gstats'},list.map(k=>h('div',{class:'stat'},h('span',null,k[0]),h('b',null,k[1]))));}
 function chips(items,cur,cb,label){
   return h('div',{class:'chips',role:'group','aria-label':label||''},
     items.map(([v,l])=>h('button',{type:'button',class:'chip'+(v===cur?' on':''),'aria-pressed':v===cur?'true':'false',onclick:()=>cb(v)},l)));
 }
 function sld(o){
-  const out=h('b'), inp=h('input',{type:'range',min:o.min,max:o.max,step:o.step,'aria-label':o.label.replace(/<[^>]+>/g,'')});
+  const out=h('b'),inp=h('input',{type:'range',min:o.min,max:o.max,step:o.step,'aria-label':o.label.replace(/<[^>]+>/g,'')});
   const f=o.fmt||(v=>nf(v,o.d==null?2:o.d));
   inp.value=o.val;
-  const upd=()=>{ out.textContent=f(+inp.value)+(o.unit?' '+o.unit:''); };
-  inp.addEventListener('input',()=>{ upd(); o.on(+inp.value); });
+  const upd=()=>{out.textContent=f(+inp.value)+(o.unit?' '+o.unit:'');};
+  inp.addEventListener('input',()=>{upd();o.on(+inp.value);});
   upd();
   return h('label',{class:'fld'},h('span',null,h('span',{html:o.label}),' = ',out),inp);
 }
-function verdict(html,kind){ return h('div',{class:'verdict'+(kind?' '+kind:'')},h('div',{html})); }
+function verdict(html,kind){return h('div',{class:'verdict'+(kind?' '+kind:'')},h('div',{html}));}
 
-/* ===================== état global ===================== */
+/* ===================== état ===================== */
 const SYS={
   plant:{classe:0, forme:'A', K:2, T:0.5, m:0.5, w0:2},
   corr:{type:'P', Kp:2, Ti:1, Td:0.2},
   input:'echelon',
   dist:0
 };
-
 const TABS=[
-  {id:'precision', t:'Précision', hint:'Choisissez la classe de G(p), le correcteur et l’entrée : le tableau des écarts met en évidence le cas courant.'},
-  {id:'rapidite',  t:'Rapidité',  hint:'Réglez le gain et observez le temps de réponse à 5 % ; le tracé de droite montre l’influence du gain Kp.'},
-  {id:'stabilite', t:'Stabilité', hint:'Observez les pôles de la boucle fermée, les marges de gain et de phase, et le diagramme de Bode.'}
+  {id:'precision',t:'Précision',hint:'Choisissez la classe de G(p), le correcteur et l’entrée : le tableau des écarts met en évidence le cas courant.'},
+  {id:'rapidite',t:'Rapidité',hint:'Réglez le gain et observez le temps de réponse à 5 % ; le tracé de droite montre l’influence du gain Kp.'},
+  {id:'stabilite',t:'Stabilité',hint:'Observez les pôles de la boucle fermée, les marges de gain et de phase, et le diagramme de Bode.'}
 ];
 let CUR='precision';
 
 /* ===================== modèle ===================== */
 function model(){
-  const P=SYS.plant, C=SYS.corr;
-  let Ng=[P.K], Dg;
-  if (P.forme==='A') Dg=[P.T,1];
-  else Dg=[1/(P.w0*P.w0), 2*P.m/P.w0, 1];
-  for (let i=0;i<P.classe;i++) Dg=pmul(Dg,[1,0]);
-
+  const P=SYS.plant,C=SYS.corr;
+  let Ng=[P.K],Dg;
+  if (P.forme==='A')Dg=[P.T,1];
+  else Dg=[1/(P.w0*P.w0),2*P.m/P.w0,1];
+  for (let i=0;i<P.classe;i++)Dg=pmul(Dg,[1,0]);
   let Nc,Dc;
-  if (C.type==='P'){ Nc=[C.Kp]; Dc=[1]; }
-  else if (C.type==='PI'){ Nc=[C.Kp*C.Ti, C.Kp]; Dc=[C.Ti,0]; }
-  else { const td=Math.max(C.Td/10,1e-6);
-    Nc=[C.Kp*(C.Ti*td+C.Ti*C.Td), C.Kp*(C.Ti+td), C.Kp];
-    Dc=[C.Ti*td, C.Ti, 0]; }
-
-  const Ln=pmul(Nc,Ng), Ld=pmul(Dc,Dg);
+  if (C.type==='P'){Nc=[C.Kp];Dc=[1];}
+  else if (C.type==='PI'){Nc=[C.Kp*C.Ti,C.Kp];Dc=[C.Ti,0];}
+  else {const td=Math.max(C.Td/10,1e-6);
+    Nc=[C.Kp*(C.Ti*td+C.Ti*C.Td),C.Kp*(C.Ti+td),C.Kp];
+    Dc=[C.Ti*td,C.Ti,0];}
+  const Ln=pmul(Nc,Ng),Ld=pmul(Dc,Dg);
   const Pn=padd(Ld,Ln);
   let cls=0;
-  for (let i=Ld.length-1;i>=0 && Math.abs(Ld[i])<1e-12;i--) cls++;
+  for (let i=Ld.length-1;i>=0&&Math.abs(Ld[i])<1e-12;i--)cls++;
   const n0=Ln[Ln.length-1];
-  const Kpos = cls===0 ? n0/Ld[Ld.length-1] : Infinity;
-  const Kv   = cls===1 ? n0/Ld[Ld.length-2] : (cls>1?Infinity:0);
-  const Ka   = cls===2 ? n0/Ld[Ld.length-3] : (cls>2?Infinity:0);
-
+  const Kpos=cls===0?n0/Ld[Ld.length-1]:Infinity;
+  const Kv=cls===1?n0/Ld[Ld.length-2]:(cls>1?Infinity:0);
+  const Ka=cls===2?n0/Ld[Ld.length-3]:(cls>2?Infinity:0);
   const poles=roots(Pn);
-  const stable = poles.length>0 && poles.every(z=>z.re < -1e-9);
+  const stable=poles.length>0&&poles.every(z=>z.re<-1e-9);
   const P0=Pn[Pn.length-1];
-  const distGain = Math.abs(P0)<1e-12 ? 0 : (Ng[0]*Dc[Dc.length-1])/P0;
-
+  const distGain=Math.abs(P0)<1e-12?0:(Ng[0]*Dc[Dc.length-1])/P0;
   return {Ng,Dg,Nc,Dc,Ln,Ld,Pn,cls,Kpos,Kv,Ka,T1n:Ln,T1d:Pn,T2n:pmul(Ng,Dc),T2d:Pn,poles,stable,distGain};
 }
-
 function timeFrame(M){
   let tmax=10;
   const nz=M.poles.filter(z=>Math.abs(z.re)>1e-9);
   if (nz.length){
     const pos=nz.filter(z=>z.re>0);
-    if (pos.length) tmax = 5/Math.max(...pos.map(z=>z.re));
-    else tmax = 6/Math.min(...nz.map(z=>-z.re));
+    if (pos.length)tmax=5/Math.max(...pos.map(z=>z.re));
+    else tmax=6/Math.min(...nz.map(z=>-z.re));
   }
   return clamp(tmax,0.2,150);
 }
 function eSignal(t){
-  if (SYS.input==='dirac') return 0;
-  if (SYS.input==='echelon') return 1;
+  if (SYS.input==='dirac')return 0;
+  if (SYS.input==='echelon')return 1;
   return t;
 }
 function computeResponse(M,tmax,N){
-  const inp=SYS.input;
-  let y1;
+  const inp=SYS.input;let y1;
   if (inp==='dirac'){
     const ss=tf2ss(M.T1n,M.T1d);
     y1=simulateSS(ss,()=>0,tmax,N,ss.B.slice());
   } else {
-    const uf = inp==='echelon' ? (()=>1) : (t=>t);
+    const uf=inp==='echelon'?(()=>1):(t=>t);
     y1=simulateSS(tf2ss(M.T1n,M.T1d),uf,tmax,N);
   }
   let y2=null;
-  if (SYS.dist>0) y2=simulateSS(tf2ss(M.T2n,M.T2d),()=>SYS.dist,tmax,N);
-  const y=y1.map((p,i)=>[p[0], p[1]+(y2?y2[i][1]:0)]);
+  if (SYS.dist>0)y2=simulateSS(tf2ss(M.T2n,M.T2d),()=>SYS.dist,tmax,N);
+  const y=y1.map((p,i)=>[p[0],p[1]+(y2?y2[i][1]:0)]);
   return {y1,y2,y};
 }
 function metrics(ys){
-  const n=ys.length, yss=ys[n-1][1];
-  if (!isFinite(yss)||Math.abs(yss)<1e-9) return {yss,t5:NaN,tr:NaN,D:NaN,tp:NaN,ymax:NaN};
-  let ymax=-Infinity, tp=0;
-  for (const p of ys) if (isFinite(p[1]) && p[1]>ymax){ ymax=p[1]; tp=p[0]; }
+  const n=ys.length,yss=ys[n-1][1];
+  if (!isFinite(yss)||Math.abs(yss)<1e-9)return {yss,t5:NaN,tr:NaN,D:NaN,tp:NaN,ymax:NaN};
+  let ymax=-Infinity,tp=0;
+  for (const p of ys)if(isFinite(p[1])&&p[1]>ymax){ymax=p[1];tp=p[0];}
   const D=(ymax-yss)/Math.abs(yss)*100;
   let t5=NaN;
   for (let i=n-1;i>=0;i--){
-    if (Math.abs(ys[i][1]-yss) > 0.05*Math.abs(yss)){ t5 = (i<n-1? ys[i+1][0] : ys[i][0]); break; }
+    if (Math.abs(ys[i][1]-yss)>0.05*Math.abs(yss)){t5=(i<n-1?ys[i+1][0]:ys[i][0]);break;}
   }
   let t10=NaN,t90=NaN;
   for (let i=0;i<n;i++){
-    if (isNaN(t10)&&ys[i][1]>=0.1*yss) t10=ys[i][0];
-    if (isNaN(t90)&&ys[i][1]>=0.9*yss) t90=ys[i][0];
+    if (isNaN(t10)&&ys[i][1]>=0.1*yss)t10=ys[i][0];
+    if (isNaN(t90)&&ys[i][1]>=0.9*yss)t90=ys[i][0];
   }
   return {yss,t5,tr:t90-t10,D,tp,ymax};
 }
 function bode(M){
-  const wmin=0.02, wmax=3000, N=700, pts=[];
-  let prev=null, off=0;
+  const wmin=0.02,wmax=3000,N=700,pts=[];
+  let prev=null,off=0;
   for (let i=0;i<=N;i++){
     const w=wmin*Math.pow(wmax/wmin,i/N);
-    const [nr,ni]=pevalC(M.Ln,0,w), [dr,di]=pevalC(M.Ld,0,w);
+    const [nr,ni]=pevalC(M.Ln,0,w),[dr,di]=pevalC(M.Ld,0,w);
     const den=dr*dr+di*di;
     let lr=0,li=0;
-    if (den>1e-300){ lr=(nr*dr+ni*di)/den; li=(ni*dr-nr*di)/den; }
+    if (den>1e-300){lr=(nr*dr+ni*di)/den;li=(ni*dr-nr*di)/den;}
     const mag=20*Math.log10(Math.max(1e-15,Math.hypot(lr,li)));
     let ph=Math.atan2(li,lr)*180/PI;
-    if (prev!==null){ while (ph+off-prev>180) off-=360; while (ph+off-prev<-180) off+=360; }
-    ph+=off; prev=ph;
+    if (prev!==null){while(ph+off-prev>180)off-=360;while(ph+off-prev<-180)off+=360;}
+    ph+=off;prev=ph;
     pts.push({w,lw:Math.log10(w),mag,ph});
   }
   return pts;
 }
 function marginsOf(pts){
-  let wc=NaN, pm=NaN, w180=NaN, gm=NaN;
+  let wc=NaN,pm=NaN,w180=NaN,gm=NaN;
   for (let i=0;i<pts.length-1;i++){
-    const a=pts[i], b=pts[i+1];
+    const a=pts[i],b=pts[i+1];
     if (isNaN(wc)&&a.mag>=0&&b.mag<0){
       const u=a.mag/(a.mag-b.mag);
       wc=a.w*Math.pow(b.w/a.w,u);
@@ -497,39 +513,58 @@ function marginsOf(pts){
 
 /* ===================== schéma bloc ===================== */
 function diagSVG(M){
-  const P=SYS.plant, C=SYS.corr;
-  const gTxt = P.forme==='A' ? 'K/(1+Tp)' : 'K/(1+2mp/ω₀+p²/ω₀²)';
-  const gInt = P.classe===0?'':(P.classe===1?' × 1/p':' × 1/p²');
-  const cTxt = C.type==='P' ? 'C(p) = Kp' : C.type==='PI' ? 'C(p) = Kp(1 + 1/(Ti·p))' : 'C(p) = Kp(1 + 1/(Ti·p) + Td·p)';
-  const distTxt = SYS.dist>0 ? 'd(t)' : 'd(t) = 0';
-  return '<svg viewBox="0 0 780 165" style="width:100%;height:auto" role="img" aria-label="Schéma bloc de l’asservissement">'
-  + '<defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">'
-  + '<path d="M0,0 L8,3 L0,6 Z" fill="#33475b"/></marker></defs>'
-  + '<text x="6" y="62" font-size="13.5" fill="#111">e(t)</text>'
-  + '<line x1="30" y1="72" x2="56" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
-  + '<circle cx="74" cy="72" r="16" fill="#fff" stroke="#33475b" stroke-width="2"/>'
-  + '<text x="52" y="60" font-size="14" fill="#33475b">+</text>'
-  + '<text x="82" y="106" font-size="14" fill="#33475b">−</text>'
-  + '<line x1="90" y1="72" x2="116" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
-  + '<rect x="118" y="46" width="168" height="52" rx="8" fill="#eef1f5" stroke="#33475b" stroke-width="2"/>'
-  + '<text x="202" y="66" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111">Correcteur</text>'
-  + '<text x="202" y="84" text-anchor="middle" font-size="11.5" fill="#5a6068">' + cTxt + '</text>'
-  + '<line x1="286" y1="72" x2="314" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
-  + '<circle cx="332" cy="72" r="16" fill="#fff" stroke="#33475b" stroke-width="2"/>'
-  + '<text x="310" y="60" font-size="14" fill="#33475b">+</text>'
-  + '<text x="340" y="50" font-size="14" fill="#33475b">+</text>'
-  + '<line x1="332" y1="16" x2="332" y2="54" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
-  + '<text x="340" y="14" font-size="12.5" fill="#5a6068">' + distTxt + '</text>'
-  + '<line x1="348" y1="72" x2="374" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
-  + '<rect x="376" y="46" width="212" height="52" rx="8" fill="#dcebf8" stroke="#2e6da4" stroke-width="2"/>'
-  + '<text x="482" y="66" text-anchor="middle" font-size="13.5" font-weight="600" fill="#1b4a76">Système</text>'
-  + '<text x="482" y="84" text-anchor="middle" font-size="11.5" fill="#1b4a76">' + gTxt + gInt + '</text>'
-  + '<line x1="588" y1="72" x2="640" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
-  + '<text x="648" y="66" font-size="13.5" fill="#111">s(t)</text>'
-  + '<path d="M610,72 L610,140 L74,140 L74,90" fill="none" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
-  + '<text x="330" y="156" text-anchor="middle" font-size="11.5" fill="#5a6068">retour unitaire</text>'
-  + '<text x="700" y="46" font-size="11.5" fill="#5a6068">L(p) = C(p)·G(p)</text>'
-  + '</svg>';
+  const P=SYS.plant,C=SYS.corr;
+  const gTxt=P.forme==='A'?'K/(1+Tp)':'K/(1+2mp/ω₀+p²/ω₀²)';
+  const gInt=P.classe===0?'':(P.classe===1?' × 1/p':' × 1/p²');
+  const cTxt=C.type==='P'?'C(p) = Kp':C.type==='PI'?'C(p) = Kp(1 + 1/(Ti·p))':'C(p) = Kp(1 + 1/(Ti·p) + Td·p)';
+  const distTxt=SYS.dist>0?'d(t)':'d(t) = 0';
+  return '<svg viewBox="0 0 780 165" style="width:100%;height:auto" role="img" aria-label="Schéma bloc">'
+  +'<defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">'
+  +'<path d="M0,0 L8,3 L0,6 Z" fill="#33475b"/></marker></defs>'
+  +'<text x="6" y="62" font-size="13.5" fill="#111">e(t)</text>'
+  +'<line x1="30" y1="72" x2="56" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
+  +'<circle cx="74" cy="72" r="16" fill="#fff" stroke="#33475b" stroke-width="2"/>'
+  +'<text x="52" y="60" font-size="14" fill="#33475b">+</text>'
+  +'<text x="82" y="106" font-size="14" fill="#33475b">−</text>'
+  +'<line x1="90" y1="72" x2="116" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
+  +'<rect x="118" y="46" width="168" height="52" rx="8" fill="#eef1f5" stroke="#33475b" stroke-width="2"/>'
+  +'<text x="202" y="66" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111">Correcteur</text>'
+  +'<text x="202" y="84" text-anchor="middle" font-size="11.5" fill="#5a6068">'+cTxt+'</text>'
+  +'<line x1="286" y1="72" x2="314" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
+  +'<circle cx="332" cy="72" r="16" fill="#fff" stroke="#33475b" stroke-width="2"/>'
+  +'<text x="310" y="60" font-size="14" fill="#33475b">+</text>'
+  +'<text x="340" y="50" font-size="14" fill="#33475b">+</text>'
+  +'<line x1="332" y1="16" x2="332" y2="54" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
+  +'<text x="340" y="14" font-size="12.5" fill="#5a6068">'+distTxt+'</text>'
+  +'<line x1="348" y1="72" x2="374" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
+  +'<rect x="376" y="46" width="212" height="52" rx="8" fill="#dcebf8" stroke="#2e6da4" stroke-width="2"/>'
+  +'<text x="482" y="66" text-anchor="middle" font-size="13.5" font-weight="600" fill="#1b4a76">Système</text>'
+  +'<text x="482" y="84" text-anchor="middle" font-size="11.5" fill="#1b4a76">'+gTxt+gInt+'</text>'
+  +'<line x1="588" y1="72" x2="640" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
+  +'<text x="648" y="66" font-size="13.5" fill="#111">s(t)</text>'
+  +'<path d="M610,72 L610,140 L74,140 L74,90" fill="none" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
+  +'<text x="330" y="156" text-anchor="middle" font-size="11.5" fill="#5a6068">retour unitaire</text>'
+  +'<text x="700" y="46" font-size="11.5" fill="#5a6068">L(p) = C(p)·G(p)</text>'
+  +'</svg>';
+}
+
+/* ===================== bloc d'analyse (sous les graphiques) ===================== */
+function mkAnalysis(){
+  const M=model(),mg=marginsOf(bode(M));
+  return h('div',{class:'blk'},
+    h('h3',{style:'margin-top:0'},'Analyse du modèle — boucle ouverte L(p) = C(p)·G(p)'),
+    h('table',{class:'kv'},h('tbody',null,
+      h('tr',null,h('td',null,'Classe de L(p)'),h('td',{class:'m'},String(M.cls))),
+      h('tr',null,h('td',null,'Gain de position Kp'),h('td',{class:'m'},M.cls===0?nf(M.Kpos,3):'∞')),
+      h('tr',null,h('td',null,'Gain de vitesse Kv'),h('td',{class:'m'},M.cls===1?nf(M.Kv,3):(M.cls>1?'∞':'0'))),
+      h('tr',null,h('td',null,'Gain d’accélération Ka'),h('td',{class:'m'},M.cls===2?nf(M.Ka,3):(M.cls>2?'∞':'0'))),
+      h('tr',null,h('td',null,'Écart d’échelon 1/(1+Kp)'),h('td',{class:'m'},M.cls===0?nf(1/(1+M.Kpos),3):'0')),
+      h('tr',null,h('td',null,'Écart de rampe 1/Kv'),h('td',{class:'m'},M.cls===0?'∞':(M.cls===1?nf(1/M.Kv,3):'0'))),
+      h('tr',{class:'hl'},h('td',null,'Stabilité boucle fermée'),h('td',{class:'m'},M.stable?'stable':'instable')),
+      h('tr',null,h('td',null,'Marge de phase Mφ'),h('td',{class:'m'},isFinite(mg.pm)?nf(mg.pm,1)+' °':'—')),
+      h('tr',null,h('td',null,'Marge de gain MG'),h('td',{class:'m'},isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞'))
+    ))
+  );
 }
 
 /* ===================== contrôles ===================== */
@@ -537,7 +572,7 @@ function mkControls(onChange,opts){
   opts=Object.assign({input:true,dist:true},opts||{});
   const host=h('div',{class:'blk'});
   function build(){
-    const P=SYS.plant, C=SYS.corr;
+    const P=SYS.plant,C=SYS.corr;
     host.innerHTML='';
     const r1=h('div',{class:'ctrl'});
     r1.append(
@@ -547,7 +582,7 @@ function mkControls(onChange,opts){
     host.append(r1);
     const r2=h('div',{class:'ctrl'});
     r2.append(sld({label:'K',min:0.2,max:10,step:0.1,val:P.K,d:1,on:v=>{P.K=v;onChange();}}));
-    if (P.forme==='A') r2.append(sld({label:'T',min:0.05,max:3,step:0.05,val:P.T,d:2,unit:'s',on:v=>{P.T=v;onChange();}}));
+    if (P.forme==='A')r2.append(sld({label:'T',min:0.05,max:3,step:0.05,val:P.T,d:2,unit:'s',on:v=>{P.T=v;onChange();}}));
     else r2.append(
       sld({label:'m',min:0.05,max:2,step:0.05,val:P.m,d:2,on:v=>{P.m=v;onChange();}}),
       sld({label:'ω₀',min:0.3,max:10,step:0.1,val:P.w0,d:1,unit:'rad/s',on:v=>{P.w0=v;onChange();}})
@@ -558,8 +593,8 @@ function mkControls(onChange,opts){
       h('div',{class:'fld'},h('span',null,'Correcteur C(p)'),chips([['P','P'],['PI','PI'],['PID','PID']],C.type,v=>{C.type=v;build();onChange();},'Correcteur')),
       sld({label:'K<sub>p</sub>',min:0.1,max:20,step:0.1,val:C.Kp,d:1,on:v=>{C.Kp=v;onChange();}})
     );
-    if (C.type!=='P') r3.append(sld({label:'T<sub>i</sub>',min:0.1,max:5,step:0.05,val:C.Ti,d:2,unit:'s',on:v=>{C.Ti=v;onChange();}}));
-    if (C.type==='PID') r3.append(sld({label:'T<sub>d</sub>',min:0.01,max:2,step:0.01,val:C.Td,d:2,unit:'s',on:v=>{C.Td=v;onChange();}}));
+    if (C.type!=='P')r3.append(sld({label:'T<sub>i</sub>',min:0.1,max:5,step:0.05,val:C.Ti,d:2,unit:'s',on:v=>{C.Ti=v;onChange();}}));
+    if (C.type==='PID')r3.append(sld({label:'T<sub>d</sub>',min:0.01,max:2,step:0.01,val:C.Td,d:2,unit:'s',on:v=>{C.Td=v;onChange();}}));
     host.append(r3);
     if (opts.input){
       const r4=h('div',{class:'ctrl'});
@@ -568,7 +603,7 @@ function mkControls(onChange,opts){
       if (opts.dist){
         r4.append(h('div',{class:'fld'},h('span',null,'Perturbation d(t)'),
           chips([[0,'Aucune'],[1,'Échelon']],SYS.dist>0?1:0,v=>{SYS.dist=v?1:0;build();onChange();},'Perturbation')));
-        if (SYS.dist>0) r4.append(sld({label:'amplitude',min:0.1,max:5,step:0.1,val:SYS.dist,d:1,on:v=>{SYS.dist=v;onChange();}}));
+        if (SYS.dist>0)r4.append(sld({label:'amplitude',min:0.1,max:5,step:0.1,val:SYS.dist,d:1,on:v=>{SYS.dist=v;onChange();}}));
       }
       host.append(r4);
     }
@@ -580,28 +615,28 @@ function mkControls(onChange,opts){
 
 /* ===================== onglet PRÉCISION ===================== */
 function cellVal(M,c,col){
-  if (col===0) return c===0 ? 1/(1+M.Kpos) : 0;
-  if (col===1) return c===0 ? Infinity : (c===1 ? 1/M.Kv : 0);
-  return c<2 ? Infinity : 1/M.Ka;
+  if (col===0)return c===0?1/(1+M.Kpos):0;
+  if (col===1)return c===0?Infinity:(c===1?1/M.Kv:0);
+  return c<2?Infinity:1/M.Ka;
 }
 function fmtVal(v){
-  if (!isFinite(v)) return '∞';
-  if (Math.abs(v)<1e-12) return '0';
+  if (!isFinite(v))return '∞';
+  if (Math.abs(v)<1e-12)return '0';
   return nf(v,3);
 }
 function errTable(M){
-  const curCol = SYS.input==='echelon'?0 : SYS.input==='rampe'?1 : -1;
-  const dispCls = Math.min(M.cls,2);
-  const txt=[[ '1/(1+Kp)','∞','∞' ],[ '0','1/Kv','∞' ],[ '0','0','1/Ka' ]];
+  const curCol=SYS.input==='echelon'?0:SYS.input==='rampe'?1:-1;
+  const dispCls=Math.min(M.cls,2);
+  const txt=[['1/(1+Kp)','∞','∞'],['0','1/Kv','∞'],['0','0','1/Ka']];
   const rows=[0,1,2].map(c=>{
     const tds=[h('td',{class:'lbl'},String(c))];
     for (let col=0;col<3;col++){
-      const on = (c===dispCls && col===curCol);
-      const v = cellVal(M,c,col);
-      const showNum = (c===M.cls);
+      const on=(c===dispCls&&col===curCol);
+      const v=cellVal(M,c,col);
+      const showNum=(c===M.cls);
       tds.push(h('td',{class:(on?'on ':'')+(isFinite(v)?'':'inf')},
         txt[c][col],
-        showNum ? h('span',{class:'num'},'= '+fmtVal(v)) : null));
+        showNum?h('span',{class:'num'},'= '+fmtVal(v)):null));
     }
     return h('tr',null,tds);
   });
@@ -613,44 +648,42 @@ function errTable(M){
       h('th',null,'Parabole — écart d’accélération'))),
     h('tbody',null,rows));
   const wrap=h('div',null,tbl);
-  if (M.cls>2) wrap.append(h('p',{class:'small'},'L(p) possède '+M.cls+' intégrateurs : tous les écarts sont nuls (la ligne 2 est mise en évidence par défaut).'));
+  if (M.cls>2)wrap.append(h('p',{class:'small'},'L(p) possède '+M.cls+' intégrateurs : tous les écarts sont nuls (la ligne 2 est mise en évidence par défaut).'));
   return wrap;
 }
-
 function mountPrecision(root){
   root.append(h('h2',null,'Précision des systèmes asservis'));
   root.append(h('p',{html:'La <b>précision</b> mesure l’<b>écart</b> entre la consigne e(t) et la sortie s(t) en <b>régime permanent</b>. Cet écart dépend de la <b>classe</b> de la fonction de transfert en boucle ouverte L(p) = C(p)·G(p) — c’est-à-dire du nombre d’intégrateurs qu’elle contient — et du <b>type d’entrée</b>.'}));
-  const dg=h('div'); root.append(dg);
+  const dg=h('div');root.append(dg);
   root.append(h('p',{class:'small',html:'Modifiez la <b>classe</b> de G(p), ajoutez un <b>correcteur intégral</b> (PI ou PID) et regardez la case correspondante du tableau s’allumer.'}));
-  root.append(mkControls(()=>{draw();aside();}));
+  root.append(mkControls(()=>{draw();}));
 
   const pb=plotBox('Réponse temporelle s(t) et consigne e(t)',{h:310,yl:'s(t)'});
   const pe=plotBox('Écart ε(t) = e(t) − s(t)',{h:185,yl:'ε(t)'});
-  root.append(pb.box, pe.box);
+  root.append(pb.box,pe.box);
   root.append(pleg([[COL.slate,'consigne e(t)','d'],[COL.blue,'sortie s(t)'],[COL.green,'valeur finale visée','d'],[COL.red,'écart ε(t)']]));
-  const res=h('div'); root.append(res);
+  const res=h('div');root.append(res);
+  const ana=h('div');root.append(ana);
 
   function draw(){
     const M=model();
     dg.innerHTML=diagSVG(M);
     let tm=timeFrame(M);
-    if (SYS.input==='rampe') tm*=1.7;
+    if (SYS.input==='rampe')tm*=1.7;
     const R=computeResponse(M,tm,900);
     const eS=eSignal;
-
     const yAll=R.y.map(p=>p[1]).filter(isFinite);
     const eAll=R.y.map(p=>eS(p[0])-p[1]).filter(isFinite);
-    const ylo=Math.min(0,...yAll), yhi=Math.max(1.02,...yAll);
-    const elo=Math.min(0,...eAll), ehi=Math.max(0.01,...eAll);
-    pb.P.set(Object.assign(xAxis(tm), yAxisFor(ylo,yhi)));
-    pe.P.set(Object.assign(xAxis(tm), yAxisFor(elo,ehi)));
-
+    const ylo=Math.min(0,...yAll),yhi=Math.max(1.02,...yAll);
+    const elo=Math.min(0,...eAll),ehi=Math.max(0.01,...eAll);
+    pb.P.set(Object.assign(xAxis(tm),yAxisFor(ylo,yhi)));
+    pe.P.set(Object.assign(xAxis(tm),yAxisFor(elo,ehi)));
     const yss=R.y[R.y.length-1][1];
     pb.P.draw=P=>{
       P.fn(eS,COL.slate,2,[6,4],0,tm);
       P.seg(0,yss,tm,yss,COL.green,1.3,[5,4]);
       P.line(R.y1,COL.blue,2.6);
-      if (R.y2) P.line(R.y2,COL.violet,1.8,[4,3]);
+      if (R.y2)P.line(R.y2,COL.violet,1.8,[4,3]);
       P.line(R.y,COL.ink,2.6);
       P.dot(tm,yss,COL.green,4.5);
     };
@@ -658,32 +691,31 @@ function mountPrecision(root){
       P.seg(0,0,tm,0,COL.soft,1);
       P.line(R.y.map((p,i)=>[p[0],eS(p[0])-p[1]]),COL.red,2.4);
     };
-    pb.P.redraw(); pe.P.redraw();
+    pb.P.redraw();pe.P.redraw();
 
     res.innerHTML='';
-    const ecart = isFinite(yss)? yss : NaN;
     res.append(stats([
-      ['Classe de L(p)', String(M.cls)],
-      ['Gain de position Kp', M.cls===0? nf(M.Kpos,2) : '∞'],
-      ['Gain de vitesse Kv', M.cls===1? nf(M.Kv,2) : (M.cls>1?'∞':'0')],
-      ['Gain d’accélération Ka', M.cls===2? nf(M.Ka,2) : (M.cls>2?'∞':'0')],
-      ['Écart d’échelon 1/(1+Kp)', M.cls===0? nf(1/(1+M.Kpos),3) : '0'],
-      ['Écart de rampe 1/Kv', M.cls===0? '∞' : M.cls===1? nf(1/M.Kv,3) : '0']
+      ['Classe de L(p)',String(M.cls)],
+      ['Gain de position Kp',M.cls===0?nf(M.Kpos,2):'∞'],
+      ['Gain de vitesse Kv',M.cls===1?nf(M.Kv,2):(M.cls>1?'∞':'0')],
+      ['Gain d’accélération Ka',M.cls===2?nf(M.Ka,2):(M.cls>2?'∞':'0')],
+      ['Écart d’échelon 1/(1+Kp)',M.cls===0?nf(1/(1+M.Kpos),3):'0'],
+      ['Écart de rampe 1/Kv',M.cls===0?'∞':M.cls===1?nf(1/M.Kv,3):'0']
     ]));
-
     res.append(h('h3',null,'Tableau des écarts'));
     res.append(errTable(M));
-
     const v=[];
-    if (M.cls===0) v.push('L(p) est de <b>classe 0</b> : un échelon laisse un écart de position <b>1/(1+Kp) = '+nf(1/(1+M.Kpos),3)+'</b>. Un correcteur intégral (PI ou PID) ferait passer L(p) en classe 1 et annulerait cet écart.');
-    else if (M.cls===1) v.push('L(p) est de <b>classe 1</b> : l’écart de position est <b>nul</b> pour un échelon, mais une rampe laisse un écart de traînage <b>1/Kv = '+nf(1/M.Kv,3)+'</b>.');
+    if (M.cls===0)v.push('L(p) est de <b>classe 0</b> : un échelon laisse un écart de position <b>1/(1+Kp) = '+nf(1/(1+M.Kpos),3)+'</b>. Un correcteur intégral (PI ou PID) ferait passer L(p) en classe 1 et annulerait cet écart.');
+    else if (M.cls===1)v.push('L(p) est de <b>classe 1</b> : l’écart de position est <b>nul</b> pour un échelon, mais une rampe laisse un écart de traînage <b>1/Kv = '+nf(1/M.Kv,3)+'</b>.');
     else v.push('L(p) est de <b>classe '+M.cls+'</b> : les écarts de position et de traînage sont <b>nuls</b>.');
     if (SYS.dist>0){
       const de=SYS.dist*M.distGain;
       v.push('Perturbation en échelon d’amplitude '+nf(SYS.dist,1)+' : l’écart résiduel sur la sortie vaut <b>'+nf(de,3)+'</b>'+(Math.abs(de)<1e-9?' — le correcteur intégral la rejette.':' — un intégrateur dans la boucle le rejetterait.'));
     }
-    if (!M.stable) v.push('<b>Attention :</b> la boucle fermée est instable, les écarts ci-dessus n’ont pas de sens physique.');
-    res.append(verdict(v.join(' '), M.stable?(M.cls===0&&SYS.input!=='dirac'?'warn':'yes'):'no'));
+    if (!M.stable)v.push('<b>Attention :</b> la boucle fermée est instable, les écarts ci-dessus n’ont pas de sens physique.');
+    res.append(verdict(v.join(' '),M.stable?(M.cls===0&&SYS.input!=='dirac'?'warn':'yes'):'no'));
+
+    ana.innerHTML='';ana.append(mkAnalysis());
   }
   draw();
 }
@@ -692,15 +724,16 @@ function mountPrecision(root){
 function mountRapidite(root){
   root.append(h('h2',null,'Rapidité des systèmes asservis'));
   root.append(h('p',{html:'La <b>rapidité</b> caractérise la vitesse avec laquelle la sortie rejoint sa valeur finale. On la mesure par le <b>temps de réponse à 5 %</b> t₅%, le <b>temps de montée</b> 10→90 % ou le <b>temps de pic</b>. Elle est liée à la pulsation propre du système et au gain de la boucle : augmenter le gain rend le système plus vif, mais souvent moins stable.'}));
-  const dg=h('div'); root.append(dg);
-  root.append(mkControls(()=>{draw();aside();},{input:false,dist:false}));
+  const dg=h('div');root.append(dg);
+  root.append(mkControls(()=>{draw();},{input:false,dist:false}));
 
   const p1=plotBox('Réponse indicielle (échelon unitaire)',{h:300,yl:'s(t)'});
   const p2=plotBox('Temps de réponse à 5 % en fonction du gain Kp',{h:300,xl:'Kp',yl:'t₅% (s)'});
-  const row=h('div',{class:'two'}); row.append(p1.box,p2.box);
+  const row=h('div',{class:'two'});row.append(p1.box,p2.box);
   root.append(row);
   root.append(pleg([[COL.slate,'consigne','d'],[COL.blue,'sortie'],[COL.orange,'bande ±5 %','d'],[COL.violet,'t₅%'],[COL.red,'t₅% courant']]));
-  const res=h('div'); root.append(res);
+  const res=h('div');root.append(res);
+  const ana=h('div');root.append(ana);
 
   function draw(){
     const M=model();
@@ -709,9 +742,8 @@ function mountRapidite(root){
     const R=simulateSS(tf2ss(M.T1n,M.T1d),()=>1,tm,900);
     const met=metrics(R);
     const ys=R.map(p=>p[1]).filter(isFinite);
-    const lo=Math.min(0,...ys), hi=Math.max(1.02,...ys);
-    p1.P.set(Object.assign(xAxis(tm), yAxisFor(lo,hi)));
-
+    const lo=Math.min(0,...ys),hi=Math.max(1.02,...ys);
+    p1.P.set(Object.assign(xAxis(tm),yAxisFor(lo,hi)));
     p1.P.draw=P=>{
       P.seg(0,1,tm,1,COL.slate,1.8,[6,4]);
       P.seg(0,1.05,tm,1.05,COL.orange,1.2,[3,3]);
@@ -730,48 +762,49 @@ function mountRapidite(root){
     };
     p1.P.redraw();
 
-    /* balayage de Kp */
-    const kp0=SYS.corr.Kp, KMAX=20, NPT=28, sweep=[];
+    const kp0=SYS.corr.Kp,KMAX=20,NPT=28,sweep=[];
     let ymaxS=0;
     for (let i=0;i<=NPT;i++){
       const kp=0.1+(KMAX-0.1)*i/NPT;
       SYS.corr.Kp=kp;
       const Mi=model();
-      if (!Mi.stable){ sweep.push([kp,NaN]); continue; }
+      if (!Mi.stable){sweep.push([kp,NaN]);continue;}
       const tmi=timeFrame(Mi);
       const Ri=simulateSS(tf2ss(Mi.T1n,Mi.T1d),()=>1,tmi,300);
       const mi=metrics(Ri);
-      const v = (isFinite(mi.t5)&&mi.t5>0)? mi.t5 : NaN;
-      if (isFinite(v)) ymaxS=Math.max(ymaxS,v);
+      const v=(isFinite(mi.t5)&&mi.t5>0)?mi.t5:NaN;
+      if (isFinite(v))ymaxS=Math.max(ymaxS,v);
       sweep.push([kp,v]);
     }
     SYS.corr.Kp=kp0;
-    const yTop = ymaxS>0 ? Math.min(ymaxS,50)*1.15 : 5;
+    const yTop=ymaxS>0?Math.min(ymaxS,50)*1.15:5;
     p2.P.set({xmin:0,xmax:KMAX,xt:niceStep(KMAX,6),ymin:0,ymax:yTop,yt:niceStep(yTop,5),fx:v=>nf(v,1),fy:v=>nf(v,2)});
     p2.P.draw=P=>{
       P.line(sweep.filter(p=>isFinite(p[1])),COL.blue,2.6);
       const cur=sweep.reduce((a,p)=>Math.abs(p[0]-kp0)<Math.abs(a[0]-kp0)?p:a,sweep[0]);
-      if (isFinite(cur[1])) P.dot(cur[0],cur[1],COL.red,6);
+      if (isFinite(cur[1]))P.dot(cur[0],cur[1],COL.red,6);
       P.seg(kp0,0,kp0,yTop,COL.red,1.1,[3,3]);
       P.txt('Kp = '+nf(kp0,1),kp0,0,COL.red,'center',11.5,0,-8);
     };
     p2.P.redraw();
 
     res.innerHTML='';
-    res.append(stats([
-      ['Gain statique (valeur finale)', nfs(met.yss,3)],
-      ['Temps de montée 10→90 %', isFinite(met.tr)? nf(met.tr,2)+' s':'—'],
-      ['Temps de réponse à 5 %', isFinite(met.t5)? nf(met.t5,2)+' s':'—'],
-      ['Dépassement D %', isFinite(met.D)? nf(met.D,1)+' %':'—'],
-      ['Temps de pic', isFinite(met.tp)? nf(met.tp,2)+' s':'—'],
-      ['Marge de phase', nf(marginsOf(bode(M)).pm,1)+' °']
-    ]));
     const mm=marginsOf(bode(M));
+    res.append(stats([
+      ['Gain statique (valeur finale)',nfs(met.yss,3)],
+      ['Temps de montée 10→90 %',isFinite(met.tr)?nf(met.tr,2)+' s':'—'],
+      ['Temps de réponse à 5 %',isFinite(met.t5)?nf(met.t5,2)+' s':'—'],
+      ['Dépassement D %',isFinite(met.D)?nf(met.D,1)+' %':'—'],
+      ['Temps de pic',isFinite(met.tp)?nf(met.tp,2)+' s':'—'],
+      ['Marge de phase',nf(mm.pm,1)+' °']
+    ]));
     let txt;
-    if (!M.stable) txt='La boucle fermée est <b>instable</b> : le temps de réponse n’est pas défini. Diminuez Kp.';
-    else if (!isFinite(met.t5)) txt='Réponse non mesurable sur la fenêtre d’observation.';
+    if (!M.stable)txt='La boucle fermée est <b>instable</b> : le temps de réponse n’est pas défini. Diminuez Kp.';
+    else if (!isFinite(met.t5))txt='Réponse non mesurable sur la fenêtre d’observation.';
     else txt='Avec Kp = '+nf(kp0,1)+', le système atteint 95 % de sa valeur finale en <b>'+nf(met.t5,2)+' s</b>'+(isFinite(met.D)&&met.D>0.5?' avec un dépassement de '+nf(met.D,1)+' %':' sans dépassement notable')+'. Augmentez Kp pour accélérer la réponse : t₅% diminue, mais la marge de phase se dégrade ('+nf(mm.pm,0)+'° actuellement).';
-    res.append(verdict(txt, M.stable?'yes':'no'));
+    res.append(verdict(txt,M.stable?'yes':'no'));
+
+    ana.innerHTML='';ana.append(mkAnalysis());
   }
   draw();
 }
@@ -780,18 +813,19 @@ function mountRapidite(root){
 function mountStabilite(root){
   root.append(h('h2',null,'Stabilité des systèmes asservis'));
   root.append(h('p',{html:'Un système est <b>stable</b> si sa réponse libre tend vers 0 : tous les <b>pôles de la boucle fermée</b> doivent avoir une partie réelle strictement négative. En pratique, on juge la stabilité sur la boucle ouverte L(p) = C(p)·G(p) grâce à la <b>marge de gain</b> et à la <b>marge de phase</b> lues sur le diagramme de Bode.'}));
-  const dg=h('div'); root.append(dg);
-  root.append(mkControls(()=>{draw();aside();},{input:false,dist:false}));
+  const dg=h('div');root.append(dg);
+  root.append(mkControls(()=>{draw();},{input:false,dist:false}));
 
   const p1=plotBox('Réponse indicielle de la boucle fermée',{h:280,yl:'s(t)'});
   const p2=plotBox('Pôles de la boucle fermée (plan complexe)',{h:280,xl:'Re',yl:'Im'});
-  const row=h('div',{class:'two'}); row.append(p1.box,p2.box);
+  const row=h('div',{class:'two'});row.append(p1.box,p2.box);
   root.append(row);
   const p3=plotBox('Bode — module de L(jω) (dB)',{h:230,yl:'|L| (dB)',xl:'ω (rad/s), échelle log'});
   const p4=plotBox('Bode — phase de L(jω) (°)',{h:230,yl:'arg L (°)',xl:'ω (rad/s), échelle log'});
   root.append(p3.box,p4.box);
   root.append(pleg([[COL.blue,'L(jω)'],[COL.red,'pulsation de coupure / marge'],[COL.green,'0 dB et −180°','d'],[COL.violet,'pôles BF','o']]));
-  const res=h('div'); root.append(res);
+  const res=h('div');root.append(res);
+  const ana=h('div');root.append(ana);
 
   function draw(){
     const M=model();
@@ -799,47 +833,45 @@ function mountStabilite(root){
     const tm=timeFrame(M);
     const R=simulateSS(tf2ss(M.T1n,M.T1d),()=>1,tm,900);
     const ys=R.map(p=>p[1]).filter(isFinite);
-    p1.P.set(Object.assign(xAxis(tm), yAxisFor(Math.min(0,...ys),Math.max(1.02,...ys))));
+    p1.P.set(Object.assign(xAxis(tm),yAxisFor(Math.min(0,...ys),Math.max(1.02,...ys))));
     p1.P.draw=P=>{
       P.seg(0,1,tm,1,COL.slate,1.6,[6,4]);
-      P.line(R, M.stable?COL.blue:COL.red, 2.8);
+      P.line(R,M.stable?COL.blue:COL.red,2.8);
     };
     p1.P.redraw();
 
-    /* plan des pôles */
     const pr=M.poles;
     const rmax=Math.max(...pr.map(z=>Math.abs(z.re)),1e-3);
     const imax=Math.max(...pr.map(z=>Math.abs(z.im)),1e-3);
-    let xmin=-1.2*rmax, xmax=0.35*rmax;
-    pr.forEach(z=>{ if (z.re>xmax) xmax=z.re*1.15; if (z.re<xmin) xmin=z.re*1.15; });
-    if (xmax<=0) xmax=0.35*rmax;
-    const ymin=-1.2*imax, ymax=1.2*imax;
+    let xmin=-1.2*rmax,xmax=0.35*rmax;
+    pr.forEach(z=>{if(z.re>xmax)xmax=z.re*1.15;if(z.re<xmin)xmin=z.re*1.15;});
+    if (xmax<=0)xmax=0.35*rmax;
+    const ymin=-1.2*imax,ymax=1.2*imax;
     p2.P.set({xmin,xmax,xt:niceStep(xmax-xmin,6),ymin,ymax,yt:niceStep(ymax-ymin,5),fx:v=>nf(v,2),fy:v=>nf(v,2)});
     p2.P.draw=P=>{
       P.seg(0,ymin,0,ymax,COL.axis,1.6);
       P.seg(xmin,0,xmax,0,COL.soft,1.2);
       pr.forEach(z=>{
-        P.dot(z.re,z.im, z.re<0?COL.violet:COL.red, 6);
+        P.dot(z.re,z.im,z.re<0?COL.violet:COL.red,6);
         P.dot(z.re,z.im,'#fff',3);
       });
     };
     p2.P.redraw();
 
-    /* Bode */
-    const B=bode(M), mg=marginsOf(B);
-    const lw0=Math.log10(0.02), lw1=Math.log10(3000);
+    const B=bode(M),mg=marginsOf(B);
+    const lw0=Math.log10(0.02),lw1=Math.log10(3000);
     let mags=B.map(p=>p.mag).filter(isFinite);
     let phs=B.map(p=>p.ph).filter(isFinite);
     mags=mags.map(v=>clamp(v,-90,90));
     const magR={ymin:-90,ymax:90,yt:30};
-    const phLo=Math.min(...phs,-200), phHi=Math.max(...phs,20);
+    const phLo=Math.min(...phs,-200),phHi=Math.max(...phs,20);
     const phR=yAxisFor(phLo-10,phHi+10);
     p3.P.set(Object.assign({xmin:lw0,xmax:lw1,xt:(lw1-lw0)/6,fx:v=>{const w=Math.pow(10,v);return w>=10?nf(w,0):w>=1?nf(w,1):nf(w,2);}},magR));
     p3.P.draw=P=>{
       P.seg(lw0,0,lw1,0,COL.green,1.5,[6,4]);
       P.line(B.map(p=>[p.lw,clamp(p.mag,-90,90)]),COL.blue,2.4);
-      if (isFinite(mg.wc)){ P.seg(Math.log10(mg.wc),-90,Math.log10(mg.wc),0,COL.red,1.2,[4,3]); P.dot(Math.log10(mg.wc),0,COL.red,4.5); P.txt('ωc = '+nf(mg.wc,2),Math.log10(mg.wc),0,COL.red,'left',11.5,6,-8); }
-      if (isFinite(mg.w180)){ P.seg(Math.log10(mg.w180),-90,Math.log10(mg.w180),0,COL.violet,1.2,[4,3]); }
+      if (isFinite(mg.wc)){P.seg(Math.log10(mg.wc),-90,Math.log10(mg.wc),0,COL.red,1.2,[4,3]);P.dot(Math.log10(mg.wc),0,COL.red,4.5);P.txt('ωc = '+nf(mg.wc,2),Math.log10(mg.wc),0,COL.red,'left',11.5,6,-8);}
+      if (isFinite(mg.w180))P.seg(Math.log10(mg.w180),-90,Math.log10(mg.w180),0,COL.violet,1.2,[4,3]);
     };
     p3.P.redraw();
 
@@ -848,119 +880,347 @@ function mountStabilite(root){
       P.seg(lw0,-180,lw1,-180,COL.green,1.5,[6,4]);
       P.line(B.map(p=>[p.lw,p.ph]),COL.blue,2.4);
       if (isFinite(mg.wc)){
-        const phc = B.reduce((a,p)=>Math.abs(p.w-mg.wc)<Math.abs(a.w-mg.wc)?p:a,B[0]).ph;
+        const phc=B.reduce((a,p)=>Math.abs(p.w-mg.wc)<Math.abs(a.w-mg.wc)?p:a,B[0]).ph;
         P.seg(Math.log10(mg.wc),phR.ymin,Math.log10(mg.wc),phR.ymax,COL.red,1.2,[4,3]);
         P.dot(Math.log10(mg.wc),phc,COL.red,4.5);
         P.txt('Mφ = '+nf(mg.pm,1)+'°',Math.log10(mg.wc),phc,COL.red,'left',11.5,7,-9);
       }
-      if (isFinite(mg.w180)){
-        P.seg(Math.log10(mg.w180),phR.ymin,Math.log10(mg.w180),phR.ymax,COL.violet,1.2,[4,3]);
-      }
+      if (isFinite(mg.w180))P.seg(Math.log10(mg.w180),phR.ymin,Math.log10(mg.w180),phR.ymax,COL.violet,1.2,[4,3]);
     };
     p4.P.redraw();
 
     res.innerHTML='';
     res.append(stats([
-      ['Boucle fermée', M.stable?'STABLE':'INSTABLE'],
-      ['Pôles à partie réelle > 0', String(pr.filter(z=>z.re>1e-9).length)],
-      ['Marge de phase Mφ', isFinite(mg.pm)? nf(mg.pm,1)+' °':'—'],
-      ['Marge de gain MG', isFinite(mg.gm)? nf(mg.gm,1)+' dB':'∞'],
-      ['Pulsation de coupure ωc', isFinite(mg.wc)? nf(mg.wc,2)+' rad/s':'—'],
-      ['Pulsation à −180° ω₁₈₀', isFinite(mg.w180)? nf(mg.w180,2)+' rad/s':'—']
+      ['Boucle fermée',M.stable?'STABLE':'INSTABLE'],
+      ['Pôles à partie réelle > 0',String(pr.filter(z=>z.re>1e-9).length)],
+      ['Marge de phase Mφ',isFinite(mg.pm)?nf(mg.pm,1)+' °':'—'],
+      ['Marge de gain MG',isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞'],
+      ['Pulsation de coupure ωc',isFinite(mg.wc)?nf(mg.wc,2)+' rad/s':'—'],
+      ['Pulsation à −180° ω₁₈₀',isFinite(mg.w180)?nf(mg.w180,2)+' rad/s':'—']
     ]));
-
     let txt;
     if (M.stable){
-      const okG = !isFinite(mg.gm)||mg.gm>6;
-      const okP = !isFinite(mg.pm)||mg.pm>30;
+      const okG=!isFinite(mg.gm)||mg.gm>6;
+      const okP=!isFinite(mg.pm)||mg.pm>30;
       txt='La boucle fermée est <b>stable</b>. '+(okG&&okP
-        ? 'Les marges sont confortables (Mφ = '+nf(mg.pm,1)+'°, MG = '+(isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞')+').'
-        : 'Attention, les marges sont faibles : le système est stable mais peu robuste. Une marge de phase inférieure à 45° ou une marge de gain inférieure à 6 dB annonce un risque d’instabilité en cas de variation des paramètres.');
+        ?'Les marges sont confortables (Mφ = '+nf(mg.pm,1)+'°, MG = '+(isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞')+').'
+        :'Attention, les marges sont faibles : le système est stable mais peu robuste. Une marge de phase inférieure à 45° ou une marge de gain inférieure à 6 dB annonce un risque d’instabilité en cas de variation des paramètres.');
     } else {
       txt='La boucle fermée est <b>instable</b> : '+pr.filter(z=>z.re>1e-9).length+' pôle(s) ont une partie réelle positive (croix rouges). Diminuez le gain Kp ou augmentez Ti.';
     }
-    res.append(verdict(txt, M.stable?'yes':'no'));
+    res.append(verdict(txt,M.stable?'yes':'no'));
+
+    ana.innerHTML='';ana.append(mkAnalysis());
   }
   draw();
 }
 
-/* ===================== panneau d'analyse ===================== */
-function aside(){
-  const box=$('#act'); box.innerHTML='';
-  const M=model(), mg=marginsOf(bode(M));
-  box.append(h('div',{class:'phead'},h('b',null,'Analyse'),h('span',{class:'sub'},TABS.find(t=>t.id===CUR).t)));
+/* ===================================================================
+   ACTIVITÉS ET COURS (structure identique au fichier d'origine)
+   =================================================================== */
+
+const ACT={
+  precision:{
+    title:'Précision',
+    level:'Niveau 1 · Découvrir',
+    time:'20 min',
+    course:'precision-cours',
+    goal:'Relier la classe de L(p) et le type d’entrée aux écarts en régime permanent.',
+    steps:[
+      'Laissez le premier ordre avec le correcteur P. Observez le tableau des écarts : la case <b>classe 0 / échelon</b> s’allume et affiche un écart non nul. Lisez sa valeur.',
+      'Passez au correcteur <b>PI</b> : la classe de L(p) devient 1. Que devient l’écart de position ? Et l’écart de rampe ?',
+      'Choisissez l’entrée <b>rampe</b> et revenez au correcteur P (classe 0). L’écart de traînage devient infini : pourquoi ?',
+      'Ajoutez une perturbation en échelon avec le correcteur P, puis avec le PI. Dans quel cas l’écart dû à la perturbation est-il rejeté ?',
+      'Passez au second ordre (m = 0,5) et refaites les essais : la classe et les écarts changent-ils ?'
+    ],
+    defi:{q:'Un système de classe 1, de gain Kv = 5 s⁻¹, reçoit une rampe de pente 1. Quel est l’écart de traînage en régime permanent ?',a:'Pour une rampe, l’écart de traînage vaut <b>1/Kv = 1/5 = 0,2</b>. La sortie suit la rampe avec un retard constant de 0,2 unité.'},
+    qcm:[
+      {q:'Quel est l’écart statique d’un système de classe 0 de gain Kp en réponse à un échelon ?',o:['0','1/(1+Kp)','Kp','∞'],a:1,w:'Un échelon laisse un écart de position 1/(1+Kp) pour un système de classe 0 (sans intégrateur).'},
+      {q:'Pour annuler l’écart de position d’un système, il faut…',o:['augmenter le gain proportionnel','ajouter un intégrateur (PI ou PID)','ajouter un dérivateur','diminuer le gain'],a:1,w:'Seul un intégrateur dans la boucle ouverte (classe ≥ 1) annule l’écart de position. Augmenter Kp le réduit sans l’annuler.'},
+      {q:'Un système de classe 1 répond à une rampe avec…',o:['un écart nul','un écart de traînage 1/Kv','un écart infini','des oscillations entretenues'],a:1,w:'Classe 1 : écart de position nul (échelon) mais écart de traînage 1/Kv (rampe).'},
+      {q:'L’écart d’accélération 1/Ka est nul si…',o:['la classe de L(p) est 0','la classe de L(p) est 1','la classe de L(p) est ≥ 2','le gain est infini'],a:2,w:'Il faut deux intégrateurs (classe ≥ 2) pour annuler l’écart sur une entrée parabolique.'}
+    ]
+  },
+  rapidite:{
+    title:'Rapidité',
+    level:'Niveau 1 · Découvrir',
+    time:'25 min',
+    course:'rapidite-cours',
+    goal:'Mesurer le temps de réponse à 5 %, comprendre l’influence du gain et du dépassement.',
+    steps:[
+      'Avec le premier ordre (T = 0,5 s) et Kp = 2, lisez le t₅%. Comparez à la valeur théorique 3T.',
+      'Augmentez Kp progressivement. Sur le graphe de droite, t₅% diminue puis se stabilise. Que se passe-t-il quand Kp devient très grand ?',
+      'Passez au second ordre avec m = 0,3 : observez l’apparition du dépassement et l’évolution de t₅%.',
+      'Faites varier m de 0,1 à 1 : comment évolue le temps de pic ?',
+      'Comparez t₅% et t_r (10→90 %) sur la même courbe : quel indicateur est le plus robuste ?'
+    ],
+    defi:{q:'Un premier ordre de constante T = 0,4 s reçoit un échelon. Estimez son temps de réponse à 5 %.',a:'Pour un premier ordre, t₅% ≈ <b>3T = 1,2 s</b>. On peut le vérifier sur la courbe : la sortie entre dans la bande ±5 % vers 1,2 s.'},
+    qcm:[
+      {q:'Le temps de réponse à 5 % est…',o:['le temps pour atteindre 95 % de la valeur finale','le temps après lequel la sortie reste dans ±5 % de sa valeur finale','toujours 5 secondes','le temps de pic'],a:1,w:'Définition : instant à partir duquel |s(t) − s(∞)| ≤ 5 % |s(∞)| et le reste.'},
+      {q:'Augmenter Kp dans une boucle de classe 0…',o:['augmente t₅%','diminue t₅% (jusqu’à une limite)','ne change pas t₅%','rend le système instable dans tous les cas'],a:1,w:'Augmenter Kp accélère la réponse mais dégrade la stabilité ; au-delà d’un certain gain la réponse devient oscillante.'},
+      {q:'Le dépassement d’un second ordre dépend principalement de…',o:['K','m (coefficient d’amortissement)','ω₀ (pulsation propre)','T'],a:1,w:'D% = 100·exp(−mπ/√(1−m²)) : seul m intervient.'},
+      {q:'Le temps de montée 10→90 % est…',o:['le temps entre 10 % et 90 % de la valeur finale','toujours égal à t₅%','10 secondes','90 secondes'],a:0,w:'Différence entre les instants où la sortie atteint 90 % puis 10 % de sa valeur finale.'}
+    ]
+  },
+  stabilite:{
+    title:'Stabilité',
+    level:'Niveau 2 · Comprendre',
+    time:'30 min',
+    course:'stabilite-cours',
+    goal:'Relier les pôles de la boucle fermée et les marges de Bode au comportement du système.',
+    steps:[
+      'Avec le premier ordre et Kp = 2, la boucle fermée est stable : le diagramme des pôles montre une seule croix violette à partie réelle négative.',
+      'Augmentez Kp jusqu’à la limite : quand la boucle fermée devient-elle instable ? Où apparaît la croix rouge ?',
+      'Lisez la marge de phase et la marge de gain sur les diagrammes de Bode. Sont-elles confortables ?',
+      'Passez au correcteur PI : qu’ajoute-t-il au diagramme de Bode ? Qu’advient-il de la marge de phase ?',
+      'Passez au second ordre m = 0,2 : la marge de phase est-elle plus faible que pour m = 1 ? Concluez.'
+    ],
+    defi:{q:'Une boucle ouverte a une marge de phase de 15°. Peut-on la qualifier de robuste ?',a:'Non : une marge de phase inférieure à <b>30°</b> (et a fortiori à 15°) traduit un système proche de l’instabilité. Un retard ou une variation de gain peut le faire basculer. On vise en général <b>Mφ &gt; 45°</b> et <b>MG &gt; 6 dB</b>.'},
+    qcm:[
+      {q:'Un système est stable si…',o:['tous les pôles de la boucle fermée ont une partie réelle &lt; 0','tous les pôles ont une partie réelle &gt; 0','les pôles sont sur l’axe imaginaire','le gain est infini'],a:0,w:'Critère fondamental : les pôles de la boucle fermée doivent être dans le demi-plan gauche strict.'},
+      {q:'La marge de phase est…',o:['l’avance de phase qu’il faudrait ajouter à ωc pour atteindre −180°','le retard de phase du système','toujours 180°','la différence entre −180° et 0°'],a:0,w:'Mφ = 180° + arg L(jωc), où ωc est la pulsation de coupure à 0 dB.'},
+      {q:'Une marge de gain de 6 dB signifie…',o:['le gain peut être multiplié par 2 avant instabilité','le système est instable','le gain peut être divisé par 2','rien de particulier'],a:0,w:'6 dB = 20·log₁₀(2) : le gain peut être multiplié par 2 avant que le système ne devienne instable.'},
+      {q:'Augmenter Kp dans une boucle de classe 0…',o:['augmente la marge de phase','diminue la marge de phase','ne change pas la marge','n’affecte pas la stabilité'],a:1,w:'Augmenter le gain décale la courbe de module vers le haut, donc ωc augmente, et la phase à ωc est plus basse : la marge diminue.'}
+    ]
+  }
+};
+
+const COURSE=[
+  {id:'intro',t:'Performances des SLCI',h:`
+<p>Un <b>système linéaire continu invariant</b> (SLCI) asservi est jugé sur trois grandes performances, qui se conditionnent mutuellement :</p>
+<ul>
+<li><b>Précision</b> — l’écart entre consigne et sortie en régime permanent une fois le transitoire achevé.</li>
+<li><b>Rapidité</b> — la vitesse avec laquelle la sortie rejoint sa valeur finale.</li>
+<li><b>Stabilité</b> — la capacité de la boucle fermée à converger ; elle conditionne les deux autres.</li>
+</ul>
+<h3>Boucle d’asservissement</h3>
+<div class="formula math">ε(p) = E(p) − S(p) &nbsp;; S(p) = G(p)·[C(p)·ε(p) + D(p)] &nbsp;; L(p) = C(p)·G(p)</div>
+<p>La <b>fonction de transfert en boucle ouverte</b> L(p) = C(p)·G(p) gouverne la précision et la stabilité. La <b>fonction de transfert en boucle fermée</b> T(p) = L(p)/(1 + L(p)) (avec retour unitaire) gouverne la rapidité.</p>
+<div class="retain"><b>À retenir.</b> Précision, rapidité et stabilité ne peuvent pas être optimisées indépendamment : le réglage du correcteur est toujours un compromis.</div>`},
+  {id:'precision-cours',t:'Précision et erreurs',h:`
+<p>En régime permanent, l’écart ε(∞) = e(∞) − s(∞) dépend de la <b>classe</b> de L(p) — c’est-à-dire du nombre d’intégrateurs (pôles en p = 0) — et du <b>type d’entrée</b>.</p>
+<div class="formula math">Kp = lim<sub>p→0</sub> L(p) &nbsp;; Kv = lim<sub>p→0</sub> p·L(p) &nbsp;; Ka = lim<sub>p→0</sub> p²·L(p)</div>
+<table class="ctable"><thead><tr><th>Classe de L(p)</th><th>Échelon : ε(∞)</th><th>Rampe : ε(∞)</th><th>Parabole : ε(∞)</th></tr></thead><tbody>
+<tr><td>0</td><td>1/(1+Kp)</td><td>∞</td><td>∞</td></tr>
+<tr><td>1</td><td>0</td><td>1/Kv</td><td>∞</td></tr>
+<tr><td>2</td><td>0</td><td>0</td><td>1/Ka</td></tr>
+<tr><td>≥ 3</td><td>0</td><td>0</td><td>0</td></tr></tbody></table>
+<h3>Influence d’une perturbation</h3>
+<p>Une perturbation d(t) additive à l’entrée du système laisse sur la sortie un écart ε_d = d·G(0)/(1+L(0)). Il n’est annulé que si L(p) contient un intégrateur.</p>
+<div class="retain"><b>À retenir.</b> Un intégrateur dans C(p) fait gagner une classe et améliore la précision, au prix d’une marge de phase plus faible.</div>`},
+  {id:'rapidite-cours',t:'Rapidité et réponse temporelle',h:`
+<h3>Premier ordre</h3>
+<div class="formula math">T(p) = ${fr('K', '1+Tp')} &nbsp;; pour un échelon : s(t) = KA(1 − e<sup>−t/T</sup>)</div>
+<ul>
+<li><b>t₅% ≈ 3T</b> (temps de réponse à 5 %)</li>
+<li><b>t_r (10→90 %) ≈ 2,2 T</b></li>
+<li>pas de dépassement</li>
+</ul>
+<h3>Second ordre</h3>
+<div class="formula math">T(p) = ${fr('K', '1 + 2mp/ω₀ + p²/ω₀²')}</div>
+<ul>
+<li>Pseudo-pulsation ω = ω₀√(1 − m²)</li>
+<li><b>Dépassement</b> : D% = 100·exp(−mπ/√(1 − m²))</li>
+<li><b>Temps de pic</b> : t_p = π/ω</li>
+<li><b>t₅% ≈ 3/(mω₀)</b> pour m &lt; 0,7</li>
+</ul>
+<h3>Influence du gain Kp</h3>
+<p>Augmenter Kp augmente la pulsation propre de la boucle fermée : le système est plus rapide mais le dépassement grandit et la marge de phase diminue. Il y a un Kp optimal qui réalise le meilleur compromis rapidité/stabilité.</p>
+<div class="retain"><b>À retenir.</b> Le temps de réponse à 5 % est le meilleur indicateur de rapidité ; le dépassement mesure la « violence » du transitoire.</div>`},
+  {id:'stabilite-cours',t:'Stabilité et marges',h:`
+<h3>Critère fondamental</h3>
+<p>Un système bouclé est <b>stable</b> si et seulement si tous les pôles de la fonction de transfert en boucle fermée ont une <b>partie réelle strictement négative</b>.</p>
+<h3>Marges de stabilité</h3>
+<p>Sur le diagramme de Bode de L(jω) :</p>
+<ul>
+<li><b>Marge de phase</b> : Mφ = 180° + arg L(jω<sub>c</sub>), où ω<sub>c</sub> est la pulsation telle que |L(jω<sub>c</sub>)| = 1 (0 dB).</li>
+<li><b>Marge de gain</b> : MG = −20·log₁₀|L(jω<sub>180</sub>)|, où ω<sub>180</sub> est la pulsation telle que arg L = −180°.</li>
+</ul>
+<h3>Valeurs usuelles</h3>
+<table class="ctable"><thead><tr><th>Indicateur</th><th>Bon</th><th>Limite</th><th>Mauvais</th></tr></thead><tbody>
+<tr><td>Marge de phase Mφ</td><td>&gt; 45°</td><td>30° à 45°</td><td>&lt; 30°</td></tr>
+<tr><td>Marge de gain MG</td><td>&gt; 10 dB</td><td>6 à 10 dB</td><td>&lt; 6 dB</td></tr></tbody></table>
+<h3>Compromis gain/stabilité</h3>
+<p>Augmenter Kp décale la courbe de module vers le haut : ω<sub>c</sub> augmente et la phase à ω<sub>c</sub> est plus basse, donc Mφ diminue. Il existe un gain critique au-delà duquel la boucle fermée devient instable.</p>
+<div class="retain"><b>À retenir.</b> Le critère algébrique est la position des pôles ; le critère graphique est la lecture des marges sur le Bode.</div>`},
+  {id:'bilan',t:'Bilan et vocabulaire',h:`
+<h3>Choisir un compromis</h3>
+<table class="ctable"><thead><tr><th>Correcteur</th><th>Précision</th><th>Rapidité</th><th>Stabilité</th></tr></thead><tbody>
+<tr><td><b>P</b></td><td>réduite par Kp</td><td>améliorée par Kp</td><td>dégradée par Kp</td></tr>
+<tr><td><b>PI</b></td><td>position annulée</td><td>légèrement dégradée</td><td>marge plus faible</td></tr>
+<tr><td><b>PID</b></td><td>position annulée</td><td>améliorée (Td)</td><td>Mφ restaurée par Td</td></tr></tbody></table>
+<h3>Vocabulaire</h3>
+<dl class="gloss">
+<dt>Boucle ouverte L(p)</dt><dd>Produit C(p)·G(p) ; sa classe et ses pôles gouvernent les écarts et la stabilité.</dd>
+<dt>Boucle fermée T(p)</dt><dd>L(p)/(1+L(p)) ; ses pôles déterminent la stabilité réelle et sa dynamique.</dd>
+<dt>Classe</dt><dd>Nombre d’intégrateurs dans L(p).</dd>
+<dt>Écart statique</dt><dd>e(∞) − s(∞) en réponse à un échelon.</dd>
+<dt>Écart de traînage</dt><dd>Écart résiduel en réponse à une rampe.</dd>
+<dt>Temps de réponse à 5 %</dt><dd>Instant à partir duquel la sortie reste dans ±5 % de sa valeur finale.</dd>
+<dt>Dépassement</dt><dd>Écart maximal au-dessus de la valeur finale, en %.</dd>
+<dt>Marge de phase</dt><dd>Mφ = 180° + arg L(jωc).</dd>
+<dt>Marge de gain</dt><dd>MG = −20·log₁₀|L(jω₁₈₀)|.</dd>
+<dt>Gain critique</dt><dd>Valeur de Kp qui amène la boucle fermée à la limite de stabilité.</dd>
+</dl>
+<div class="retain"><b>À retenir.</b> Précision, rapidité et stabilité sont liées : aucun réglage ne peut les optimiser toutes indépendamment.</div>`}
+];
+
+/* ===================== état activité & cours ===================== */
+const AS={key:'precision',tab:'steps',open:false,st:lsGet(KEYS.act,{})};
+const CS={open:false,id:'intro'};
+
+function actSave(){lsSet(KEYS.act,AS.st);}
+function actState(){return AS.st[AS.key]||(AS.st[AS.key]={a:{},checked:false,shown:false});}
+function actScore(a){const s=actState();return a.qcm.filter((q,i)=>s.a[i]===q.a).length;}
+function courseSection(id){return COURSE.find(s=>s.id===id)||COURSE[0];}
+
+function renderAct(){
+  const box=$('#act'),btn=$('#bAct');
+  btn.setAttribute('aria-pressed',AS.open?'true':'false');
+  btn.classList.toggle('pri',AS.open);
+  box.hidden=!AS.open;
+  if (!AS.open){box.innerHTML='';return;}
+  const a=ACT[AS.key];
+  const oldB=box.querySelector('.pbody'),tag=AS.key+'|'+AS.tab;
+  const keep=oldB&&box.dataset.k===tag?oldB.scrollTop:0;
+  box.dataset.k=tag;
+  box.innerHTML='';
+  const nq=a.qcm.length;
+  box.append(h('div',{class:'phead'},
+    h('b',null,'Activité'),
+    h('span',{class:'sub'},a.title),
+    h('button',{class:'btn sm',type:'button',onclick:()=>{AS.open=false;renderAct();}},'Fermer')));
+  box.append(h('div',{class:'tabs',role:'tablist'},
+    h('button',{type:'button',role:'tab','aria-selected':AS.tab==='steps'?'true':'false',onclick:()=>{AS.tab='steps';renderAct();}},'Consignes'),
+    h('button',{type:'button',role:'tab','aria-selected':AS.tab==='qcm'?'true':'false',onclick:()=>{AS.tab='qcm';renderAct();}},'Questions ('+nq+')')));
   const body=h('div',{class:'pbody'});
-  body.append(h('div',{class:'goal'},h('b',null,'Boucle ouverte L(p) = C(p)·G(p)'),
-    h('div',{class:'mono'},'classe = '+M.cls)));
-  body.append(h('table',{class:'kv'},
-    h('tbody',null,
-      h('tr',null,h('td',null,'Classe de L(p)'),h('td',{class:'m'},String(M.cls))),
-      h('tr',null,h('td',null,'Gain de position Kp'),h('td',{class:'m'},M.cls===0?nf(M.Kpos,3):'∞')),
-      h('tr',null,h('td',null,'Gain de vitesse Kv'),h('td',{class:'m'},M.cls===1?nf(M.Kv,3):(M.cls>1?'∞':'0'))),
-      h('tr',null,h('td',null,'Gain d’accélération Ka'),h('td',{class:'m'},M.cls===2?nf(M.Ka,3):(M.cls>2?'∞':'0'))),
-      h('tr',null,h('td',null,'Écart d’échelon'),h('td',{class:'m'},M.cls===0?nf(1/(1+M.Kpos),3):'0')),
-      h('tr',null,h('td',null,'Écart de rampe'),h('td',{class:'m'},M.cls===0?'∞':(M.cls===1?nf(1/M.Kv,3):'0'))),
-      h('tr',{class:'hl'},h('td',null,'Stabilité BF'),h('td',{class:'m'},M.stable?'stable':'instable')),
-      h('tr',null,h('td',null,'Marge de phase'),h('td',{class:'m'},isFinite(mg.pm)?nf(mg.pm,1)+' °':'—')),
-      h('tr',null,h('td',null,'Marge de gain'),h('td',{class:'m'},isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞'))
-    )));
-  const help={
-    precision:'La <b>classe</b> de L(p) est le nombre d’intégrateurs (pôles en 0). Plus elle est élevée, plus la précision est grande — mais plus la stabilité devient délicate.',
-    rapidite:'Le <b>temps de réponse à 5 %</b> est l’instant après lequel la sortie reste dans une bande de ±5 % autour de sa valeur finale. Il varie comme l’inverse de la pulsation propre.',
-    stabilite:'La <b>marge de phase</b> est l’avance de phase qu’il faudrait ajouter à ωc pour atteindre −180°. La <b>marge de gain</b> est le facteur d’amplification qui amènerait le module à 0 dB à ω₁₈₀.'
-  };
-  body.append(h('p',{class:'small',html:help[CUR]}));
-  body.append(h('p',{class:'small',html:'Un système est stable si tous les pôles de la boucle fermée sont à partie réelle <b>strictement négative</b>.'}));
+  if (AS.tab==='steps'){
+    body.append(h('p',{class:'small'},a.level+' · environ '+a.time));
+    body.append(h('div',{class:'goal'},h('b',null,'Objectif. '),a.goal));
+    body.append(h('ol',{class:'steps'},a.steps.map(s=>h('li',{html:s}))));
+    body.append(h('div',{class:'defi'},
+      h('b',null,'Défi'),
+      h('p',{html:a.defi.q}),
+      h('details',null,h('summary',null,'Voir la réponse'),h('p',{html:a.defi.a}))));
+    if (a.course)body.append(h('p',null,h('button',{class:'btn',type:'button',onclick:()=>openCourse(a.course)},'Voir le cours : '+courseSection(a.course).t)));
+    body.append(h('p',null,h('button',{class:'btn pri',type:'button',onclick:()=>{AS.tab='qcm';renderAct();}},'Passer aux questions')));
+  } else {
+    const s=actState(),show=s.checked||s.shown;
+    a.qcm.forEach((q,i)=>{
+      const fs=h('fieldset',{class:'q'},h('legend',null,(i+1)+'. '+q.q));
+      q.o.forEach((o,j)=>{
+        const good=show&&j===q.a;
+        const bad=s.checked&&!s.shown&&s.a[i]===j&&j!==q.a;
+        const inp=h('input',{type:'radio',name:'q'+i,checked:show&&s.shown?j===q.a:s.a[i]===j,disabled:show});
+        inp.addEventListener('change',()=>{s.a[i]=j;actSave();renderAct();});
+        fs.append(h('label',{class:'opt'+(good?' good':'')+(bad?' bad':'')},
+          inp,h('span',null,o+(good?'  ✓':'')+(bad?'  ✗':''))));
+      });
+      if (show){const miss=s.a[i]==null&&!s.shown;fs.append(h('p',{class:'why'},(miss?'Sans réponse. ':'')+q.w));}
+      body.append(fs);
+    });
+    const done=Object.keys(s.a).length;
+    body.append(h('p',{class:'small'},s.shown?'Réponses affichées.':s.checked?'':done+' réponse(s) sur '+nq+'.'));
+    if (s.checked&&!s.shown)body.append(h('p',{class:'score'},'Score : '+actScore(a)+' / '+nq));
+    const row=h('div',{class:'files'});
+    if (!show)row.append(h('button',{class:'btn pri',type:'button',onclick:()=>{s.checked=true;actSave();renderAct();}},'Corriger'));
+    row.append(h('button',{class:'btn',type:'button',onclick:()=>{s.shown=true;actSave();renderAct();}},'Afficher les réponses'));
+    if (show)row.append(h('button',{class:'btn',type:'button',onclick:()=>{AS.st[AS.key]={a:{},checked:false,shown:false};actSave();renderAct();}},'Recommencer'));
+    body.append(row);
+  }
   box.append(body);
+  body.scrollTop=keep;
 }
 
-/* ===================== rendu général ===================== */
+function renderCourse(){
+  const box=$('#course'),btn=$('#bCourse'),work=$('#work'),modes=$('#modes');
+  btn.setAttribute('aria-pressed',CS.open?'true':'false');
+  btn.classList.toggle('pri',CS.open);
+  box.hidden=!CS.open;work.hidden=CS.open;modes.hidden=CS.open;
+  if (!CS.open){box.innerHTML='';return;}
+  box.innerHTML='';
+  const cur=courseSection(CS.id),idx=COURSE.indexOf(cur);
+  const go=id=>{CS.id=id;renderCourse();};
+  const nav=h('nav',{class:'ctoc','aria-label':'Sommaire du cours'},COURSE.map((s,i)=>
+    h('button',{type:'button',class:s.id===cur.id?'on':'','aria-current':s.id===cur.id?'true':'false',onclick:()=>go(s.id)},(i+1)+'. '+s.t)));
+  const sel=h('select',{class:'ctoc-sel','aria-label':'Choisir une section',onchange:e=>go(e.target.value)},
+    COURSE.map((s,i)=>h('option',{value:s.id,selected:s.id===cur.id},(i+1)+'. '+s.t)));
+  const art=h('article',{class:'cbody'});
+  art.append(h('p',{class:'ckick'},'Cours · section '+(idx+1)+' sur '+COURSE.length));
+  art.append(h('h2',null,cur.t));
+  art.append(h('div',{class:'math',html:cur.h}));
+  art.append(h('div',{class:'cpn'},
+    idx>0?h('button',{class:'btn',type:'button',onclick:()=>go(COURSE[idx-1].id)},'← '+COURSE[idx-1].t):h('span'),
+    idx<COURSE.length-1?h('button',{class:'btn pri',type:'button',onclick:()=>go(COURSE[idx+1].id)},COURSE[idx+1].t+' →'):h('span')));
+  const top=h('div',{class:'ctop'},
+    h('b',null,'Cours : performances des SLCI'),
+    h('button',{class:'btn pri sm',type:'button',onclick:()=>{CS.open=false;renderCourse();}},'Retour à l’atelier'));
+  box.append(top,sel,h('div',{class:'cwrap'},nav,art));
+  box.scrollTop=0;
+}
+function openCourse(id){if(id)CS.id=id;CS.open=true;renderCourse();}
+
+/* ===================== aide ===================== */
+function closeDlg(){const d=$('#dlg');d.hidden=true;d.innerHTML='';}
+function openDlg(title,body){
+  const d=$('#dlg');d.innerHTML='';d.hidden=false;
+  d.append(h('div',{class:'dlgbox',role:'dialog','aria-label':title},
+    h('header',null,h('b',null,title),h('button',{class:'btn sm',type:'button',onclick:closeDlg},'Fermer')),
+    h('div',{class:'dbody'},body)));
+  d.onclick=ev=>{if(ev.target===d)closeDlg();};
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#dlg').hidden)closeDlg();});
+$('#bHelp').addEventListener('click',()=>{
+  openDlg('Aide',h('div',{html:
+    '<p>Page interactive sur les <b>performances des SLCI</b>, organisée en trois onglets d’atelier :</p>'+
+    '<ul>'+
+    '<li><b>Précision</b> — écarts en régime permanent selon la classe de L(p), le type d’entrée et l’éventuelle perturbation.</li>'+
+    '<li><b>Rapidité</b> — temps de réponse à 5 %, temps de montée, dépassement, influence du gain Kp.</li>'+
+    '<li><b>Stabilité</b> — pôles de la boucle fermée, marges de gain et de phase, diagramme de Bode.</li>'+
+    '</ul>'+
+    '<h3>Le modèle</h3>'+
+    '<p>G(p) est défini par sa <b>classe</b> (nombre d’intégrateurs : 0, 1 ou 2) et sa <b>forme</b> : premier ordre K/(1+Tp) ou second ordre K/(1+2mp/ω₀+p²/ω₀²).</p>'+
+    '<p>C(p) est P, PI ou PID (dérivée filtrée). La boucle est à retour unitaire, avec possibilité d’injecter une perturbation d(t) en échelon à l’entrée du procédé.</p>'+
+    '<h3>Les boutons du bandeau</h3>'+
+    '<ul>'+
+    '<li><b>Activité</b> — ouvre le panneau latéral avec consignes, défi et QCM corrigé (mémorisé dans le navigateur).</li>'+
+    '<li><b>Cours</b> — bascule en vue plein écran avec sommaire et sections.</li>'+
+    '<li><b>Aide</b> — affiche cette fenêtre.</li>'+
+    '</ul>'+
+    '<p class="small">Simulation numérique par Runge-Kutta d’ordre 4 ; analyse modale par calcul des racines du polynôme caractéristique.</p>'}));
+});
+
+/* ===================== rendu et événements ===================== */
 function renderTabs(){
-  const seg=$('#tabs'); seg.innerHTML='';
-  TABS.forEach(t=>seg.append(h('button',{type:'button',role:'tab','aria-pressed':t.id===CUR?'true':'false',onclick:()=>{CUR=t.id;render();}},t.t)));
+  const seg=$('#tabs');seg.innerHTML='';
+  TABS.forEach(t=>seg.append(h('button',{type:'button',role:'tab','aria-pressed':t.id===CUR?'true':'false',onclick:()=>{
+    CUR=t.id;AS.key=t.id;AS.tab='steps';
+    render();
+  }},t.t)));
 }
 function render(){
   renderTabs();
   $('#hint').textContent=TABS.find(t=>t.id===CUR).hint;
-  const root=$('#ws'); root.innerHTML='';
-  if (CUR==='precision') mountPrecision(root);
-  else if (CUR==='rapidite') mountRapidite(root);
+  const root=$('#ws');root.innerHTML='';
+  if (CUR==='precision')mountPrecision(root);
+  else if (CUR==='rapidite')mountRapidite(root);
   else mountStabilite(root);
-  aside();
-  window.scrollTo({top:0,behavior:'instant'});
+  renderAct();
 }
 
-/* ===================== aide ===================== */
-function closeDlg(){ const d=$('#dlg'); d.hidden=true; d.innerHTML=''; }
-function openDlg(title,body){
-  const d=$('#dlg'); d.innerHTML=''; d.hidden=false;
-  d.append(h('div',{class:'dlgbox',role:'dialog','aria-label':title},
-    h('header',null,h('b',null,title),h('button',{class:'btn sm',type:'button',onclick:closeDlg},'Fermer')),
-    h('div',{class:'dbody'},body)));
-  d.onclick=ev=>{ if (ev.target===d) closeDlg(); };
-}
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('#dlg').hidden) closeDlg(); });
-$('#bHelp').addEventListener('click',()=>{
-  openDlg('Aide',h('div',{html:
-    '<p>Page interactive sur les <b>performances des systèmes linéaires continus invariants</b> (SLCI), organisée en trois onglets :</p>'+
-    '<ul>'+
-    '<li><b>Précision</b> — écarts en régime permanent selon la classe de L(p) et le type d’entrée (échelon, rampe), influence d’une perturbation en échelon.</li>'+
-    '<li><b>Rapidité</b> — temps de montée, temps de réponse à 5 %, dépassement, et influence du gain Kp.</li>'+
-    '<li><b>Stabilité</b> — pôles de la boucle fermée, marges de gain et de phase, diagramme de Bode.</li>'+
-    '</ul>'+
-    '<h3>Le modèle</h3>'+
-    '<p>Le système G(p) est défini par sa <b>classe</b> (nombre d’intégrateurs : 0, 1 ou 2) et sa <b>forme</b> : premier ordre K/(1+Tp) ou second ordre K/(1+2mp/ω₀+p²/ω₀²).</p>'+
-    '<p>Le correcteur C(p) est proportionnel (P), proportionnel-intégral (PI) ou proportionnel-intégral-dérivé (PID avec dérivée filtrée). La boucle est à retour unitaire, avec possibilité d’injecter une perturbation d(t) à l’entrée du système.</p>'+
-    '<h3>Utilisation</h3>'+
-    '<ul>'+
-    '<li>Changez la <b>classe</b>, la <b>forme</b>, les <b>paramètres</b> ou le <b>correcteur</b> avec les boutons et les curseurs.</li>'+
-    '<li>Dans l’onglet Précision, choisissez l’<b>entrée</b> et l’éventuelle <b>perturbation</b>.</li>'+
-    '<li>La case du <b>tableau des écarts</b> correspondant à votre configuration s’allume en bleu et affiche la valeur numérique.</li>'+
-    '</ul>'+
-    '<p class="small">Modèle : boucle à retour unitaire, perturbation additive à l’entrée du procédé. Simulation numérique par Runge-Kutta d’ordre 4.</p>'}));
+$('#bAct').addEventListener('click',()=>{
+  if (CS.open){CS.open=false;renderCourse();}
+  AS.open=!AS.open;
+  renderAct();
+});
+$('#bCourse').addEventListener('click',()=>{
+  CS.open=!CS.open;
+  renderCourse();
 });
 
 /* ===================== démarrage ===================== */
+AS.open=!isSmall();
+AS.key=CUR;
 render();
 </script>
 </body>
