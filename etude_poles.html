@@ -185,7 +185,7 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
-const KEYS = { act: 'atelier-poles-v6' };
+const KEYS = { act: 'atelier-poles-v7' };
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
 const WORKSHOPS = [];
@@ -896,7 +896,6 @@ function mountQ6(root) {
   <div id="q6-workspace">
     <header class="row" style="padding: 0 0 10px; border-bottom: 1px solid var(--line); margin-bottom: 15px; justify-content: space-between;">
       <h2 style="margin:0;font-size:20px;">Somme de réponses par pôles</h2>
-      <button type="button" class="btn" id="q6-bTheme" aria-pressed="false">☾ Mode sombre</button>
     </header>
     
     <div class="bar" style="margin-bottom:15px;">
@@ -1224,11 +1223,6 @@ function mountQ6(root) {
     S.terms[+card.dataset.i].on = e.target.checked; refresh();
   });
 
-  $q('#q6-bTheme').addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  });
-
   loadExample(); refresh();
 }
 WORKSHOPS.push({ id: 'q6', title: 'Somme de réponses', hint: 'Placez des pôles dans le plan : chacun définit une fonction de transfert de gain 1. La courbe noire est la somme de leurs réponses.',
@@ -1255,6 +1249,103 @@ const ACT = {
       { q: 'La classe d\'une fonction de transfert est :', o: ['le degré du numérateur', 'le nombre de pôles à l\'origine', 'le nombre de zéros', 'le nombre total de pôles'], a: 1, w: 'Un pôle en 0 (intégrateur) incrémente la classe, ce qui améliore la précision.' },
       { q: 'Un système dont les pôles sont −1 ± 3j est :', o: ['stable et apériodique', 'stable et oscillant', 'instable', 'marginal'], a: 1, w: 'Partie réelle négative → stable ; partie imaginaire non nulle → oscillations.' },
       { q: 'Les zéros d\'une fonction de transfert :', o: ['déterminent la stabilité', 'modulent l\'amplitude des modes', 'fixent la classe', 'n\'ont aucun effet'], a: 1, w: 'Les zéros ne conditionnent pas la stabilité, mais ils dosent les modes et peuvent créer des dépassements.' }
+    ]
+  },
+  q2: {
+    title: 'Pôle réel', level: 'Niveau 1 · Découvrir', time: '20 min', course: 'premier-ordre',
+    goal: 'Relier la position d\'un pôle réel à la constante de temps, à la rapidité et à la cassure du Bode.',
+    steps: [
+      'Placez |p₀| = 1 rad/s : τ = 1 s. Repérez sur la réponse le point à 63 % et le point à 95 %.',
+      'Doublez |p₀| : que devient le temps de réponse ? Que devient la cassure du Bode ?',
+      'Placez |p₀| très faible (0,1 rad/s) : le système est-il plus rapide ou plus lent ?',
+      'Faites varier K sans toucher à |p₀| : la position du pôle change-t-elle ? La rapidité change-t-elle ?',
+      'Vérifiez sur le Bode que la cassure à −20 dB/décade se produit à ω = 1/τ = |p₀|.'
+    ],
+    defi: { q: 'On veut un temps de réponse à 5 % inférieur à 0,3 s pour un premier ordre. Quelle condition sur le pôle ?',
+      a: 't5 % = 3τ ≤ 0,3 s donc τ ≤ 0,1 s, soit |p₀| ≥ 10 rad/s : le pôle doit être au moins à 10 rad/s à gauche de l\'axe imaginaire.' },
+    qcm: [
+      { q: 'Pour un premier ordre H(p) = K/(1 + τp), le pôle est :', o: ['en −τ', 'en −1/τ', 'en 1/τ', 'en τ'], a: 1, w: '1 + τp = 0 donne p = −1/τ.' },
+      { q: 'La réponse indicielle atteint 63 % de sa valeur finale à :', o: ['t = τ', 't = 2τ', 't = 3τ', 't = 5τ'], a: 0, w: 'À t = τ, 1 − e^(−1) ≈ 0,63. À 3τ, on est à 95 %.' },
+      { q: 'Un pôle plus éloigné de l\'axe imaginaire signifie :', o: ['un système plus lent', 'un système plus rapide', 'un système instable', 'un système oscillant'], a: 1, w: 'Plus |Re(p)| est grand, plus e^(−|Re|·t) décroît vite.' },
+      { q: 'Sur le diagramme de Bode, la cassure du premier ordre apparaît à :', o: ['ω = τ', 'ω = 1/τ = |p₀|', 'ω = K', 'ω = 1'], a: 1, w: 'Au-delà de ω = 1/τ, le gain décroît de −20 dB/décade ; la phase passe de 0 à −90°.' }
+    ]
+  },
+  q3: {
+    title: 'Pôles complexes', level: 'Niveau 2 · Comprendre', time: '25 min', course: 'second-ordre',
+    goal: 'Relier la position des pôles complexes conjugués à ωn, ζ, θ et au dépassement.',
+    steps: [
+      'Fixez ωn = 2 rad/s et faites varier ζ de 0,05 à 1 : décrivez la trajectoire des pôles.',
+      'À ζ = 0,7, notez θ. Vérifiez cos θ = ζ.',
+      'À ζ = 0,3, mesurez le dépassement. Retrouvez-le par D = 100·exp(−πζ/√(1−ζ²)).',
+      'Fixez ζ = 0,5 et doublez ωn : le dépassement change-t-il ? Le temps de réponse ?',
+      'Sur le Bode, où se trouve la résonance par rapport à ωn quand ζ est petit ?'
+    ],
+    defi: { q: 'On veut un dépassement de 10 %. Quelles valeurs de ζ et de θ cela impose-t-il ? Et si ωn = 4 rad/s, où sont les pôles ?',
+      a: 'D = 10 % donne ζ ≈ 0,59 (θ ≈ 54°). Les pôles sont à −ζωn ± jωn√(1−ζ²) = −2,36 ± j3,23 rad/s.' },
+    qcm: [
+      { q: 'Les pôles d\'un second ordre avec ζ < 1 sont :', o: ['réels et distincts', 'réels confondus', 'complexes conjugués', 'imaginaires purs'], a: 2, w: 'Pour 0 < ζ < 1, p = −ζωn ± jωn√(1−ζ²).' },
+      { q: 'Le module d\'un pôle vaut :', o: ['ζωn', 'ωn', 'ωn√(1−ζ²)', 'ζ'], a: 1, w: '|p| = √(ζ²ωn² + ωn²(1−ζ²)) = ωn.' },
+      { q: 'L\'amortissement ζ est égal à :', o: ['sin θ', 'cos θ', 'tan θ', 'θ'], a: 1, w: 'ζ = −Re(p)/|p| = cos θ où θ est l\'angle entre le pôle et l\'axe réel négatif.' },
+      { q: 'Quand ζ diminue, les pôles :', o: ['s\'éloignent de l\'axe imaginaire', 'se rapprochent de l\'axe imaginaire', 's\'éloignent de l\'origine', 'deviennent réels'], a: 1, w: 'ζ → 0 : les pôles tendent vers ±jωn, donc vers l\'axe imaginaire, et la réponse oscille de plus en plus.' },
+      { q: 'Le dépassement dépend principalement de :', o: ['ωn', 'ζ', 'du gain', 'de la classe'], a: 1, w: 'D = 100·exp(−πζ/√(1−ζ²)) : il ne dépend que de ζ.' }
+    ]
+  },
+  q4: {
+    title: 'Pôle dominant', level: 'Niveau 2 · Comprendre', time: '20 min', course: 'dominants',
+    goal: 'Identifier le pôle dominant d\'un système d\'ordre supérieur et juger de la validité d\'une réduction de modèle.',
+    steps: [
+      'Avec τ₁ = 1 s et τ₂ = 0,1 s, identifiez le pôle dominant. Le rapport |p₂/p₁| vaut-il plus de 5 ?',
+      'Superposez la réponse exacte et l\'approximation du premier ordre : l\'écart est-il visible ?',
+      'Rapprochez τ₂ de τ₁ : que devient l\'écart ? Que devient le verdict ?',
+      'Placez τ₂ très petit (pôle très rapide) : l\'approximation devient-elle exacte ?',
+      'Échangez les rôles de τ₁ et τ₂ : le résultat change-t-il ?'
+    ],
+    defi: { q: 'H(p) = 1/((1 + 2p)(1 + 0,05p)). Peut-on la réduire à un premier ordre ? Lequel ? Quel est l\'écart de temps de réponse ?',
+      a: 'Pôles : −0,5 et −20 rad/s, rapport 40 ≫ 5. On réduit à H ≈ 1/(1 + 2p) : τ = 2 s, t5 % ≈ 6 s. L\'écart avec le système exact est inférieur à 2 %.' },
+    qcm: [
+      { q: 'Le pôle dominant est :', o: ['le plus éloigné de l\'axe imaginaire', 'le plus proche de l\'axe imaginaire', 'celui de plus grande partie imaginaire', 'le pôle à l\'origine'], a: 1, w: 'C\'est le pôle dont le mode e^(pt) s\'amortit le plus lentement.' },
+      { q: 'On peut négliger un pôle si :', o: ['son module est très inférieur à celui du dominant', 'son module est au moins 5 fois supérieur à celui du dominant', 'il est à l\'origine', 'il est complexe'], a: 1, w: 'Un pôle rapide (grand module) s\'amortit très vite : son effet ne dure que le début du transitoire.' },
+      { q: 'Un système du troisième ordre avec pôles −0,5, −20 et −50 a pour comportement approximatif :', o: ['un premier ordre de τ = 2 s', 'un premier ordre de τ = 0,05 s', 'un second ordre oscillant', 'un intégrateur'], a: 0, w: 'Le pôle −0,5 domine ; les deux autres sont 40 et 100 fois plus rapides.' },
+      { q: 'Deux pôles réels −3 et −4 rad/s :', o: ['le premier domine nettement', 'aucun ne domine vraiment', 'le second domine', 'le système est instable'], a: 1, w: 'Rapport 1,33 : les deux modes comptent, la réduction à un premier ordre est grossière.' }
+    ]
+  },
+  q5: {
+    title: 'Stabilité', level: 'Niveau 3 · Appliquer', time: '25 min', course: 'stabilite',
+    goal: 'Lire la stabilité d\'un système directement sur la position de ses pôles et interpréter la réponse impulsionnelle.',
+    steps: [
+      'Placez σ = −0,8 et ω = 3 : la réponse impulsionnelle est-elle amortie ? Quelle est la pseudo-période ?',
+      'Amenez σ à 0 : que devient l\'amplitude ? Le système est-il stable ?',
+      'Passez σ à +0,5 : décrivez la réponse. Combien de temps met-elle à doubler d\'amplitude ?',
+      'Faites varier ω : quel effet sur la fréquence des oscillations ?',
+      'Vérifiez que l\'enveloppe tracée est bien ±2|A|e^(σt).'
+    ],
+    defi: { q: 'Un système a pour pôles −1, −2 ± 5j. Est-il stable ? Quel est son mode le plus lent ? Combien de temps met-il à s\'amortir à 5 % ?',
+      a: 'Tous les pôles ont une partie réelle négative : le système est stable. Le mode le plus lent est celui de plus faible |Re| : −1 (constante de temps 1 s). L\'autre paire a un amortissement plus rapide (|Re| = 2). Le régime transitoire s\'éteint à 5 % vers 3 s.' },
+    qcm: [
+      { q: 'Un système est stable si et seulement si :', o: ['tous ses pôles sont à partie réelle négative', 'tous ses pôles sont réels', 'tous ses zéros sont à partie réelle négative', 'son gain est positif'], a: 0, w: 'C\'est le critère fondamental : pôles dans le demi-plan gauche strict.' },
+      { q: 'Un pôle unique en p = 0 donne une réponse impulsionnelle :', o: ['nulle', 'constante (échelon)', 'en rampe', 'oscillante'], a: 1, w: '1/p correspond à l\'échelon unité : le système est marginalement stable.' },
+      { q: 'Deux pôles en p = 0 donnent une réponse impulsionnelle :', o: ['constante', 'en rampe', 'oscillante amortie', 'nulle'], a: 1, w: '1/p² correspond à t : le système est instable (réponse non bornée).' },
+      { q: 'Un pôle à partie réelle positive donne une réponse :', o: ['qui s\'amortit', 'constante', 'qui diverge exponentiellement', 'sinusoïdale entretenue'], a: 2, w: 'Le mode e^(σt) avec σ > 0 croît sans limite.' },
+      { q: 'Une paire de pôles ±jω (partie réelle nulle) donne :', o: ['une réponse amortie', 'une sinusoïde entretenue', 'une rampe', 'une divergence'], a: 1, w: 'Ce sont des pôles imaginaires purs : le système est marginalement stable (oscillateur).' }
+    ]
+  },
+  q6: {
+    title: 'Somme de réponses', level: 'Niveau 3 · Appliquer', time: '25 min', course: 'somme',
+    goal: 'Comprendre la linéarité : la réponse totale est la somme des réponses de chaque fonction de transfert.',
+    steps: [
+      'Placez un pôle réel stable, puis un deuxième. Que devient la courbe épaisse (la somme) ?',
+      'Placez un pôle complexe conjugué. Pourquoi la somme oscille-t-elle ?',
+      'Placez un pôle dans le demi-plan droit. Que fait la somme ?',
+      'Essayez différentes entrées (Dirac, Échelon, Rampe) sur le même jeu de pôles.',
+      'Utilisez les cartes du bas pour mettre en sourdine un pôle : la somme change-t-elle comme prévu ?'
+    ],
+    defi: { q: 'Si H₁(p) a un pôle en −1 et H₂(p) un pôle en −2, quel est le pôle dominant de la somme ?',
+      a: 'Le pôle dominant est −1 (le plus proche de l\'axe imaginaire). C\'est lui qui impose la dynamique lente de la somme.' },
+    qcm: [
+      { q: 'La réponse d\'un système linéaire à une somme d\'entrées est :', o: ['la somme des réponses', 'le produit des réponses', 'la réponse à la somme des entrées', 'indépendante des entrées'], a: 0, w: 'C\'est le principe de superposition : linéarité = additivité + homogénéité.' },
+      { q: 'La somme de deux systèmes stables est :', o: ['toujours stable', 'toujours instable', 'marginale', 'cela dépend des pôles'], a: 0, w: 'Si tous les pôles sont dans le demi-plan gauche, la somme l\'est aussi.' },
+      { q: 'La somme d\'un système stable et d\'un système instable est :', o: ['stable', 'instable', 'marginale', 'cela dépend du gain'], a: 1, w: 'Le pôle instable de l\'un des systèmes rend la somme instable.' },
+      { q: 'Le pôle dominant de la somme est :', o: ['toujours le pôle de plus grande partie réelle', 'toujours le pôle de plus petite partie réelle', 'le pôle le plus proche de l\'axe imaginaire parmi tous ceux des composants', 'le pôle à l\'origine'], a: 2, w: 'C\'est le pôle dont le mode s\'amortit le plus lentement.' }
     ]
   }
 };
@@ -1283,6 +1374,15 @@ const COURSE = [
   { id: 'dominants', t: 'Pôles dominants', h: `
 <p>Lorsqu'un système possède plusieurs pôles, le mode associé à chaque pôle s'amortit comme e^(pᵢt). Le pôle <b>le plus proche de l'axe imaginaire</b> est le <b>pôle dominant</b> : son mode s'amortit le plus lentement et impose la dynamique globale.</p>
 <p>Si un pôle est au moins <b>5 fois plus éloigné</b> de l'axe imaginaire que le pôle dominant, il est négligeable et on peut simplifier la fonction de transfert.</p>` },
+  { id: 'stabilite', t: 'Stabilité', h: `
+<p>Un système est stable si et seulement si tous ses pôles ont une partie réelle strictement négative. Les pôles imaginaires purs donnent des oscillations entretenues (marginal), et les pôles à partie réelle positive divergent (instable).</p>
+<h3>Cas particuliers</h3>
+<ul>
+<li>Un pôle simple à l'origine : réponse en échelon (marginal).</li>
+<li>Deux pôles à l'origine : réponse en rampe (instable).</li>
+<li>Paire ±jω simple : oscillateur non amorti (marginal).</li>
+<li>Paire ±jω double : instable.</li>
+</ul>` },
   { id: 'somme', t: 'Somme de réponses', h: `
 <p>Le système étant linéaire, la réponse totale à une entrée donnée est la <b>somme</b> des réponses de chaque fonction de transfert élémentaire.</p>
 <p>Pour visualiser cela, l'onglet 6 permet de placer des pôles : chaque pôle génère une fonction de transfert de gain statique 1. La réponse résultante est la somme de toutes ces contributions.</p>` }
@@ -1321,6 +1421,7 @@ function renderAct() {
   const oldB = box.querySelector('.pbody'), tag = AS.key + '|' + AS.tab, keep = oldB && box.dataset.k === tag ? oldB.scrollTop : 0;
   box.dataset.k = tag; box.innerHTML = '';
   const a = ACT[AS.key];
+  if (!a) { box.innerHTML = '<p class="small" style="padding:12px">Pas d\'activité pour cet atelier.</p>'; return; }
   const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
   box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
   const nq = a.qcm.length;
