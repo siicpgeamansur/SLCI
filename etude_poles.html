@@ -12,6 +12,7 @@
   --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
   --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;
   --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
+  --c1:#2e6da4;--c2:#c0281f;--c3:#1e7a2e;--c4:#b06a10;--c5:#7b4fc2;--c6:#0e8a96;
   color-scheme:light;
 }
 html,body{height:100%}
@@ -48,6 +49,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
 input[type=text],input[type=number],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--fg)}
 input[type=range]{width:100%;padding:0;accent-color:var(--accent)}
+input[type=checkbox]{accent-color:var(--accent)}
 .mono{font-family:var(--font-mono);font-size:12.5px}
 .small{font-size:12px;color:var(--muted);margin:0 0 9px}
 #dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
@@ -123,6 +125,13 @@ fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
 .flow .bx{border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:5px 10px;font-weight:500}
 .flow .ar{color:var(--muted);font-size:16px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.card{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel);display:flex;flex-direction:column;gap:4px;min-width:0}
+.card.off{opacity:.55}
+.card .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.card .fx{font-family:var(--font-mono);font-size:11.5px;overflow-x:auto;white-space:nowrap;padding-bottom:2px}
+.card .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 
 @media (max-width:820px){
   .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
@@ -170,7 +179,7 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
-const KEYS = { act: 'atelier-poles-v3' };
+const KEYS = { act: 'atelier-poles-v4' };
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
 const WORKSHOPS = [];
@@ -206,38 +215,6 @@ function polyFromRoots(k, roots) {
 }
 function polyvalC(coef, p) { let r = { re: 0, im: 0 }; for (const c of coef) r = Cx.add(Cx.mul(r, p), { re: c, im: 0 }); return r; }
 function deriv(coef) { const n = coef.length - 1, out = []; for (let i = 0; i < n; i++) out.push(coef[i] * (n - i)); return out.length ? out : [0]; }
-function rootsOf(coefIn) {
-  let c = coefIn.slice();
-  while (c.length > 1 && Math.abs(c[0]) < 1e-14) c.shift();
-  const n = c.length - 1;
-  if (n <= 0) return [];
-  const a = c.map(v => v / c[0]);
-  if (n === 1) return [{ re: -a[1], im: 0 }];
-  if (n === 2) {
-    const disc = a[1] * a[1] - 4 * a[2];
-    if (disc >= 0) { const s = Math.sqrt(disc); return [{ re: (-a[1] + s) / 2, im: 0 }, { re: (-a[1] - s) / 2, im: 0 }]; }
-    const s = Math.sqrt(-disc) / 2;
-    return [{ re: -a[1] / 2, im: s }, { re: -a[1] / 2, im: -s }];
-  }
-  const rad = 1 + Math.max(...a.slice(1).map(Math.abs));
-  let zs = [];
-  for (let i = 0; i < n; i++) { const th = 2 * Math.PI * i / n + 0.3; zs.push({ re: rad * Math.cos(th), im: rad * Math.sin(th) }); }
-  for (let it = 0; it < 900; it++) {
-    let maxd = 0; const nz = [];
-    for (let i = 0; i < n; i++) {
-      let num = { re: 0, im: 0 };
-      for (const cc of a) num = Cx.add(Cx.mul(num, zs[i]), { re: cc, im: 0 });
-      let den = { re: 1, im: 0 };
-      for (let j = 0; j < n; j++) if (j !== i) den = Cx.mul(den, Cx.sub(zs[i], zs[j]));
-      const d = Cx.div(num, den);
-      maxd = Math.max(maxd, Cx.abs(d));
-      nz.push(Cx.sub(zs[i], d));
-    }
-    zs = nz;
-    if (maxd < 1e-13) break;
-  }
-  return zs.map(z => Math.abs(z.im) < 1e-7 * (1 + Math.abs(z.re)) ? { re: z.re, im: 0 } : z);
-}
 
 /* ---------- Fonction de transfert ---------- */
 function mkFT(k, poles, zeros) {
@@ -306,11 +283,10 @@ function simBounds(ft) {
 function simulateStep(ft, tmax, nsteps, inputType) {
   inputType = inputType || 'step';
   const ss = toSS(ft);
-  const out = x => { let s = ss.D; for (let i = 0; i < ss.n; i++) s += ss.C[i] * x[i]; return s; };
-  if (!ss) { return { t: [0, tmax], y: [0, 0], blown: false }; }
+  if (!ss) return { t: [0, tmax], y: [0, 0], blown: false };
   const n = ss.n, dt = tmax / nsteps;
   let x = new Array(n).fill(0);
-  const t = [0], y = [out(x)];
+  const t = [0], y = [ss.D];
   const f = (xx, t) => { 
     let u = 1;
     if (inputType === 'ramp') u = t;
@@ -330,8 +306,10 @@ function simulateStep(ft, tmax, nsteps, inputType) {
     const k3 = f(x3, tk + dt/2), x4 = x.map((v, i) => v + dt * k3[i]);
     const k4 = f(x4, tk + dt);
     x = x.map((v, i) => v + dt / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
-    if (!isFinite(x[0]) || Math.abs(out(x)) > 1000) { blown = true; break; }
-    t.push(k * dt); y.push(out(x));
+    let out = ss.D;
+    for (let i=0; i<n; i++) out += ss.C[i] * x[i];
+    if (!isFinite(x[0]) || Math.abs(out) > 1000) { blown = true; break; }
+    t.push(k * dt); y.push(out);
   }
   return { t, y, blown };
 }
@@ -352,13 +330,18 @@ function impulseAt(modes, t) {
 /* ---------- Tracés graphiques ---------- */
 function pzSvg(svg, o) {
   const W = 520, H = 340, PAD = 34;
-  const pts = [...(o.poles || []), ...(o.zeros || [])];
-  if (o.traces) for (const tr of o.traces) for (const q of tr) pts.push(q);
-  let reMin = -1, reMax = 1, imMax = 1;
-  for (const p of pts) { reMin = Math.min(reMin, p.re); reMax = Math.max(reMax, p.re); imMax = Math.max(imMax, Math.abs(p.im)); }
-  const sp = reMax - reMin || 1;
-  reMin -= 0.10 * sp + 0.25; reMax += 0.10 * sp + 0.25;
-  imMax = imMax * 1.12 + 0.35;
+  let reMin = o.fixedBounds ? o.fixedBounds.reMin : -1;
+  let reMax = o.fixedBounds ? o.fixedBounds.reMax : 1;
+  let imMax = o.fixedBounds ? o.fixedBounds.imMax : 1;
+  
+  if (!o.fixedBounds) {
+    const pts = [...(o.poles || []), ...(o.zeros || [])];
+    for (const p of pts) { reMin = Math.min(reMin, p.re); reMax = Math.max(reMax, p.re); imMax = Math.max(imMax, Math.abs(p.im)); }
+    const sp = reMax - reMin || 1;
+    reMin -= 0.10 * sp + 0.25; reMax += 0.10 * sp + 0.25;
+    imMax = imMax * 1.12 + 0.35;
+  }
+  
   const xspan = reMax - reMin, yspan = 2 * imMax;
   const sc = Math.min((W - 2 * PAD) / xspan, (H - 2 * PAD) / yspan);
   const cxD = (reMin + reMax) / 2;
@@ -366,7 +349,30 @@ function pzSvg(svg, o) {
   const Y = im => H / 2 - im * sc;
   const x0 = X(reMin), x1 = X(reMax), y0 = Y(imMax), y1 = Y(-imMax);
   let s = '';
+  
   if (X(0) < x1) s += '<rect x="' + X(0).toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' + (x1 - X(0)).toFixed(1) + '" height="' + (y1 - y0).toFixed(1) + '" fill="rgba(192,40,31,.06)"/>';
+  
+  // Iso-zeta and Iso-wn
+  if (o.isoZeta) {
+    for (const z of o.isoZeta) {
+      const th = Math.acos(z);
+      const x = reMin;
+      const y = -x * Math.tan(Math.PI - th);
+      s += `<line x1="${X(0)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(y)}" stroke="#ccc" stroke-dasharray="3 3"/>`;
+      s += `<line x1="${X(0)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(-y)}" stroke="#ccc" stroke-dasharray="3 3"/>`;
+      s += `<text x="${X(x)+5}" y="${Y(y)}" font-size="10" fill="#999">ζ=${z}</text>`;
+    }
+  }
+  if (o.isoWn) {
+    for (const w of o.isoWn) {
+      if (-w < reMin) continue;
+      const r = w * sc;
+      s += `<path d="M ${X(0)-r} ${Y(0)} A ${r} ${r} 0 0 1 ${X(0)} ${Y(0)-r}" stroke="#ccc" stroke-dasharray="3 3" fill="none"/>`;
+      s += `<path d="M ${X(0)-r} ${Y(0)} A ${r} ${r} 0 0 0 ${X(0)} ${Y(0)+r}" stroke="#ccc" stroke-dasharray="3 3" fill="none"/>`;
+      s += `<text x="${X(0)-r}" y="${Y(0)-5}" font-size="10" fill="#999">ωn=${w}</text>`;
+    }
+  }
+
   const stepG = (() => { const raw = Math.max(xspan, yspan) / 8, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; })();
   for (let v = Math.ceil(reMin / stepG) * stepG; v <= reMax + 1e-9; v += stepG) {
     if (Math.abs(v) < 1e-9) continue;
@@ -378,6 +384,7 @@ function pzSvg(svg, o) {
   }
   s += '<line x1="' + x0.toFixed(1) + '" y1="' + Y(0).toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="#55555f" stroke-width="1.2"/>';
   s += '<line x1="' + X(0).toFixed(1) + '" y1="' + y0.toFixed(1) + '" x2="' + X(0).toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="#55555f" stroke-width="1.2"/>';
+  
   for (let v = Math.ceil(reMin / stepG) * stepG; v <= reMax + 1e-9; v += stepG) if (Math.abs(v) > 1e-9) s += '<text x="' + X(v).toFixed(1) + '" y="' + (Y(0) + 13).toFixed(1) + '" text-anchor="middle" font-size="10" fill="#6a6a78">' + fmt(v, 1) + '</text>';
   for (let v = stepG; v <= imMax; v += stepG) {
     s += '<text x="' + (X(0) - 5).toFixed(1) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#6a6a78">' + fmt(v, 1) + 'j</text>';
@@ -385,73 +392,12 @@ function pzSvg(svg, o) {
   }
   s += '<text x="' + (x1 - 4) + '" y="' + (Y(0) - 6) + '" text-anchor="end" font-size="11" fill="#55555f">Re</text>';
   s += '<text x="' + (X(0) + 6) + '" y="' + (y0 + 12) + '" font-size="11" fill="#55555f">Im</text>';
-  if (o.traces) o.traces.forEach(tr => tr.forEach(q => { s += '<circle cx="' + X(q.re).toFixed(1) + '" cy="' + Y(q.im).toFixed(1) + '" r="1.6" fill="#b9c6d4"/>'; }));
-  for (const z of (o.zeros || [])) {
-    s += '<circle cx="' + X(z.re).toFixed(1) + '" cy="' + Y(z.im).toFixed(1) + '" r="5.5" fill="#fff" stroke="#1e7a2e" stroke-width="2"/>';
-    s += '<text x="' + (X(z.re) + 8).toFixed(1) + '" y="' + (Y(z.im) - 7).toFixed(1) + '" font-size="10.5" fill="#1e7a2e">z</text>';
-  }
+  
   for (const p of (o.poles || [])) {
     const x = X(p.re), y = Y(p.im), r = 5.5;
     s += '<line x1="' + (x - r).toFixed(1) + '" y1="' + (y - r).toFixed(1) + '" x2="' + (x + r).toFixed(1) + '" y2="' + (y + r).toFixed(1) + '" stroke="#2e6da4" stroke-width="2.2"/>';
     s += '<line x1="' + (x - r).toFixed(1) + '" y1="' + (y + r).toFixed(1) + '" x2="' + (x + r).toFixed(1) + '" y2="' + (y - r).toFixed(1) + '" stroke="#2e6da4" stroke-width="2.2"/>';
   }
-  svg.innerHTML = s;
-}
-
-function bodeSvg(svg, o) {
-  const W = 640, H = 400, L = 56, R = 14, gT = 12, gB = 196, pT = 214, pB = 366;
-  const wmin = o.wmin, wmax = o.wmax, lw0 = Math.log10(wmin), lw1 = Math.log10(wmax);
-  const N = 240, ws = [];
-  for (let i = 0; i <= N; i++) ws.push(Math.pow(10, lw0 + (lw1 - lw0) * i / N));
-  let gmin = Infinity, gmax = -Infinity, pmin = Infinity, pmax = -Infinity;
-  for (const cv of o.curves) for (const w of ws) {
-    const v = cv.fn(w);
-    if (isFinite(v[0])) { gmin = Math.min(gmin, v[0]); gmax = Math.max(gmax, v[0]); }
-    if (v[1] !== null && isFinite(v[1])) { pmin = Math.min(pmin, v[1]); pmax = Math.max(pmax, v[1]); }
-  }
-  if (!isFinite(gmin)) { gmin = -40; gmax = 40; }
-  gmin = Math.min(Math.floor(gmin / 20) * 20, 0); gmax = Math.max(Math.ceil(gmax / 20) * 20, 20);
-  if (gmax - gmin < 40) gmax = gmin + 40;
-  if (!isFinite(pmin)) { pmin = -90; pmax = 0; }
-  pmin = Math.min(Math.floor(pmin / 45) * 45, -90); pmax = Math.max(Math.ceil(pmax / 45) * 45, 0);
-  const X = w => L + (Math.log10(w) - lw0) / (lw1 - lw0) * (W - L - R);
-  const Yg = d => gB - (clamp(d, gmin, gmax) - gmin) / (gmax - gmin) * (gB - gT);
-  const Yp = d => pB - (clamp(d, pmin, pmax) - pmin) / (pmax - pmin) * (pB - pT);
-  let s = '';
-  for (let e = Math.ceil(lw0); e <= Math.floor(lw1); e++) {
-    const w = Math.pow(10, e), x = X(w);
-    s += '<line x1="' + x + '" y1="' + gT + '" x2="' + x + '" y2="' + gB + '" stroke="#eceef2"/><line x1="' + x + '" y1="' + pT + '" x2="' + x + '" y2="' + pB + '" stroke="#eceef2"/>';
-    s += '<text x="' + x + '" y="' + (pB + 14) + '" text-anchor="middle" font-size="10.5" fill="#6a6a78">' + (e >= 0 ? fmtN(w) : fmt(w, -e)) + '</text>';
-  }
-  const gStep = (gmax - gmin) > 120 ? 40 : 20;
-  for (let g = gmin; g <= gmax + 1e-9; g += gStep) {
-    const y = Yg(g);
-    s += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="' + (g === 0 ? '#55555f' : '#e8e8ee') + '"/><text x="' + (L - 5) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + g + '</text>';
-  }
-  const pStep = (pmax - pmin) > 180 ? 90 : 45;
-  for (let p = pmin; p <= pmax + 1e-9; p += pStep) {
-    const y = Yp(p);
-    s += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="' + (p === -180 ? '#d93a2b' : '#e8e8ee') + '"' + (p === -180 ? ' stroke-dasharray="5 4"' : '') + '/><text x="' + (L - 5) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + p + '</text>';
-  }
-  s += '<rect x="' + L + '" y="' + gT + '" width="' + (W - L - R) + '" height="' + (gB - gT) + '" fill="none" stroke="#55555f"/><rect x="' + L + '" y="' + pT + '" width="' + (W - L - R) + '" height="' + (pB - pT) + '" fill="none" stroke="#55555f"/>';
-  s += '<text transform="translate(12 ' + ((gT + gB) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11.5" fill="#1f1f28">gain (dB)</text><text transform="translate(12 ' + ((pT + pB) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11.5" fill="#1f1f28">phase (°)</text><text x="' + ((L + W - R) / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11.5" fill="#1f1f28">pulsation ω (rad/s)</text>';
-  (o.marks || []).forEach(m => {
-    if (m.w < wmin || m.w > wmax) return;
-    const x = X(m.w);
-    s += '<line x1="' + x + '" y1="' + gT + '" x2="' + x + '" y2="' + pB + '" stroke="#e08a00" stroke-dasharray="3 3" stroke-opacity=".8"/>';
-    s += '<text x="' + (x + 4) + '" y="' + (gT + 12) + '" font-size="10.5" fill="#9a5b00">' + m.label + '</text>';
-  });
-  o.curves.forEach(cv => {
-    const gp = [], pp = [];
-    for (const w of ws) { const v = cv.fn(w); gp.push(X(w).toFixed(1) + ',' + Yg(v[0]).toFixed(1)); if (v[1] !== null) pp.push(X(w).toFixed(1) + ',' + Yp(v[1]).toFixed(1)); }
-    const st = ' fill="none" stroke="' + cv.color + '" stroke-width="' + (cv.width || 2) + '"' + (cv.dash ? ' stroke-dasharray="' + cv.dash + '"' : '');
-    s += '<polyline' + st + ' points="' + gp.join(' ') + '"/>';
-    if (pp.length) s += '<polyline' + st + ' points="' + pp.join(' ') + '"/>';
-  });
-  o.curves.forEach((cv, i) => {
-    const x = L + 10, y = gT + 12 + i * 15;
-    s += '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 18) + '" y2="' + y + '" stroke="' + cv.color + '" stroke-width="2"' + (cv.dash ? ' stroke-dasharray="' + cv.dash + '"' : '') + '/><text x="' + (x + 24) + '" y="' + (y + 3.5) + '" font-size="11" fill="#1f1f28">' + cv.name + '</text>';
-  });
   svg.innerHTML = s;
 }
 
@@ -476,7 +422,6 @@ function timeSvg(svg, o) {
   }
   for (let i = 0; i <= 5; i++) { const t = tmax * i / 5; s += '<line x1="' + X(t) + '" y1="' + T + '" x2="' + X(t) + '" y2="' + (H - B) + '" stroke="#f2f2f6"/><text x="' + X(t) + '" y="' + (H - B + 14) + '" text-anchor="middle" font-size="10.5" fill="#6a6a78">' + fmt(t, tmax < 5 ? 2 : 1) + '</text>'; }
   s += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - B - T) + '" fill="none" stroke="#55555f"/>';
-  if (o.vlines) o.vlines.forEach(vl => { s += '<line x1="' + X(vl.t) + '" y1="' + T + '" x2="' + X(vl.t) + '" y2="' + (H - B) + '" stroke="' + vl.color + '" stroke-dasharray="4 3" stroke-opacity=".75"/><text x="' + (X(vl.t) + 3) + '" y="' + (T + 11) + '" font-size="10" fill="' + vl.color + '">' + vl.label + '</text>'; });
   s += '<g clip-path="url(#' + (o.cid || 'clp') + ')">';
   o.curves.forEach(c => {
     if (c.dash) return;
@@ -505,20 +450,6 @@ function slider(host, o) {
   wrap.append(lab, rng); host.append(wrap); upd();
   return { sync: () => { rng.value = o.get(); upd(); } };
 }
-function pzText(p) {
-  if (Math.abs(p.im) < 1e-9) return 'p = ' + fmt(p.re, 2);
-  return 'p = ' + fmt(p.re, 2) + ' ± ' + fmt(Math.abs(p.im), 2) + ' j';
-}
-function freqRange(ft) {
-  const mags = [...ft.poles, ...ft.zeros].map(p => Math.hypot(p.re, p.im)).filter(m => m > 1e-6);
-  let lo = mags.length ? Math.min(...mags) : 1, hi = mags.length ? Math.max(...mags) : 10;
-  lo = clamp(Math.pow(10, Math.floor(Math.log10(lo)) - 1), 1e-3, 1);
-  hi = clamp(Math.pow(10, Math.ceil(Math.log10(hi)) + 1), 10, 1e4);
-  return { wmin: lo, wmax: hi };
-}
-function ftBodeCurve(ft, name, color, dash) {
-  return { name: name, color: color, dash: dash, fn: w => [20*Math.log10(Math.max(ftMag(ft, w), 1e-12)), ftPhase(ft, w)] };
-}
 function drawPZ(sel, ft, extra) {
   const svg = $(sel); if (!svg) return;
   pzSvg(svg, Object.assign({ poles: ft.poles, zeros: ft.zeros }, extra || {}));
@@ -526,11 +457,11 @@ function drawPZ(sel, ft, extra) {
 
 /* ================= Atelier 1 : Plan complexe interactif ================= */
 const Q1_POLES = [
-  { id: 0, re: -1, im: 0, color: '#6b2b2b', name: 'Pôle réel stable', label: '1' },
-  { id: 1, re: -0.5, im: 2, color: '#7b4fc2', name: 'Pôles complexes stables', label: '2' },
+  { id: 0, re: -2, im: 0, color: '#6b2b2b', name: 'Pôle réel stable', label: '1' },
+  { id: 1, re: -1, im: 2.5, color: '#7b4fc2', name: 'Pôles complexes stables', label: '2' },
   { id: 2, re: 0, im: 2, color: '#2e6da4', name: 'Pôles imaginaires purs', label: '3' },
-  { id: 3, re: 1, im: 0, color: '#b06a10', name: 'Pôle réel instable', label: '4' },
-  { id: 4, re: 0.5, im: 2, color: '#1e7a2e', name: 'Pôles complexes instables', label: '5' },
+  { id: 3, re: 1.5, im: 0, color: '#b06a10', name: 'Pôle réel instable', label: '4' },
+  { id: 4, re: 0.5, im: 2.5, color: '#1e7a2e', name: 'Pôles complexes instables', label: '5' },
   { id: 5, re: 0, im: 0, color: '#6a6a78', name: 'Pôle à l\'origine', label: '6' }
 ];
 const Q1 = { selected: 0, input: 'echelon' };
@@ -552,34 +483,12 @@ window.setInput = type => { Q1.input = type; drawQ1(); };
 function drawQ1() {
   const pole = Q1_POLES[Q1.selected];
   const svgMap = $('#q1-map');
-  const cx = 200, cy = 150, scale = 40;
-  const X = re => cx + re * scale;
-  const Y = im => cy - im * scale;
   
-  let s = '';
-  s += `<rect x="${cx}" y="0" width="${400-cx}" height="300" fill="rgba(192,40,31,.06)" />`;
-  for (let i = -4; i <= 4; i++) {
-    if (i === 0) continue;
-    s += `<line x1="${X(i)}" y1="0" x2="${X(i)}" y2="300" stroke="#eee" />`;
-    s += `<line x1="0" y1="${Y(i)}" x2="400" y2="${Y(i)}" stroke="#eee" />`;
-  }
-  s += `<line x1="0" y1="${cy}" x2="400" y2="${cy}" stroke="#333" stroke-width="1.2" />`;
-  s += `<line x1="${cx}" y1="0" x2="${cx}" y2="300" stroke="#333" stroke-width="1.2" />`;
-  s += `<text x="390" y="${cy-10}" font-size="12" text-anchor="end">Re</text>`;
-  s += `<text x="${cx+10}" y="15" font-size="12">Im</text>`;
-  
-  Q1_POLES.forEach(p => {
-    const sel = p.id === Q1.selected;
-    const r = sel ? 8 : 5;
-    const x = X(p.re), y = Y(p.im);
-    if (p.im !== 0) {
-      s += `<circle cx="${x}" cy="${Y(-p.im)}" r="${r}" fill="${p.color}" stroke="${sel?'#000':'#fff'}" stroke-width="${sel?2:1}" style="cursor:pointer" onclick="window.selPole(${p.id})" />`;
-      s += `<text x="${x+r+3}" y="${Y(-p.im)+4}" font-size="12" font-weight="bold" fill="${p.color}">${p.label}</text>`;
-    }
-    s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${p.color}" stroke="${sel?'#000':'#fff'}" stroke-width="${sel?2:1}" style="cursor:pointer" onclick="window.selPole(${p.id})" />`;
-    s += `<text x="${x+r+3}" y="${y+4}" font-size="12" font-weight="bold" fill="${p.color}">${p.label}</text>`;
+  pzSvg(svgMap, {
+    poles: [{re: pole.re, im: pole.im}],
+    zeros: [],
+    fixedBounds: { reMin: -4, reMax: 3, imMin: -3.5, imMax: 3.5 }
   });
-  svgMap.innerHTML = s;
   
   const ft = getFTFromPole(pole);
   let tmax = 5;
@@ -651,7 +560,7 @@ function mountQ1(root) {
     <div class="two">
       <div>
         <h3>Plan complexe</h3>
-        <svg id="q1-map" viewBox="0 0 400 300" style="width:100%;max-width:400px;height:auto;display:block;margin:0 auto;background:#fff;border:1px solid #eee;border-radius:8px"></svg>
+        <svg id="q1-map" viewBox="0 0 520 340" style="width:100%;max-width:520px;height:auto;display:block;margin:0 auto;background:#fff;border:1px solid #eee;border-radius:8px"></svg>
         <div id="q1-legend" class="files" style="margin-top:10px;justify-content:center"></div>
       </div>
       <div>
@@ -700,7 +609,7 @@ function mountQ2(root) {
   slider($('#q2-sl'), { name: 'Gain K', min: 0.2, max: 5, step: 0.05, dec: 2, get: () => S.K, set: v => { S.K = v; }, onchange: () => upd() });
   const upd = () => {
     const ft = mkFT(S.K, [{ re: -S.a, im: 0 }], []);
-    drawPZ('#q2-map', ft);
+    drawPZ('#q2-map', ft, { fixedBounds: { reMin: -22, reMax: 2, imMin: -6, imMax: 6 } });
     const b = simBounds(ft);
     const tmax = Math.max(4 / S.a, 0.1), n = clamp(Math.ceil(tmax * S.a * 60), 1500, 20000);
     const sim = simulateStep(ft, tmax, n);
@@ -713,8 +622,6 @@ function mountQ2(root) {
     b2[4].textContent = fmt(3 / S.a, 3) + ' s';
     const m = $('#q2-msg'); m.className = 'verdict yes';
     m.innerHTML = 'Le pôle est à <b>' + fmt(-S.a, 2) + ' rad/s</b> de l\'origine, donc τ = ' + fmt(1 / S.a, 3) + ' s. À t = τ, la sortie atteint 63 % de sa valeur finale ; à t = 3τ, elle en est à 95 %. <b>Doubler |p₀| divise le temps de réponse par deux.</b>';
-    const rg = freqRange(ft);
-    bodeSvg($('#q2-bode'), { wmin: rg.wmin, wmax: rg.wmax, curves: [ftBodeCurve(ft, 'H(jω)', '#2e6da4')], marks: [{ w: S.a, label: 'ω = 1/τ' }] });
   };
   upd();
 }
@@ -722,13 +629,17 @@ WORKSHOPS.push({ id: 'q2', title: 'Pôle réel', hint: 'Déplacez le pôle sur l
   mount: mountQ2, reset: () => { Object.assign(Q2, { a: 1, K: 1 }); } });
 
 /* ================= Atelier 3 : pôles complexes, second ordre ================= */
-const Q3 = { zeta: 0.5, wn: 2 };
+const Q3 = { zeta: 0.5, wn: 2, showZeta: true, showWn: true };
 function mountQ3(root) {
   root.innerHTML = '<h2>Pôles complexes et second ordre</h2>'
     + '<p>Un second ordre normalisé s\'écrit <b>H(p) = ωn² / (p² + 2ζωn p + ωn²)</b>. Ses pôles sont <b>p = −ζωn ± jωn√(1 − ζ²)</b> (pour ζ &lt; 1). On en déduit deux lectures graphiques :</p>'
     + '<ul><li><b>ωn = |p|</b> : la distance du pôle à l\'origine fixe l\'échelle de temps.</li>'
     + '<li><b>ζ = −Re(p)/|p| = cos θ</b>, où θ est l\'angle entre le pôle et l\'axe réel négatif. Plus le pôle est proche de l\'axe imaginaire, plus ζ est petit, plus ça oscille.</li></ul>'
     + '<div id="q3-sl"></div>'
+    + '<div class="opts" style="margin: 10px 0">'
+    + '<label><input type="checkbox" id="q3-chk-zeta" ' + (Q3.showZeta?'checked':'') + '> Trajectoires à ζ constant</label>'
+    + '<label><input type="checkbox" id="q3-chk-wn" ' + (Q3.showWn?'checked':'') + '> Trajectoires à ωn constant</label>'
+    + '</div>'
     + '<div class="two"><div><h3>Plan complexe</h3><svg id="q3-map" viewBox="0 0 520 340" style="width:100%;max-width:560px;height:auto"></svg></div>'
     + '<div><h3>Réponse indicielle</h3><svg id="q3-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg></div></div>'
     + statsHtml([['Pôles', ''], ['ωn = |p|', ''], ['ζ = cos θ', ''], ['θ', ''], ['Dépassement D', ''], ['Pseudo-période', '']], 'q3-stats')
@@ -738,12 +649,23 @@ function mountQ3(root) {
   const S = Q3;
   slider($('#q3-sl'), { name: 'Amortissement ζ', min: 0.05, max: 1.2, step: 0.01, dec: 2, get: () => S.zeta, set: v => { S.zeta = v; }, onchange: () => upd() });
   slider($('#q3-sl'), { name: 'Pulsation propre ωn', min: 0.3, max: 10, step: 0.05, dec: 2, unit: 'rad/s', get: () => S.wn, set: v => { S.wn = v; }, onchange: () => upd() });
+  
+  $('#q3-chk-zeta').addEventListener('change', e => { S.showZeta = e.target.checked; upd(); });
+  $('#q3-chk-wn').addEventListener('change', e => { S.showWn = e.target.checked; upd(); });
+
   const upd = () => {
     const z = Math.min(S.zeta, 0.999), wn = S.wn;
     const re = -z * wn, im = wn * Math.sqrt(1 - z * z);
     const ft = mkFT(wn * wn, [{ re: re, im: im }], []);
-    const svg = $('#q3-map');
-    pzSvg(svg, { poles: ft.poles, zeros: [], angle: { re: re, im: im } });
+    
+    pzSvg($('#q3-map'), {
+      poles: ft.poles, zeros: [],
+      angle: { re: re, im: im },
+      fixedBounds: { reMin: -10, reMax: 4, imMin: -8, imMax: 8 },
+      isoZeta: S.showZeta ? [0.2, 0.5, 0.7, 0.9] : [],
+      isoWn: S.showWn ? [2, 4, 6, 8] : []
+    });
+    
     const b = simBounds(ft), tmax = clamp(6 / (z * wn), 0.3, 60), n = clamp(Math.ceil(tmax * wn * 30), 1500, 20000);
     const sim = simulateStep(ft, tmax, n);
     timeSvg($('#q3-step'), { tmax: tmax, cid: 'q3s', curves: [{ name: 'y(t)', color: '#2e6da4', t: sim.t, y: sim.y }] });
@@ -764,13 +686,11 @@ function mountQ3(root) {
     else if (z > 0.85) txt += 'Zone sur-amortie : pas ou peu de dépassement, mais réponse plus lente que nécessaire.';
     else txt += 'Dépassement de ' + fmt(D, 1) + ' % : c\'est une zone de compromis raisonnable.';
     m.innerHTML = txt;
-    const rg = freqRange(ft);
-    bodeSvg($('#q3-bode'), { wmin: rg.wmin, wmax: rg.wmax, curves: [ftBodeCurve(ft, 'H(jω)', '#2e6da4')], marks: [{ w: wn, label: 'ωn' }] });
   };
   upd();
 }
 WORKSHOPS.push({ id: 'q3', title: 'Pôles complexes', hint: 'Déplacez ζ et ωn : les pôles tournent autour de l\'origine (ζ) et s\'en éloignent (ωn). L\'angle θ vérifie ζ = cos θ.',
-  mount: mountQ3, reset: () => { Object.assign(Q3, { zeta: 0.5, wn: 2 }); } });
+  mount: mountQ3, reset: () => { Object.assign(Q3, { zeta: 0.5, wn: 2, showZeta: true, showWn: true }); } });
 
 /* ================= Atelier 4 : pôle dominant ================= */
 const Q4 = { t1: 1, t2: 0.1 };
@@ -788,17 +708,21 @@ function mountQ4(root) {
   slider($('#q4-sl'), { name: 'Constante de temps τ₂', min: 0.02, max: 3, step: 0.01, dec: 2, unit: 's', get: () => S.t2, set: v => { S.t2 = v; }, onchange: () => upd() });
   const upd = () => {
     const p1 = -1 / S.t1, p2 = -1 / S.t2;
-    const ft = mkFT(1, [{ re: p1, im: 0 }, { re: p2, im: 0 }], []);
-    drawPZ('#q4-map', ft);
+    const ftExact = mkFT(1 / (S.t1 * S.t2), [{ re: p1, im: 0 }, { re: p2, im: 0 }], []);
+    const pDom = Math.max(p1, p2);
+    const ftApprox = mkFT(-pDom, [{ re: pDom, im: 0 }], []);
+    
+    drawPZ('#q4-map', ftExact, { fixedBounds: { reMin: -55, reMax: 2, imMin: -10, imMax: 10 } });
+    
     const tmax = clamp(8 * Math.max(S.t1, S.t2), 0.3, 120);
     const n = clamp(Math.ceil(tmax * Math.max(1 / S.t1, 1 / S.t2) * 25), 1500, 30000);
-    const exact = simulateStep(ft, tmax, n);
-    const approx = simulateStep(mkFT(1, [{ re: Math.max(p1, p2), im: 0 }], []), tmax, n);
+    const exact = simulateStep(ftExact, tmax, n);
+    const approx = simulateStep(ftApprox, tmax, n);
     timeSvg($('#q4-step'), { tmax: tmax, cid: 'q4s', curves: [
       { name: 'système exact (2 pôles)', color: '#2e6da4', t: exact.t, y: exact.y },
       { name: 'approximation 1er ordre (pôle dominant)', color: '#e08a00', dash: '6 4', t: approx.t, y: approx.y }
     ] });
-    const dom = Math.max(p1, p2), ratio = Math.max(Math.abs(p1), Math.abs(p2)) / Math.min(Math.abs(p1), Math.abs(p2));
+    const dom = pDom, ratio = Math.max(Math.abs(p1), Math.abs(p2)) / Math.min(Math.abs(p1), Math.abs(p2));
     const b2 = $('#q4-stats').querySelectorAll('.stat b');
     b2[0].textContent = fmt(p1, 3) + ' rad/s';
     b2[1].textContent = fmt(p2, 3) + ' rad/s';
@@ -843,7 +767,7 @@ function mountQ5(root) {
   slider($('#q5-sl'), { name: 'ω = Im(p)', min: 0.5, max: 4, step: 0.05, dec: 2, unit: 'rad/s', get: () => S.im, set: v => { S.im = v; }, onchange: () => upd() });
   const upd = () => {
     const ft = mkFT(1, [{ re: S.re, im: S.im }], []);
-    drawPZ('#q5-map', ft);
+    drawPZ('#q5-map', ft, { fixedBounds: { reMin: -3, reMax: 2, imMin: -5, imMax: 5 } });
     const modes = impulseModes(ft);
     const tmax = clamp(6 / Math.max(Math.abs(S.re), 0.05), 1, 40), n = clamp(Math.ceil(tmax * Math.max(Math.abs(S.re), S.im) * 40), 2000, 30000);
     const t = [], y = [], envP = [], envN = [];
@@ -879,54 +803,216 @@ function mountQ5(root) {
 WORKSHOPS.push({ id: 'q5', title: 'Stabilité', hint: 'Faites glisser la paire de pôles de part et d\'autre de l\'axe imaginaire et observez la réponse impulsionnelle.',
   mount: mountQ5, reset: () => { Object.assign(Q5, { re: -0.8, im: 3 }); } });
 
-/* ================= Atelier 6 : lieu des racines ================= */
-const Q6 = { K: 4 };
-function locusData() {
-  const traces = [], Ks = [];
-  for (let i = 0; i <= 140; i++) Ks.push(Math.pow(10, -1.5 + 3.4 * i / 140));
-  for (const K of Ks) traces.push(rootsOf([1, 4, 3, K]));
-  return traces;
+/* ================= Atelier 6 : Somme de réponses par pôles ================= */
+const Q6 = { terms: [], input: 'echelon', mode: 'simple', nextId: 1 };
+const MAXT = 6;
+function isOrigin(p) { return Math.abs(p.re) < 1e-9 && Math.abs(p.im) < 1e-9; }
+function termPoles(t) {
+  const base = t.im > 1e-9 ? [{re:t.re,im:t.im},{re:t.re,im:-t.im}] : [{re:t.re,im:0}];
+  return t.dbl ? base.concat(base.map(p=>({re:p.re,im:p.im}))) : base;
 }
-const LOCUS = locusData();
+function termFT(t) {
+  const poles = termPoles(t);
+  let prod = {re:1,im:0};
+  for(const p of poles) if(!isOrigin(p)) prod = Cx.mul(prod, {re:-p.re, im:-p.im});
+  return { poles: poles, k: prod.re, den: polyFromRoots(1, poles) };
+}
+function termLabel(t) {
+  const m = t.dbl ? 'double' : 'simple';
+  if(isOrigin(t)) return 'pôle à l\'origine ' + m;
+  if(t.im > 1e-9) return 'pôles complexes ' + m + 's ' + fmt(t.re) + ' ± ' + fmt(t.im) + 'j';
+  return 'pôle réel ' + m + ' ' + fmt(t.re);
+}
+function termStab(t) {
+  if(t.re > 1e-9) return { txt: 'instable', cls: 'no' };
+  if(Math.abs(t.re) <= 1e-9) return t.dbl ? { txt: 'instable', cls: 'no' } : { txt: 'marginal', cls: 'warn' };
+  return { txt: 'stable', cls: 'yes' };
+}
+// Matrix exponential for simulation
+function mmul(A,B,n){
+  const C = Array.from({length:n}, () => new Array(n).fill(0));
+  for(let i=0;i<n;i++) for(let k=0;k<n;k++) { const a=A[i][k]; if(a!==0) for(let j=0;j<n;j++) C[i][j]+=a*B[k][j]; }
+  return C;
+}
+function expm(M,n){
+  let nrm=0; for(const r of M) nrm=Math.max(nrm, r.reduce((s,v)=>s+Math.abs(v),0));
+  const sq=Math.max(0, Math.ceil(Math.log2(Math.max(nrm, 1e-12)))+1), f=Math.pow(2,sq);
+  const A=M.map(r=>r.map(v=>v/f));
+  const I=Array.from({length:n}, (_,i)=>Array.from({length:n}, (_,j)=>i===j?1:0));
+  let E=I.map(r=>r.slice()), T=I.map(r=>r.slice());
+  for(let k=1;k<=20;k++) { T=mmul(T,A,n).map(r=>r.map(v=>v/k)); E=E.map((r,i)=>r.map((v,j)=>v+T[i][j])); }
+  for(let i=0;i<sq;i++) E=mmul(E,E,n);
+  return E;
+}
+function respond(term, input, tmax, N){
+  const ft = termFT(term), m = {dirac:0, echelon:1, rampe:2}[input];
+  const q = ft.den.concat(new Array(m).fill(0)), n = q.length-1, dt = tmax/N;
+  const A = Array.from({length:n}, ()=>new Array(n).fill(0));
+  for(let j=0;j<n;j++) A[0][j] = -q[j+1];
+  for(let i=1;i<n;i++) A[i][i-1] = 1;
+  const E = expm(A.map(r=>r.map(v=>v*dt)), n);
+  let x = new Array(n).fill(0); x[0]=1;
+  const t = [], y = [];
+  for(let s=0;s<=N;s++) {
+    t.push(s*dt);
+    y.push(ft.k * x[n-1]);
+    if(s===N) break;
+    const nx = new Array(n).fill(0);
+    for(let i=0;i<n;i++) { let a=0; for(let j=0;j<n;j++) a+=E[i][j]*x[j]; nx[i]=a; }
+    x=nx;
+  }
+  return {t, y};
+}
+function autoT(list){
+  const stab=[], uns=[];
+  for(const t of list){
+    const f = t.dbl ? 1.6 : 1;
+    if(t.re > 1e-9) uns.push(3/t.re);
+    else if(t.re < -1e-9) stab.push(5*f/Math.abs(t.re));
+    else if(t.im > 1e-9) (t.dbl?uns:stab).push(4*2*Math.PI/t.im*(t.dbl?0.6:1));
+    else stab.push(5);
+  }
+  let tm = stab.length ? Math.max(...stab) : null;
+  if(uns.length) { const tu=Math.max(...uns); tm = tm===null ? tu : Math.min(tm,tu); }
+  if(tm===null) tm=5;
+  return clamp(tm, 0.05, 300);
+}
+
 function mountQ6(root) {
-  root.innerHTML = '<h2>Lieu des racines : déplacement des pôles avec le gain</h2>'
-    + '<p>On ferme la boucle sur un gain K : la fonction de transfert en boucle fermée est <b>H_BF(p) = K·L(p) / (1 + K·L(p))</b>. Ses pôles sont les solutions de <b>1 + K·L(p) = 0</b>, c\'est-à-dire les racines de <b>D(p) + K·N(p)</b>. Quand K varie de 0 à ∞, les pôles se déplacent dans le plan complexe : c\'est le <b>lieu des racines</b>.</p>'
-    + '<p>Exemple : <b>L(p) = 1 / (p(p + 1)(p + 3))</b>, donc D(p) = p³ + 4p² + 3p. Les pôles en boucle fermée sont les racines de <b>p³ + 4p² + 3p + K = 0</b>.</p>'
-    + '<div id="q6-sl"></div>'
-    + '<div class="two"><div><h3>Lieu des racines</h3><svg id="q6-map" viewBox="0 0 520 340" style="width:100%;max-width:560px;height:auto"></svg></div>'
-    + '<div><h3>Réponse indicielle en boucle fermée</h3><svg id="q6-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg></div></div>'
-    + statsHtml([['Gain K', ''], ['Pôles en BF', ''], ['Stabilité', ''], ['Gain critique K_c', '']], 'q6-stats')
-    + '<p class="verdict" id="q6-msg"></p>'
-    + '<div class="analogy"><b>Ce qu\'il faut retenir :</b> les branches du lieu partent des <b>pôles en boucle ouverte</b> (K = 0) et aboutissent aux <b>zéros</b> (ou à l\'infini si le système est strictement propre). Le lieu traverse l\'axe imaginaire pour un gain <b>K_c</b> : au-delà, le système devient instable. Ici K_c = 12 (à vérifier par le critère de Routh : p³+4p²+3p+K, ligne s¹ : (12 − K)/4, d\'où K &lt; 12).</div>';
-  const S = Q6;
-  const logK = () => Math.log10(S.K);
-  slider($('#q6-sl'), { name: 'log₁₀(K)', min: -1.5, max: 2, step: 0.01, dec: 2, get: logK, set: v => { S.K = Math.pow(10, v); }, onchange: () => upd() });
-  const upd = () => {
-    const poles = rootsOf([1, 4, 3, S.K]);
-    const ft = mkFT(S.K, poles, []);
-    pzSvg($('#q6-map'), { poles: poles, zeros: [], traces: LOCUS });
-    const b = simBounds(ft);
-    const tmax = clamp(b.tmax, 0.5, 40), n = clamp(b.n, 1500, 30000);
-    const sim = simulateStep(ft, tmax, n);
-    timeSvg($('#q6-step'), { tmax: tmax, cid: 'q6s', clip: 6, curves: [{ name: 'y(t)', color: '#2e6da4', t: sim.t, y: sim.y }] });
-    const st = stabilityOf(ft);
-    const b2 = $('#q6-stats').querySelectorAll('.stat b');
-    b2[0].textContent = fmt(S.K, 2);
-    b2[1].textContent = poles.map(p => Math.abs(p.im) < 1e-6 ? fmt(p.re, 2) : fmt(p.re, 2) + '±' + fmt(Math.abs(p.im), 2) + 'j').join(' ; ');
-    b2[2].textContent = st.txt;
-    b2[3].textContent = '12';
-    const m = $('#q6-msg'); m.className = 'verdict ' + st.cls;
-    if (S.K < 12) {
-      const real = poles.filter(p => Math.abs(p.im) < 1e-6);
-      m.innerHTML = 'K = ' + fmt(S.K, 2) + ' &lt; 12 : les trois pôles sont dans le demi-plan gauche, le système est stable.' + (real.length === 2 ? ' Deux d\'entre eux sont réels, le troisième est réel aussi : la réponse est apériodique.' : ' Une paire complexe conjuguée donne un régime oscillant amorti.');
+  Q6.terms = [];
+  Q6.nextId = 1;
+  root.innerHTML = `
+    <h2>Somme de réponses par pôles</h2>
+    <p>Placer des pôles dans le plan complexe, chacun devenant une fonction de transfert de gain statique 1, et observer la somme de leurs réponses (jusqu'à 6 fonctions) à un Dirac, un échelon ou une rampe.</p>
+    <div class="opts">
+      <div class="fld"><span>Entrée</span><div id="q6-in"></div></div>
+      <div class="fld"><span>Mode</span><div id="q6-mode"></div></div>
+      <button class="btn" id="q6-reset">Tout effacer</button>
+    </div>
+    <div class="two">
+      <div>
+        <h3>Plan complexe</h3>
+        <svg id="q6-map" viewBox="0 0 520 340" style="width:100%;max-width:560px;height:auto;background:#fff;border:1px solid #eee;border-radius:8px;cursor:crosshair"></svg>
+        <div class="small" style="text-align:center;margin-top:5px;">Cliquez pour ajouter un pôle (le conjugué s'ajoute automatiquement).</div>
+      </div>
+      <div>
+        <h3>Réponse temporelle</h3>
+        <svg id="q6-chart" viewBox="0 0 640 340" style="width:100%;height:auto;background:#fff;border:1px solid #eee;border-radius:8px"></svg>
+        <p class="verdict" id="q6-msg" aria-live="polite"></p>
+      </div>
+    </div>
+    <div id="q6-cards" class="cards" style="margin-top:10px"></div>
+  `;
+
+  const inpNames = [['dirac', 'Dirac'], ['echelon', 'Échelon'], ['rampe', 'Rampe']];
+  const modeNames = [['simple', 'Simple'], ['double', 'Double']];
+  
+  const segIn = h('div', { class: 'seg', role: 'tablist' }, inpNames.map(k => h('button', { type: 'button', 'aria-pressed': Q6.input === k[0] ? 'true' : 'false', onclick: () => { Q6.input = k[0]; $('#q6-in').innerHTML = ''; $('#q6-in').appendChild(segIn); updateQ6(); } }, k[1])));
+  $('#q6-in').appendChild(segIn);
+  
+  const segMode = h('div', { class: 'seg', role: 'tablist' }, modeNames.map(k => h('button', { type: 'button', 'aria-pressed': Q6.mode === k[0] ? 'true' : 'false', onclick: () => { Q6.mode = k[0]; $('#q6-mode').innerHTML = ''; $('#q6-mode').appendChild(segMode); updateQ6(); } }, k[1])));
+  $('#q6-mode').appendChild(segMode);
+
+  const map = $('#q6-map');
+  map.addEventListener('click', e => {
+    const r = map.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width * 520;
+    const y = (e.clientY - r.top) / r.height * 340;
+    // map to coords with fixed bounds (-8 to 4, -6 to 6)
+    const reMin = -8, reMax = 4, imMin = -6, imMax = 6;
+    const X = re => 520 / 2 + (re - (reMin+reMax)/2) * Math.min(520/(reMax-reMin), 340/(2*imMax));
+    const Y = im => 340 / 2 - im * Math.min(520/(reMax-reMin), 340/(2*imMax));
+    const re = ((x - 520/2) / Math.min(520/(reMax-reMin), 340/(2*imMax))) + (reMin+reMax)/2;
+    const im = -((y - 340/2) / Math.min(520/(reMax-reMin), 340/(2*imMax)));
+    
+    if (Q6.terms.length >= MAXT) return;
+    
+    let selTerm = null;
+    Q6.terms.forEach(t => {
+      const pts = t.im > 1e-9 ? [t.im, -t.im] : [0];
+      pts.forEach(pim => {
+        const dx = X(t.re) - x, dy = Y(pim) - y;
+        if (Math.hypot(dx, dy) < 15) selTerm = t;
+      });
+    });
+    
+    if (selTerm) {
+      Q6.terms.splice(Q6.terms.indexOf(selTerm), 1);
     } else {
-      m.innerHTML = 'K = ' + fmt(S.K, 2) + ' ≥ 12 : une paire de pôles a franchi l\'axe imaginaire. Le système est <b>instable</b> : la réponse diverge. Il faut réduire le gain.';
+      Q6.terms.push({ id: Q6.nextId++, re: re, im: Math.abs(im), dbl: Q6.mode === 'double', on: true, c: Q6.terms.length % 6 + 1 });
     }
-  };
-  upd();
+    updateQ6();
+  });
+  
+  $('#q6-reset').addEventListener('click', () => { Q6.terms = []; updateQ6(); });
+
+  function updateQ6() {
+    // 1. Map
+    pzSvg($('#q6-map'), {
+      poles: Q6.terms.flatMap(t => termPoles(t)),
+      zeros: [],
+      fixedBounds: { reMin: -8, reMax: 4, imMin: -6, imMax: 6 }
+    });
+    
+    // 2. Chart
+    if (!Q6.terms.length) {
+      $('#q6-chart').innerHTML = '<text x="320" y="170" text-anchor="middle" fill="#999">Placez un pôle pour voir sa réponse.</text>';
+      $('#q6-msg').textContent = 'Aucun pôle placé.';
+      $('#q6-msg').className = 'verdict';
+      $('#q6-cards').innerHTML = '';
+      return;
+    }
+    
+    const tmax = autoT(Q6.terms), N = 400;
+    const resp = Q6.terms.map(t => respond(t, Q6.input, tmax, N));
+    const sum = new Array(N+1).fill(0);
+    for(let i=0; i<=N; i++) {
+      for(let j=0; j<Q6.terms.length; j++) sum[i] += resp[j].y[i];
+    }
+    
+    const curves = [];
+    curves.push({ name: 'Somme', color: '#111', t: resp[0].t, y: sum, width: 2.8 });
+    Q6.terms.forEach((term, i) => {
+      curves.push({ name: 'H'+(i+1), color: 'var(--c'+term.c+')', t: resp[i].t, y: resp[i].y, width: 1.5 });
+    });
+    
+    timeSvg($('#q6-chart'), { tmax, curves, cid: 'q6c' });
+    
+    // 3. Verdict
+    const uns = Q6.terms.filter(t => termStab(t).cls === 'no').length;
+    const marg = Q6.terms.filter(t => termStab(t).cls === 'warn').length;
+    const last = sum[sum.length-1];
+    const m = $('#q6-msg');
+    if(uns) { m.className='verdict no'; m.innerHTML='<b>Somme instable</b> : présence de pôles dans le demi-plan droit ou doubles sur l\'axe imaginaire.'; }
+    else if(marg) { m.className='verdict warn'; m.innerHTML='<b>Somme marginalement stable</b> : au moins un pôle sur l\'axe imaginaire.'; }
+    else { m.className='verdict yes'; m.innerHTML='<b>Somme stable</b> : tous les pôles sont dans le demi-plan gauche.'; }
+    
+    // 4. Cards
+    $('#q6-cards').innerHTML = Q6.terms.map((t,i) => {
+      const ft = termFT(t), st = termStab(t);
+      const fx = 'H<sub>'+(i+1)+'</sub>(p) = ' + fmt(ft.k, 3) + ' / (' + ft.den.map((c,d)=>d===ft.den.length-1?'1':(d>0?'p': '')).join('') + ')'; // simplified
+      return `<div class="card">
+        <div class="top"><span class="dot" style="background:var(--c${t.c})"></span><b>H<sub>${i+1}</sub></b><span class="small">${termLabel(t)}</span><span class="pill ${st.cls}">${st.txt}</span></div>
+        <div class="acts">
+          <button class="btn sm" data-i="${i}" data-a="mult">${t.dbl?'Simple':'Double'}</button>
+          <button class="btn sm" data-i="${i}" data-a="del">Supprimer</button>
+        </div>
+      </div>`;
+    }).join('');
+    $('#q6-cards').querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.dataset.i), a = btn.dataset.a;
+        if(a==='del') Q6.terms.splice(i,1);
+        if(a==='mult') Q6.terms[i].dbl = !Q6.terms[i].dbl;
+        updateQ6();
+      });
+    });
+  }
+  
+  updateQ6();
 }
-WORKSHOPS.push({ id: 'q6', title: 'Lieu des racines', hint: 'Augmentez K : les pôles en boucle fermée migrent depuis les pôles de la boucle ouverte et finissent par traverser l\'axe imaginaire.',
-  mount: mountQ6, reset: () => { Object.assign(Q6, { K: 4 }); } });
+WORKSHOPS.push({ id: 'q6', title: 'Somme de réponses', hint: 'Placez des pôles dans le plan : chacun définit une fonction de transfert de gain 1. La courbe noire est la somme de leurs réponses.',
+  mount: mountQ6, reset: () => { Q6.terms = []; Q6.nextId = 1; } });
 /*LOGIC-END*/
 
 /* ---------- activités ---------- */
@@ -963,7 +1049,23 @@ const COURSE = [
 <table class="ctable"><thead><tr><th>Lecture</th><th>Sur quoi elle agit</th></tr></thead><tbody>
 <tr><td>Position des pôles</td><td>Stabilité et régime transitoire (modes e^(pⱼt))</td></tr>
 <tr><td>Position des zéros</td><td>Amplitude relative des modes, forme de la réponse, dépassement</td></tr>
-<tr><td>Pôles à l'origine</td><td>Classe du système, donc précision (erreur statique nulle dès la classe 1)</td></tr></tbody></table>` }
+<tr><td>Pôles à l'origine</td><td>Classe du système, donc précision (erreur statique nulle dès la classe 1)</td></tr></tbody></table>` },
+  { id: 'premier-ordre', t: 'Pôle réel et premier ordre', h: `
+<p>Un système du premier ordre s'écrit H(p) = K/(1 + τp). Son unique pôle est <b>p₀ = −1/τ</b>. La constante de temps est donc <b>τ = 1/|p₀|</b>.</p>
+<p>La réponse à un échelon est s(t) = K(1 − e^(−t/τ)). À t = τ, elle atteint 63 % ; à t = 3τ, 95 %. Plus le pôle est <b>éloigné de l'axe imaginaire</b> (|p₀| grand), plus le système est <b>rapide</b>.</p>` },
+  { id: 'second-ordre', t: 'Pôles complexes et second ordre', h: `
+<p>Un second ordre s'écrit H(p) = ωn² / (p² + 2ζωn p + ωn²). Ses pôles sont <b>p = −ζωn ± jωn√(1 − ζ²)</b>. On peut les lire dans le plan complexe :</p>
+<ul>
+<li><b>ωn = |p|</b> : c'est la distance à l'origine. À ωn constant, les pôles se déplacent sur un <b>arc de cercle</b> centré sur l'origine.</li>
+<li><b>ζ = cos θ</b> : c'est l'angle par rapport à l'axe réel négatif. À ζ constant, les pôles se déplacent sur une <b>demi-droite</b> issue de l'origine.</li>
+</ul>
+<p>Le dépassement ne dépend que de ζ : D = 100·exp(−πζ/√(1−ζ²)). Plus ζ est petit, plus la réponse oscille.</p>` },
+  { id: 'dominants', t: 'Pôles dominants', h: `
+<p>Lorsqu'un système possède plusieurs pôles, le mode associé à chaque pôle s'amortit comme e^(pᵢt). Le pôle <b>le plus proche de l'axe imaginaire</b> est le <b>pôle dominant</b> : son mode s'amortit le plus lentement et impose la dynamique globale.</p>
+<p>Si un pôle est au moins <b>5 fois plus éloigné</b> de l'axe imaginaire que le pôle dominant, il est négligeable et on peut simplifier la fonction de transfert.</p>` },
+  { id: 'somme', t: 'Somme de réponses', h: `
+<p>Le système étant linéaire, la réponse totale à une entrée donnée est la <b>somme</b> des réponses de chaque fonction de transfert élémentaire.</p>
+<p>Pour visualiser cela, l'onglet 6 permet de placer des pôles : chaque pôle génère une fonction de transfert de gain statique 1. La réponse résultante est la somme de toutes ces contributions.</p>` }
 ];
 
 /* ---------- interface ---------- */
@@ -1063,7 +1165,7 @@ function openDlg(title, body) {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
 $('#bHelp').addEventListener('click', () => {
-  openDlg('Aide', h('div', { html: '<p>Cette page vous permet d\'étudier l\'influence de la position des pôles sur le comportement temporel d\'un système.</p><ul><li>Dans l\'onglet 1, cliquez sur un pôle du plan complexe pour voir sa réponse à un Dirac, un échelon ou une rampe.</li><li>Les onglets suivants vous permettent d\'explorer des cas particuliers : premier ordre, second ordre, pôle dominant, stabilité et lieu des racines.</li></ul>' }));
+  openDlg('Aide', h('div', { html: '<p>Cette page vous permet d\'étudier l\'influence de la position des pôles sur le comportement temporel d\'un système.</p><ul><li>Dans l\'onglet 1, cliquez sur un pôle du plan complexe pour voir sa réponse à un Dirac, un échelon ou une rampe.</li><li>Les onglets suivants vous permettent d\'explorer des cas particuliers : premier ordre, second ordre, pôle dominant, stabilité, et somme de réponses.</li></ul>' }));
 });
 (function init() { AS.open = !isSmall(); renderSeg(); mountWs(); renderAct(); renderCourse(); })();
 </script>
