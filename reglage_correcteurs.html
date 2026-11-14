@@ -207,7 +207,7 @@ const WORKSHOPS = [];
 
 /*LOGIC-START*/
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 const fmt = (x, d = 2) => { if (!isFinite(x)) return x > 0 ? '∞' : '−∞'; const r = Math.round(x * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', ','); };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
@@ -221,13 +221,20 @@ function plantFR(w, P) { return [P.K0 / Math.sqrt((1 + w * w * P.t1 * P.t1) * (1
 function ctrlFR(w, c) {
   if (!c || c.type === 'none') return [1, 0];
   if (c.type === 'P') return [c.Kp, 0];
-  if (c.type === 'PI') { const x = w * c.Ti; return [c.Kp * Math.sqrt(1 + x * x) / x, Math.atan(x) * R2D - 90]; }
+  if (c.type === 'PI') {
+    if (!isFinite(c.Ti) || c.Ti <= 0) return [c.Kp, 0];   /* K_i = 0 : correcteur P pur */
+    const x = w * c.Ti; return [c.Kp * Math.sqrt(1 + x * x) / x, Math.atan(x) * R2D - 90];
+  }
   const x = c.a * c.T * w, y = c.T * w;
   return [c.K * Math.sqrt((1 + x * x) / (1 + y * y)), (Math.atan(x) - Math.atan(y)) * R2D];
 }
 function loopFR(w, P, c) { const a = plantFR(w, P), b = ctrlFR(w, c); return [a[0] * b[0], a[1] + b[1]]; }
 const unitCtrl = type => type === 'P' ? { type: 'P', Kp: 1 } : type === 'PI' ? { type: 'PI', Kp: 1, Ti: 1 } : { type: 'AV', K: 1, a: 1, T: 1 };
-const dcGain = (P, c) => { if (c.type === 'PI') return 1; const k = c.type === 'P' ? c.Kp : c.K; const l0 = k * P.K0; return l0 / (1 + l0); };
+const dcGain = (P, c) => {
+  if (c.type === 'PI' && isFinite(c.Ti) && c.Ti > 0) return 1;   /* intégrateur : gain statique infini */
+  const k = c.type === 'AV' ? c.K : c.Kp;
+  const l0 = k * P.K0; return l0 / (1 + l0);
+};
 
 /* ---------- analyse : pulsation de coupure, marges, bande passante ---------- */
 function analyzeFreq(P, c) {
@@ -272,7 +279,7 @@ function simulate(P, c, tmax, N) {
   const n = clamp(Math.ceil(tmax / (minTau / 6)), 3000, 150000), dt = tmax / n, every = Math.max(1, Math.floor(n / N));
   const f = x => {
     const y = P.K0 * x[1], e = 1 - y; let u, dxc = 0;
-    if (c.type === 'PI') { u = c.Kp * (e + x[2] / c.Ti); dxc = e; }
+    if (c.type === 'PI') { const inv = isFinite(c.Ti) ? 1 / c.Ti : 0; u = c.Kp * (e + x[2] * inv); dxc = e; }
     else if (c.type === 'AV') { u = c.K * (c.a * e - (c.a - 1) * x[2]); dxc = (e - x[2]) / c.T; }
     else u = (c.type === 'P' ? c.Kp : 1) * e;
     return [(u - x[0]) / P.t1, (x[0] - x[1]) / P.t2, dxc];
@@ -289,7 +296,7 @@ function simulate(P, c, tmax, N) {
 function analyze(P, c, tmax) {
   const F = analyzeFreq(P, c), wc = F.wc || 1;
   const dc = dcGain(P, c);
-  tmax = tmax || clamp(Math.max(15 / wc, 4 * P.t1 / (1 + (c.type === 'PI' ? 1e3 : dc / (1 - dc + 1e-9))), c.type === 'PI' ? 3 * c.Ti : 0), 0.3, 120);
+  tmax = tmax || clamp(Math.max(15 / wc, 4 * P.t1 / (1 + (c.type === 'PI' ? 1e3 : dc / (1 - dc + 1e-9))), c.type === 'PI' && isFinite(c.Ti) ? 3 * c.Ti : 0), 0.3, 120);
   const S = simulate(P, c, tmax), yf = dc;
   const unstable = (F.M !== null && F.M <= 0) || (isFinite(F.Mg) && F.Mg <= 0) || S.blown;
   let D = 0, tr = Infinity;
@@ -586,68 +593,84 @@ WORKSHOPS.push({ id: 'q2', title: 'Correcteur P', hint: 'Faites varier Kp : la c
   mount: mountQ2, reset: () => { Object.assign(Q2, { Kp: 5, Mt: 60 }); Object.assign(PLANT, PLANT0); } });
 
 /* ================= Atelier 3 : Correcteur PI ================= */
-const Q3 = { Kp: 6.7, Ti: 1, Mt: 60, method: 'pole' };
+const Q3 = { Kp: 6, Ti: Infinity, Mt: 60 };
+function decadeHtml() {
+  const rows = [[10, '10 · ω₀dB'], [2, '2 · ω₀dB'], [1, 'ω₀dB'], [0.5, 'ω₀dB / 2'], [0.2, 'ω₀dB / 5'], [0.1, 'ω₀dB / 10'], [0.033, 'ω₀dB / 30'], [0.01, 'ω₀dB / 100']];
+  const body = rows.map(([r, lab]) => '<tr><td class="m">' + lab + '</td><td class="m">' + fmt(Math.atan(r) * R2D, 1) + ' °</td><td class="m">+' + fmt(10 * Math.log10(1 + r * r), 2) + ' dB</td></tr>').join('');
+  return '<p>L\'intégrateur apporte un gain infini en basse fréquence : <b>l\'erreur statique est nulle dès que Kᵢ &gt; 0, quelle que soit la valeur de Tᵢ</b>. Tout le réglage de Tᵢ consiste donc à choisir <b>où</b> l\'intégrateur agit, c\'est-à-dire <b>à quelle vitesse</b> l\'erreur est annulée. À la pulsation ω, il coûte un déphasage de −arctan(1/(Tᵢω)).</p>' +
+    '<div class="dwrap"><table class="dt"><thead><tr><th>Position de la cassure 1/Tᵢ</th><th>Phase perdue par l\'intégrateur en ω₀dB</th><th>Gain ajouté par le PI en ω₀dB</th></tr></thead><tbody>' + body + '</tbody></table></div>' +
+    '<p><b>Trop près</b> (cassure à ω₀dB ou au-dessus) : 45° à 84° de phase perdus, la marge s\'effondre ; pour la retrouver il faudrait baisser Kp dans les mêmes proportions, donc perdre en rapidité et en précision dynamique.</p>' +
+    '<p><b>Une décade</b> (1/Tᵢ = ω₀dB/10) : 5,7° perdus — c\'est exactement l\'origine de la règle du « +5° » du cours — et 0,04 dB de gain en plus en ω₀dB, donc le Kp calculé à l\'étape 1 reste presque valable et un simple réajustement suffit.</p>' +
+    '<p><b>Trop loin</b> (deux ou trois décades) : l\'action intégrale n\'agit plus que très bas en fréquence. Dans la bande utile, autour de ω₀dB, le correcteur est indiscernable d\'un P : la réponse transitoire est celle du P. Ce n\'est pourtant pas exactement un P, car le gain statique reste infini : l\'erreur statique est bien annulée, mais au bout d\'un temps très long. Le pôle lent introduit a une constante de temps de l\'ordre de Tᵢ, soit 100/ω₀dB ou 1000/ω₀dB : la réponse traîne une « queue » interminable et le rejet d\'une perturbation devient très lent. Le temps de réponse est fortement dégradé.</p>' +
+    '<p><b>Le compromis</b> : plus la cassure est proche de ω₀dB, plus l\'intégrateur agit tôt (erreur annulée vite) mais plus il coûte de phase ; plus elle est loin, moins elle coûte cher mais plus elle agit tard. Une décade est le bon compromis.</p>';
+}
 function mountQ3(root) {
-  root.innerHTML = '<h2>Correcteur proportionnel intégral</h2><p>Le correcteur PI s\'écrit <b>C(p) = Kp (1 + Tᵢ p) / (Tᵢ p)</b> avec Kᵢ = Kp/Tᵢ. Il ajoute un intégrateur : l\'erreur statique devient nulle. En contrepartie il retire de la phase aux basses pulsations (−90° très en dessous de 1/Tᵢ). Il y a <b>deux paramètres à régler : Tᵢ et Kp</b>, et deux méthodes du cours pour le faire.</p>' +
-    '<div id="q3-plant"></div><h3>1. Choisir la méthode</h3><div id="q3-met"></div><div class="verdict goal" id="q3-metx"></div>' +
-    '<h3>2. Régler les paramètres</h3><div id="q3-sl3"></div><div class="files" style="margin:6px 0"><button class="btn" id="q3-bti" type="button"></button><button class="btn" id="q3-bkp" type="button"></button><button class="btn" id="q3-ball" type="button">Tout régler (Tᵢ puis Kp)</button></div><p class="small">Un bouton se colore et affiche ✓ lorsque la valeur du curseur correspond au réglage calculé par la méthode choisie. Vous pouvez aussi déplacer les curseurs à la main.</p>' +
-    '<div id="q3-sl"></div><div id="q3-sl2"></div><div class="verdict" id="q3-calc" aria-live="polite"></div>' + analysisHtml('q3') +
+  root.innerHTML = '<h2>Correcteur proportionnel intégral</h2><p>Le correcteur PI s\'écrit <b>C(p) = Kp (1 + Tᵢ p) / (Tᵢ p) = Kp + Kᵢ/p</b> avec <b>Kᵢ = Kp/Tᵢ</b>. L\'intégrateur annule l\'erreur statique, mais il retire de la phase aux basses pulsations (−90° très en dessous de 1/Tᵢ). On le règle <b>en trois temps</b> : on commence par un simple gain (Kᵢ = 0), on introduit ensuite l\'action intégrale, puis on réajuste le gain.</p>' +
+    '<div id="q3-plant"></div>' +
+    '<h3>Étape 1 — Correcteur P : régler le gain (Kᵢ = 0)</h3>' +
+    '<p class="small">Tant que Kᵢ = 0, <b>C(p) = Kp</b> : sur le Bode, la courbe orange du correcteur est une droite horizontale et sa phase est nulle. Déplacer Kp translate seulement la courbe de gain, exactement comme dans l\'atelier « Correcteur P ».</p>' +
+    '<div id="q3-sl1"></div>' +
+    '<div class="files" style="margin:4px 0"><button class="btn pri" id="q3-b1" type="button">① Régler Kp pour la marge de phase visée</button></div>' +
+    '<p class="verdict goal" id="q3-c1" aria-live="polite"></p>' +
+    '<h3>Étape 2 — Introduire l\'action intégrale</h3>' +
+    '<p class="small">Dès que Kᵢ &gt; 0, une cassure apparaît à la pulsation <b>1/Tᵢ</b> : en dessous, le gain du correcteur croît de 20 dB/décade et sa phase tend vers −90°. La marge de phase diminue : c\'est le prix de la précision.</p>' +
+    '<div id="q3-sl2"></div>' +
+    '<div class="files" style="margin:4px 0"><button class="btn" id="q3-b2a" type="button">② 1/Tᵢ = ω₀dB′/10 (une décade)</button><button class="btn" id="q3-b2b" type="button">② Tᵢ = τ₁ (compensation du pôle dominant)</button></div>' +
+    '<p class="verdict goal" id="q3-c2" aria-live="polite"></p>' +
+    '<details class="defi"><summary>Pourquoi une décade sous ω₀dB, et pas deux ni dix ?</summary>' + decadeHtml() + '</details>' +
+    '<h3>Étape 3 — Réajuster le gain</h3>' +
+    '<div class="files" style="margin:4px 0"><button class="btn pri" id="q3-b3" type="button">③ Recalculer Kp pour retrouver la marge visée</button><button class="btn" id="q3-ball" type="button">Dérouler les trois étapes</button></div>' +
+    '<p class="verdict" id="q3-c3" aria-live="polite"></p>' +
+    analysisHtml('q3') +
     '<div class="analogy"><b>Pourquoi la compensation marche :</b> avec Tᵢ = τ₁, le numérateur (1 + Tᵢ p) du correcteur annule le facteur (1 + τ₁ p) du système. Il reste L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)) : un intégrateur et un seul pôle, donc un second ordre facile à régler par la marge de phase. Cette méthode n\'est possible que si le pôle dominant est réel.</div>';
-  const S = Q3, METH = [['pole', 'Compensation du pôle dominant'], ['freq', 'Placement fréquentiel (3 étapes)'], ['man', 'Réglage manuel']];
-  const TX = {
-    pole: '<b>Compensation du pôle dominant.</b> Étape 1 : Tᵢ = τ₁ (élimine le pôle dominant). Étape 2 : Kp pour la marge de phase imposée. Plus rapide, mais exige un pôle dominant réel.',
-    freq: '<b>Placement fréquentiel.</b> Étape 1 : Kp′ pour la marge visée avec un P seul, ce qui donne ω₀dB′. Étape 2 : Tᵢ tel que 1/Tᵢ = ω₀dB′/10 (une décade plus bas). Étape 3 : réajuster Kp, car l\'intégrateur coûte environ 5° de marge.',
-    man: '<b>Réglage manuel.</b> Déplacez Kp et Tᵢ : comparez Bode et réponse indicielle. Les boutons restent disponibles avec la méthode « compensation de pôle ».'
-  };
-  const sl = [slider($('#q3-sl'), { name: 'Kp', min: 0.1, max: 200, step: 0.1, dec: 1, get: () => S.Kp, set: v => { S.Kp = v; }, onchange: () => upd() }),
-    slider($('#q3-sl2'), { name: 'Tᵢ', min: 0.05, max: 10, step: 0.05, dec: 2, unit: 's', get: () => S.Ti, set: v => { S.Ti = v; }, onchange: () => upd() })];
-  slider($('#q3-sl3'), { name: 'Marge de phase visée Mφ', min: 20, max: 85, step: 1, dec: 0, unit: '°', get: () => S.Mt, set: v => { S.Mt = v; }, onchange: () => upd() });
+  const S = Q3;
+  const tiOf = () => (isFinite(S.Ti) && S.Ti > 0) ? S.Ti : Infinity;
+  const kiOf = () => isFinite(tiOf()) ? S.Kp / tiOf() : 0;
+  const ctrl = () => ({ type: 'PI', Kp: S.Kp, Ti: tiOf() });
+  const sKp = slider($('#q3-sl1'), { name: 'Kp', min: 0.1, max: 200, step: 0.1, dec: 1, get: () => S.Kp, set: v => { S.Kp = v; }, onchange: () => upd() });
+  const sKi = slider($('#q3-sl2'), { name: 'Kᵢ (action intégrale)', min: 0, max: 30, step: 0.05, dec: 2, unit: 's⁻¹', get: kiOf, set: v => { S.Ti = v > 0 ? S.Kp / v : Infinity; }, onchange: () => upd() });
+  slider($('#q3-sl2'), { name: 'Marge de phase visée Mφ', min: 20, max: 85, step: 1, dec: 0, unit: '°', get: () => S.Mt, set: v => { S.Mt = v; }, onchange: () => upd() });
   plantEditor($('#q3-plant'), () => upd());
-  /* valeurs calculées par la méthode choisie */
-  const target = () => {
-    if (S.method === 'freq') { const d = designPI3(PLANT, S.Mt); return d ? { Ti: d.c.Ti, kpWith: Ti => { const r = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti }, S.Mt); return r ? r.gain : null; }, d } : null; }
-    return { Ti: PLANT.t1, kpWith: Ti => { const r = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti }, S.Mt); return r ? r.gain : null; }, d: null };
-  };
-  const doTi = () => { const t = target(); if (!t) return false; S.Ti = clamp(t.Ti, 0.05, 10); sl.forEach(x => x.sync()); return true; };
-  const doKp = () => { const t = target(); if (!t) return false; const k = t.kpWith(S.Ti); if (k === null) return false; S.Kp = clamp(k, 0.1, 200); sl.forEach(x => x.sync()); return true; };
-  const detail = () => {
-    const el = $('#q3-calc'), t = target(), A = analyze(PLANT, { type: 'PI', Kp: S.Kp, Ti: S.Ti });
-    let h = '';
-    if (!t) h = 'Cette marge de phase n\'est pas atteignable avec cette méthode : choisissez une valeur plus faible.';
-    else if (S.method === 'pole') {
-      const d = designPI(PLANT, S.Mt);
-      h = '<b>Étape 1 :</b> Tᵢ = τ₁ = <b>' + fmt(PLANT.t1, 2) + ' s</b>. La boucle ouverte devient Kp·K₀ / (Tᵢ p (1 + τ₂ p)).<br><b>Étape 2 :</b> Mφ = 90° − arctan(ω₀dB τ₂) donne ω₀dB = 1 / (τ₂ tan Mφ) = <b>' + fmt(d.w, 2) + ' rad/s</b>, puis Kp = Tᵢ ω₀dB √(1 + ω₀dB² τ₂²) / K₀ = <b>' + fmt(d.c.Kp, 2) + '</b>.';
-    } else if (S.method === 'freq') {
-      const d = t.d;
-      h = '<b>Étape 1 (P seul) :</b> Kp′ = <b>' + fmt(d.kp1, 2) + '</b> donne la marge visée, avec ω₀dB′ = <b>' + fmt(d.w1, 2) + ' rad/s</b>.<br><b>Étape 2 :</b> 1/Tᵢ = ω₀dB′/10, soit Tᵢ = <b>' + fmt(d.c.Ti, 2) + ' s</b> (Kᵢ = Kp/Tᵢ).<br><b>Étape 3 :</b> on réajuste Kp pour retrouver la marge : <b>Kp = ' + fmt(d.c.Kp, 2) + '</b> (variante graphique : viser dès l\'étape 1 la marge + 5°).';
+  function upd() {
+    sKp.sync(); sKi.sync();
+    const A = renderAnalysis('q3', ctrl());
+    const dP = designP(PLANT, S.Mt), c1 = $('#q3-c1');
+    if (dP) c1.innerHTML = 'Avec un correcteur P seul (Kᵢ = 0), la marge de <b>' + fmt(S.Mt, 0) + '°</b> est obtenue pour <b>Kp′ = ' + fmt(dP.c.Kp, 2) + '</b>, à la pulsation <b>ω₀dB′ = ' + fmt(dP.w, 2) + ' rad/s</b>. C\'est cette pulsation qui sert de référence à l\'étape 2.';
+    else c1.innerHTML = 'Cette marge de phase n\'est pas atteignable avec un P seul.';
+    const Ti = tiOf(), br = isFinite(Ti) ? 1 / Ti : 0, c2 = $('#q3-c2');
+    if (!isFinite(Ti)) {
+      c2.innerHTML = '<b>Kᵢ = 0 : le correcteur est un P pur.</b> La courbe orange est plate, la FTBO corrigée est celle de l\'étape 1. Augmentez Kᵢ (ou cliquez sur un bouton ②) : la cassure à 1/Tᵢ apparaît sur le Bode du correcteur et la FTBO corrigée change.';
     } else {
-      h = S.Ti > PLANT.t1 * 1.02 ? 'Tᵢ &gt; τ₁ : le pôle dominant n\'est pas compensé, une <b>queue lente</b> (constante de temps proche de Tᵢ) apparaît.' : S.Ti < PLANT.t1 * 0.98 ? 'Tᵢ &lt; τ₁ : le zéro du correcteur est plus rapide que le pôle ; le dépassement croît.' : 'Tᵢ ≈ τ₁ : le pôle dominant est compensé.';
+      const r = dP ? br / dP.w : 0;
+      let t = '<b>Kᵢ = ' + fmt(kiOf(), 2) + ' s⁻¹</b>, donc <b>Tᵢ = Kp/Kᵢ = ' + fmt(Ti, 2) + ' s</b> et cassure à <b>1/Tᵢ = ' + fmt(br, 2) + ' rad/s</b>';
+      if (dP) t += ' (' + (r >= 1 ? fmt(r, 1) + ' × ω₀dB′' : 'ω₀dB′/' + fmt(1 / r, 1)) + ')';
+      t += '. Coût en phase à ω₀dB′ : <b>' + fmt(Math.atan(r) * R2D, 1) + ' °</b>';
+      if (A.M !== null && A.wc) t += ' ; marge de phase actuelle : <b>' + fmt(A.M, 1) + ' °</b>' + (A.M < S.Mt - 2 ? ' — elle a baissé, réajustez le gain à l\'étape 3.' : '.');
+      c2.innerHTML = t;
     }
-    h += '<br>Valeurs actuelles : Kᵢ = Kp/Tᵢ = <b>' + fmt(S.Kp / S.Ti, 2) + '</b> s⁻¹' + (A.wc ? ' ; Tᵢ·ω₀dB = ' + fmt(S.Ti * A.wc, 1) + ' (phase perdue par l\'intégrateur en ω₀dB : ' + fmt(Math.atan(1 / (S.Ti * A.wc)) * R2D, 1) + ' °).' : '.');
-    el.innerHTML = h; el.className = 'verdict';
-    return A;
-  };
-  const refreshBtns = () => {
-    const t = target(), bti = $('#q3-bti'), bkp = $('#q3-bkp');
-    const okTi = !!t && Math.abs(S.Ti - clamp(t.Ti, 0.05, 10)) <= 0.02 * S.Ti + 0.026;
-    const k = t ? t.kpWith(S.Ti) : null, okKp = k !== null && Math.abs(S.Kp - clamp(k, 0.1, 200)) <= 0.03 * S.Kp + 0.06;
-    const tiTxt = S.method === 'pole' ? 'Régler Tᵢ = τ₁' : S.method === 'freq' ? 'Régler Tᵢ (1/Tᵢ = ω₀dB′/10)' : 'Régler Tᵢ = τ₁';
-    bti.textContent = tiTxt + (okTi ? '  ✓' : ''); bti.classList.toggle('pri', okTi); bti.setAttribute('aria-pressed', okTi ? 'true' : 'false');
-    bkp.textContent = 'Régler Kp pour Mφ = ' + S.Mt + '°' + (okKp ? '  ✓' : ''); bkp.classList.toggle('pri', okKp); bkp.setAttribute('aria-pressed', okKp ? 'true' : 'false');
-  };
-  const upd = () => {
-    setChips('#q3-met', METH, S.method, id => { S.method = id; if (id === 'pole') { doTi(); doKp(); } else if (id === 'freq') { doTi(); doKp(); } upd(); }, 'Méthode de réglage');
-    $('#q3-metx').innerHTML = TX[S.method];
-    const A = renderAnalysis('q3', { type: 'PI', Kp: S.Kp, Ti: S.Ti });
-    detail(); refreshBtns(); return A;
-  };
-  $('#q3-bti').addEventListener('click', () => { if (S.method === 'man') S.method = 'pole'; if (!doTi()) $('#q3-calc').innerHTML = 'Réglage impossible pour cette marge.'; upd(); });
-  $('#q3-bkp').addEventListener('click', () => { if (S.method === 'man') S.method = 'pole'; if (!doKp()) { $('#q3-calc').innerHTML = 'Aucune pulsation ne donne cette marge avec ce Tᵢ : augmentez Tᵢ ou visez une marge plus faible.'; return; } upd(); });
-  $('#q3-ball').addEventListener('click', () => { if (S.method === 'man') S.method = 'pole'; doTi(); doKp(); upd(); });
+    const g = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti }, S.Mt), c3 = $('#q3-c3');
+    if (!g) { c3.className = 'verdict warn'; c3.innerHTML = 'Avec ce Tᵢ, aucune valeur de Kp ne permet d\'atteindre ' + fmt(S.Mt, 0) + '° : rapprochez la cassure de ω₀dB, ou baissez la marge visée.'; }
+    else {
+      const ok = Math.abs(g.gain - S.Kp) <= 0.02 * g.gain + 0.02;
+      c3.className = 'verdict ' + (ok ? 'yes' : '');
+      c3.innerHTML = 'Pour retrouver ' + fmt(S.Mt, 0) + '° avec ce Tᵢ, il faut <b>Kp = ' + fmt(g.gain, 2) + '</b> (coupure à ' + fmt(g.w, 2) + ' rad/s). Kp actuel : ' + fmt(S.Kp, 2) + (ok ? ' — <b>réglage atteint ✓</b>' : ' : cliquez sur ③ pour l\'appliquer.');
+    }
+  }
+  $('#q3-b1').addEventListener('click', () => { const d = designP(PLANT, S.Mt); if (!d) return; S.Kp = clamp(d.c.Kp, 0.1, 200); S.Ti = Infinity; upd(); });
+  $('#q3-b2a').addEventListener('click', () => { const d = designP(PLANT, S.Mt); if (!d) return; S.Ti = 10 / d.w; upd(); });
+  $('#q3-b2b').addEventListener('click', () => { S.Ti = PLANT.t1; upd(); });
+  $('#q3-b3').addEventListener('click', () => { const g = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti: tiOf() }, S.Mt); if (!g) return; S.Kp = clamp(g.gain, 0.1, 200); upd(); });
+  $('#q3-ball').addEventListener('click', () => {
+    const d = designP(PLANT, S.Mt); if (!d) return;
+    S.Kp = clamp(d.c.Kp, 0.1, 200); S.Ti = 10 / d.w;
+    const g = gainForMargin(PLANT, { type: 'PI', Kp: 1, Ti: S.Ti }, S.Mt);
+    if (g) S.Kp = clamp(g.gain, 0.1, 200);
+    upd();
+  });
   upd();
 }
-WORKSHOPS.push({ id: 'q3', title: 'Correcteur PI', hint: 'Choisissez une méthode (compensation de pôle ou placement fréquentiel), puis réglez Tᵢ et Kp avec les boutons : ✓ indique que le réglage est appliqué.',
-  mount: mountQ3, reset: () => { Object.assign(Q3, { Kp: 6.7, Ti: 1, Mt: 60, method: 'pole' }); Object.assign(PLANT, PLANT0); } });
+WORKSHOPS.push({ id: 'q3', title: 'Correcteur PI', hint: 'Étape 1 : Kᵢ = 0, le correcteur est un P, seul le gain agit. Étape 2 : Kᵢ > 0, la cassure à 1/Tᵢ apparaît et la FTBO corrigée change. Étape 3 : on réajuste Kp.',
+  mount: mountQ3, reset: () => { Object.assign(Q3, { Kp: 6, Ti: Infinity, Mt: 60 }); Object.assign(PLANT, PLANT0); } });
 
 /* ================= Atelier 4 : Avance de phase ================= */
 const Q4 = { K: 16, a: 2.7, T: 0.04, wt: 15, Mt: 60, ok: false };
@@ -972,23 +995,25 @@ const ACT = {
   },
   q3: {
     title: 'Correcteur PI', level: 'Niveau 2 · Comprendre', time: '30 min', course: 'pi',
-    goal: 'Régler un correcteur PI par compensation de pôle, et comprendre ce que l\'intégrateur apporte et coûte.',
+    goal: 'Régler un correcteur PI en trois temps : un gain seul (Kᵢ = 0), puis l\'action intégrale, puis un réajustement du gain. Comprendre le compromis entre position de la cassure 1/Tᵢ, phase perdue et vitesse d\'annulation de l\'erreur.',
     steps: [
-      'Laissez Tᵢ très grand (10 s) puis diminuez-le. Observez la phase aux basses pulsations et l\'erreur statique.',
-      'Cliquez sur « Tᵢ = τ₁ ». Comparez la courbe C·H avec la courbe H : quel facteur a disparu ?',
-      'Visez 60° et cliquez sur « Kp pour la marge de phase visée ». Vérifiez que Mφ mesurée est bien 60°.',
-      'Choisissez Tᵢ = 3·τ₁ puis 0,3·τ₁ sans compenser le pôle. Que devient la réponse indicielle ?',
-      'Comparez avec le correcteur P de l\'atelier précédent : même marge, quelles différences (erreur statique, ω₀dB, temps de réponse) ?'
+      'Étape 1 : avec Kᵢ = 0, le correcteur est un P. Cliquez sur ① et vérifiez sur le Bode que la courbe orange reste plate : seule la courbe de gain de la FTBO s\'est translatée.',
+      'Étape 2 : cliquez sur « 1/Tᵢ = ω₀dB′/10 ». La cassure et le déphasage de l\'intégrateur apparaissent sur la courbe orange ; regardez la marge de phase baisser.',
+      'Recommencez l\'étape 2 avec « Tᵢ = τ₁ ». Où se trouve la cassure ? Lequel des deux donne la meilleure marge à Kp identique ?',
+      'Étape 3 : cliquez sur ③. Retrouvez-vous la marge visée ? Comparez l\'erreur statique avec celle de l\'étape 1.',
+      'Déplacez le curseur Kᵢ à la main : que se passe-t-il quand la cassure passe au-dessus de ω₀dB ? Puis quand elle descend deux décades plus bas ?',
+      'Ouvrez « Pourquoi une décade… » et vérifiez les valeurs du tableau sur la courbe de phase du correcteur.'
     ],
     defi: { q: 'Avec Tᵢ = τ₁, établissez la boucle ouverte, puis exprimez Kp pour obtenir une marge Mφ donnée.',
       a: 'L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)). Mφ = 90° − arctan(ω₀dB τ₂) donc ω₀dB = 1 / (τ₂ tan Mφ). |L(jω₀dB)| = 1 donne Kp = Tᵢ ω₀dB √(1 + ω₀²τ₂²) / K₀.' },
     qcm: [
       { q: 'Un correcteur PI apporte :', o: ['une erreur statique nulle', 'une avance de phase', 'une réduction du bruit en haute fréquence', 'un gain constant'], a: 0, w: 'L\'action intégrale annule l\'erreur de position, au prix d\'un retard de phase.' },
+      { q: 'Tant que Kᵢ = 0, le correcteur PI se comporte comme :', o: ['un intégrateur pur', 'un gain pur Kp', 'une avance de phase', 'un retard pur'], a: 1, w: 'C(p) = Kp(1 + Tᵢp)/(Tᵢp) tend vers Kp quand Tᵢ → ∞, c\'est-à-dire quand Kᵢ = Kp/Tᵢ → 0.' },
       { q: 'La compensation de pôle consiste à choisir :', o: ['Kp = 1', 'Tᵢ = τ₁', 'Tᵢ = τ₂', 'Tᵢ = 0'], a: 1, w: 'Le zéro (1 + Tᵢ p) du correcteur annule le pôle dominant (1 + τ₁ p) du système.' },
       { q: 'Aux très basses pulsations, la phase d\'un PI vaut :', o: ['0°', '+90°', '−90°', '−180°'], a: 2, w: 'C(jω) ≈ Kp / (jTᵢ ω) : un intégrateur pur, de phase −90°.' },
-      { q: 'Après compensation du pôle dominant, la boucle fermée se comporte comme :', o: ['un premier ordre', 'un second ordre', 'un système instable', 'un système sans erreur de traînage'], a: 1, w: 'Il reste un intégrateur et un pôle 1/(1 + τ₂ p) : L(p) = Kp·K₀ / (Tᵢ p (1 + τ₂ p)).' },
-      { q: 'Dans la méthode en trois étapes (placement fréquentiel), on choisit Tᵢ tel que :', o: ['1/Tᵢ = ω₀dB\'/10', '1/Tᵢ = 10·ω₀dB\'', 'Tᵢ = ω₀dB\'', 'Tᵢ = Kp'], a: 0, w: 'La cassure 1/Tᵢ est placée une décade sous ω₀dB\' : l\'intégrateur ne coûte qu\'environ 5° de marge, qu\'on compense à l\'étape 3.' },
-      { q: 'Si Tᵢ est beaucoup plus grand que τ₁ :', o: ['la réponse est très rapide', 'une queue lente apparaît dans la réponse', 'le système devient instable', 'l\'erreur statique est non nulle'], a: 1, w: 'Le pôle lent n\'est pas compensé : la sortie rejoint la consigne avec une constante de temps de l\'ordre de Tᵢ.' }
+      { q: 'Avec 1/Tᵢ = ω₀dB/10, la phase perdue par l\'intégrateur à ω₀dB vaut environ :', o: ['0,6°', '5,7°', '45°', '84°'], a: 1, w: 'arctan(1/10) = 5,7° : c\'est l\'origine de la règle du « +5° » du cours, que l\'on compense à l\'étape 3.' },
+      { q: 'Si Tᵢ est beaucoup plus grand que 1/ω₀dB (cassure très éloignée) :', o: ['l\'erreur statique n\'est plus nulle', 'l\'erreur statique reste nulle mais la réponse traîne très longtemps', 'le système devient instable', 'le gain en haute fréquence augmente'], a: 1, w: 'Le gain statique reste infini (donc εs = 0), mais le pôle lent introduit a une constante de temps de l\'ordre de Tᵢ : la réponse a une très longue « queue » et le temps de réponse est fortement dégradé.' },
+      { q: 'Dans la méthode en trois étapes (placement fréquentiel), on choisit Tᵢ tel que :', o: ['1/Tᵢ = ω₀dB′/10', '1/Tᵢ = 10·ω₀dB′', 'Tᵢ = ω₀dB′', 'Tᵢ = Kp'], a: 0, w: 'La cassure 1/Tᵢ est placée une décade sous ω₀dB′ : l\'intégrateur ne coûte qu\'environ 5,7° de marge, qu\'on compense à l\'étape 3.' }
     ]
   },
   q4: {
@@ -1157,10 +1182,12 @@ COURSE.push({ id: 'integral', t: 'Correcteur intégral', h: `
 COURSE.push({ id: 'pi', t: 'Correcteur PI : deux méthodes de réglage', h: `
 <p><b>C(p) = Kp + Kᵢ/p = Kp (1 + Tᵢ p)/(Tᵢ p)</b> avec <b>Tᵢ = Kp/Kᵢ</b> (attention : certains sujets écrivent C = Kp + 1/(Tᵢ p)). Intégral pur aux basses pulsations, proportionnel aux hautes ; cassure à ω = 1/Tᵢ, phase de −90° à 0°.</p>
 <p>Avantages : l'augmentation de la <b>classe</b> améliore la précision ; au-delà de 1/Tᵢ la phase n'est plus diminuée, donc la stabilité est peu dégradée <b>si</b> la cassure est bien choisie. Plus 1/Tᵢ est faible, plus Kᵢ est faible et plus le système est lent : c'est un compromis stabilité / rapidité tout en garantissant la précision.</p>
+<p><b>Réglage en trois temps.</b> On règle d'abord le gain avec Kᵢ = 0 (le correcteur est alors un P, seul le gain de la FTBO se translate), on introduit ensuite l'action intégrale en choisissant Tᵢ (la cassure 1/Tᵢ apparaît sur le Bode du correcteur et la FTBO corrigée change), enfin on réajuste Kp car l'intégrateur a coûté de la phase.</p>
 <h3>Méthode 1 : par marge de phase imposée (placement fréquentiel)</h3>
 <ol><li><b>Kp' (P seul)</b> : on règle Kp' pour la marge de phase imposée (graphiquement par translation Δ<sub>dB</sub>, ou analytiquement : ω₀dB' tel que Mφ = marge, puis |H<sub>c</sub>'(jω₀dB')| = 1).</li>
 <li><b>Tᵢ</b> : on place l'effet intégral loin de ω₀dB' : 1/Tᵢ ≪ ω₀dB', en général une décade : <b>1/Tᵢ = ω₀dB'/10</b>.</li>
 <li><b>Ajustement de Kp</b> : la cassure à une décade coûte environ <b>5° de marge</b>. Variante analytique : garder Tᵢ et recalculer Kp pour retrouver la marge ; variante graphique : viser dès l'étape 1 la marge souhaitée + 5°.</li></ol>
+<div class="analogy"><b>Pourquoi une décade ?</b> À la pulsation ω₀dB, l'intégrateur coûte arctan(1/(Tᵢω₀dB)) de phase. Une décade (Tᵢω₀dB = 10) coûte 5,7°, ce qui est l'origine de la règle du « +5° », et n'ajoute que 0,04 dB de gain : le Kp' de l'étape 1 reste presque valable. Une cassure à ω₀dB coûterait 45° et ferait chuter la marge ; deux ou trois décades ne coûtent presque rien en phase, mais l'intégrateur n'agit plus que très bas en fréquence : autour de ω₀dB le correcteur est indiscernable d'un P, et le pôle lent de constante de temps Tᵢ = 100/ω₀dB ou 1000/ω₀dB donne une réponse qui traîne interminablement (l'erreur statique reste nulle, mais elle est annulée beaucoup trop tard). La décade est le compromis entre coût en phase et rapidité de l'action intégrale.</div>
 <h3>Méthode 2 : compensation du pôle dominant réel</h3>
 <p>Si H<sub>nc</sub>(p) = G(p)/(1 + τp) avec un <b>pôle dominant réel</b> −1/τ, on choisit <b>Tᵢ = τ</b> :</p>
 <p>H<sub>c</sub>(p) = G(p)·(1/(1 + τp))·Kp(1 + Tᵢp)/(Tᵢp) = G(p)·Kp/(Tᵢ p).</p>
