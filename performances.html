@@ -2,68 +2,51 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Performances des SLCI — Précision · Rapidité · Stabilité</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Performances des SLCI</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-:root{
-  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
-  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
-  --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
-  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;
-  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
-  color-scheme:light;
-}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-ui);padding-bottom:env(safe-area-inset-bottom,0px)}
-button,input,select{font:inherit;color:inherit}
+:root{--bg:#fff;--bar:#eee;--panel:#fff;--panel2:#f1f3f6;--line:#b9bfc7;--fg:#111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#fff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;--ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 'IBM Plex Sans',system-ui,sans-serif}
 .inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.band{background:var(--bar);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-.band+.band{top:0}
+.band{background:var(--bar);border-bottom:1px solid var(--line)}
 .row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:7px}
-.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.01em}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px}
 .brand small{font-weight:400;color:var(--muted);font-size:13px}
-.files{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto}
-.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer}
+.files{display:flex;gap:6px;margin-left:auto}
+.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer;color:inherit;font-family:inherit}
 .btn:hover{border-color:var(--accent)}
 .btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .btn.sm{padding:3px 8px;font-size:12px}
-:is(button,input,select,summary):focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-width:100%;overflow-x:auto}
-.seg button{border:0;background:transparent;padding:7px 16px;font-weight:500;font-size:13.5px;cursor:pointer;white-space:nowrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow-x:auto}
+.seg button{border:0;background:transparent;padding:7px 16px;font-weight:500;font-size:13.5px;cursor:pointer;white-space:nowrap;color:inherit;font-family:inherit}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
 .work{display:flex;gap:14px;align-items:flex-start;padding:14px max(16px,env(safe-area-inset-left,0px)) 40px;max-width:1500px;margin:0 auto}
-#stage{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden}
+#stage{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 #hint{padding:7px 14px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
 #ws{padding:16px 18px 28px}
-#ws h2{font-size:23px;margin:0 0 8px;text-wrap:balance}
-#ws h3{font-size:16.5px;margin:24px 0 6px}
+#ws h2{font-size:23px;margin:0 0 8px}#ws h3{font-size:16.5px;margin:24px 0 6px}
 #ws p,#ws li{font-size:14.5px;line-height:1.55}
-#act{width:clamp(300px,26vw,390px);flex:none;border:1px solid var(--line);border-radius:12px;background:var(--panel);position:sticky;top:96px;overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 110px)}
+#act{width:clamp(300px,26vw,390px);flex:none;border:1px solid var(--line);border-radius:12px;background:var(--panel);display:flex;flex-direction:column;max-height:calc(100vh - 110px);overflow:hidden}
 #act .phead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);flex:none}
 #act .phead b{font-size:15px}
 #act .phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #act .pbody{padding:12px 14px;font-size:13.5px;overflow:auto;flex:1;min-height:0}
-.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none;background:var(--panel)}
-.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);flex:none;background:var(--panel)}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted);font-family:inherit}
 .tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
 .goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 11px;margin:0 0 10px}
 .notation{background:#f1f3f6;border-left:3px solid var(--muted);border-radius:6px;padding:8px 10px;margin:0 0 10px;font-size:12.5px;line-height:1.5}
-.steps{margin:0 0 10px;padding-left:20px}
-.steps li{margin-bottom:9px;font-size:13.5px}
+.steps{margin:0 0 10px;padding-left:20px}.steps li{margin-bottom:9px;font-size:13.5px}
 .defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:10px 0}
-.defi p{margin:6px 0}
-.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+.defi p{margin:6px 0}.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
 fieldset.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px 6px;margin:0 0 10px;min-width:0}
-fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%;font-size:13.5px}
+fieldset.q legend{font-weight:600;padding:0 4px;font-size:13.5px}
 .opt{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:13px}
 .opt input{margin-top:3px;width:auto;flex:none}
-.opt.good{background:rgba(30,122,46,.15)}
-.opt.bad{background:rgba(192,40,31,.15)}
+.opt.good{background:rgba(30,122,46,.15)}.opt.bad{background:rgba(192,40,31,.15)}
 .why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
 .score{font-weight:600;font-size:15px;margin:4px 0 8px}
 .verdict{border-radius:8px;padding:9px 12px;margin:12px 0 6px;font-size:13.8px;background:var(--panel2);border:1px solid var(--line)}
@@ -76,45 +59,40 @@ fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%;font-size:13.5px}
 .fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
 .ctrl{display:flex;gap:6px 20px;flex-wrap:wrap;align-items:flex-end;margin:8px 0 2px}
 .ctrl .fld{margin:0;min-width:150px}
-.ctrl input[type=range]{width:180px;max-width:100%}
 input[type=range]{width:100%;padding:0;accent-color:var(--accent)}
+.ctrl input[type=range]{width:180px;max-width:100%}
 .blk{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 10px;margin:10px 0}
 .blk svg{display:block;max-width:100%;height:auto}
-.mono{font-family:var(--font-mono);font-size:12.5px}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:12.5px}
 .small{font-size:12.5px;color:var(--muted);margin:0 0 9px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0}
-.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 12px;font-size:13px;cursor:pointer}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 12px;font-size:13px;cursor:pointer;color:inherit;font-family:inherit}
 .chip:hover{border-color:var(--accent)}
 .chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;margin:12px 0}
 .stat{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);display:flex;flex-direction:column;gap:2px;min-width:0}
 .stat span{font-size:12px;color:var(--muted)}
-.stat b{font-size:14px;font-family:var(--font-mono);overflow-wrap:anywhere}
+.stat b{font-size:14px;font-family:'IBM Plex Mono',monospace;overflow-wrap:anywhere}
 .plotbox{border:1px solid var(--line);border-radius:10px;background:#fff;margin:10px 0;padding:4px 4px 2px;overflow:hidden}
-.plotbox canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+.plotbox canvas{display:block;width:100%}
 .plotbox .ptitle{font-size:12px;color:var(--muted);margin:3px 9px}
 .pleg{display:flex;gap:4px 16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 2px 8px}
 .pleg i{display:inline-block;width:18px;height:0;border-top:3px solid #888;vertical-align:middle;margin-right:5px}
 .pleg i.d{border-top-style:dashed}
-.pleg i.o{width:9px;height:9px;border:0;border-radius:50%;background:#888}
 .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:4px 16px;align-items:start}
 .two>*{min-width:0}
 table.err{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0 12px}
 table.err th,table.err td{border:1px solid var(--line);padding:7px 9px;text-align:center;vertical-align:middle}
 table.err th{background:var(--panel2);font-weight:600;font-size:12.5px;line-height:1.3}
-table.err td.lbl{font-weight:600;background:var(--panel2);font-family:var(--font-mono)}
+table.err td.lbl{font-weight:600;background:var(--panel2);font-family:'IBM Plex Mono',monospace}
 table.err td.inf{color:var(--bad);font-weight:600}
 table.err td.on{background:var(--accent-soft);color:var(--accent-ink);font-weight:600;box-shadow:inset 0 0 0 2px var(--accent)}
-table.err .num{display:block;font-family:var(--font-mono);font-size:11.5px;color:var(--accent-ink);font-weight:700;margin-top:3px}
+table.err .num{display:block;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--accent-ink);font-weight:700;margin-top:3px}
 table.kv{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
-table.kv td,table.kv th{border-bottom:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:middle}
+table.kv td,table.kv th{border-bottom:1px solid var(--line);padding:6px 9px;text-align:left}
 table.kv th{background:var(--panel2);font-weight:600}
-table.kv td.m{font-family:var(--font-mono);font-size:12.5px;white-space:nowrap}
+table.kv td.m{font-family:'IBM Plex Mono',monospace;font-size:12.5px}
 table.kv tr.hl td{background:var(--accent-soft)}
-.badge{display:inline-block;border-radius:12px;padding:2px 10px;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--panel2)}
-.badge.ok{background:rgba(30,122,46,.15);border-color:var(--ok);color:var(--ok)}
-.badge.warn{background:rgba(154,91,0,.14);border-color:var(--warn);color:var(--warn)}
-.badge.no{background:rgba(192,40,31,.13);border-color:var(--bad);color:var(--bad)}
 #dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(680px,100%);max-height:88%;display:flex;flex-direction:column}
 .dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
@@ -127,17 +105,16 @@ table.kv tr.hl td{background:var(--accent-soft)}
 .ctop{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
 .cwrap{display:flex;gap:28px;padding-block:14px;max-width:1200px;margin:0 auto}
 .ctoc{flex:none;width:250px;position:sticky;top:60px;align-self:flex-start;max-height:calc(100vh - 80px);overflow:auto;display:flex;flex-direction:column;gap:1px}
-.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px;border-radius:0}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px;color:inherit;font-family:inherit}
 .ctoc button:hover{background:var(--panel2)}
 .ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
-.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
 .cbody{flex:1;min-width:0;max-width:860px}
 .ckick{color:var(--muted);font-size:12.5px;margin:0}
 .cbody h2{font-size:26px;margin:2px 0 12px}
 .cbody h3{font-size:16.5px;margin:22px 0 6px}
 .cbody p,.cbody li{font-size:14.5px;line-height:1.6}
-.cbody ul,.cbody ol{padding-left:22px}
-.cbody li{margin-bottom:4px}
+.cbody ul,.cbody ol{padding-left:22px}.cbody li{margin-bottom:4px}
 .cbody table{display:block;overflow-x:auto;max-width:100%}
 .ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
 .ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
@@ -146,30 +123,18 @@ table.kv tr.hl td{background:var(--accent-soft)}
 .formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
 .cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
 .gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}
-.gloss dt{font-weight:600}
-.gloss dd{margin:0}
+.gloss dt{font-weight:600}.gloss dd{margin:0}
 .fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 3px;font-size:.92em;line-height:1.25}
 .fr>span:first-child{border-bottom:1px solid currentColor;padding:0 3px}
 .fr>span:last-child{padding:0 3px}
-.math i,.formula i,.mi{font-family:'Times New Roman','STIX Two Text',serif;font-style:italic;font-size:1.06em}
-.svgwrap{display:flex;justify-content:center;margin:10px 0}
-@media (max-width:900px){
-  .work{flex-direction:column}
-  #act{width:100%;position:static;max-height:none}
-  #act .pbody{max-height:none}
-  .ctrl .fld{min-width:140px;flex:1 1 140px}
-  .ctrl input[type=range]{width:100%}
-  #ws{padding:14px 12px 24px}
-  .ctoc{display:none}
-  .ctoc-sel{display:block}
-  .cwrap{flex-direction:column;padding-top:8px}
-  .gloss{grid-template-columns:1fr}
-  .gloss dd{margin-bottom:6px}
-}
-@media (prefers-reduced-motion:no-preference){.btn,.chip{transition:border-color .12s,background .12s}}
+.math i,.formula i,.mi{font-family:'Times New Roman',serif;font-style:italic;font-size:1.06em}
+#boot{position:fixed;inset:0;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif}
+@media (max-width:900px){.work{flex-direction:column}#act{width:100%;max-height:none}.ctrl .fld{min-width:140px;flex:1 1 140px}.ctrl input[type=range]{width:100%}#ws{padding:14px 12px 24px}.ctoc{display:none}.ctoc-sel{display:block}.cwrap{flex-direction:column;padding-top:8px}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}}
 </style>
 </head>
 <body>
+
+<div id="boot">Chargement…</div>
 
 <header class="band"><div class="inner row">
   <div class="brand">
@@ -180,172 +145,366 @@ table.kv tr.hl td{background:var(--accent-soft)}
     <span>Performances des SLCI <small>Précision · Rapidité · Stabilité</small></span>
   </div>
   <div class="files">
-    <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
-    <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
+    <button class="btn" id="bAct" type="button">Activité</button>
+    <button class="btn" id="bCourse" type="button">Cours</button>
     <button class="btn" id="bHelp" type="button">Aide</button>
   </div>
 </div></header>
 
-<div class="band" id="modes"><div class="inner row"><div class="seg" id="tabs" role="tablist" aria-label="Performance"></div></div></div>
+<div class="band" id="modes"><div class="inner row"><div class="seg" id="tabs" role="tablist"></div></div></div>
 
 <main class="work" id="work">
   <section id="stage">
     <div id="hint"></div>
     <div id="ws"></div>
   </section>
-  <aside id="act" hidden aria-label="Activité"></aside>
+  <aside id="act" hidden></aside>
 </main>
 
-<section id="course" hidden aria-label="Cours"></section>
-
+<section id="course" hidden></section>
 <div id="dlg" hidden></div>
 
 <script>
+(function(){
 'use strict';
-/* ===================== outils ===================== */
-const $ = (s,r)=>(r||document).querySelector(s);
-function h(tag, attrs, ...kids){
-  const el=document.createElement(tag);
-  if (attrs) for (const [k,v] of Object.entries(attrs)){
+
+/* Affiche les erreurs à l'écran pour diagnostiquer les pages blanches */
+window.addEventListener('error', function(e){
+  var boot=document.getElementById('boot');
+  if (boot) boot.style.display='none';
+  var d=document.getElementById('dlg');
+  if (d){d.hidden=false;d.innerHTML='<div class="dlgbox"><header><b>Erreur JavaScript</b></header><div class="dbody"><p style="color:#c0281f"><b>'+e.message+'</b></p><p>Fichier : '+e.filename+'<br>Ligne : '+e.lineno+' , colonne : '+e.colno+'</p><pre style="white-space:pre-wrap;font-size:11px;max-height:200px;overflow:auto">'+(e.error&&e.error.stack?e.error.stack:'(pas de pile)')+'</pre><p>Copie ce message pour diagnostic.</p></div></div>';}
+});
+
+var $=function(s,r){return (r||document).querySelector(s);};
+function h(tag,attrs){
+  var el=document.createElement(tag);
+  if (attrs) for (var k in attrs){
+    var v=attrs[k];
     if (v===false||v==null) continue;
     if (k==='class') el.className=v;
     else if (k==='html') el.innerHTML=v;
-    else if (k.startsWith('on')) el.addEventListener(k.slice(2),v);
+    else if (k.charAt(0)==='o'&&k.charAt(1)==='n') el.addEventListener(k.substr(2),v);
     else if (v===true) el.setAttribute(k,'');
     else el.setAttribute(k,v);
   }
-  for (const k of kids.flat()) if (k!=null&&k!==false) el.append(k.nodeType?k:document.createTextNode(k));
+  for (var i=2;i<arguments.length;i++){
+    var kids=arguments[i];
+    if (!kids) continue;
+    if (!kids.nodeType&&kids.constructor===Array){
+      for (var j=0;j<kids.length;j++){
+        var c=kids[j];
+        if (c==null||c===false) continue;
+        el.appendChild(c.nodeType?c:document.createTextNode(c));
+      }
+    } else if (kids.nodeType){ el.appendChild(kids); }
+    else { el.appendChild(document.createTextNode(kids)); }
+  }
   return el;
 }
-const isSmall=()=>{try{return window.matchMedia('(max-width:900px)').matches;}catch(e){return false;}};
-const KEYS={act:'slci-perf-qcm-v3'};
-function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function isSmall(){try{return window.matchMedia('(max-width:900px)').matches;}catch(e){return false;}}
+var KEYS={act:'slci-v4'};
+function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-function nf(v,d){d=d==null?2:d;let s=(+v).toFixed(d);if(s.indexOf('.')>=0)s=s.replace(/0+$/,'').replace(/\.$/,'');if(s==='-0')s='0';return s.replace('.',',');}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function nf(v,d){d=d==null?2:d;var s=(+v).toFixed(d);if(s.indexOf('.')>=0)s=s.replace(/0+$/,'').replace(/\.$/,'');if(s==='-0')s='0';return s.replace('.',',');}
 function nfs(v,d){if(v===Infinity)return '∞';if(v===-Infinity)return '−∞';if(!isFinite(v)||isNaN(v))return '—';return nf(v,d==null?2:d);}
-const PI=Math.PI, SQ=Math.sqrt;
-const fr=(a,b)=>'<span class="fr"><span>'+a+'</span><span>'+b+'</span></span>';
+var PI=Math.PI, SQ=Math.sqrt;
+function fr(a,b){return '<span class="fr"><span>'+a+'</span><span>'+b+'</span></span>';}
 
-/* ===================== polynômes ===================== */
-function pmul(a,b){const r=new Array(a.length+b.length-1).fill(0);for(let i=0;i<a.length;i++)for(let j=0;j<b.length;j++)r[i+j]+=a[i]*b[j];return r;}
-function padd(a,b){const n=Math.max(a.length,b.length),r=new Array(n).fill(0);for(let i=0;i<a.length;i++)r[n-a.length+i]+=a[i];for(let i=0;i<b.length;i++)r[n-b.length+i]+=b[i];return r;}
-function pevalC(p,re,im){let sr=0,si=0;for(const c of p){const nr=sr*re-si*im+c,ni=sr*im+si*re;sr=nr;si=ni;}return [sr,si];}
+/* ====== polynômes ====== */
+function pmul(a,b){var r=new Array(a.length+b.length-1);for(var i=0;i<r.length;i++)r[i]=0;for(i=0;i<a.length;i++)for(var j=0;j<b.length;j++)r[i+j]+=a[i]*b[j];return r;}
+function padd(a,b){var n=Math.max(a.length,b.length),r=new Array(n);for(var i=0;i<n;i++)r[i]=0;for(i=0;i<a.length;i++)r[n-a.length+i]+=a[i];for(i=0;i<b.length;i++)r[n-b.length+i]+=b[i];return r;}
+function pevalC(p,re,im){var sr=0,si=0;for(var i=0;i<p.length;i++){var c=p[i];var nr=sr*re-si*im+c;var ni=sr*im+si*re;sr=nr;si=ni;}return [sr,si];}
+
 function tf2ss(num,den){
-  const d0=den[0]||1;let n1=num.map(v=>v/d0),d1=den.map(v=>v/d0),D=0;
-  if (n1.length===d1.length){D=n1[0];n1=n1.map((v,i)=>v-D*d1[i]).slice(1);}
-  const n=d1.length-1;while(n1.length<n)n1.unshift(0);if(n1.length>n)n1=n1.slice(n1.length-n);
-  const A=[],B=new Array(n).fill(0),C=n1.slice().reverse();
-  for (let i=0;i<n;i++){const row=new Array(n).fill(0);if(i<n-1)row[i+1]=1;A.push(row);}
-  for (let j=0;j<n;j++)A[n-1][j]=-d1[n-j];
+  var d0=den[0]||1;
+  var n1=num.map(function(v){return v/d0;});
+  var d1=den.map(function(v){return v/d0;});
+  var D=0;
+  if (n1.length===d1.length){D=n1[0];n1=n1.map(function(v,i){return v-D*d1[i];}).slice(1);}
+  var n=d1.length-1;
+  while(n1.length<n)n1.unshift(0);
+  if (n1.length>n)n1=n1.slice(n1.length-n);
+  var A=[],B=new Array(n),C=n1.slice().reverse();
+  for (var i=0;i<n;i++){var row=new Array(n);for(var jj=0;jj<n;jj++)row[jj]=0;if(i<n-1)row[i+1]=1;A.push(row);B[i]=0;}
+  for (var jj2=0;jj2<n;jj2++)A[n-1][jj2]=-d1[n-jj2];
   B[n-1]=1;
-  return {n,A,B,C,D};
+  return {n:n,A:A,B:B,C:C,D:D};
 }
 function simulateSS(ss,uf,tmax,N,x0){
-  const {n,A,B,C,D}=ss;
-  let x=x0?x0.slice():new Array(n).fill(0);
-  const dt=tmax/N,out=[];
-  const f=(xx,u)=>{const dx=new Array(n).fill(0);for(let i=0;i<n;i++){let s=B[i]*u;for(let j=0;j<n;j++)s+=A[i][j]*xx[j];dx[i]=s;}return dx;};
-  for (let k=0;k<=N;k++){
-    const t=k*dt;let y=D*uf(t);for(let i=0;i<n;i++)y+=C[i]*x[i];
+  var n=ss.n,A=ss.A,B=ss.B,C=ss.C,D=ss.D;
+  var x=x0?x0.slice():new Array(n);
+  for(var i=0;i<n;i++)if(x[i]==null)x[i]=0;
+  var dt=tmax/N, out=[];
+  function f(xx,u){var dx=new Array(n);for(var i=0;i<n;i++){var s=B[i]*u;for(var j=0;j<n;j++)s+=A[i][j]*xx[j];dx[i]=s;}return dx;}
+  for (var k=0;k<=N;k++){
+    var t=k*dt, y=D*uf(t);
+    for (var i2=0;i2<n;i2++)y+=C[i2]*x[i2];
     out.push([t,y]);
-    const k1=f(x,uf(t));
-    const x2=x.map((v,i)=>v+dt/2*k1[i]),k2=f(x2,uf(t+dt/2));
-    const x3=x.map((v,i)=>v+dt/2*k2[i]),k3=f(x3,uf(t+dt/2));
-    const x4=x.map((v,i)=>v+dt*k3[i]),k4=f(x4,uf(t+dt));
-    x=x.map((v,i)=>v+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
+    var k1=f(x,uf(t));
+    var x2=new Array(n);for(var a=0;a<n;a++)x2[a]=x[a]+dt/2*k1[a];
+    var k2=f(x2,uf(t+dt/2));
+    var x3=new Array(n);for(var b=0;b<n;b++)x3[b]=x[b]+dt/2*k2[b];
+    var k3=f(x3,uf(t+dt/2));
+    var x4=new Array(n);for(var c=0;c<n;c++)x4[c]=x[c]+dt*k3[c];
+    var k4=f(x4,uf(t+dt));
+    for(var d=0;d<n;d++)x[d]=x[d]+dt/6*(k1[d]+2*k2[d]+2*k3[d]+k4[d]);
     if (!isFinite(x[0]))break;
   }
   return out;
 }
 function roots(p){
-  let q=p.slice();while(q.length>1&&Math.abs(q[0])<1e-12)q.shift();
-  const n=q.length-1;if(n<1)return [];
-  const a=q.map(v=>v/q[0]);
-  let z=[];for(let i=0;i<n;i++){const ang=2*PI*i/n+0.4;z.push({re:0.9*Math.cos(ang),im:0.9*Math.sin(ang)});}
-  for (let it=0;it<300;it++){
-    let mx=0;const nz=[];
-    for (let i=0;i<n;i++){
-      const zi=z[i];let sr=0,si=0;
-      for (const c of a){const nr=sr*zi.re-si*zi.im+c,ni=sr*zi.im+si*zi.re;sr=nr;si=ni;}
-      let dr=1,di=0;
-      for (let j=0;j<n;j++){if(j===i)continue;const ar=zi.re-z[j].re,ai=zi.im-z[j].im;const nr=dr*ar-di*ai,ni=dr*ai+di*ar;dr=nr;di=ni;}
-      const dd=dr*dr+di*di;
+  var q=p.slice();
+  while(q.length>1&&Math.abs(q[0])<1e-12)q.shift();
+  var n=q.length-1;if(n<1)return [];
+  var a=q.map(function(v){return v/q[0];});
+  var z=[];for(var i=0;i<n;i++){var ang=2*PI*i/n+0.4;z.push({re:0.9*Math.cos(ang),im:0.9*Math.sin(ang)});}
+  for (var it=0;it<300;it++){
+    var mx=0, nz=[];
+    for (var i2=0;i2<n;i2++){
+      var zi=z[i2], sr=0, si=0;
+      for (var ci=0;ci<a.length;ci++){var c=a[ci];var nr=sr*zi.re-si*zi.im+c;var ni=sr*zi.im+si*zi.re;sr=nr;si=ni;}
+      var dr=1, di=0;
+      for (var j=0;j<n;j++){if(j===i2)continue;var ar=zi.re-z[j].re,ai=zi.im-z[j].im;var nr2=dr*ar-di*ai;var ni2=dr*ai+di*ar;dr=nr2;di=ni2;}
+      var dd=dr*dr+di*di;
       if (dd<1e-300){nz.push(zi);continue;}
-      const qr=(sr*dr+si*di)/dd,qi=(si*dr-sr*di)/dd;
-      mx=Math.max(mx,Math.hypot(qr,qi));
+      var qr=(sr*dr+si*di)/dd, qi=(si*dr-sr*di)/dd;
+      var mag=Math.sqrt(qr*qr+qi*qi);
+      if (mag>mx)mx=mag;
       nz.push({re:zi.re-qr,im:zi.im-qi});
     }
     z=nz;if(mx<1e-11)break;
   }
   return z;
 }
+
+/* ====== état ====== */
+var SYS={
+  plant:{classe:0, forme:'A', K:2, T:0.5, m:0.5, w0:2},
+  corr:{type:'P', Kp:2, Ti:1, Td:0.2},
+  input:'echelon', amp:1, pert:0
+};
+var TABS=[
+  {id:'precision',t:'Précision',hint:'K_BO du tableau = gain de la FTBO L(p)=C(p)·G(p), pas Kp.'},
+  {id:'rapidite',t:'Rapidité',hint:'Rapidité = réponse à un échelon (réponse indicielle).'},
+  {id:'stabilite',t:'Stabilité',hint:'Pôles BF, marges de gain et de phase.'}
+];
+var CUR='precision';
+
+function model(){
+  var P=SYS.plant, C=SYS.corr;
+  var Ng=[P.K], Dg;
+  if (P.forme==='A')Dg=[P.T,1];
+  else Dg=[1/(P.w0*P.w0),2*P.m/P.w0,1];
+  for (var i=0;i<P.classe;i++)Dg=pmul(Dg,[1,0]);
+  var Nc, Dc;
+  if (C.type==='P'){Nc=[C.Kp];Dc=[1];}
+  else if (C.type==='PI'){Nc=[C.Kp*C.Ti,C.Kp];Dc=[C.Ti,0];}
+  else {var td=Math.max(C.Td/10,1e-6);
+    Nc=[C.Kp*(C.Ti*td+C.Ti*C.Td),C.Kp*(C.Ti+td),C.Kp];
+    Dc=[C.Ti*td,C.Ti,0];}
+  var Ln=pmul(Nc,Ng), Ld=pmul(Dc,Dg);
+  var Pn=padd(Ld,Ln);
+  var cls=0;
+  for (var j=Ld.length-1;j>=0;j--){if(Math.abs(Ld[j])<1e-12)cls++;else break;}
+  var LnLast=Ln[Ln.length-1];
+  var LdIdx=Ld.length-cls-1;
+  var LdLast=LdIdx>=0?Ld[LdIdx]:0;
+  var K_BO=Math.abs(LdLast)<1e-15?Infinity:LnLast/LdLast;
+  var poles=roots(Pn);
+  var stable=poles.length>0&&poles.every(function(z){return z.re<-1e-9;});
+  var alpha1=C.type==='P'?0:1;
+  var K1=C.type==='P'?C.Kp:(C.Ti>1e-12?C.Kp/C.Ti:Infinity);
+  return {
+    Ng:Ng,Dg:Dg,Nc:Nc,Dc:Dc,Ln:Ln,Ld:Ld,Pn:Pn,cls:cls,K_BO:K_BO,
+    T1n:Ln,T1d:Pn,T2n:pmul(Ng,Dc),T2d:Pn,poles:poles,stable:stable,
+    alpha1:alpha1,K1:K1,K2:P.K,alpha2:P.classe
+  };
+}
+function timeFrame(M){
+  var tmax=10;
+  var nz=M.poles.filter(function(z){return Math.abs(z.re)>1e-9;});
+  if (nz.length){
+    var pos=nz.filter(function(z){return z.re>0;});
+    if (pos.length)tmax=5/Math.max.apply(null,pos.map(function(z){return z.re;}));
+    else tmax=6/Math.min.apply(null,nz.map(function(z){return -z.re;}));
+  }
+  return clamp(tmax,0.2,150);
+}
+function simTimeframe(M){
+  var base=timeFrame(M);
+  if (SYS.pert>0&&SYS.input==='echelon'){
+    return {base:base,td:base*0.85,tmax:base*2.5,hasPert:true};
+  }
+  return {base:base,td:0,tmax:base,hasPert:false};
+}
+function eSignal(t){
+  var a=SYS.amp;
+  if (SYS.input==='dirac')return 0;
+  if (SYS.input==='echelon')return a;
+  if (SYS.input==='rampe')return a*t;
+  if (SYS.input==='parabole')return 0.5*a*t*t;
+  return 0;
+}
+function computeResponse(M,tf){
+  var N=900, tmax=tf.tmax, td=tf.td, hasPert=tf.hasPert;
+  var inp=SYS.input, a=SYS.amp, y1;
+  if (inp==='dirac'){
+    var ss=tf2ss(M.T1n,M.T1d);
+    y1=simulateSS(ss,function(){return 0;},tmax,N,ss.B.slice());
+  } else {
+    var uf;
+    if (inp==='echelon')uf=function(){return a;};
+    else if (inp==='rampe')uf=function(t){return a*t;};
+    else uf=function(t){return 0.5*a*t*t;};
+    y1=simulateSS(tf2ss(M.T1n,M.T1d),uf,tmax,N);
+  }
+  var y2=null;
+  if (hasPert)y2=simulateSS(tf2ss(M.T2n,M.T2d),function(t){return t>=td?SYS.pert:0;},tmax,N);
+  var y=y1.map(function(p,i){return [p[0],p[1]+(y2?y2[i][1]:0)];});
+  return {y1:y1,y2:y2,y:y};
+}
+function metrics(ys){
+  var n=ys.length, yss=ys[n-1][1];
+  if (!isFinite(yss)||Math.abs(yss)<1e-9)return {yss:yss,t5:NaN,tr:NaN,D:NaN,tp:NaN,ymax:NaN};
+  var ymax=-Infinity, tp=0;
+  for (var i=0;i<ys.length;i++){var p=ys[i];if(isFinite(p[1])&&p[1]>ymax){ymax=p[1];tp=p[0];}}
+  var D=(ymax-yss)/Math.abs(yss)*100;
+  var t5=NaN;
+  for (var i2=n-1;i2>=0;i2--){
+    if (Math.abs(ys[i2][1]-yss)>0.05*Math.abs(yss)){t5=(i2<n-1?ys[i2+1][0]:ys[i2][0]);break;}
+  }
+  var t10=NaN, t90=NaN;
+  for (var i3=0;i3<n;i3++){
+    if (isNaN(t10)&&ys[i3][1]>=0.1*yss)t10=ys[i3][0];
+    if (isNaN(t90)&&ys[i3][1]>=0.9*yss)t90=ys[i3][0];
+  }
+  return {yss:yss,t5:t5,tr:t90-t10,D:D,tp:tp,ymax:ymax};
+}
+function bode(M){
+  var wmin=0.02,wmax=3000,N=700,pts=[];
+  var prev=null, off=0;
+  for (var i=0;i<=N;i++){
+    var w=wmin*Math.pow(wmax/wmin,i/N);
+    var r1=pevalC(M.Ln,0,w), r2=pevalC(M.Ld,0,w);
+    var nr=r1[0],ni=r1[1],dr=r2[0],di=r2[1];
+    var den=dr*dr+di*di;
+    var lr=0,li=0;
+    if (den>1e-300){lr=(nr*dr+ni*di)/den;li=(ni*dr-nr*di)/den;}
+    var mag=20*Math.log10(Math.max(1e-15,Math.sqrt(lr*lr+li*li)));
+    var ph=Math.atan2(li,lr)*180/PI;
+    if (prev!==null){while(ph+off-prev>180)off-=360;while(ph+off-prev<-180)off+=360;}
+    ph+=off;prev=ph;
+    pts.push({w:w,lw:Math.log10(w),mag:mag,ph:ph});
+  }
+  return pts;
+}
+function marginsOf(pts){
+  var wc=NaN,pm=NaN,w180=NaN,gm=NaN;
+  for (var i=0;i<pts.length-1;i++){
+    var a=pts[i],b=pts[i+1];
+    if (isNaN(wc)&&a.mag>=0&&b.mag<0){
+      var u=a.mag/(a.mag-b.mag);
+      wc=a.w*Math.pow(b.w/a.w,u);
+      pm=180+(a.ph+(b.ph-a.ph)*u);
+    }
+    if (isNaN(w180)&&a.ph>=-180&&b.ph<-180){
+      var u2=(a.ph+180)/(a.ph-b.ph);
+      w180=a.w*Math.pow(b.w/a.w,u2);
+      gm=-(a.mag+(b.mag-a.mag)*u2);
+    }
+  }
+  return {wc:wc,pm:pm,w180:w180,gm:gm};
+}
 function tfMag(num,den,w){
-  const [nr,ni]=pevalC(num,0,w);
-  const [dr,di]=pevalC(den,0,w);
-  const dn=dr*dr+di*di;
+  var r1=pevalC(num,0,w), r2=pevalC(den,0,w);
+  var nr=r1[0],ni=r1[1],dr=r2[0],di=r2[1];
+  var dn=dr*dr+di*di;
   if (dn<1e-30)return Infinity;
   return Math.sqrt((nr*nr+ni*ni)/dn);
 }
+function closedLoopBandwidth(M){
+  var T0=tfMag(M.Ln,M.Pn,0);
+  if (!isFinite(T0)||T0<1e-12)return NaN;
+  var target=T0/Math.SQRT2;
+  var N=600,wmin=1e-3,wmax=1e4;
+  var prevW=wmin, prevMag=tfMag(M.Ln,M.Pn,wmin);
+  for (var i=1;i<=N;i++){
+    var w=wmin*Math.pow(wmax/wmin,i/N);
+    var mag=tfMag(M.Ln,M.Pn,w);
+    if (prevMag>=target&&mag<target){
+      var u=(prevMag-target)/(prevMag-mag);
+      return prevW*Math.pow(w/prevW,u);
+    }
+    prevW=w;prevMag=mag;
+  }
+  return NaN;
+}
 
-/* ===================== graphique ===================== */
-const COL={ink:'#111111',grid:'#e4e7ec',axis:'#5a6068',blue:'#2e6da4',green:'#2e8b3a',orange:'#d98a12',red:'#c0281f',violet:'#7b4fc2',slate:'#33475b',soft:'#9fb4ca'};
+/* ====== graphique ====== */
+var COL={ink:'#111',grid:'#e4e7ec',axis:'#5a6068',blue:'#2e6da4',green:'#2e8b3a',orange:'#d98a12',red:'#c0281f',violet:'#7b4fc2',slate:'#33475b',soft:'#9fb4ca'};
 function Plot(host,o){
-  const cv=h('canvas',{role:'img','aria-label':o.label||'Graphique'});host.append(cv);
-  const ctx=cv.getContext('2d');
-  const P={cv,ctx,W:300,H:300,o:Object.assign({xmin:0,xmax:10,ymin:0,ymax:1,xt:1,yt:0.2,ml:52,mr:16,mt:20,mb:36,h:300,xl:'',yl:'',grid:true},o),draw:null};
-  P.X=x=>P.o.ml+(x-P.o.xmin)/(P.o.xmax-P.o.xmin)*(P.W-P.o.ml-P.o.mr);
-  P.Y=y=>P.H-P.o.mb-(y-P.o.ymin)/(P.o.ymax-P.o.ymin)*(P.H-P.o.mt-P.o.mb);
-  P.set=a=>{Object.assign(P.o,a);P.redraw();};
-  P.resize=()=>{
-    const w=Math.max(220,host.clientWidth-2),hh=P.o.h,d=Math.min(2,window.devicePixelRatio||1);
+  var cv=h('canvas',{role:'img','aria-label':o.label||'Graphique'});
+  host.appendChild(cv);
+  var ctx=cv.getContext('2d');
+  var P={cv:cv,ctx:ctx,W:300,H:300,o:{},draw:null};
+  var def={xmin:0,xmax:10,ymin:0,ymax:1,xt:1,yt:0.2,ml:52,mr:16,mt:20,mb:36,h:300,xl:'',yl:'',grid:true};
+  for (var k in def)P.o[k]=def[k];
+  for (var k2 in o)P.o[k2]=o[k2];
+  P.X=function(x){return P.o.ml+(x-P.o.xmin)/(P.o.xmax-P.o.xmin)*(P.W-P.o.ml-P.o.mr);};
+  P.Y=function(y){return P.H-P.o.mb-(y-P.o.ymin)/(P.o.ymax-P.o.ymin)*(P.H-P.o.mt-P.o.mb);};
+  P.set=function(a){for(var k in a)P.o[k]=a[k];P.redraw();};
+  P.resize=function(){
+    var w=Math.max(220,host.clientWidth-2),hh=P.o.h,d=Math.min(2,window.devicePixelRatio||1);
     if (cv.width===Math.round(w*d)&&P.H===hh)return;
     cv.width=Math.round(w*d);cv.height=Math.round(hh*d);cv.style.height=hh+'px';
     P.W=w;P.H=hh;P.redraw();
   };
-  P.line=(pts,c,w,dash)=>{
+  P.line=function(pts,c,w,dash){
     if (!pts||pts.length<2)return;
     ctx.save();ctx.strokeStyle=c||COL.ink;ctx.lineWidth=w||2;ctx.setLineDash(dash||[]);
     ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();
-    let started=false;
-    for (const p of pts){
+    var started=false;
+    for (var i=0;i<pts.length;i++){
+      var p=pts[i];
       if (!isFinite(p[0])||!isFinite(p[1])){started=false;continue;}
-      const x=P.X(p[0]),y=P.Y(p[1]);
+      var x=P.X(p[0]),y=P.Y(p[1]);
       if (!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
     }
     ctx.stroke();ctx.restore();
   };
-  P.fn=(f,c,w,dash,a,b)=>{
-    const x0=a==null?P.o.xmin:a,x1=b==null?P.o.xmax:b,N=Math.max(140,Math.round(P.W/1.5)),pts=[];
-    for (let i=0;i<=N;i++){const t=x0+(x1-x0)*i/N;pts.push([t,f(t)]);}
+  P.fn=function(f,c,w,dash,a,b){
+    var x0=a==null?P.o.xmin:a, x1=b==null?P.o.xmax:b, N=Math.max(140,Math.round(P.W/1.5)), pts=[];
+    for (var i=0;i<=N;i++){var t=x0+(x1-x0)*i/N;pts.push([t,f(t)]);}
     P.line(pts,c,w,dash);
   };
-  P.seg=(x1,y1,x2,y2,c,w,dash)=>P.line([[x1,y1],[x2,y2]],c,w,dash);
-  P.dot=(x,y,c,r)=>{
+  P.seg=function(x1,y1,x2,y2,c,w,dash){P.line([[x1,y1],[x2,y2]],c,w,dash);};
+  P.dot=function(x,y,c,r){
     if (!isFinite(x)||!isFinite(y))return;
     ctx.save();ctx.beginPath();ctx.arc(P.X(x),P.Y(y),r||5,0,2*PI);
     ctx.fillStyle=c||COL.red;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#fff';ctx.stroke();ctx.restore();
   };
-  P.txt=(s,x,y,c,al,size,px,py)=>{
+  P.txt=function(s,x,y,c,al,size,px,py){
     if (!isFinite(x)||!isFinite(y))return;
     ctx.save();ctx.fillStyle=c||COL.ink;ctx.font=(size||12)+'px "IBM Plex Sans", system-ui, sans-serif';
     ctx.textAlign=al||'left';ctx.textBaseline='middle';
     ctx.fillText(s,P.X(x)+(px||0),P.Y(y)+(py||0));ctx.restore();
   };
-  P.redraw=()=>{
-    const o=P.o,W=P.W,H=P.H;
-    ctx.save();const d=cv.width/W;ctx.setTransform(d,0,0,d,0,0);
+  P.redraw=function(){
+    var o=P.o, W=P.W, H=P.H;
+    ctx.save();var d=cv.width/W;ctx.setTransform(d,0,0,d,0,0);
     ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
     ctx.font='11.5px "IBM Plex Sans", system-ui, sans-serif';ctx.fillStyle=COL.axis;ctx.strokeStyle=COL.grid;ctx.lineWidth=1;
-    const nx=Math.floor((o.xmax-o.xmin)/o.xt+1e-9),ny=Math.floor((o.ymax-o.ymin)/o.yt+1e-9);
-    for (let i=0;i<=nx;i++){
-      const x=o.xmin+i*o.xt,px=Math.round(P.X(x))+.5;
+    var nx=Math.floor((o.xmax-o.xmin)/o.xt+1e-9), ny=Math.floor((o.ymax-o.ymin)/o.yt+1e-9);
+    for (var i=0;i<=nx;i++){
+      var x=o.xmin+i*o.xt, px=Math.round(P.X(x))+.5;
       if (o.grid){ctx.beginPath();ctx.moveTo(px,o.mt);ctx.lineTo(px,H-o.mb);ctx.stroke();}
       ctx.textAlign='center';ctx.textBaseline='top';
       ctx.fillText(o.fx?o.fx(x):nf(x,2),px,H-o.mb+5);
     }
-    for (let i=0;i<=ny;i++){
-      const y=o.ymin+i*o.yt,py=Math.round(P.Y(y))+.5;
+    for (var i2=0;i2<=ny;i2++){
+      var y=o.ymin+i2*o.yt, py=Math.round(P.Y(y))+.5;
       if (o.grid){ctx.beginPath();ctx.moveTo(o.ml,py);ctx.lineTo(W-o.mr,py);ctx.stroke();}
       ctx.textAlign='right';ctx.textBaseline='middle';
       ctx.fillText(o.fy?o.fy(y):nf(y,2),o.ml-6,py);
@@ -359,217 +518,58 @@ function Plot(host,o){
     if (P.draw)P.draw(P);
     ctx.restore();
   };
-  if (window.ResizeObserver)new ResizeObserver(()=>P.resize()).observe(host);
+  if (window.ResizeObserver)new ResizeObserver(function(){P.resize();}).observe(host);
   P.resize();setTimeout(P.resize,50);
   return P;
 }
 function plotBox(title,opts){
-  const box=h('div',{class:'plotbox'});
-  if (title)box.append(h('div',{class:'ptitle'},title));
-  const host=h('div');box.append(host);
-  const P=Plot(host,opts);
-  return {box,P};
+  var box=h('div',{class:'plotbox'});
+  if (title)box.appendChild(h('div',{class:'ptitle'},title));
+  var host=h('div');box.appendChild(host);
+  var P=Plot(host,opts);
+  return {box:box,P:P};
 }
 function pleg(items){
-  return h('div',{class:'pleg'},items.map(it=>h('span',null,
-    h('i',{class:it[2]||'',style:'border-top-color:'+it[0]+';background:'+(it[2]==='o'?it[0]:'none')}),it[1])));
+  return h('div',{class:'pleg'},items.map(function(it){
+    return h('span',null,h('i',{class:it[2]||'',style:'border-top-color:'+it[0]+';background:'+(it[2]==='o'?it[0]:'none')}),it[1]);
+  }));
 }
-function nice(v){const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;}
+function nice(v){var e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e;}
 function niceStep(r,n){return nice(r/n);}
-function xAxis(tm){const st=niceStep(tm,8);return {xmin:0,xmax:tm,xt:st};}
+function xAxis(tm){var st=niceStep(tm,8);return {xmin:0,xmax:tm,xt:st};}
 function yAxisFor(lo,hi){
   if (!isFinite(lo))lo=0;if(!isFinite(hi))hi=1;
-  if (hi-lo<1e-9){hi=lo+1;}
-  const st=niceStep(hi-lo,5);
+  if (hi-lo<1e-9)hi=lo+1;
+  var st=niceStep(hi-lo,5);
   return {ymin:Math.floor(lo/st)*st,ymax:Math.ceil(hi/st)*st,yt:st};
 }
-function stats(list){return h('div',{class:'gstats'},list.map(k=>h('div',{class:'stat'},h('span',null,k[0]),h('b',null,k[1]))));}
+function stats(list){return h('div',{class:'gstats'},list.map(function(k){return h('div',{class:'stat'},h('span',null,k[0]),h('b',null,k[1]));}));}
 function chips(items,cur,cb,label){
   return h('div',{class:'chips',role:'group','aria-label':label||''},
-    items.map(([v,l])=>h('button',{type:'button',class:'chip'+(v===cur?' on':''),'aria-pressed':v===cur?'true':'false',onclick:()=>cb(v)},l)));
+    items.map(function(it){
+      var v=it[0],l=it[1];
+      return h('button',{type:'button',class:'chip'+(v===cur?' on':''),'aria-pressed':v===cur?'true':'false',onclick:function(){cb(v);}},l);
+    }));
 }
 function sld(o){
-  const out=h('b'),inp=h('input',{type:'range',min:o.min,max:o.max,step:o.step,'aria-label':o.label.replace(/<[^>]+>/g,'')});
-  const f=o.fmt||(v=>nf(v,o.d==null?2:o.d));
+  var out=h('b'), inp=h('input',{type:'range',min:o.min,max:o.max,step:o.step,'aria-label':o.label.replace(/<[^>]+>/g,'')});
+  var f=o.fmt||function(v){return nf(v,o.d==null?2:o.d);};
   inp.value=o.val;
-  const upd=()=>{out.textContent=f(+inp.value)+(o.unit?' '+o.unit:'');};
-  inp.addEventListener('input',()=>{upd();o.on(+inp.value);});
+  function upd(){out.textContent=f(+inp.value)+(o.unit?' '+o.unit:'');}
+  inp.addEventListener('input',function(){upd();o.on(+inp.value);});
   upd();
   return h('label',{class:'fld'},h('span',null,h('span',{html:o.label}),' = ',out),inp);
 }
-function verdict(html,kind){return h('div',{class:'verdict'+(kind?' '+kind:'')},h('div',{html}));}
+function verdict(html,kind){return h('div',{class:'verdict'+(kind?' '+kind:'')},h('div',{html:html}));}
 
-/* ===================== état ===================== */
-const SYS={
-  plant:{classe:0, forme:'A', K:2, T:0.5, m:0.5, w0:2},
-  corr:{type:'P', Kp:2, Ti:1, Td:0.2},
-  input:'echelon',
-  amp:1,
-  pert:0
-};
-const TABS=[
-  {id:'precision',t:'Précision',hint:'Choisissez la classe de G(p), le correcteur et l’entrée. Le gain du tableau est celui de la FTBO : K_BO = lim p^α·FTBO(p).'},
-  {id:'rapidite',t:'Rapidité',hint:'La rapidité se mesure classiquement sur la réponse à un échelon. Observez t₅% et la bande passante à −3 dB.'},
-  {id:'stabilite',t:'Stabilité',hint:'Pôles de la boucle fermée, marges de gain (cible 8–12 dB) et de phase (cible 45–60°) sur le diagramme de Bode.'}
-];
-let CUR='precision';
-
-/* ===================== modèle ===================== */
-function model(){
-  const P=SYS.plant,C=SYS.corr;
-  let Ng=[P.K],Dg;
-  if (P.forme==='A')Dg=[P.T,1];
-  else Dg=[1/(P.w0*P.w0),2*P.m/P.w0,1];
-  for (let i=0;i<P.classe;i++)Dg=pmul(Dg,[1,0]);
-  let Nc,Dc;
-  if (C.type==='P'){Nc=[C.Kp];Dc=[1];}
-  else if (C.type==='PI'){Nc=[C.Kp*C.Ti,C.Kp];Dc=[C.Ti,0];}
-  else {const td=Math.max(C.Td/10,1e-6);
-    Nc=[C.Kp*(C.Ti*td+C.Ti*C.Td),C.Kp*(C.Ti+td),C.Kp];
-    Dc=[C.Ti*td,C.Ti,0];}
-  const Ln=pmul(Nc,Ng),Ld=pmul(Dc,Dg);
-  const Pn=padd(Ld,Ln);
-  let cls=0;
-  for (let i=Ld.length-1;i>=0&&Math.abs(Ld[i])<1e-12;i--)cls++;
-  const LnLast=Ln[Ln.length-1];
-  const LdIdx=Ld.length-cls-1;
-  const LdLast=LdIdx>=0?Ld[LdIdx]:0;
-  const K_BO=Math.abs(LdLast)<1e-15?Infinity:LnLast/LdLast;
-  const Kpos=cls===0?K_BO:Infinity;
-  const Kv=cls===1?K_BO:(cls>1?Infinity:0);
-  const Ka=cls===2?K_BO:(cls>2?Infinity:0);
-  const poles=roots(Pn);
-  const stable=poles.length>0&&poles.every(z=>z.re<-1e-9);
-  const P0=Pn[Pn.length-1];
-  const pertGain=Math.abs(P0)<1e-12?0:(Ng[0]*Dc[Dc.length-1])/P0;
-  const alpha1=C.type==='P'?0:1;
-  const K1=C.type==='P'?C.Kp:(C.Ti>1e-12?C.Kp/C.Ti:Infinity);
-  const K2=P.K,alpha2=P.classe;
-  return {Ng,Dg,Nc,Dc,Ln,Ld,Pn,cls,K_BO,Kpos,Kv,Ka,T1n:Ln,T1d:Pn,T2n:pmul(Ng,Dc),T2d:Pn,poles,stable,pertGain,alpha1,K1,K2,alpha2};
-}
-function timeFrame(M){
-  let tmax=10;
-  const nz=M.poles.filter(z=>Math.abs(z.re)>1e-9);
-  if (nz.length){
-    const pos=nz.filter(z=>z.re>0);
-    if (pos.length)tmax=5/Math.max(...pos.map(z=>z.re));
-    else tmax=6/Math.min(...nz.map(z=>-z.re));
-  }
-  return clamp(tmax,0.2,150);
-}
-function simTimeframe(M){
-  const base=timeFrame(M);
-  if (SYS.pert>0&&SYS.input==='echelon'){
-    const td=base*0.85;
-    return {base,td,tmax:base*2.5,hasPert:true};
-  }
-  return {base,td:0,tmax:base,hasPert:false};
-}
-function eSignal(t){
-  const a=SYS.amp;
-  if (SYS.input==='dirac')return 0;
-  if (SYS.input==='echelon')return a;
-  if (SYS.input==='rampe')return a*t;
-  if (SYS.input==='parabole')return 0.5*a*t*t;
-  return 0;
-}
-function computeResponse(M,tf){
-  const N=900;
-  const {tmax,td,hasPert}=tf;
-  const inp=SYS.input,a=SYS.amp;
-  let y1;
-  if (inp==='dirac'){
-    const ss=tf2ss(M.T1n,M.T1d);
-    y1=simulateSS(ss,()=>0,tmax,N,ss.B.slice());
-  } else {
-    let uf;
-    if (inp==='echelon')uf=()=>a;
-    else if (inp==='rampe')uf=t=>a*t;
-    else uf=t=>0.5*a*t*t;
-    y1=simulateSS(tf2ss(M.T1n,M.T1d),uf,tmax,N);
-  }
-  let y2=null;
-  if (hasPert)y2=simulateSS(tf2ss(M.T2n,M.T2d),t=>(t>=td?SYS.pert:0),tmax,N);
-  const y=y1.map((p,i)=>[p[0],p[1]+(y2?y2[i][1]:0)]);
-  return {y1,y2,y};
-}
-function metrics(ys){
-  const n=ys.length,yss=ys[n-1][1];
-  if (!isFinite(yss)||Math.abs(yss)<1e-9)return {yss,t5:NaN,tr:NaN,D:NaN,tp:NaN,ymax:NaN};
-  let ymax=-Infinity,tp=0;
-  for (const p of ys)if(isFinite(p[1])&&p[1]>ymax){ymax=p[1];tp=p[0];}
-  const D=(ymax-yss)/Math.abs(yss)*100;
-  let t5=NaN;
-  for (let i=n-1;i>=0;i--){
-    if (Math.abs(ys[i][1]-yss)>0.05*Math.abs(yss)){t5=(i<n-1?ys[i+1][0]:ys[i][0]);break;}
-  }
-  let t10=NaN,t90=NaN;
-  for (let i=0;i<n;i++){
-    if (isNaN(t10)&&ys[i][1]>=0.1*yss)t10=ys[i][0];
-    if (isNaN(t90)&&ys[i][1]>=0.9*yss)t90=ys[i][0];
-  }
-  return {yss,t5,tr:t90-t10,D,tp,ymax};
-}
-function bode(M){
-  const wmin=0.02,wmax=3000,N=700,pts=[];
-  let prev=null,off=0;
-  for (let i=0;i<=N;i++){
-    const w=wmin*Math.pow(wmax/wmin,i/N);
-    const [nr,ni]=pevalC(M.Ln,0,w),[dr,di]=pevalC(M.Ld,0,w);
-    const den=dr*dr+di*di;
-    let lr=0,li=0;
-    if (den>1e-300){lr=(nr*dr+ni*di)/den;li=(ni*dr-nr*di)/den;}
-    const mag=20*Math.log10(Math.max(1e-15,Math.hypot(lr,li)));
-    let ph=Math.atan2(li,lr)*180/PI;
-    if (prev!==null){while(ph+off-prev>180)off-=360;while(ph+off-prev<-180)off+=360;}
-    ph+=off;prev=ph;
-    pts.push({w,lw:Math.log10(w),mag,ph});
-  }
-  return pts;
-}
-function marginsOf(pts){
-  let wc=NaN,pm=NaN,w180=NaN,gm=NaN;
-  for (let i=0;i<pts.length-1;i++){
-    const a=pts[i],b=pts[i+1];
-    if (isNaN(wc)&&a.mag>=0&&b.mag<0){
-      const u=a.mag/(a.mag-b.mag);
-      wc=a.w*Math.pow(b.w/a.w,u);
-      pm=180+(a.ph+(b.ph-a.ph)*u);
-    }
-    if (isNaN(w180)&&a.ph>=-180&&b.ph<-180){
-      const u=(a.ph+180)/(a.ph-b.ph);
-      w180=a.w*Math.pow(b.w/a.w,u);
-      gm=-(a.mag+(b.mag-a.mag)*u);
-    }
-  }
-  return {wc,pm,w180,gm};
-}
-function closedLoopBandwidth(M){
-  const T0=tfMag(M.Ln,M.Pn,0);
-  if (!isFinite(T0)||T0<1e-12)return NaN;
-  const target=T0/Math.SQRT2;
-  const N=600,wmin=1e-3,wmax=1e4;
-  let prevW=wmin,prevMag=tfMag(M.Ln,M.Pn,wmin);
-  for (let i=1;i<=N;i++){
-    const w=wmin*Math.pow(wmax/wmin,i/N);
-    const mag=tfMag(M.Ln,M.Pn,w);
-    if (prevMag>=target&&mag<target){
-      const u=(prevMag-target)/(prevMag-mag);
-      return prevW*Math.pow(w/prevW,u);
-    }
-    prevW=w;prevMag=mag;
-  }
-  return NaN;
-}
-
-/* ===================== schémas SVG ===================== */
+/* ====== schémas SVG ====== */
 function diagSVG(M){
-  const P=SYS.plant,C=SYS.corr;
-  const gTxt=P.forme==='A'?'K/(1+Tp)':'K/(1+2mp/ω₀+p²/ω₀²)';
-  const gInt=P.classe===0?'':(P.classe===1?' × 1/p':' × 1/p²');
-  const cTxt=C.type==='P'?'C(p) = Kp':C.type==='PI'?'C(p) = Kp(1 + 1/(Ti·p))':'C(p) = Kp(1 + 1/(Ti·p) + Td·p)';
-  const pertTxt=SYS.pert>0?'pert(t)':'pert(t) = 0';
-  const boTxt='α = '+M.cls+' ; K_BO = '+(isFinite(M.K_BO)?nf(M.K_BO,2):'∞');
+  var P=SYS.plant, C=SYS.corr;
+  var gTxt=P.forme==='A'?'K/(1+Tp)':'K/(1+2mp/ω₀+p²/ω₀²)';
+  var gInt=P.classe===0?'':(P.classe===1?' × 1/p':' × 1/p²');
+  var cTxt=C.type==='P'?'C(p) = Kp':C.type==='PI'?'C(p) = Kp(1 + 1/(Ti·p))':'C(p) = Kp(1 + 1/(Ti·p) + Td·p)';
+  var pertTxt=SYS.pert>0?'pert(t)':'pert(t) = 0';
+  var boTxt='α = '+M.cls+' ; K_BO = '+(isFinite(M.K_BO)?nf(M.K_BO,2):'∞');
   return '<svg viewBox="0 0 780 175" style="width:100%;height:auto" role="img" aria-label="Schéma bloc">'
   +'<defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">'
   +'<path d="M0,0 L8,3 L0,6 Z" fill="#33475b"/></marker></defs>'
@@ -600,7 +600,7 @@ function diagSVG(M){
   +'</svg>';
 }
 function genericLoopSVG(showPert){
-  const pert=showPert?'<line x1="467" y1="8" x2="467" y2="42" stroke="#7b4fc2" stroke-width="2" marker-end="url(#ahg)"/>'
+  var pert=showPert?'<line x1="467" y1="8" x2="467" y2="42" stroke="#7b4fc2" stroke-width="2" marker-end="url(#ahg)"/>'
     +'<text x="478" y="14" font-size="12" fill="#7b4fc2">pert(t)</text>':'';
   return '<svg viewBox="0 0 780 200" style="width:100%;height:auto;display:block;margin:8px auto" role="img" aria-label="Schéma bloc générique">'
   +'<defs><marker id="ahg" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">'
@@ -633,58 +633,58 @@ function genericLoopSVG(showPert){
   +'<text x="170" y="30" font-size="12" fill="#1b4a76">FTBO : L(p) = C(p)·G(p)</text>'
   +'</svg>';
 }
-
-/* SVG pour l'abaque t_red vs ξ */
 function tReduitOf(xi){
   if (xi<=0)return NaN;
-  const dt=0.005,tmax=80;
-  let lastOut=0;
-  for (let t=0;t<=tmax;t+=dt){
-    let s;
-    if (xi<1-1e-6){const wd=Math.sqrt(1-xi*xi);s=1-Math.exp(-xi*t)*(Math.cos(wd*t)+xi/wd*Math.sin(wd*t));}
+  var dt=0.005,tmax=80,lastOut=0;
+  for (var t=0;t<=tmax;t+=dt){
+    var s;
+    if (xi<1-1e-6){var wd=Math.sqrt(1-xi*xi);s=1-Math.exp(-xi*t)*(Math.cos(wd*t)+xi/wd*Math.sin(wd*t));}
     else if (xi<=1+1e-6){s=1-(1+t)*Math.exp(-t);}
-    else {const r=Math.sqrt(xi*xi-1),p1=-xi+r,p2=-xi-r;s=1-(p1*Math.exp(p2*t)-p2*Math.exp(p1*t))/(p1-p2);}
+    else {var r=Math.sqrt(xi*xi-1),p1=-xi+r,p2=-xi-r;s=1-(p1*Math.exp(p2*t)-p2*Math.exp(p1*t))/(p1-p2);}
     if (Math.abs(s-1)>0.05)lastOut=t;
   }
-  const t5=lastOut+dt;
-  const wref=xi<1?Math.sqrt(1-xi*xi):1;
+  var t5=lastOut+dt;
+  var wref=xi<1?Math.sqrt(1-xi*xi):1;
   return t5*wref;
 }
 function abaqueSVG(){
-  const W=580,H=340,pad={l:55,r:25,t:22,b:48};
-  const N=80,pts=[];
-  for (let i=0;i<=N;i++){
-    const lx=-1+2*i/N;
-    const xi=Math.pow(10,lx);
-    const tr=tReduitOf(xi);
+  var W=580,H=340,pad={l:55,r:25,t:22,b:48};
+  var N=80,pts=[];
+  for (var i=0;i<=N;i++){
+    var lx=-1+2*i/N;
+    var xi=Math.pow(10,lx);
+    var tr=tReduitOf(xi);
     if (!isFinite(tr)||tr<=0)continue;
-    pts.push({xi,lx,tr,ltr:Math.log10(tr)});
+    pts.push({xi:xi,lx:lx,tr:tr,ltr:Math.log10(tr)});
   }
-  const ltrmin=0,ltrmax=2;
-  const X=lx=>pad.l+(lx+1)/2*(W-pad.l-pad.r);
-  const Y=ltr=>H-pad.b-(ltr-ltrmin)/(ltrmax-ltrmin)*(H-pad.t-pad.b);
-  let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:620px;height:auto;display:block;margin:8px auto" role="img" aria-label="Abaque t_red vs xi">';
+  var ltrmin=0,ltrmax=2;
+  var X=function(lx){return pad.l+(lx+1)/2*(W-pad.l-pad.r);};
+  var Y=function(ltr){return H-pad.b-(ltr-ltrmin)/(ltrmax-ltrmin)*(H-pad.t-pad.b);};
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:620px;height:auto;display:block;margin:8px auto" role="img" aria-label="Abaque t_red vs xi">';
   svg+='<rect width="'+W+'" height="'+H+'" fill="#fff"/>';
-  for (let i=0;i<=4;i++){
-    const lx=-1+i*0.5;
-    svg+='<line x1="'+X(lx).toFixed(1)+'" y1="'+pad.t+'" x2="'+X(lx).toFixed(1)+'" y2="'+(H-pad.b)+'" stroke="#e4e7ec" stroke-width="1"/>';
-    const xv=Math.pow(10,lx);
-    const label=xv>=1?nf(xv,xv>=10?0:1):nf(xv,2);
-    svg+='<text x="'+X(lx).toFixed(1)+'" y="'+(H-pad.b+15)+'" text-anchor="middle" font-size="11" fill="#5a6068">'+label+'</text>';
+  for (var i2=0;i2<=4;i2++){
+    var lx2=-1+i2*0.5;
+    svg+='<line x1="'+X(lx2).toFixed(1)+'" y1="'+pad.t+'" x2="'+X(lx2).toFixed(1)+'" y2="'+(H-pad.b)+'" stroke="#e4e7ec" stroke-width="1"/>';
+    var xv=Math.pow(10,lx2);
+    var lbl=xv>=1?nf(xv,xv>=10?0:1):nf(xv,2);
+    svg+='<text x="'+X(lx2).toFixed(1)+'" y="'+(H-pad.b+15)+'" text-anchor="middle" font-size="11" fill="#5a6068">'+lbl+'</text>';
   }
-  for (let i=0;i<=2;i++){
-    svg+='<line x1="'+pad.l+'" y1="'+Y(i).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Y(i).toFixed(1)+'" stroke="#e4e7ec" stroke-width="1"/>';
-    svg+='<text x="'+(pad.l-5)+'" y="'+(Y(i)+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="#5a6068">'+(i===0?'1':i===1?'10':'100')+'</text>';
+  for (var i3=0;i3<=2;i3++){
+    svg+='<line x1="'+pad.l+'" y1="'+Y(i3).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Y(i3).toFixed(1)+'" stroke="#e4e7ec" stroke-width="1"/>';
+    svg+='<text x="'+(pad.l-5)+'" y="'+(Y(i3)+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="#5a6068">'+(i3===0?'1':i3===1?'10':'100')+'</text>';
   }
   svg+='<line x1="'+pad.l+'" y1="'+(H-pad.b)+'" x2="'+(W-pad.r)+'" y2="'+(H-pad.b)+'" stroke="#5a6068" stroke-width="1.4"/>';
   svg+='<line x1="'+pad.l+'" y1="'+pad.t+'" x2="'+pad.l+'" y2="'+(H-pad.b)+'" stroke="#5a6068" stroke-width="1.4"/>';
-  let path='';
-  pts.forEach((p,i)=>{path+=(i===0?'M':' L')+X(p.lx).toFixed(1)+','+Y(Math.min(p.ltr,ltrmax)).toFixed(1);});
+  var path='';
+  for (var i4=0;i4<pts.length;i4++){
+    var p=pts[i4];
+    path+=(i4===0?'M':' L')+X(p.lx).toFixed(1)+','+Y(Math.min(p.ltr,ltrmax)).toFixed(1);
+  }
   svg+='<path d="'+path+'" fill="none" stroke="#2e6da4" stroke-width="2.4"/>';
-  const m1xi=0.69,m2xi=1;
-  const m1tr=tReduitOf(m1xi),m2tr=tReduitOf(m2xi);
-  const mx1=X(Math.log10(m1xi)),my1=Y(Math.min(Math.log10(m1tr),ltrmax));
-  const mx2=X(Math.log10(m2xi)),my2=Y(Math.min(Math.log10(m2tr),ltrmax));
+  var m1xi=0.69,m2xi=1;
+  var m1tr=tReduitOf(m1xi),m2tr=tReduitOf(m2xi);
+  var mx1=X(Math.log10(m1xi)),my1=Y(Math.min(Math.log10(m1tr),ltrmax));
+  var mx2=X(Math.log10(m2xi)),my2=Y(Math.min(Math.log10(m2tr),ltrmax));
   svg+='<line x1="'+mx1.toFixed(1)+'" y1="'+my1.toFixed(1)+'" x2="'+mx1.toFixed(1)+'" y2="'+(H-pad.b)+'" stroke="#1e7a2e" stroke-width="1.2" stroke-dasharray="3,3"/>';
   svg+='<line x1="'+pad.l+'" y1="'+my1.toFixed(1)+'" x2="'+mx1.toFixed(1)+'" y2="'+my1.toFixed(1)+'" stroke="#1e7a2e" stroke-width="1.2" stroke-dasharray="3,3"/>';
   svg+='<circle cx="'+mx1.toFixed(1)+'" cy="'+my1.toFixed(1)+'" r="5" fill="#1e7a2e" stroke="#fff" stroke-width="2"/>';
@@ -698,50 +698,49 @@ function abaqueSVG(){
   svg+='</svg>';
   return svg;
 }
-
-/* SVG Bode avec marges (exemple fixe L(p)=10/((1+p)(1+0,1p)(1+0,05p))) */
 function bodeMargesSVG(){
-  const K=10,Ts=[1,0.1,0.05];
-  const wmin=0.1,wmax=200,N=250,pts=[];
-  let phPrev=null,off=0;
-  for (let i=0;i<=N;i++){
-    const w=wmin*Math.pow(wmax/wmin,i/N);
-    let magF=K,phRad=0;
-    for (const T of Ts){magF/=Math.sqrt(1+(T*w)**2);phRad-=Math.atan(T*w);}
-    let phDeg=phRad*180/PI;
+  var K=10, Ts=[1,0.1,0.05];
+  var wmin=0.1,wmax=200,N=250,pts=[];
+  var phPrev=null,off=0;
+  for (var i=0;i<=N;i++){
+    var w=wmin*Math.pow(wmax/wmin,i/N);
+    var magF=K, phRad=0;
+    for (var ti=0;ti<Ts.length;ti++){var T=Ts[ti];magF/=Math.sqrt(1+(T*w)*(T*w));phRad-=Math.atan(T*w);}
+    var phDeg=phRad*180/PI;
     if (phPrev!==null){while(phDeg+off-phPrev>180)off-=360;while(phDeg+off-phPrev<-180)off+=360;}
     phDeg+=off;phPrev=phDeg;
-    pts.push({w,lw:Math.log10(w),magDB:20*Math.log10(magF),phDeg});
+    pts.push({w:w,lw:Math.log10(w),magDB:20*Math.log10(magF),phDeg:phDeg});
   }
-  let wc=NaN,pm=NaN,w180=NaN,gm=NaN;
-  for (let i=0;i<N;i++){
-    if (isNaN(wc)&&pts[i].magDB>=0&&pts[i+1].magDB<0){
-      const u=pts[i].magDB/(pts[i].magDB-pts[i+1].magDB);
-      wc=pts[i].w*Math.pow(pts[i+1].w/pts[i].w,u);
-      pm=180+pts[i].phDeg+(pts[i+1].phDeg-pts[i].phDeg)*u;
+  var wc=NaN,pm=NaN,w180=NaN,gm=NaN;
+  for (var i2=0;i2<N;i2++){
+    if (isNaN(wc)&&pts[i2].magDB>=0&&pts[i2+1].magDB<0){
+      var u=pts[i2].magDB/(pts[i2].magDB-pts[i2+1].magDB);
+      wc=pts[i2].w*Math.pow(pts[i2+1].w/pts[i2].w,u);
+      pm=180+pts[i2].phDeg+(pts[i2+1].phDeg-pts[i2].phDeg)*u;
     }
-    if (isNaN(w180)&&pts[i].phDeg>=-180&&pts[i+1].phDeg<-180){
-      const u=(pts[i].phDeg+180)/(pts[i].phDeg-pts[i+1].phDeg);
-      w180=pts[i].w*Math.pow(pts[i+1].w/pts[i].w,u);
-      gm=-(pts[i].magDB+(pts[i+1].magDB-pts[i].magDB)*u);
+    if (isNaN(w180)&&pts[i2].phDeg>=-180&&pts[i2+1].phDeg<-180){
+      var u2=(pts[i2].phDeg+180)/(pts[i2].phDeg-pts[i2+1].phDeg);
+      w180=pts[i2].w*Math.pow(pts[i2+1].w/pts[i2].w,u2);
+      gm=-(pts[i2].magDB+(pts[i2+1].magDB-pts[i2].magDB)*u2);
     }
   }
-  const W=580,pad={l:55,r:25,t:15,b:25};
-  const Hg=180,Hp=150,yoffP=Hg+30,totalH=400;
-  const lwmin=Math.log10(wmin),lwmax=Math.log10(wmax);
-  const X=lw=>pad.l+(lw-lwmin)/(lwmax-lwmin)*(W-pad.l-pad.r);
-  const dBmin=-50,dBmax=30;
-  const Yg=dB=>pad.t+(dBmax-dB)/(dBmax-dBmin)*(Hg-pad.t-pad.b);
-  const phmin=-270,phmax=10;
-  const Yp=ph=>yoffP+pad.t+(phmax-ph)/(phmax-phmin)*(Hp-pad.t-pad.b);
-  let svg='<svg viewBox="0 0 '+W+' '+totalH+'" style="width:100%;max-width:640px;height:auto;display:block;margin:8px auto" role="img" aria-label="Bode avec marges">';
+  var W=580, pad={l:55,r:25,t:15,b:25};
+  var Hg=180, Hp=150, yoffP=Hg+30, totalH=400;
+  var lwmin=Math.log10(wmin), lwmax=Math.log10(wmax);
+  var X=function(lw){return pad.l+(lw-lwmin)/(lwmax-lwmin)*(W-pad.l-pad.r);};
+  var dBmin=-50, dBmax=30;
+  var Yg=function(dB){return pad.t+(dBmax-dB)/(dBmax-dBmin)*(Hg-pad.t-pad.b);};
+  var phmin=-270, phmax=10;
+  var Yp=function(ph){return yoffP+pad.t+(phmax-ph)/(phmax-phmin)*(Hp-pad.t-pad.b);};
+  var svg='<svg viewBox="0 0 '+W+' '+totalH+'" style="width:100%;max-width:640px;height:auto;display:block;margin:8px auto" role="img" aria-label="Bode avec marges">';
   svg+='<rect width="'+W+'" height="'+totalH+'" fill="#fff"/>';
-  // Gain plot
-  for (let lx=0;lx<=Math.log10(wmax);lx+=1){
+  for (var lx=0;lx<=Math.log10(wmax);lx+=1){
     svg+='<line x1="'+X(lx).toFixed(1)+'" y1="'+pad.t+'" x2="'+X(lx).toFixed(1)+'" y2="'+(Hg-pad.b)+'" stroke="#e4e7ec" stroke-width="1"/>';
     svg+='<text x="'+X(lx).toFixed(1)+'" y="'+(Hg-pad.b+13)+'" text-anchor="middle" font-size="10" fill="#5a6068">'+nf(Math.pow(10,lx),0)+'</text>';
   }
-  for (const dB of [20,0,-20,-40]){
+  var dBVals=[20,0,-20,-40];
+  for (var dvi=0;dvi<dBVals.length;dvi++){
+    var dB=dBVals[dvi];
     svg+='<line x1="'+pad.l+'" y1="'+Yg(dB).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Yg(dB).toFixed(1)+'" stroke="#e4e7ec" stroke-width="1"/>';
     svg+='<text x="'+(pad.l-5)+'" y="'+(Yg(dB)+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#5a6068">'+dB+'</text>';
   }
@@ -749,11 +748,14 @@ function bodeMargesSVG(){
   svg+='<line x1="'+pad.l+'" y1="'+pad.t+'" x2="'+pad.l+'" y2="'+(Hg-pad.b)+'" stroke="#5a6068" stroke-width="1.2"/>';
   svg+='<line x1="'+pad.l+'" y1="'+Yg(0).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Yg(0).toFixed(1)+'" stroke="#1e7a2e" stroke-width="1.5" stroke-dasharray="6,4"/>';
   svg+='<text x="'+(W-pad.r-4)+'" y="'+(Yg(0)-4).toFixed(1)+'" text-anchor="end" font-size="10.5" fill="#1e7a2e">0 dB</text>';
-  let pathG='';
-  pts.forEach((p,i)=>{pathG+=(i===0?'M':' L')+X(p.lw).toFixed(1)+','+Yg(clamp(p.magDB,dBmin,dBmax)).toFixed(1);});
+  var pathG='';
+  for (var pi=0;pi<pts.length;pi++){
+    var p=pts[pi];
+    pathG+=(pi===0?'M':' L')+X(p.lw).toFixed(1)+','+Yg(clamp(p.magDB,dBmin,dBmax)).toFixed(1);
+  }
   svg+='<path d="'+pathG+'" fill="none" stroke="#2e6da4" stroke-width="2.2"/>';
   if (isFinite(w180)&&isFinite(gm)){
-    const xw=X(Math.log10(w180)),y0=Yg(0),y180=Yg(clamp(-gm,dBmin,dBmax));
+    var xw=X(Math.log10(w180)),y0=Yg(0),y180=Yg(clamp(-gm,dBmin,dBmax));
     svg+='<line x1="'+xw.toFixed(1)+'" y1="'+y0.toFixed(1)+'" x2="'+xw.toFixed(1)+'" y2="'+y180.toFixed(1)+'" stroke="#7b4fc2" stroke-width="1.8"/>';
     svg+='<polygon points="'+(xw-4).toFixed(1)+','+(y0+6).toFixed(1)+' '+(xw+4).toFixed(1)+','+(y0+6).toFixed(1)+' '+xw.toFixed(1)+','+(y0+1).toFixed(1)+'" fill="#7b4fc2"/>';
     svg+='<polygon points="'+(xw-4).toFixed(1)+','+(y180-6).toFixed(1)+' '+(xw+4).toFixed(1)+','+(y180-6).toFixed(1)+' '+xw.toFixed(1)+','+(y180-1).toFixed(1)+'" fill="#7b4fc2"/>';
@@ -765,12 +767,13 @@ function bodeMargesSVG(){
     svg+='<text x="'+(X(Math.log10(wc))+4).toFixed(1)+'" y="'+(Yg(0)-5).toFixed(1)+'" font-size="10.5" fill="#c0281f">ωc = '+nf(wc,1)+'</text>';
   }
   svg+='<text x="'+((pad.l+W-pad.r)/2).toFixed(1)+'" y="'+(Hg-4)+'" text-anchor="middle" font-size="11" fill="#111">|L(jω)| (dB)</text>';
-  // Phase plot
   svg+='<rect x="0" y="'+(yoffP-8)+'" width="'+W+'" height="'+(Hp+20)+'" fill="#fff"/>';
-  for (let lx=0;lx<=Math.log10(wmax);lx+=1){
-    svg+='<line x1="'+X(lx).toFixed(1)+'" y1="'+(yoffP+pad.t)+'" x2="'+X(lx).toFixed(1)+'" y2="'+(yoffP+Hp-pad.b)+'" stroke="#e4e7ec" stroke-width="1"/>';
+  for (var lx2=0;lx2<=Math.log10(wmax);lx2+=1){
+    svg+='<line x1="'+X(lx2).toFixed(1)+'" y1="'+(yoffP+pad.t)+'" x2="'+X(lx2).toFixed(1)+'" y2="'+(yoffP+Hp-pad.b)+'" stroke="#e4e7ec" stroke-width="1"/>';
   }
-  for (const ph of [0,-90,-180,-270]){
+  var phVals=[0,-90,-180,-270];
+  for (var pvi=0;pvi<phVals.length;pvi++){
+    var ph=phVals[pvi];
     svg+='<line x1="'+pad.l+'" y1="'+Yp(ph).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Yp(ph).toFixed(1)+'" stroke="#e4e7ec" stroke-width="1"/>';
     svg+='<text x="'+(pad.l-5)+'" y="'+(Yp(ph)+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#5a6068">'+ph+'°</text>';
   }
@@ -778,13 +781,16 @@ function bodeMargesSVG(){
   svg+='<line x1="'+pad.l+'" y1="'+(yoffP+pad.t)+'" x2="'+pad.l+'" y2="'+(yoffP+Hp-pad.b)+'" stroke="#5a6068" stroke-width="1.2"/>';
   svg+='<line x1="'+pad.l+'" y1="'+Yp(-180).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Yp(-180).toFixed(1)+'" stroke="#1e7a2e" stroke-width="1.5" stroke-dasharray="6,4"/>';
   svg+='<text x="'+(W-pad.r-4)+'" y="'+(Yp(-180)-4).toFixed(1)+'" text-anchor="end" font-size="10.5" fill="#1e7a2e">-180°</text>';
-  let pathP='';
-  pts.forEach((p,i)=>{pathP+=(i===0?'M':' L')+X(p.lw).toFixed(1)+','+Yp(clamp(p.phDeg,phmin,phmax)).toFixed(1);});
+  var pathP='';
+  for (var pi2=0;pi2<pts.length;pi2++){
+    var p2=pts[pi2];
+    pathP+=(pi2===0?'M':' L')+X(p2.lw).toFixed(1)+','+Yp(clamp(p2.phDeg,phmin,phmax)).toFixed(1);
+  }
   svg+='<path d="'+pathP+'" fill="none" stroke="#2e6da4" stroke-width="2.2"/>';
   if (isFinite(wc)&&isFinite(pm)){
-    const xwc=X(Math.log10(wc));
-    const phAtWc=pm-180;
-    const yPh180=Yp(-180),yPhWc=Yp(clamp(phAtWc,phmin,phmax));
+    var xwc=X(Math.log10(wc));
+    var phAtWc=pm-180;
+    var yPh180=Yp(-180),yPhWc=Yp(clamp(phAtWc,phmin,phmax));
     svg+='<line x1="'+xwc.toFixed(1)+'" y1="'+yPh180.toFixed(1)+'" x2="'+xwc.toFixed(1)+'" y2="'+yPhWc.toFixed(1)+'" stroke="#7b4fc2" stroke-width="1.8"/>';
     svg+='<polygon points="'+(xwc-4).toFixed(1)+','+(yPh180-6).toFixed(1)+' '+(xwc+4).toFixed(1)+','+(yPh180-6).toFixed(1)+' '+xwc.toFixed(1)+','+(yPh180-1).toFixed(1)+'" fill="#7b4fc2"/>';
     svg+='<polygon points="'+(xwc-4).toFixed(1)+','+(yPhWc+6).toFixed(1)+' '+(xwc+4).toFixed(1)+','+(yPhWc+6).toFixed(1)+' '+xwc.toFixed(1)+','+(yPhWc+1).toFixed(1)+'" fill="#7b4fc2"/>';
@@ -801,60 +807,58 @@ function bodeMargesSVG(){
   return svg;
 }
 
-/* ===================== contrôles ===================== */
+/* ====== contrôles ====== */
 function mkControls(onChange,opts){
-  opts=Object.assign({input:true,pert:true},opts||{});
-  const host=h('div',{class:'blk'});
+  opts=opts||{};
+  var input=opts.input!==false;
+  var pert=opts.pert!==false;
+  var host=h('div',{class:'blk'});
   function build(){
-    const P=SYS.plant,C=SYS.corr;
+    var P=SYS.plant, C=SYS.corr;
     host.innerHTML='';
-    const r1=h('div',{class:'ctrl'});
-    r1.append(
-      h('div',{class:'fld'},h('span',null,'Classe de G(p)'),chips([[0,'0'],[1,'1'],[2,'2']],P.classe,v=>{P.classe=v;build();onChange();},'Classe')),
-      h('div',{class:'fld'},h('span',null,'Forme de G(p)'),chips([['A','1er ordre'],['B','2nd ordre']],P.forme,v=>{P.forme=v;build();onChange();},'Forme'))
-    );
-    host.append(r1);
-    const r2=h('div',{class:'ctrl'});
-    r2.append(sld({label:'K',min:0.2,max:10,step:0.1,val:P.K,d:1,on:v=>{P.K=v;onChange();}}));
-    if (P.forme==='A')r2.append(sld({label:'T',min:0.05,max:3,step:0.05,val:P.T,d:2,unit:'s',on:v=>{P.T=v;onChange();}}));
-    else r2.append(
-      sld({label:'m',min:0.05,max:2,step:0.05,val:P.m,d:2,on:v=>{P.m=v;onChange();}}),
-      sld({label:'ω₀',min:0.3,max:10,step:0.1,val:P.w0,d:1,unit:'rad/s',on:v=>{P.w0=v;onChange();}})
-    );
-    host.append(r2);
-    const r3=h('div',{class:'ctrl'});
-    r3.append(
-      h('div',{class:'fld'},h('span',null,'Correcteur C(p)'),chips([['P','P'],['PI','PI'],['PID','PID']],C.type,v=>{C.type=v;build();onChange();},'Correcteur')),
-      sld({label:'K<sub>p</sub>',min:0.1,max:20,step:0.1,val:C.Kp,d:1,on:v=>{C.Kp=v;onChange();}})
-    );
-    if (C.type!=='P')r3.append(sld({label:'T<sub>i</sub>',min:0.1,max:5,step:0.05,val:C.Ti,d:2,unit:'s',on:v=>{C.Ti=v;onChange();}}));
-    if (C.type==='PID')r3.append(sld({label:'T<sub>d</sub>',min:0.01,max:2,step:0.01,val:C.Td,d:2,unit:'s',on:v=>{C.Td=v;onChange();}}));
-    host.append(r3);
-    if (opts.input){
-      const r4=h('div',{class:'ctrl'});
-      r4.append(h('div',{class:'fld'},h('span',null,'Entrée e(t)'),
-        chips([['dirac','Dirac'],['echelon','Échelon'],['rampe','Rampe'],['parabole','Parabole']],SYS.input,
-          v=>{SYS.input=v;if(v!=='echelon')SYS.pert=0;build();onChange();},'Entrée')));
+    var r1=h('div',{class:'ctrl'});
+    r1.appendChild(h('div',{class:'fld'},h('span',null,'Classe de G(p)'),
+      chips([[0,'0'],[1,'1'],[2,'2']],P.classe,function(v){P.classe=v;build();onChange();},'Classe')));
+    r1.appendChild(h('div',{class:'fld'},h('span',null,'Forme de G(p)'),
+      chips([['A','1er ordre'],['B','2nd ordre']],P.forme,function(v){P.forme=v;build();onChange();},'Forme')));
+    host.appendChild(r1);
+    var r2=h('div',{class:'ctrl'});
+    r2.appendChild(sld({label:'K',min:0.2,max:10,step:0.1,val:P.K,d:1,on:function(v){P.K=v;onChange();}}));
+    if (P.forme==='A')r2.appendChild(sld({label:'T',min:0.05,max:3,step:0.05,val:P.T,d:2,unit:'s',on:function(v){P.T=v;onChange();}}));
+    else {
+      r2.appendChild(sld({label:'m',min:0.05,max:2,step:0.05,val:P.m,d:2,on:function(v){P.m=v;onChange();}}));
+      r2.appendChild(sld({label:'ω₀',min:0.3,max:10,step:0.1,val:P.w0,d:1,unit:'rad/s',on:function(v){P.w0=v;onChange();}}));
+    }
+    host.appendChild(r2);
+    var r3=h('div',{class:'ctrl'});
+    r3.appendChild(h('div',{class:'fld'},h('span',null,'Correcteur C(p)'),
+      chips([['P','P'],['PI','PI'],['PID','PID']],C.type,function(v){C.type=v;build();onChange();},'Correcteur')));
+    r3.appendChild(sld({label:'K<sub>p</sub>',min:0.1,max:20,step:0.1,val:C.Kp,d:1,on:function(v){C.Kp=v;onChange();}}));
+    if (C.type!=='P')r3.appendChild(sld({label:'T<sub>i</sub>',min:0.1,max:5,step:0.05,val:C.Ti,d:2,unit:'s',on:function(v){C.Ti=v;onChange();}}));
+    if (C.type==='PID')r3.appendChild(sld({label:'T<sub>d</sub>',min:0.01,max:2,step:0.01,val:C.Td,d:2,unit:'s',on:function(v){C.Td=v;onChange();}}));
+    host.appendChild(r3);
+    if (input){
+      var r4=h('div',{class:'ctrl'});
+      r4.appendChild(h('div',{class:'fld'},h('span',null,'Entrée e(t)'),
+        chips([['dirac','Dirac'],['echelon','Échelon'],['rampe','Rampe'],['parabole','Parabole']],SYS.input,function(v){SYS.input=v;if(v!=='echelon')SYS.pert=0;build();onChange();},'Entrée')));
       if (SYS.input!=='dirac')
-        r4.append(sld({label:SYS.input==='parabole'?'a (e(t)=a·t²/2)':'amplitude a',min:0.1,max:5,step:0.1,val:SYS.amp,d:1,on:v=>{SYS.amp=v;onChange();}}));
-      if (opts.pert&&SYS.input==='echelon'){
-        r4.append(h('div',{class:'fld'},h('span',null,'Perturbation pert(t)'),
-          chips([[0,'Aucune'],[1,'Échelon']],SYS.pert>0?1:0,
-            v=>{SYS.pert=v?1:0;build();onChange();},'Perturbation')));
+        r4.appendChild(sld({label:SYS.input==='parabole'?'a (e(t)=a·t²/2)':'amplitude a',min:0.1,max:5,step:0.1,val:SYS.amp,d:1,on:function(v){SYS.amp=v;onChange();}}));
+      if (pert&&SYS.input==='echelon'){
+        r4.appendChild(h('div',{class:'fld'},h('span',null,'Perturbation pert(t)'),
+          chips([[0,'Aucune'],[1,'Échelon']],SYS.pert>0?1:0,function(v){SYS.pert=v?1:0;build();onChange();},'Perturbation')));
         if (SYS.pert>0)
-          r4.append(sld({label:'amplitude pert',min:0.1,max:5,step:0.1,val:SYS.pert,d:1,on:v=>{SYS.pert=v;onChange();}}));
+          r4.appendChild(sld({label:'amplitude pert',min:0.1,max:5,step:0.1,val:SYS.pert,d:1,on:function(v){SYS.pert=v;onChange();}}));
       }
-      host.append(r4);
+      host.appendChild(r4);
     }
   }
   build();
-  host.rebuild=build;
   return host;
 }
 
-/* ===================== onglet PRÉCISION ===================== */
+/* ====== PRÉCISION ====== */
 function cellVal(M,c,col){
-  const K=M.K_BO,a=SYS.amp;
+  var K=M.K_BO, a=SYS.amp;
   if (col===0)return c===0?a/(1+K):0;
   if (col===1)return c===0?Infinity:(c===1?a/K:0);
   if (col===2)return c<2?Infinity:(c===2?a/K:0);
@@ -866,80 +870,94 @@ function fmtVal(v){
   return nf(v,3);
 }
 function errTable(M){
-  const curCol=SYS.input==='echelon'?0:SYS.input==='rampe'?1:SYS.input==='parabole'?2:-1;
-  const dispCls=Math.min(M.cls,2);
-  const txt=[
-    ['a/(1+K_BO)','∞','∞'],
-    ['0','a/K_BO','∞'],
-    ['0','0','a/K_BO']
-  ];
-  const rows=[0,1,2].map(c=>{
-    const tds=[h('td',{class:'lbl'},String(c))];
-    for (let col=0;col<3;col++){
-      const on=(c===dispCls&&col===curCol);
-      const v=cellVal(M,c,col);
-      const showNum=(c===M.cls);
+  var curCol=SYS.input==='echelon'?0:SYS.input==='rampe'?1:SYS.input==='parabole'?2:-1;
+  var dispCls=Math.min(M.cls,2);
+  var txt=[['a/(1+K_BO)','∞','∞'],['0','a/K_BO','∞'],['0','0','a/K_BO']];
+  var rows=[0,1,2].map(function(c){
+    var tds=[h('td',{class:'lbl'},String(c))];
+    for (var col=0;col<3;col++){
+      var on=(c===dispCls&&col===curCol);
+      var v=cellVal(M,c,col);
+      var showNum=(c===M.cls);
       tds.push(h('td',{class:(on?'on ':'')+(isFinite(v)?'':'inf')},
         txt[c][col],
         showNum?h('span',{class:'num'},'= '+fmtVal(v)):null));
     }
     return h('tr',null,tds);
   });
-  const tbl=h('table',{class:'err'},
+  var tbl=h('table',{class:'err'},
     h('thead',null,h('tr',null,
       h('th',null,'Classe α de la FTBO'),
       h('th',null,'Échelon (ampl. a) — écart de position'),
       h('th',null,'Rampe (pente a) — écart de traînage'),
       h('th',null,'Parabole (coef. a/2) — écart d’accélération'))),
     h('tbody',null,rows));
-  const wrap=h('div',null,tbl);
-  if (M.cls>2)wrap.append(h('p',{class:'small'},'L(p) possède '+M.cls+' intégrateurs : tous les écarts sont nuls (la ligne 2 est mise en évidence par défaut).'));
+  var wrap=h('div',null,tbl);
+  if (M.cls>2)wrap.appendChild(h('p',{class:'small'},'L(p) possède '+M.cls+' intégrateurs : tous les écarts sont nuls.'));
   return wrap;
 }
 function kboExpr(){
-  const P=SYS.plant, C=SYS.corr;
-  const K=nf(P.K,2), Kp=nf(C.Kp,2), Ti=nf(C.Ti,2);
+  var P=SYS.plant, C=SYS.corr;
+  var K=nf(P.K,2), Kp=nf(C.Kp,2), Ti=nf(C.Ti,2);
   if (C.type==='P'){
     if (P.classe===0)return 'K_BO = Kp · K = '+Kp+' × '+K+' = '+nf(P.K*C.Kp,3);
-    return 'K_BO = Kp · K = '+Kp+' × '+K+' = '+nf(P.K*C.Kp,3)+' (gain de '+['position','vitesse','accélération'][Math.min(P.classe,2)]+')';
+    return 'K_BO = Kp · K = '+Kp+' × '+K+' = '+nf(P.K*C.Kp,3);
   }
   return 'K_BO = (Kp · K) / Ti = ('+Kp+' × '+K+') / '+Ti+' = '+nf(P.K*C.Kp/C.Ti,3);
 }
+function mkAnalysis(M){
+  var mg=marginsOf(bode(M));
+  var bp=closedLoopBandwidth(M);
+  return h('div',{class:'blk'},
+    h('h3',{style:'margin-top:0'},'Analyse du modèle — L(p) = C(p)·G(p)'),
+    h('table',{class:'kv'},h('tbody',null,
+      h('tr',null,h('td',null,'Classe α de la FTBO'),h('td',{class:'m'},String(M.cls))),
+      h('tr',{class:'hl'},h('td',null,'Gain K_BO de la FTBO'),h('td',{class:'m'},isFinite(M.K_BO)?nf(M.K_BO,3):'∞')),
+      h('tr',null,h('td',null,'Écart de position a/(1+K_BO)'),h('td',{class:'m'},M.cls===0?nf(SYS.amp/(1+M.K_BO),3):'0')),
+      h('tr',null,h('td',null,'Écart de traînage a/K_BO'),h('td',{class:'m'},M.cls===0?'∞':(M.cls===1?nf(SYS.amp/M.K_BO,3):'0'))),
+      h('tr',null,h('td',null,'Bande passante à −3 dB'),h('td',{class:'m'},isFinite(bp)?nf(bp,2)+' rad/s':'—')),
+      h('tr',{class:'hl'},h('td',null,'Stabilité boucle fermée'),h('td',{class:'m'},M.stable?'stable':'instable')),
+      h('tr',null,h('td',null,'Marge de phase Mφ'),h('td',{class:'m'},isFinite(mg.pm)?nf(mg.pm,1)+' °':'—')),
+      h('tr',null,h('td',null,'Marge de gain MG'),h('td',{class:'m'},isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞'))
+    ))
+  );
+}
 function mountPrecision(root){
-  root.append(h('h2',null,'Précision des systèmes asservis'));
-  root.append(h('p',{html:'La <b>précision</b> mesure l’<b>écart ε(∞)</b> entre consigne et sortie en <b>régime permanent</b>. On note <i>G(p)</i> le système (procédé), <i>C(p)</i> le correcteur et <i>L(p) = C(p)·G(p)</i> la <b>fonction de transfert en boucle ouverte</b> (FTBO). L’écart dépend de la <b>classe α de L(p)</b> (nombre d’intégrateurs) et du <b>type d’entrée</b>.'}));
-  const dg=h('div');root.append(dg);
-  root.append(mkControls(()=>{draw();}));
-
-  const pb=plotBox('Réponse s(t) et consigne e(t)',{h:310,yl:'s(t)'});
-  const pe=plotBox('Écart ε(t) = e(t) − s(t)',{h:185,yl:'ε(t)'});
-  root.append(pb.box,pe.box);
-  root.append(pleg([[COL.slate,'consigne e(t)','d'],[COL.blue,'sortie s(t)'],[COL.green,'régime permanent','d'],[COL.orange,'début pert(t)','d'],[COL.red,'écart ε(t)'],[COL.violet,'effet de pert(t)','d']]));
-  const res=h('div');root.append(res);
-  const ana=h('div');root.append(ana);
+  root.appendChild(h('h2',null,'Précision des systèmes asservis'));
+  root.appendChild(h('p',{html:'La <b>précision</b> mesure l’<b>écart ε(∞)</b> entre consigne et sortie en régime permanent. On note <i>G(p)</i> le système, <i>C(p)</i> le correcteur et <i>L(p)=C(p)·G(p)</i> la FTBO. L’écart dépend de la <b>classe α de L(p)</b> et du type d’entrée.'}));
+  var dg=h('div');root.appendChild(dg);
+  root.appendChild(mkControls(function(){draw();}));
+  var pb=plotBox('Réponse s(t) et consigne e(t)',{h:310,yl:'s(t)'});
+  var pe=plotBox('Écart ε(t) = e(t) − s(t)',{h:185,yl:'ε(t)'});
+  root.appendChild(pb.box);root.appendChild(pe.box);
+  root.appendChild(pleg([[COL.slate,'consigne','d'],[COL.blue,'sortie'],[COL.green,'régime permanent','d'],[COL.orange,'début pert(t)','d'],[COL.red,'écart ε(t)']]));
+  var res=h('div');root.appendChild(res);
+  var ana=h('div');root.appendChild(ana);
 
   function draw(){
-    const M=model();
+    var M=model();
     dg.innerHTML=diagSVG(M);
-    const tf=simTimeframe(M);
-    const R=computeResponse(M,tf);
-    const {tmax,td,hasPert}=tf;
-    const eS=eSignal;
-    const yFinalSS=R.y[R.y.length-1][1];
-    let yInitSS=yFinalSS;
+    var tf=simTimeframe(M);
+    var R=computeResponse(M,tf);
+    var tmax=tf.tmax, td=tf.td, hasPert=tf.hasPert;
+    var eS=eSignal;
+    var yFinalSS=R.y[R.y.length-1][1];
+    var yInitSS=yFinalSS;
     if (hasPert&&td>0){
-      const dt=tmax/900;
-      const iTd=Math.max(0,Math.round(td/dt)-8);
+      var dt=tmax/900;
+      var iTd=Math.max(0,Math.round(td/dt)-8);
       yInitSS=R.y[iTd][1];
     }
-    const yAll=R.y.map(p=>p[1]).filter(isFinite);
-    const eAll=R.y.map(p=>eS(p[0])-p[1]).filter(isFinite);
-    const ylo=Math.min(0,...yAll),yhi=Math.max(SYS.amp*1.02,...yAll);
-    const elo=Math.min(0,...eAll),ehi=Math.max(0.01,...eAll);
+    var yAll=R.y.map(function(p){return p[1];}).filter(isFinite);
+    var eAll=R.y.map(function(p){return eS(p[0])-p[1];}).filter(isFinite);
+    var ylo=Math.min.apply(null,[0].concat(yAll));
+    var yhi=Math.max.apply(null,[SYS.amp*1.02].concat(yAll));
+    var elo=Math.min.apply(null,[0].concat(eAll));
+    var ehi=Math.max.apply(null,[0.01].concat(eAll));
     pb.P.set(Object.assign(xAxis(tmax),yAxisFor(ylo,yhi)));
     pe.P.set(Object.assign(xAxis(tmax),yAxisFor(elo,ehi)));
 
-    pb.P.draw=P=>{
+    pb.P.draw=function(P){
       P.fn(eS,COL.slate,2,[6,4],0,tmax);
       P.seg(0,yFinalSS,tmax,yFinalSS,COL.green,1.3,[5,4]);
       P.line(R.y1,COL.blue,2.6);
@@ -951,22 +969,22 @@ function mountPrecision(root){
         P.txt('pert(t) démarre',td,P.o.ymax,COL.orange,'left',11.5,6,10);
       }
     };
-    pe.P.draw=P=>{
+    pe.P.draw=function(P){
       P.seg(0,0,tmax,0,COL.soft,1);
-      P.line(R.y.map((p,i)=>[p[0],eS(p[0])-p[1]]),COL.red,2.4);
+      P.line(R.y.map(function(p){return [p[0],eS(p[0])-p[1]];}),COL.red,2.4);
       if (hasPert)P.seg(td,P.o.ymin,td,P.o.ymax,COL.orange,1.4,[4,3]);
     };
     pb.P.redraw();pe.P.redraw();
 
     res.innerHTML='';
-    const statData=[
+    var statData=[
       ['Classe α de la FTBO',String(M.cls)],
       ['Gain K_BO = lim p^α·FTBO',isFinite(M.K_BO)?nf(M.K_BO,3):'∞'],
-      ['Amplitude a de l’entrée',nf(SYS.amp,2)]
+      ['Amplitude a',nf(SYS.amp,2)]
     ];
     if (hasPert){
-      const eI=SYS.amp-yInitSS,eF=SYS.amp-yFinalSS;
-      statData.push(['Écart avant pert(t)',nf(eI,3)],['Écart après pert(t)',nf(eF,3)],['Variation due à pert(t)',nf(eF-eI,3)]);
+      var eI=SYS.amp-yInitSS,eF=SYS.amp-yFinalSS;
+      statData.push(['Écart avant pert',nf(eI,3)],['Écart après pert',nf(eF,3)],['Variation',nf(eF-eI,3)]);
     } else {
       statData.push(
         ['Écart de position (échelon)',M.cls===0?nf(SYS.amp/(1+M.K_BO),3):'0'],
@@ -974,86 +992,71 @@ function mountPrecision(root){
         ['Écart d’accélération (parabole)',M.cls<2?'∞':(M.cls===2?nf(SYS.amp/M.K_BO,3):'0')]
       );
     }
-    res.append(stats(statData));
+    res.appendChild(stats(statData));
 
-    res.append(h('div',{class:'alert'},
-      h('h3',null,'⚠ Le gain du tableau ci-dessous est le gain de la FTBO, pas celui du correcteur'),
-      h('p',{html:'Dans le tableau des écarts, <b>K_BO</b> désigne le gain de la <b>FTBO</b> L(p) = C(p)·G(p). Ce n’est <b>pas</b> le gain Kp du correcteur.'}),
+    res.appendChild(h('div',{class:'alert'},
+      h('h3',null,'⚠ Le gain du tableau est le gain de la FTBO, pas celui du correcteur'),
+      h('p',{html:'Dans le tableau, <b>K_BO</b> désigne le gain de la <b>FTBO</b> L(p) = C(p)·G(p). Ce n’est <b>pas</b> Kp.'}),
       h('div',{class:'mono',style:'background:#fff;padding:8px 10px;border-radius:6px;margin-top:6px;font-size:12.5px;color:#111'},
-        'L(p) = C(p) · G(p) = K_BO · (1 + …) / (p^α · (1 + …))',h('br'),
+        'L(p) = K_BO · (1+…) / (p^α · (1+…))',h('br'),
         'K_BO = lim_{p→0} p^α · L(p) = '+nf(M.K_BO,3)),
-      h('p',{style:'margin-top:8px',html:'<b>Application à votre modèle :</b> '+kboExpr()+'.'})
+      h('p',{style:'margin-top:8px',html:'<b>Votre modèle :</b> '+kboExpr()+'.'})
     ));
 
-    res.append(h('h3',null,'Tableau des écarts en poursuite (sans perturbation)'));
-    res.append(errTable(M));
+    res.appendChild(h('h3',null,'Tableau des écarts en poursuite (sans perturbation)'));
+    res.appendChild(errTable(M));
 
     if (hasPert){
-      const d=SYS.pert;
-      let errPert;
+      var d=SYS.pert, errPert;
       if (M.alpha1===0)errPert=M.alpha2===0?d*M.K2/(1+M.K1*M.K2):d/M.K1;
       else errPert=0;
-      const eI=SYS.amp-yInitSS,eF=SYS.amp-yFinalSS;
-      res.append(h('div',{class:'blk',style:'border-left:4px solid var(--violet)'},
+      var eI2=SYS.amp-yInitSS,eF2=SYS.amp-yFinalSS;
+      res.appendChild(h('div',{class:'blk',style:'border-left:4px solid var(--violet)'},
         h('h3',{style:'margin-top:0'},'Écart dû à la perturbation en échelon'),
-        h('p',{html:'La perturbation pert(t) = pert·u(t − t_pert) démarre à <b>t_pert = '+nf(td,2)+' s</b>, une fois le régime permanent du système non perturbé établi. Amplitude <b>pert = '+nf(d,2)+'</b>. On note F₁ = C(p) (classe α₁, gain K₁) et F₂ = G(p) (classe α₂, gain K₂).'}),
+        h('p',{html:'pert(t) = pert·u(t − t_pert) démarre à <b>t_pert = '+nf(td,2)+' s</b>. Amplitude <b>pert = '+nf(d,2)+'</b>. F₁ = C(p), F₂ = G(p).'}),
         h('table',{class:'kv'},h('tbody',null,
-          h('tr',null,h('td',null,'α₁ (classe de C = F₁)'),h('td',{class:'m'},String(M.alpha1)+' ('+SYS.corr.type+')')),
-          h('tr',null,h('td',null,'K₁ = gain de F₁'),h('td',{class:'m'},isFinite(M.K1)?nf(M.K1,3):'∞')),
-          h('tr',null,h('td',null,'α₂ (classe de G = F₂)'),h('td',{class:'m'},String(M.alpha2))),
-          h('tr',null,h('td',null,'K₂ = gain de F₂'),h('td',{class:'m'},nf(M.K2,3))),
-          h('tr',null,h('td',null,'Écart avant pert'),h('td',{class:'m'},nf(eI,3))),
-          h('tr',null,h('td',null,'Écart après pert'),h('td',{class:'m'},nf(eF,3))),
+          h('tr',null,h('td',null,'α₁ (classe de C)'),h('td',{class:'m'},String(M.alpha1)+' ('+SYS.corr.type+')')),
+          h('tr',null,h('td',null,'K₁'),h('td',{class:'m'},isFinite(M.K1)?nf(M.K1,3):'∞')),
+          h('tr',null,h('td',null,'α₂ (classe de G)'),h('td',{class:'m'},String(M.alpha2))),
+          h('tr',null,h('td',null,'K₂'),h('td',{class:'m'},nf(M.K2,3))),
           h('tr',{class:'hl'},h('td',null,'Écart dû à pert seul'),h('td',{class:'m'},nf(errPert,3)))
         )),
-        h('p',{style:'margin-top:6px;font-size:12.5px',html:
-          M.alpha1===0
-            ? '<b>α₁ = 0</b> (correcteur P) : l’écart dû à la perturbation vaut pert·K₂/(1 + K₁·K₂) = '+nf(errPert,3)+' pour α₂ = 0, ou pert/K₁ pour α₂ ≥ 1. Un correcteur intégral (PI/PID) le rejetterait.'
-            : '<b>α₁ ≥ 1</b> (correcteur '+SYS.corr.type+') : l’intégrateur du correcteur rejette l’échelon de perturbation — l’écart dû à pert(t) seul est nul.'}));
+        h('p',{style:'margin-top:6px;font-size:12.5px',html:M.alpha1===0?'α₁=0 : l’écart dû à pert vaut '+nf(errPert,3)+'. Un correcteur intégral le rejetterait.':'α₁≥1 : l’intégrateur rejette l’échelon de perturbation.'})));
     }
 
-    const v=[];
-    if (M.cls===0)v.push('L(p) est de <b>classe 0</b> : un échelon laisse un écart <b>a/(1+K_BO) = '+nf(SYS.amp/(1+M.K_BO),3)+'</b>. Un correcteur intégral ferait passer L(p) en classe 1.');
-    else if (M.cls===1)v.push('L(p) est de <b>classe 1</b> : écart de position nul, écart de traînage <b>a/K_BO = '+nf(SYS.amp/M.K_BO,3)+'</b> sur une rampe.');
-    else v.push('L(p) est de <b>classe '+M.cls+'</b> : les écarts de position, de traînage et d’accélération sont <b>nuls</b>.');
-    if (hasPert){
-      const eI=SYS.amp-yInitSS,eF=SYS.amp-yFinalSS;
-      if (Math.abs(eF-eI)<1e-6)v.push('La perturbation <b>n’a pas d’effet</b> : le système la rejette grâce à l’intégrateur du correcteur '+SYS.corr.type+'.');
-      else v.push('La perturbation <b>dégrade l’écart</b> de '+nf(Math.abs(eF-eI),3)+' : sans intégrateur, pert(t) n’est pas rejetée.');
-    }
-    if (!M.stable)v.push('<b>Attention :</b> la boucle fermée est instable, les écarts ci-dessus n’ont pas de sens physique.');
-    res.append(verdict(v.join(' '),M.stable?(hasPert&&Math.abs(SYS.amp-yFinalSS-(SYS.amp-yInitSS))>1e-6?'warn':'yes'):'no'));
+    var v=[];
+    if (M.cls===0)v.push('L(p) est de <b>classe 0</b> : l’échelon laisse un écart <b>a/(1+K_BO) = '+nf(SYS.amp/(1+M.K_BO),3)+'</b>.');
+    else if (M.cls===1)v.push('L(p) est de <b>classe 1</b> : écart de position nul, écart de traînage <b>a/K_BO = '+nf(SYS.amp/M.K_BO,3)+'</b>.');
+    else v.push('L(p) est de <b>classe '+M.cls+'</b> : écarts nuls.');
+    if (!M.stable)v.push('<b>Attention :</b> la boucle fermée est instable.');
+    res.appendChild(verdict(v.join(' '),M.stable?'yes':'no'));
 
-    ana.innerHTML='';ana.append(mkAnalysis(M));
+    ana.innerHTML='';ana.appendChild(mkAnalysis(M));
   }
   draw();
 }
 
-/* ===================== onglet RAPIDITÉ ===================== */
+/* ====== RAPIDITÉ ====== */
 function mountRapidite(root){
-  root.append(h('h2',null,'Rapidité — réponse indicielle et bande passante'));
-  root.append(h('p',{html:'La <b>rapidité</b> se mesure classiquement sur la <b>réponse à un échelon</b> (réponse indicielle) : on en extrait le <b>temps de réponse à 5 %</b> t₅%, le <b>temps de montée</b> 10→90 % et le <b>temps de pic</b>. Dans le domaine fréquentiel, l’indicateur équivalent est la <b>bande passante à −3 dB</b>.'}));
-  const dg=h('div');root.append(dg);
-  root.append(mkControls(()=>{draw();},{input:false,pert:false}));
-
-  const p1=plotBox('Réponse indicielle (échelon unitaire)',{h:300,yl:'s(t)'});
-  const p2=plotBox('Temps de réponse à 5 % en fonction du gain Kp',{h:300,xl:'Kp',yl:'t₅% (s)'});
-  const row=h('div',{class:'two'});row.append(p1.box,p2.box);
-  root.append(row);
-  root.append(pleg([[COL.slate,'consigne','d'],[COL.blue,'sortie'],[COL.orange,'bande ±5 %','d'],[COL.violet,'t₅%'],[COL.red,'t₅% courant']]));
-  const res=h('div');root.append(res);
-  const ana=h('div');root.append(ana);
+  root.appendChild(h('h2',null,'Rapidité — réponse indicielle'));
+  root.appendChild(h('p',{html:'La rapidité se mesure classiquement sur la <b>réponse à un échelon</b>. Fréquentiellement, c’est la <b>bande passante à −3 dB</b>.'}));
+  var dg=h('div');root.appendChild(dg);
+  root.appendChild(mkControls(function(){draw();},{input:false,pert:false}));
+  var p1=plotBox('Réponse indicielle (échelon unitaire)',{h:300,yl:'s(t)'});
+  var p2=plotBox('t₅% en fonction du gain Kp',{h:300,xl:'Kp',yl:'t₅% (s)'});
+  root.appendChild(h('div',{class:'two'},p1.box,p2.box));
+  root.appendChild(pleg([[COL.slate,'consigne','d'],[COL.blue,'sortie'],[COL.orange,'bande ±5 %','d'],[COL.violet,'t₅%'],[COL.red,'point courant']]));
+  var res=h('div');root.appendChild(res);
 
   function draw(){
-    const M=model();
+    var M=model();
     dg.innerHTML=diagSVG(M);
-    const tm=timeFrame(M);
-    const R=simulateSS(tf2ss(M.T1n,M.T1d),()=>1,tm,900);
-    const met=metrics(R);
-    const ys=R.map(p=>p[1]).filter(isFinite);
-    const lo=Math.min(0,...ys),hi=Math.max(1.02,...ys);
-    p1.P.set(Object.assign(xAxis(tm),yAxisFor(lo,hi)));
-    p1.P.draw=P=>{
+    var tm=timeFrame(M);
+    var R=simulateSS(tf2ss(M.T1n,M.T1d),function(){return 1;},tm,900);
+    var met=metrics(R);
+    var ys=R.map(function(p){return p[1];}).filter(isFinite);
+    p1.P.set(Object.assign(xAxis(tm),yAxisFor(Math.min(0,Math.min.apply(null,ys)),Math.max(1.02,Math.max.apply(null,ys)))));
+    p1.P.draw=function(P){
       P.seg(0,1,tm,1,COL.slate,1.8,[6,4]);
       P.seg(0,1.05,tm,1.05,COL.orange,1.2,[3,3]);
       P.seg(0,0.95,tm,0.95,COL.orange,1.2,[3,3]);
@@ -1063,141 +1066,111 @@ function mountRapidite(root){
         P.dot(met.t5,R[Math.min(R.length-1,Math.round(met.t5/(tm/900)))][1],COL.violet,5);
         P.txt('t₅% = '+nf(met.t5,2)+' s',met.t5,0,COL.violet,'left',12,6,-10);
       }
-      if (isFinite(met.tp)&&met.D>0.5){
-        P.seg(met.tp,0,met.tp,met.ymax,COL.red,1.1,[3,3]);
-        P.dot(met.tp,met.ymax,COL.red,4.5);
-        P.txt('pic '+nf(met.D,1)+' %',met.tp,met.ymax,COL.red,'left',11.5,7,-8);
-      }
     };
     p1.P.redraw();
-
-    const kp0=SYS.corr.Kp,KMAX=20,NPT=28,sweep=[];
-    let ymaxS=0;
-    for (let i=0;i<=NPT;i++){
-      const kp=0.1+(KMAX-0.1)*i/NPT;
+    var kp0=SYS.corr.Kp,KMAX=20,NPT=28,sweep=[],ymaxS=0;
+    for (var i=0;i<=NPT;i++){
+      var kp=0.1+(KMAX-0.1)*i/NPT;
       SYS.corr.Kp=kp;
-      const Mi=model();
+      var Mi=model();
       if (!Mi.stable){sweep.push([kp,NaN]);continue;}
-      const tmi=timeFrame(Mi);
-      const Ri=simulateSS(tf2ss(Mi.T1n,Mi.T1d),()=>1,tmi,300);
-      const mi=metrics(Ri);
-      const v=(isFinite(mi.t5)&&mi.t5>0)?mi.t5:NaN;
-      if (isFinite(v))ymaxS=Math.max(ymaxS,v);
-      sweep.push([kp,v]);
+      var tmi=timeFrame(Mi);
+      var Ri=simulateSS(tf2ss(Mi.T1n,Mi.T1d),function(){return 1;},tmi,300);
+      var mi=metrics(Ri);
+      var val=(isFinite(mi.t5)&&mi.t5>0)?mi.t5:NaN;
+      if (isFinite(val))ymaxS=Math.max(ymaxS,val);
+      sweep.push([kp,val]);
     }
     SYS.corr.Kp=kp0;
-    const yTop=ymaxS>0?Math.min(ymaxS,50)*1.15:5;
-    p2.P.set({xmin:0,xmax:KMAX,xt:niceStep(KMAX,6),ymin:0,ymax:yTop,yt:niceStep(yTop,5),fx:v=>nf(v,1),fy:v=>nf(v,2)});
-    p2.P.draw=P=>{
-      P.line(sweep.filter(p=>isFinite(p[1])),COL.blue,2.6);
-      const cur=sweep.reduce((a,p)=>Math.abs(p[0]-kp0)<Math.abs(a[0]-kp0)?p:a,sweep[0]);
+    var yTop=ymaxS>0?Math.min(ymaxS,50)*1.15:5;
+    p2.P.set({xmin:0,xmax:KMAX,xt:niceStep(KMAX,6),ymin:0,ymax:yTop,yt:niceStep(yTop,5),fx:function(v){return nf(v,1);},fy:function(v){return nf(v,2);}});
+    p2.P.draw=function(P){
+      P.line(sweep.filter(function(p){return isFinite(p[1]);}),COL.blue,2.6);
+      var cur=sweep.reduce(function(a,p){return Math.abs(p[0]-kp0)<Math.abs(a[0]-kp0)?p:a;},sweep[0]);
       if (isFinite(cur[1]))P.dot(cur[0],cur[1],COL.red,6);
       P.seg(kp0,0,kp0,yTop,COL.red,1.1,[3,3]);
-      P.txt('Kp = '+nf(kp0,1),kp0,0,COL.red,'center',11.5,0,-8);
     };
     p2.P.redraw();
-
+    var mm=marginsOf(bode(M));
+    var bp=closedLoopBandwidth(M);
     res.innerHTML='';
-    const mm=marginsOf(bode(M));
-    const bp=closedLoopBandwidth(M);
-    const trRed=isFinite(met.t5)&&SYS.plant.forme==='B'?met.t5*SYS.plant.w0:NaN;
-    res.append(stats([
-      ['Gain statique (valeur finale)',nfs(met.yss,3)],
+    res.appendChild(stats([
+      ['Gain statique',nfs(met.yss,3)],
       ['Temps de montée 10→90 %',isFinite(met.tr)?nf(met.tr,2)+' s':'—'],
       ['Temps de réponse à 5 %',isFinite(met.t5)?nf(met.t5,2)+' s':'—'],
       ['Dépassement D %',isFinite(met.D)?nf(met.D,1)+' %':'—'],
       ['Bande passante à −3 dB',isFinite(bp)?nf(bp,2)+' rad/s':'—'],
       ['Marge de phase',nf(mm.pm,1)+' °']
     ]));
-    let txt;
-    if (!M.stable)txt='La boucle fermée est <b>instable</b> : le temps de réponse n’est pas défini. Diminuez Kp.';
-    else if (!isFinite(met.t5))txt='Réponse non mesurable sur la fenêtre d’observation.';
-    else {
-      txt='Avec Kp = '+nf(kp0,1)+', le système atteint 95 % de sa valeur finale en <b>'+nf(met.t5,2)+' s</b>'
-        +(isFinite(met.D)&&met.D>0.5?' avec un dépassement de '+nf(met.D,1)+' %':' sans dépassement notable')
-        +'. Bande passante à −3 dB : <b>'+nf(bp,2)+' rad/s</b>.';
-      if (SYS.plant.forme==='A')txt+=' Pour un premier ordre, t₅% ≈ 3τ et ω_c = 1/τ.';
-      else txt+=' Pour un second ordre, t_réduit = t₅%·ω_n est minimal (≈ 3) à ξ = 0,69 et vaut ≈ 5 à ξ = 1. Ici t₅%·ω₀ = '+(isFinite(trRed)?nf(trRed,2):'—')+'.';
-      txt+=' Augmentez Kp pour accélérer la réponse : t₅% diminue, mais la marge de phase se dégrade ('+nf(mm.pm,0)+'°).';
-    }
-    res.append(verdict(txt,M.stable?'yes':'no'));
-    ana.innerHTML='';ana.append(mkAnalysis(M));
+    var txt;
+    if (!M.stable)txt='Boucle fermée instable : t₅% non défini.';
+    else if (!isFinite(met.t5))txt='Réponse non mesurable.';
+    else txt='Avec Kp = '+nf(kp0,1)+', t₅% = <b>'+nf(met.t5,2)+' s</b>, bande passante à −3 dB = <b>'+nf(bp,2)+' rad/s</b>.';
+    res.appendChild(verdict(txt,M.stable?'yes':'no'));
   }
   draw();
 }
 
-/* ===================== onglet STABILITÉ ===================== */
+/* ====== STABILITÉ ====== */
 function mountStabilite(root){
-  root.append(h('h2',null,'Stabilité des systèmes asservis'));
-  root.append(h('p',{html:'Un système est <b>stable EBSB</b> si sa réponse libre tend vers 0 : tous les <b>pôles de la boucle fermée</b> doivent avoir une partie réelle strictement négative. En pratique, on juge la stabilité sur la FTBO L(p) = C(p)·G(p) grâce à la <b>marge de gain</b> et à la <b>marge de phase</b> lues sur le diagramme de Bode.'}));
-  const dg=h('div');root.append(dg);
-  root.append(mkControls(()=>{draw();},{input:false,pert:false}));
-
-  const p1=plotBox('Réponse indicielle de la boucle fermée',{h:280,yl:'s(t)'});
-  const p2=plotBox('Pôles de la boucle fermée (plan complexe)',{h:280,xl:'Re',yl:'Im'});
-  const row=h('div',{class:'two'});row.append(p1.box,p2.box);
-  root.append(row);
-  const p3=plotBox('Bode — module de L(jω) (dB)',{h:230,yl:'|L| (dB)',xl:'ω (rad/s), échelle log'});
-  const p4=plotBox('Bode — phase de L(jω) (°)',{h:230,yl:'arg L (°)',xl:'ω (rad/s), échelle log'});
-  root.append(p3.box,p4.box);
-  root.append(pleg([[COL.blue,'L(jω)'],[COL.red,'pulsation de coupure'],[COL.green,'0 dB et −180°','d'],[COL.violet,'pôles BF / ω₁₈₀']]));
-  const res=h('div');root.append(res);
-  const ana=h('div');root.append(ana);
+  root.appendChild(h('h2',null,'Stabilité des systèmes asservis'));
+  root.appendChild(h('p',{html:'Un système est <b>stable EBSB</b> si tous les pôles de la boucle fermée ont une partie réelle strictement négative. On juge aussi la stabilité sur L(p) avec les <b>marges de gain et de phase</b>.'}));
+  var dg=h('div');root.appendChild(dg);
+  root.appendChild(mkControls(function(){draw();},{input:false,pert:false}));
+  var p1=plotBox('Réponse indicielle de la boucle fermée',{h:280,yl:'s(t)'});
+  var p2=plotBox('Pôles de la boucle fermée (plan complexe)',{h:280,xl:'Re',yl:'Im'});
+  root.appendChild(h('div',{class:'two'},p1.box,p2.box));
+  var p3=plotBox('Bode — module de L(jω) (dB)',{h:230,yl:'|L| (dB)'});
+  var p4=plotBox('Bode — phase de L(jω) (°)',{h:230,yl:'arg L (°)'});
+  root.appendChild(p3.box);root.appendChild(p4.box);
+  root.appendChild(pleg([[COL.blue,'L(jω)'],[COL.red,'ωc'],[COL.green,'0 dB et −180°','d'],[COL.violet,'pôles BF / ω₁₈₀']]));
+  var res=h('div');root.appendChild(res);
+  var ana=h('div');root.appendChild(ana);
 
   function draw(){
-    const M=model();
+    var M=model();
     dg.innerHTML=diagSVG(M);
-    const tm=timeFrame(M);
-    const R=simulateSS(tf2ss(M.T1n,M.T1d),()=>1,tm,900);
-    const ys=R.map(p=>p[1]).filter(isFinite);
-    p1.P.set(Object.assign(xAxis(tm),yAxisFor(Math.min(0,...ys),Math.max(1.02,...ys))));
-    p1.P.draw=P=>{
+    var tm=timeFrame(M);
+    var R=simulateSS(tf2ss(M.T1n,M.T1d),function(){return 1;},tm,900);
+    var ys=R.map(function(p){return p[1];}).filter(isFinite);
+    p1.P.set(Object.assign(xAxis(tm),yAxisFor(Math.min(0,Math.min.apply(null,ys)),Math.max(1.02,Math.max.apply(null,ys)))));
+    p1.P.draw=function(P){
       P.seg(0,1,tm,1,COL.slate,1.6,[6,4]);
       P.line(R,M.stable?COL.blue:COL.red,2.8);
     };
     p1.P.redraw();
-
-    const pr=M.poles;
-    const rmax=Math.max(...pr.map(z=>Math.abs(z.re)),1e-3);
-    const imax=Math.max(...pr.map(z=>Math.abs(z.im)),1e-3);
-    let xmin=-1.2*rmax,xmax=0.35*rmax;
-    pr.forEach(z=>{if(z.re>xmax)xmax=z.re*1.15;if(z.re<xmin)xmin=z.re*1.15;});
+    var pr=M.poles;
+    var rmax=Math.max.apply(null,pr.map(function(z){return Math.abs(z.re);}).concat([1e-3]));
+    var imax=Math.max.apply(null,pr.map(function(z){return Math.abs(z.im);}).concat([1e-3]));
+    var xmin=-1.2*rmax,xmax=0.35*rmax;
+    pr.forEach(function(z){if(z.re>xmax)xmax=z.re*1.15;if(z.re<xmin)xmin=z.re*1.15;});
     if (xmax<=0)xmax=0.35*rmax;
-    const ymin=-1.2*imax,ymax=1.2*imax;
-    p2.P.set({xmin,xmax,xt:niceStep(xmax-xmin,6),ymin,ymax,yt:niceStep(ymax-ymin,5),fx:v=>nf(v,2),fy:v=>nf(v,2)});
-    p2.P.draw=P=>{
+    var ymin=-1.2*imax,ymax=1.2*imax;
+    p2.P.set({xmin:xmin,xmax:xmax,xt:niceStep(xmax-xmin,6),ymin:ymin,ymax:ymax,yt:niceStep(ymax-ymin,5),fx:function(v){return nf(v,2);},fy:function(v){return nf(v,2);}});
+    p2.P.draw=function(P){
       P.seg(0,ymin,0,ymax,COL.axis,1.6);
       P.seg(xmin,0,xmax,0,COL.soft,1.2);
-      pr.forEach(z=>{
-        P.dot(z.re,z.im,z.re<0?COL.violet:COL.red,6);
-        P.dot(z.re,z.im,'#fff',3);
-      });
+      pr.forEach(function(z){P.dot(z.re,z.im,z.re<0?COL.violet:COL.red,6);P.dot(z.re,z.im,'#fff',3);});
     };
     p2.P.redraw();
-
-    const B=bode(M),mg=marginsOf(B);
-    const lw0=Math.log10(0.02),lw1=Math.log10(3000);
-    let mags=B.map(p=>p.mag).filter(isFinite);
-    let phs=B.map(p=>p.ph).filter(isFinite);
-    mags=mags.map(v=>clamp(v,-90,90));
-    const magR={ymin:-90,ymax:90,yt:30};
-    const phLo=Math.min(...phs,-200),phHi=Math.max(...phs,20);
-    const phR=yAxisFor(phLo-10,phHi+10);
-    p3.P.set(Object.assign({xmin:lw0,xmax:lw1,xt:(lw1-lw0)/6,fx:v=>{const w=Math.pow(10,v);return w>=10?nf(w,0):w>=1?nf(w,1):nf(w,2);}},magR));
-    p3.P.draw=P=>{
+    var B=bode(M),mg=marginsOf(B);
+    var lw0=Math.log10(0.02),lw1=Math.log10(3000);
+    var magR={ymin:-90,ymax:90,yt:30};
+    var phR={ymin:-270,ymax:10,yt:90};
+    p3.P.set({xmin:lw0,xmax:lw1,xt:(lw1-lw0)/6,ymin:magR.ymin,ymax:magR.ymax,yt:magR.yt,fx:function(v){return nf(Math.pow(10,v),v<1?2:0);}});
+    p3.P.draw=function(P){
       P.seg(lw0,0,lw1,0,COL.green,1.5,[6,4]);
-      P.line(B.map(p=>[p.lw,clamp(p.mag,-90,90)]),COL.blue,2.4);
-      if (isFinite(mg.wc)){P.seg(Math.log10(mg.wc),-90,Math.log10(mg.wc),0,COL.red,1.2,[4,3]);P.dot(Math.log10(mg.wc),0,COL.red,4.5);P.txt('ωc = '+nf(mg.wc,2),Math.log10(mg.wc),0,COL.red,'left',11.5,6,-8);}
+      P.line(B.map(function(p){return [p.lw,clamp(p.mag,-90,90)];}),COL.blue,2.4);
+      if (isFinite(mg.wc)){P.seg(Math.log10(mg.wc),-90,Math.log10(mg.wc),0,COL.red,1.2,[4,3]);P.dot(Math.log10(mg.wc),0,COL.red,4.5);}
       if (isFinite(mg.w180))P.seg(Math.log10(mg.w180),-90,Math.log10(mg.w180),0,COL.violet,1.2,[4,3]);
     };
     p3.P.redraw();
-
-    p4.P.set(Object.assign({xmin:lw0,xmax:lw1,xt:(lw1-lw0)/6,fx:v=>{const w=Math.pow(10,v);return w>=10?nf(w,0):w>=1?nf(w,1):nf(w,2);}},phR));
-    p4.P.draw=P=>{
+    p4.P.set({xmin:lw0,xmax:lw1,xt:(lw1-lw0)/6,ymin:phR.ymin,ymax:phR.ymax,yt:phR.yt,fx:function(v){return nf(Math.pow(10,v),v<1?2:0);}});
+    p4.P.draw=function(P){
       P.seg(lw0,-180,lw1,-180,COL.green,1.5,[6,4]);
-      P.line(B.map(p=>[p.lw,p.ph]),COL.blue,2.4);
+      P.line(B.map(function(p){return [p.lw,p.ph];}),COL.blue,2.4);
       if (isFinite(mg.wc)){
-        const phc=B.reduce((a,p)=>Math.abs(p.w-mg.wc)<Math.abs(a.w-mg.wc)?p:a,B[0]).ph;
+        var phc=B.reduce(function(a,p){return Math.abs(p.w-mg.wc)<Math.abs(a.w-mg.wc)?p:a;},B[0]).ph;
         P.seg(Math.log10(mg.wc),phR.ymin,Math.log10(mg.wc),phR.ymax,COL.red,1.2,[4,3]);
         P.dot(Math.log10(mg.wc),phc,COL.red,4.5);
         P.txt('Mφ = '+nf(mg.pm,1)+'°',Math.log10(mg.wc),phc,COL.red,'left',11.5,7,-9);
@@ -1205,80 +1178,53 @@ function mountStabilite(root){
       if (isFinite(mg.w180))P.seg(Math.log10(mg.w180),phR.ymin,Math.log10(mg.w180),phR.ymax,COL.violet,1.2,[4,3]);
     };
     p4.P.redraw();
-
     res.innerHTML='';
-    res.append(stats([
+    res.appendChild(stats([
       ['Boucle fermée',M.stable?'STABLE':'INSTABLE'],
-      ['Pôles à partie réelle > 0',String(pr.filter(z=>z.re>1e-9).length)],
+      ['Pôles à partie réelle > 0',String(pr.filter(function(z){return z.re>1e-9;}).length)],
       ['Marge de phase Mφ',isFinite(mg.pm)?nf(mg.pm,1)+' °':'—'],
       ['Marge de gain MG',isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞'],
       ['Pulsation de coupure ωc',isFinite(mg.wc)?nf(mg.wc,2)+' rad/s':'—'],
       ['Pulsation à −180° ω₁₈₀',isFinite(mg.w180)?nf(mg.w180,2)+' rad/s':'—']
     ]));
-    res.append(h('div',{class:'blk',style:'font-size:13px'},h('b',null,'Cibles du cours : '),'M_G entre <b>8 et 12 dB</b>, M_φ entre <b>45° et 60°</b>.'));
-    let txt;
+    res.appendChild(h('div',{class:'blk',style:'font-size:13px'},h('b',null,'Cibles : '),'M_G entre 8 et 12 dB, M_φ entre 45° et 60°.'));
+    var txt;
     if (M.stable){
-      const okG=!isFinite(mg.gm)||mg.gm>=8;
-      const okP=!isFinite(mg.pm)||mg.pm>=45;
-      txt='La boucle fermée est <b>stable</b>. '+(okG&&okP
-        ?'Les marges sont dans les cibles (Mφ = '+nf(mg.pm,1)+'°, MG = '+(isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞')+').'
-        :'Attention, les marges sont en dessous des cibles : Mφ = '+nf(mg.pm,1)+'°, MG = '+(isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞')+'.');
-    } else txt='La boucle fermée est <b>instable</b> : '+pr.filter(z=>z.re>1e-9).length+' pôle(s) à partie réelle positive. Diminuez Kp ou augmentez Ti.';
-    res.append(verdict(txt,M.stable?'yes':'no'));
-    ana.innerHTML='';ana.append(mkAnalysis(M));
+      var okG=!isFinite(mg.gm)||mg.gm>=8;
+      var okP=!isFinite(mg.pm)||mg.pm>=45;
+      txt='Boucle fermée <b>stable</b>. '+(okG&&okP?'Marges dans les cibles.':'Marges en dessous des cibles.');
+    } else txt='Boucle fermée <b>instable</b> : '+pr.filter(function(z){return z.re>1e-9;}).length+' pôle(s) à partie réelle positive.';
+    res.appendChild(verdict(txt,M.stable?'yes':'no'));
+    ana.innerHTML='';ana.appendChild(mkAnalysis(M));
   }
   draw();
 }
 
-function mkAnalysis(M){
-  const mg=marginsOf(bode(M));
-  const bp=closedLoopBandwidth(M);
-  return h('div',{class:'blk'},
-    h('h3',{style:'margin-top:0'},'Analyse du modèle — L(p) = C(p)·G(p)'),
-    h('table',{class:'kv'},h('tbody',null,
-      h('tr',null,h('td',null,'Classe α de la FTBO'),h('td',{class:'m'},String(M.cls))),
-      h('tr',{class:'hl'},h('td',null,'Gain K_BO de la FTBO'),h('td',{class:'m'},isFinite(M.K_BO)?nf(M.K_BO,3):'∞')),
-      h('tr',null,h('td',null,'Gain de position (α=0)'),h('td',{class:'m'},M.cls===0?nf(M.Kpos,3):'∞')),
-      h('tr',null,h('td',null,'Gain de vitesse (α=1)'),h('td',{class:'m'},M.cls===1?nf(M.Kv,3):(M.cls>1?'∞':'0'))),
-      h('tr',null,h('td',null,'Gain d’accélération (α=2)'),h('td',{class:'m'},M.cls===2?nf(M.Ka,3):(M.cls>2?'∞':'0'))),
-      h('tr',null,h('td',null,'Écart de position a/(1+K_BO)'),h('td',{class:'m'},M.cls===0?nf(SYS.amp/(1+M.K_BO),3):'0')),
-      h('tr',null,h('td',null,'Écart de traînage a/K_BO'),h('td',{class:'m'},M.cls===0?'∞':(M.cls===1?nf(SYS.amp/M.K_BO,3):'0'))),
-      h('tr',null,h('td',null,'Bande passante à −3 dB'),h('td',{class:'m'},isFinite(bp)?nf(bp,2)+' rad/s':'—')),
-      h('tr',{class:'hl'},h('td',null,'Stabilité boucle fermée'),h('td',{class:'m'},M.stable?'stable':'instable')),
-      h('tr',null,h('td',null,'Marge de phase Mφ'),h('td',{class:'m'},isFinite(mg.pm)?nf(mg.pm,1)+' °':'—')),
-      h('tr',null,h('td',null,'Marge de gain MG'),h('td',{class:'m'},isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞'))
-    ))
-  );
-}
-
-/* ===================================================================
-   ACTIVITÉS
-   =================================================================== */
-const NOTATION = '<b>Notations.</b> <i>G(p)</i> = fonction de transfert du <b>système</b> (procédé) ; <i>C(p)</i> = fonction de transfert du <b>correcteur</b> ; <i>L(p) = C(p)·G(p)</i> = <b>fonction de transfert en boucle ouverte</b> (FTBO) ; <i>T(p) = L(p)/(1+L(p))</i> = <b>fonction de transfert en boucle fermée</b> (FTBF).';
-
-const ACT={
+/* ====== ACTIVITÉS ====== */
+var NOTATION = '<b>Notations.</b> <i>G(p)</i> = système ; <i>C(p)</i> = correcteur ; <i>L(p) = C(p)·G(p)</i> = FTBO ; <i>T(p) = L(p)/(1+L(p))</i> = FTBF.';
+var ACT={
   precision:{
     title:'Précision',
     level:'Niveau 1 · Découvrir',
     time:'20 min',
     course:'precision-cours',
-    notation: NOTATION,
+    notation:NOTATION,
     goal:'Relier la classe α de L(p) et le type d’entrée aux écarts en régime permanent, en comprenant que le gain du tableau est K_BO (gain de la FTBO) et non Kp.',
     steps:[
-      'Correcteur P (classe 0) : lisez <b>K_BO</b> dans le bandeau jaune. Vérifiez K_BO = Kp·K. Le tableau affiche a/(1+K_BO) pour l’échelon.',
-      'Augmentez Kp : K_BO augmente, l’écart a/(1+K_BO) diminue sans jamais s’annuler (la classe reste 0).',
-      'Passez au correcteur <b>PI</b> : la classe α passe à 1 et K_BO devient Kp·K/Ti (gain de vitesse). L’écart de position devient nul.',
-      'Choisissez l’entrée <b>rampe</b> avec le PI : l’écart de traînage vaut a/K_BO = a·Ti/(Kp·K). Fini, pas nul.',
-      'Choisissez l’entrée <b>parabole</b> (e(t)=a·t²/2, L=a/p³). Avec le PI (α=1) l’écart d’accélération diverge ; passez G(p) en classe 2 (via le sélecteur) pour l’annuler.',
-      'Ajoutez une perturbation en échelon : elle démarre en régime permanent. Lisez l’écart résiduel — il n’est rejeté que si α₁ ≥ 1 (PI/PID).'
+      'Correcteur P (classe 0) : lisez K_BO dans le bandeau jaune. Vérifiez K_BO = Kp·K.',
+      'Augmentez Kp : K_BO augmente, l’écart a/(1+K_BO) diminue sans s’annuler.',
+      'Passez au correcteur PI : la classe α passe à 1, K_BO = Kp·K/Ti. Écart de position nul.',
+      'Entrée rampe avec le PI : écart de traînage a/K_BO.',
+      'Entrée parabole (e(t)=a·t²/2) : avec α=1 diverge, avec α=2 s’annule.',
+      'Ajoutez une perturbation en échelon : elle démarre en régime permanent.'
     ],
-    defi:{q:'FTBO de classe 1, K_BO = 5 (Kv = 5 s⁻¹). Rampe de pente a = 2. Écart de traînage ?',a:'Écart de traînage : <b>a/K_BO = 2/5 = 0,4</b>. Attention, K_BO = Kv est le gain de vitesse de la FTBO, pas le gain Kp du correcteur.'},
+    defi:{q:'FTBO classe 1, K_BO = 5. Rampe a = 2. Écart de traînage ?',a:'Écart : <b>a/K_BO = 2/5 = 0,4</b>. K_BO = Kv, pas Kp.'},
     qcm:[
-      {q:'Dans le tableau des écarts, K_BO désigne…',o:['le gain Kp du correcteur','le gain de la FTBO L(p) = C(p)·G(p)','le gain statique de G(p) seul','le gain unitaire'],a:1,w:'K_BO = lim_{p→0} p^α · L(p) : c’est le gain de la boucle ouverte, il intègre correcteur ET système.'},
-      {q:'P et G(p) de classe 0 avec K = 3, Kp = 4 : K_BO vaut…',o:['4','3','7','12'],a:3,w:'K_BO = Kp · K = 4 × 3 = 12. C’est bien le produit des deux gains.'},
-      {q:'PI avec Kp = 4, Ti = 2, K = 3 : K_BO (gain de vitesse) vaut…',o:['12','6','4','0,66'],a:1,w:'K_BO = Kp·K/Ti = 4×3/2 = 6. La présence de 1/Ti reflète l’intégrateur.'},
-      {q:'Un système de classe 1 répond à une rampe avec…',o:['un écart nul','un écart de traînage a/K_BO','un écart infini','des oscillations entretenues'],a:1,w:'Classe 1 : écart de position nul mais écart de traînage a/K_BO.'},
-      {q:'Pour annuler l’écart d’accélération (entrée parabole), il faut…',o:['un correcteur P avec Kp très grand','deux intégrateurs dans L(p) (α ≥ 2)','un dérivateur','réduire Kp'],a:1,w:'Table du cours : seul α ≥ 2 annule a/K_BO sur une parabole.'}
+      {q:'Dans le tableau, K_BO désigne…',o:['le gain Kp','le gain de la FTBO L(p)=C(p)·G(p)','le gain de G(p) seul','le gain unitaire'],a:1,w:'K_BO = lim_{p→0} p^α·L(p), gain de la boucle ouverte.'},
+      {q:'P, G(p) classe 0, K=3, Kp=4 : K_BO vaut…',o:['4','3','7','12'],a:3,w:'K_BO = Kp·K = 4×3 = 12.'},
+      {q:'PI, Kp=4, Ti=2, K=3 : K_BO vaut…',o:['12','6','4','0,66'],a:1,w:'K_BO = Kp·K/Ti = 4×3/2 = 6.'},
+      {q:'Classe 1 répond à une rampe avec…',o:['écart nul','écart de traînage a/K_BO','écart infini','oscillations'],a:1,w:'Écart de traînage a/K_BO.'},
+      {q:'Annuler l’écart d’accélération ?',o:['Kp grand','α≥2','dérivateur','réduire Kp'],a:1,w:'Il faut deux intégrateurs.'}
     ]
   },
   rapidite:{
@@ -1286,21 +1232,22 @@ const ACT={
     level:'Niveau 1 · Découvrir',
     time:'25 min',
     course:'rapidite-cours',
-    notation: NOTATION,
-    goal:'Mesurer t₅% et la bande passante sur la réponse à un échelon, comprendre l’influence du gain et du dépassement.',
+    notation:NOTATION,
+    goal:'Mesurer t₅% et la bande passante sur la réponse à un échelon.',
     steps:[
-      'La rapidité se lit sur la <b>réponse à un échelon</b>. Avec T = 0,5 s, Kp = 2, vérifiez t₅% ≈ 3T et que la bande passante est proche de 1/T.',
-      'Augmentez Kp : t₅% diminue et la bande passante augmente (système plus rapide), mais le dépassement et la marge de phase se dégradent.',
-      'Passez au second ordre avec m = 0,3 : notez le dépassement et le temps de pic.',
-      'Réglez m = 0,69 : vérifiez sur le graphique que t₅%·ω₀ ≈ 3 (temps de réponse réduit minimal du cours).',
-      'Passez m = 1 : t₅%·ω₀ devrait être proche de 5 (le plus rapide sans dépassement).'
+      'La rapidité se lit sur la réponse à un échelon.',
+      'T=0,5 s, Kp=2 : vérifiez t₅% ≈ 3T.',
+      'Augmentez Kp : t₅% diminue, bande passante augmente, marges se dégradent.',
+      'Second ordre m=0,3 : notez dépassement et temps de pic.',
+      'm=0,69 : t₅%·ω₀ ≈ 3 (minimum).',
+      'm=1 : t₅%·ω₀ ≈ 5 (sans dépassement).'
     ],
-    defi:{q:'Premier ordre avec τ = 0,4 s. Estimez t₅% et la bande passante.',a:'<b>t₅% ≈ 3τ = 1,2 s</b> et <b>ω_c = 1/τ = 2,5 rad/s</b>. Ces deux grandeurs sont liées : plus le système est rapide, plus la bande passante est grande.'},
+    defi:{q:'Premier ordre, τ=0,4 s. t₅% et bande passante ?',a:'<b>t₅% ≈ 3τ = 1,2 s</b> et <b>ω_c = 1/τ = 2,5 rad/s</b>.'},
     qcm:[
-      {q:'Sur quelle réponse mesure-t-on classiquement la rapidité ?',o:['Impulsionnelle','Indicielle (échelon)','À une rampe','À un sinus'],a:1,w:'Les indicateurs de rapidité (t₅%, temps de montée, dépassement) sont extraits de la réponse indicielle.'},
-      {q:'Le temps de réponse à 5 % d’un premier ordre de constante τ vaut…',o:['τ','2τ','3τ environ','5τ'],a:2,w:'s(3τ) ≈ 0,95·KA : t₅% ≈ 3τ (précisément ln(20)·τ).'},
-      {q:'La bande passante à −3 dB d’un premier ordre est…',o:['ω_c = 1/τ','ω_c = τ','ω_c = 3τ','ω_c = 1/(3τ)'],a:0,w:'|H(jω)| = K/√(1+(τω)²) = K/√2 → ω = 1/τ.'},
-      {q:'Pour un second ordre, t_réduit = t₅%·ω_n est minimal pour…',o:['m = 0,3','m = 0,69','m = 1','m = 2'],a:1,w:'t_réduit minimum = 3 à ξ = 0,69 ; t_réduit = 5 à ξ = 1.'}
+      {q:'Sur quelle réponse mesure-t-on la rapidité ?',o:['Impulsion','Échelon','Rampe','Sinus'],a:1,w:'Réponse indicielle.'},
+      {q:'t₅% d’un 1er ordre de constante τ ?',o:['τ','2τ','3τ','5τ'],a:2,w:'t₅% ≈ 3τ.'},
+      {q:'Bande passante à −3 dB d’un 1er ordre ?',o:['1/τ','τ','3τ','1/(3τ)'],a:0,w:'ω_c = 1/τ.'},
+      {q:'t_réduit minimal pour…',o:['m=0,3','m=0,69','m=1','m=2'],a:1,w:'t_red = 3 à ξ = 0,69.'}
     ]
   },
   stabilite:{
@@ -1308,316 +1255,315 @@ const ACT={
     level:'Niveau 2 · Comprendre',
     time:'30 min',
     course:'stabilite-cours',
-    notation: NOTATION,
-    goal:'Relier les pôles de la boucle fermée et les marges au comportement du système, en comparant aux cibles (M_G 8–12 dB, M_φ 45–60°).',
+    notation:NOTATION,
+    goal:'Relier pôles BF et marges aux cibles (M_G 8–12 dB, M_φ 45–60°).',
     steps:[
-      'Premier ordre, Kp = 2 : vérifiez que la boucle fermée est stable et lisez les marges. Sont-elles dans les cibles ?',
-      'Augmentez Kp jusqu’à ce que la marge de phase passe sous 45° : plus rapide, plus fragile.',
-      'Continuez jusqu’à l’instabilité : où apparaît la croix rouge dans le plan complexe ?',
-      'Passez au correcteur PI : qu’ajoute-t-il sur la phase de L(jω) ? La marge se dégrade-t-elle ?',
-      'Passez au second ordre m = 0,2 : comparez la marge de phase à m = 1. Lien amortissement / marge.'
+      'Premier ordre Kp=2 : stable, marges ?',
+      'Augmentez Kp : Mφ passe sous 45°.',
+      'Continuez : instabilité, croix rouge.',
+      'PI : ajout de phase, Mφ dégradée.',
+      'Second ordre m=0,2 vs m=1.'
     ],
-    defi:{q:'Mφ = 25°, MG = 5 dB. Robuste au sens du cours ?',a:'Non. Cibles : <b>M_G entre 8 et 12 dB</b>, <b>M_φ entre 45 et 60°</b>. À 25° et 5 dB, le système est stable mais proche de la limite.'},
+    defi:{q:'Mφ=25°, MG=5 dB. Robuste ?',a:'Non. Cibles : M_G 8–12 dB, M_φ 45–60°.'},
     qcm:[
-      {q:'Un système est stable EBSB si…',o:['tous les pôles BF ont une partie réelle < 0','tous les pôles BF ont une partie réelle > 0','les pôles sont sur l’axe imaginaire','la marge de gain est nulle'],a:0,w:'Les pôles de la FTBF doivent être dans le demi-plan gauche strict.'},
-      {q:'La marge de phase vaut…',o:['M_φ = arg L(jωc) − 180°','M_φ = arg L(jωc) + 180°','M_φ = |L(jωc)|','M_φ = −20·log|L(jω₁₈₀)|'],a:1,w:'M_φ = arg F(jω_0dB) + 180°, où ω_0dB vérifie |F(jω)| = 1.'},
-      {q:'La marge de gain vaut…',o:['M_G = −20·log|L(jω₁₈₀)|','M_G = 20·log|L(jωc)|','M_G = 180° + arg L(jωc)','M_G = |L(jω₁₈₀)|'],a:0,w:'M_G = −20·log|F(jω₋₁₈₀°)|, où ω₋₁₈₀° vérifie arg F(jω) = −180°.'},
-      {q:'Marge de gain de 6 dB ?',o:['gain peut être × 2 avant instabilité','système instable','gain peut être ÷ 2','cible du cours'],a:0,w:'6 dB = 20·log₁₀(2). La cible du cours est plutôt 8–12 dB.'}
+      {q:'Stable EBSB si…',o:['pôles BF Re<0','pôles BF Re>0','sur axe imaginaire','marge nulle'],a:0,w:'Demi-plan gauche strict.'},
+      {q:'Marge de phase ?',o:['arg L(jωc)−180°','arg L(jωc)+180°','|L(jωc)|','−20 log|L(jω₁₈₀)|'],a:1,w:'M_φ = arg L(jω_0dB) + 180°.'},
+      {q:'Marge de gain ?',o:['−20 log|L(jω₁₈₀)|','20 log|L(jωc)|','180°+arg L(jωc)','|L(jω₁₈₀)|'],a:0,w:'M_G = −20·log|L(jω₋₁₈₀)|.'},
+      {q:'MG=6 dB ?',o:['gain ×2 avant instabilité','système instable','gain ÷2','cible'],a:0,w:'6 dB = 20 log 2.'}
     ]
   }
 };
 
-/* ===================================================================
-   COURS
-   =================================================================== */
-const COURSE=[
-  {id:'intro',t:'Performances d’un système asservi',h: () => `
-<p>Un <b>système linéaire continu invariant</b> (SLCI) asservi est évalué sur trois grandes performances :</p>
-<ul>
-<li><b>Précision</b> — écart entre consigne et sortie en régime permanent.</li>
-<li><b>Rapidité</b> — vitesse avec laquelle la sortie rejoint sa valeur finale.</li>
-<li><b>Stabilité</b> — capacité de la boucle fermée à converger.</li>
-</ul>
-<h3>Structure d’une boucle d’asservissement</h3>
-${genericLoopSVG(false)}
-<h3>Notations</h3>
-<ul>
-<li><i>G(p)</i> — fonction de transfert du <b>système</b> (procédé).</li>
-<li><i>C(p)</i> — fonction de transfert du <b>correcteur</b>.</li>
-<li><i>L(p) = C(p)·G(p)</i> — <b>fonction de transfert en boucle ouverte</b> (FTBO).</li>
-<li><i>T(p) = L(p)/(1+L(p))</i> — <b>fonction de transfert en boucle fermée</b> (FTBF), formule de Black.</li>
-</ul>
-<p>La <b>classe α</b> de L(p) est le nombre d’intégrateurs (pôles en p = 0) ; le <b>gain K<sub>BO</sub></b> est le gain de la FTBO adapté à sa classe : K<sub>BO</sub> = lim<sub>p→0</sub> p<sup>α</sup>·L(p).</p>
-<div class="retain"><b>À retenir.</b> Précision, rapidité et stabilité ne peuvent pas être optimisées indépendamment : le réglage du correcteur est toujours un compromis.</div>`},
-  {id:'precision-cours',t:'Précision — erreurs et classe',h: () => `
-<h3>Signaux d’entrée et transformées de Laplace</h3>
-<table class="ctable"><thead><tr><th>Entrée</th><th>e(t)</th><th>E(p)</th></tr></thead><tbody>
-<tr><td>Impulsion de Dirac</td><td>a·δ(t)</td><td>a</td></tr>
-<tr><td>Échelon</td><td>a·u(t)</td><td>a/p</td></tr>
-<tr><td>Rampe</td><td>a·t·u(t)</td><td>a/p²</td></tr>
-<tr><td>Parabole</td><td>(a/2)·t²·u(t)</td><td>a/p³</td></tr>
-</tbody></table>
-<h3>Erreur et écart</h3>
-<ul>
-<li><b>Erreur</b> μ(t) = y<sub>cons</sub>(t) − y(t) — différence consigne/sortie ;</li>
-<li><b>Écart</b> ε(t) — grandeur en sortie du comparateur.</li>
-</ul>
-<p>À retour unitaire, ε(p) = μ(p).</p>
-<h3>FTBO et gain K<sub>BO</sub></h3>
-<p>On écrit la FTBO sous la forme :</p>
-<div class="formula math">L(p) = C(p)·G(p) = ${fr('K<sub>BO</sub> (1 + b<sub>1</sub> p + … + b<sub>m</sub> p<sup>m</sup>)', 'p<sup>α</sup> (1 + a<sub>1</sub> p + … + a<sub>k</sub> p<sup>k</sup>)')}</div>
-<p><b>K<sub>BO</sub></b> est le <b>gain de la FTBO</b> — pas le gain Kp du correcteur. α est la <b>classe de L(p)</b>.</p>
-<h3>Écart statique en poursuite</h3>
-<table class="ctable"><thead><tr><th>Entrée (ampl. a)</th><th>α = 0</th><th>α = 1</th><th>α = 2</th></tr></thead><tbody>
-<tr><td>Échelon</td><td>a/(1 + K<sub>BO</sub>)</td><td>0</td><td>0</td></tr>
-<tr><td>Rampe</td><td>∞</td><td>a/K<sub>BO</sub></td><td>0</td></tr>
-<tr><td>Parabole</td><td>∞</td><td>∞</td><td>a/K<sub>BO</sub></td></tr>
-</tbody></table>
-<div class="alert"><h3>⚠ Ne pas confondre Kp et K<sub>BO</sub></h3>
-<p>Kp est le gain du correcteur. K<sub>BO</sub> est le gain de la <b>FTBO</b> L(p) = C(p)·G(p). Pour un correcteur P et un premier ordre : K<sub>BO</sub> = Kp·K. Pour un PI : K<sub>BO</sub> = Kp·K/Ti. C’est K<sub>BO</sub> qui intervient dans les formules d’écart.</p></div>
-<h3>Influence d’une perturbation (régulation)</h3>
-<p>On note F<sub>1</sub>(p) = ${fr('K<sub>1</sub>(1 + …)', 'p<sup>α<sub>1</sub></sup>(1 + …)')} (de l’entrée comparateur à la perturbation) et F<sub>2</sub>(p) = ${fr('K<sub>2</sub>(1 + …)', 'p<sup>α<sub>2</sub></sup>(1 + …)')} (de la perturbation à la sortie).</p>
-<table class="ctable"><thead><tr><th>Perturbation</th><th>α<sub>1</sub> = 0</th><th>α<sub>1</sub> = 1</th><th>α<sub>1</sub> ≥ 2</th></tr></thead><tbody>
-<tr><td>Échelon</td><td>pert·K<sub>2</sub>/(1 + K<sub>1</sub>K<sub>2</sub>)</td><td>0</td><td>0</td></tr>
-<tr><td>Rampe</td><td>∞</td><td>pert/K<sub>1</sub></td><td>0</td></tr>
-<tr><td>Parabole</td><td>∞</td><td>∞</td><td>pert/K<sub>1</sub></td></tr>
-</tbody></table>
-<div class="retain"><b>À retenir.</b> K<sub>BO</sub> = lim<sub>p→0</sub> p<sup>α</sup>·L(p). Un intégrateur dans C(p) fait gagner une classe et améliore la précision, au prix d’une marge de phase plus faible.</div>`},
-  {id:'rapidite-cours',t:'Rapidité — temps de réponse et bande passante',h: () => `
-<p><b>La rapidité se mesure sur la réponse à un échelon</b> (réponse indicielle), dont on tire t₅%, le temps de montée et le temps de pic. Fréquentiellement, c’est la <b>bande passante à −3 dB</b>.</p>
-<h3>Premier ordre</h3>
-<div class="formula math">T(p) = ${fr('K', '1 + τp')} &nbsp;; &nbsp; s(t) = K(1 − e<sup>−t/τ</sup>)</div>
-<ul>
-<li><b>t₅% ≈ 3τ</b> (précisément ln(20)·τ)</li>
-<li><b>t<sub>63%</sub> = τ</b></li>
-<li><b>ω<sub>c</sub> (bande passante −3 dB) = 1/τ</b></li>
-</ul>
-<h3>Second ordre</h3>
-<div class="formula math">T(p) = ${fr('K', '1 + 2mp/ω₀ + p²/ω₀²')}</div>
-<ul>
-<li>Pseudo-pulsation : ω<sub>n</sub> = ω₀√(1 − m²)</li>
-<li>Dépassement : D% = 100·exp(−mπ/√(1 − m²))</li>
-<li>Temps de pic : t<sub>p</sub> = π/ω<sub>n</sub></li>
-<li>Temps de réponse réduit : t<sub>réduit</sub> = t₅%·ω<sub>n</sub> (m &lt; 1) ou t₅%·ω₀ (m ≥ 1)</li>
-</ul>
-<h3>Abaque du temps de réponse réduit</h3>
-${abaqueSVG()}
-<p>Sur l’abaque ci-dessus :</p>
-<ul>
-<li>à <b>ξ = 0,69</b> (point vert), le temps de réponse réduit est <b>minimal</b>, égal à <b>t<sub>réduit</sub> ≈ 3</b> : c’est la réponse la plus rapide avec dépassement ;</li>
-<li>à <b>ξ = 1</b> (point orange), t<sub>réduit</sub> ≈ 5 : c’est la réponse la plus rapide <b>sans dépassement</b>.</li>
-</ul>
-<h3>Lien avec le gain Kp</h3>
-<p>Augmenter Kp accélère la boucle fermée (t₅% diminue, bande passante augmente), mais dégrade le dépassement et la marge de phase.</p>
-<div class="retain"><b>À retenir.</b> t₅% et la bande passante à −3 dB sont les deux indicateurs de rapidité ; ξ ≈ 0,69 est le meilleur compromis.</div>`},
-  {id:'stabilite-cours',t:'Stabilité et marges',h: () => `
-<h3>Critère fondamental</h3>
-<p>Un système bouclé est <b>stable EBSB</b> si tous les pôles de la FTBF ont une partie réelle <b>strictement négative</b>.</p>
-<h3>Marges de stabilité</h3>
-<p>Le point critique −1 correspond à |L| = 1 (0 dB) et arg L = −180°. On définit :</p>
-<div class="formula math">M<sub>G</sub> = −20·log|L(jω<sub>−180°</sub>)| &nbsp;; &nbsp; M<sub>φ</sub> = arg L(jω<sub>0dB</sub>) + 180°</div>
-<p>où ω<sub>−180°</sub> est la pulsation pour laquelle arg L = −180°, et ω<sub>0dB</sub> celle pour laquelle |L| = 1.</p>
-<h3>Lecture graphique sur un exemple</h3>
-<p>Exemple : <i>L(p) = 10 / ((1+p)(1+0,1p)(1+0,05p))</i>.</p>
-${bodeMargesSVG()}
-<p>Sur cet exemple :</p>
-<ul>
-<li>la <b>marge de gain M<sub>G</sub></b> se lit à ω<sub>−180°</sub> ≈ 15 rad/s : c’est la distance verticale entre |L| et 0 dB, soit ≈ 10 dB ;</li>
-<li>la <b>marge de phase M<sub>φ</sub></b> se lit à ω<sub>0dB</sub> ≈ 7,5 rad/s : c’est la distance angulaire entre arg L et −180°, soit ≈ 40°.</li>
-</ul>
-<h3>Cibles usuelles</h3>
-<table class="ctable"><thead><tr><th>Indicateur</th><th>Bon</th><th>Limite</th><th>Mauvais</th></tr></thead><tbody>
-<tr><td>Marge de phase M<sub>φ</sub></td><td>&gt; 45°</td><td>30° à 45°</td><td>&lt; 30°</td></tr>
-<tr><td>Marge de gain M<sub>G</sub></td><td>8 à 12 dB</td><td>6 à 8 dB</td><td>&lt; 6 dB</td></tr></tbody></table>
-<h3>Influence du gain</h3>
-<p>Augmenter Kp décale le module vers le haut : ω<sub>0dB</sub> augmente et arg L(ω<sub>0dB</sub>) est plus bas → M<sub>φ</sub> diminue.</p>
-<div class="retain"><b>À retenir.</b> Le critère algébrique est la position des pôles ; le critère graphique est la lecture des marges sur le Bode.</div>`},
-  {id:'bilan',t:'Bilan et vocabulaire',h: () => `
-<h3>Choisir un compromis</h3>
-<table class="ctable"><thead><tr><th>Correcteur</th><th>Précision</th><th>Rapidité</th><th>Stabilité</th></tr></thead><tbody>
-<tr><td><b>P</b></td><td>réduite par Kp (K<sub>BO</sub> augmente)</td><td>améliorée par Kp</td><td>dégradée par Kp</td></tr>
-<tr><td><b>PI</b></td><td>position annulée (α = 1)</td><td>légèrement dégradée</td><td>marge plus faible</td></tr>
-<tr><td><b>PID</b></td><td>position annulée (α = 1)</td><td>améliorée (Td)</td><td>Mφ restaurée par Td</td></tr></tbody></table>
-<h3>Vocabulaire</h3>
-<dl class="gloss">
-<dt>G(p)</dt><dd>Fonction de transfert du système (procédé).</dd>
-<dt>C(p)</dt><dd>Fonction de transfert du correcteur.</dd>
-<dt>L(p) = C(p)·G(p)</dt><dd>FTBO : sa classe et son gain K<sub>BO</sub> gouvernent les écarts et la stabilité.</dd>
-<dt>T(p)</dt><dd>FTBF = L(p)/(1+L(p)) ; ses pôles déterminent la stabilité réelle.</dd>
-<dt>Classe α</dt><dd>Nombre d’intégrateurs dans L(p).</dd>
-<dt>Gain K<sub>BO</sub></dt><dd>Gain de la FTBO : K<sub>BO</sub> = lim<sub>p→0</sub> p<sup>α</sup>·L(p).</dd>
-<dt>Écart statique</dt><dd>ε<sub>s</sub> = lim ε(t) en réponse à un échelon.</dd>
-<dt>Écart de traînage</dt><dd>Écart résiduel en réponse à une rampe.</dd>
-<dt>Temps de réponse à 5 %</dt><dd>Instant à partir duquel |s − s<sub>∞</sub>| ≤ 5 % |s<sub>∞</sub>|.</dd>
-<dt>Bande passante à −3 dB</dt><dd>Intervalle [0, ω<sub>c</sub>] où |T(jω)| ≥ |T(0)|/√2.</dd>
-<dt>Marge de phase</dt><dd>M<sub>φ</sub> = arg L(jω<sub>0dB</sub>) + 180°.</dd>
-<dt>Marge de gain</dt><dd>M<sub>G</sub> = −20·log|L(jω<sub>−180°</sub>)|.</dd>
-</dl>
-<div class="retain"><b>À retenir.</b> Précision, rapidité et stabilité sont liées : aucun réglage ne peut les optimiser toutes indépendamment.</div>`}
+/* ====== COURS ====== */
+var COURSE=[
+  {id:'intro',t:'Performances d’un système asservi',h:function(){return ''
+    +'<p>Un <b>SLCI</b> asservi est évalué sur trois performances :</p>'
+    +'<ul><li><b>Précision</b> — écart en régime permanent</li><li><b>Rapidité</b> — vitesse de convergence</li><li><b>Stabilité</b> — convergence de la boucle fermée</li></ul>'
+    +'<h3>Schéma bloc</h3>'
+    + genericLoopSVG(false)
+    +'<h3>Notations</h3>'
+    +'<ul><li><i>G(p)</i> : système (procédé)</li><li><i>C(p)</i> : correcteur</li><li><i>L(p) = C(p)·G(p)</i> : FTBO</li><li><i>T(p) = L(p)/(1+L(p))</i> : FTBF (Black)</li></ul>'
+    +'<p>Classe <b>α</b> de L(p) = nombre d’intégrateurs. Gain <b>K<sub>BO</sub></b> = lim<sub>p→0</sub> p<sup>α</sup>·L(p).</p>'
+    +'<div class="retain"><b>À retenir.</b> Précision, rapidité, stabilité ne peuvent pas être optimisées indépendamment.</div>';
+  }},
+  {id:'precision-cours',t:'Précision — erreurs et classe',h:function(){return ''
+    +'<h3>Signaux d’entrée et transformées de Laplace</h3>'
+    +'<table class="ctable"><thead><tr><th>Entrée</th><th>e(t)</th><th>E(p)</th></tr></thead><tbody>'
+    +'<tr><td>Impulsion Dirac</td><td>a·δ(t)</td><td>a</td></tr>'
+    +'<tr><td>Échelon</td><td>a·u(t)</td><td>a/p</td></tr>'
+    +'<tr><td>Rampe</td><td>a·t·u(t)</td><td>a/p²</td></tr>'
+    +'<tr><td>Parabole</td><td>(a/2)·t²·u(t)</td><td>a/p³</td></tr>'
+    +'</tbody></table>'
+    +'<h3>Erreur et écart</h3>'
+    +'<ul><li><b>Erreur</b> μ(t) = y<sub>cons</sub>(t) − y(t)</li><li><b>Écart</b> ε(t) = sortie du comparateur</li></ul>'
+    +'<p>À retour unitaire : ε(p) = μ(p).</p>'
+    +'<h3>Gain de la FTBO</h3>'
+    +'<div class="formula math">L(p) = '+fr('K<sub>BO</sub>(1+…)','p<sup>α</sup>(1+…)')+'</div>'
+    +'<div class="alert"><h3>⚠ K<sub>BO</sub> ≠ Kp</h3>'
+    +'<p>K<sub>BO</sub> est le gain de la FTBO L(p) = C(p)·G(p). Pour P : K<sub>BO</sub> = Kp·K. Pour PI : K<sub>BO</sub> = Kp·K/Ti.</p></div>'
+    +'<h3>Écart en poursuite</h3>'
+    +'<table class="ctable"><thead><tr><th>Entrée (a)</th><th>α=0</th><th>α=1</th><th>α=2</th></tr></thead><tbody>'
+    +'<tr><td>Échelon</td><td>a/(1+K<sub>BO</sub>)</td><td>0</td><td>0</td></tr>'
+    +'<tr><td>Rampe</td><td>∞</td><td>a/K<sub>BO</sub></td><td>0</td></tr>'
+    +'<tr><td>Parabole</td><td>∞</td><td>∞</td><td>a/K<sub>BO</sub></td></tr>'
+    +'</tbody></table>'
+    +'<h3>Perturbation (régulation)</h3>'
+    +'<p>F<sub>1</sub> = C(p) (classe α₁, gain K₁), F<sub>2</sub> = G(p) (classe α₂, gain K₂).</p>'
+    +'<table class="ctable"><thead><tr><th>Perturbation</th><th>α₁=0</th><th>α₁=1</th><th>α₁≥2</th></tr></thead><tbody>'
+    +'<tr><td>Échelon</td><td>pert·K₂/(1+K₁K₂)</td><td>0</td><td>0</td></tr>'
+    +'<tr><td>Rampe</td><td>∞</td><td>pert/K₁</td><td>0</td></tr></tbody></table>'
+    +'<div class="retain"><b>À retenir.</b> K<sub>BO</sub> = lim p^α·L(p). Un intégrateur fait gagner une classe.</div>';
+  }},
+  {id:'rapidite-cours',t:'Rapidité — réponse indicielle',h:function(){return ''
+    +'<p><b>La rapidité se mesure sur la réponse à un échelon</b> : t₅%, temps de montée, temps de pic. Fréquentiellement : bande passante à −3 dB.</p>'
+    +'<h3>Premier ordre</h3>'
+    +'<div class="formula math">T(p) = '+fr('K','1+τp')+'</div>'
+    +'<ul><li>t₅% ≈ 3τ</li><li>t<sub>63%</sub> = τ</li><li>ω<sub>c</sub> (bande passante −3 dB) = 1/τ</li></ul>'
+    +'<h3>Second ordre</h3>'
+    +'<div class="formula math">T(p) = '+fr('K','1+2mp/ω₀+p²/ω₀²')+'</div>'
+    +'<ul><li>ω<sub>n</sub> = ω₀√(1−m²)</li><li>D% = 100·exp(−mπ/√(1−m²))</li><li>t<sub>pic</sub> = π/ω<sub>n</sub></li><li>t<sub>réduit</sub> = t₅%·ω<sub>n</sub></li></ul>'
+    +'<h3>Abaque du temps de réponse réduit</h3>'
+    + abaqueSVG()
+    +'<ul><li><b>ξ = 0,69</b> : t<sub>réduit</sub> minimal ≈ 3 (le plus rapide avec dépassement)</li><li><b>ξ = 1</b> : t<sub>réduit</sub> ≈ 5 (le plus rapide sans dépassement)</li></ul>'
+    +'<div class="retain"><b>À retenir.</b> t₅% et bande passante à −3 dB = indicateurs de rapidité.</div>';
+  }},
+  {id:'stabilite-cours',t:'Stabilité et marges',h:function(){return ''
+    +'<h3>Critère</h3>'
+    +'<p>Stable EBSB si tous les pôles de la FTBF ont une partie réelle strictement négative.</p>'
+    +'<h3>Marges</h3>'
+    +'<div class="formula math">M<sub>G</sub> = −20·log|L(jω<sub>−180°</sub>)| ; M<sub>φ</sub> = arg L(jω<sub>0dB</sub>) + 180°</div>'
+    +'<h3>Lecture graphique (exemple)</h3>'
+    +'<p><i>L(p) = 10 / ((1+p)(1+0,1p)(1+0,05p))</i></p>'
+    + bodeMargesSVG()
+    +'<p>M<sub>G</sub> se lit à ω<sub>−180°</sub> ; M<sub>φ</sub> se lit à ω<sub>0dB</sub>.</p>'
+    +'<h3>Cibles</h3>'
+    +'<table class="ctable"><thead><tr><th>Indicateur</th><th>Bon</th><th>Limite</th><th>Mauvais</th></tr></thead><tbody>'
+    +'<tr><td>M<sub>φ</sub></td><td>&gt; 45°</td><td>30° à 45°</td><td>&lt; 30°</td></tr>'
+    +'<tr><td>M<sub>G</sub></td><td>8 à 12 dB</td><td>6 à 8 dB</td><td>&lt; 6 dB</td></tr>'
+    +'</tbody></table>'
+    +'<div class="retain"><b>À retenir.</b> Algébrique : position des pôles. Graphique : marges sur le Bode.</div>';
+  }},
+  {id:'bilan',t:'Bilan et vocabulaire',h:function(){return ''
+    +'<h3>Choix du correcteur</h3>'
+    +'<table class="ctable"><thead><tr><th>Correcteur</th><th>Précision</th><th>Rapidité</th><th>Stabilité</th></tr></thead><tbody>'
+    +'<tr><td><b>P</b></td><td>réduite par Kp</td><td>améliorée</td><td>dégradée</td></tr>'
+    +'<tr><td><b>PI</b></td><td>position annulée (α=1)</td><td>légèrement dégradée</td><td>marge plus faible</td></tr>'
+    +'<tr><td><b>PID</b></td><td>position annulée</td><td>améliorée (Td)</td><td>Mφ restaurée</td></tr>'
+    +'</tbody></table>'
+    +'<h3>Vocabulaire</h3>'
+    +'<dl class="gloss">'
+    +'<dt>G(p)</dt><dd>Système (procédé).</dd>'
+    +'<dt>C(p)</dt><dd>Correcteur.</dd>'
+    +'<dt>L(p)</dt><dd>FTBO = C(p)·G(p).</dd>'
+    +'<dt>T(p)</dt><dd>FTBF = L(p)/(1+L(p)).</dd>'
+    +'<dt>Classe α</dt><dd>Nombre d’intégrateurs dans L(p).</dd>'
+    +'<dt>K<sub>BO</sub></dt><dd>Gain de la FTBO = lim p^α·L(p).</dd>'
+    +'<dt>t₅%</dt><dd>Instant à partir duquel |s−s<sub>∞</sub>| ≤ 5% |s<sub>∞</sub>|.</dd>'
+    +'<dt>M<sub>φ</sub></dt><dd>arg L(jω<sub>0dB</sub>) + 180°.</dd>'
+    +'<dt>M<sub>G</sub></dt><dd>−20·log|L(jω<sub>−180°</sub>)|.</dd>'
+    +'</dl>'
+    +'<div class="retain"><b>À retenir.</b> Compromis toujours nécessaire.</div>';
+  }}
 ];
 
-/* ===================== état activité & cours ===================== */
-const AS={key:'precision',tab:'steps',open:false,st:lsGet(KEYS.act,{})};
-const CS={open:false,id:'intro'};
+/* ====== état activité / cours ====== */
+var AS={key:'precision',tab:'steps',open:false,st:lsGet(KEYS.act,{})};
+var CS={open:false,id:'intro'};
 
 function actSave(){lsSet(KEYS.act,AS.st);}
-function actState(){return AS.st[AS.key]||(AS.st[AS.key]={a:{},checked:false,shown:false});}
-function actScore(a){const s=actState();return a.qcm.filter((q,i)=>s.a[i]===q.a).length;}
-function courseSection(id){return COURSE.find(s=>s.id===id)||COURSE[0];}
+function actState(){
+  if (!AS.st[AS.key])AS.st[AS.key]={a:{},checked:false,shown:false};
+  return AS.st[AS.key];
+}
+function actScore(a){
+  var s=actState();
+  var n=0;
+  for (var i=0;i<a.qcm.length;i++)if(s.a[i]===a.qcm[i].a)n++;
+  return n;
+}
+function courseSection(id){
+  for (var i=0;i<COURSE.length;i++)if(COURSE[i].id===id)return COURSE[i];
+  return COURSE[0];
+}
 
 function renderAct(){
-  const box=$('#act'),btn=$('#bAct');
+  var box=$('#act'), btn=$('#bAct');
   btn.setAttribute('aria-pressed',AS.open?'true':'false');
-  btn.classList.toggle('pri',AS.open);
+  if (AS.open)btn.classList.add('pri');else btn.classList.remove('pri');
   box.hidden=!AS.open;
   if (!AS.open){box.innerHTML='';return;}
-  const a=ACT[AS.key];
-  const oldB=box.querySelector('.pbody'),tag=AS.key+'|'+AS.tab;
-  const keep=oldB&&box.dataset.k===tag?oldB.scrollTop:0;
-  box.dataset.k=tag;
+  var a=ACT[AS.key];
   box.innerHTML='';
-  const nq=a.qcm.length;
-  box.append(h('div',{class:'phead'},
+  var nq=a.qcm.length;
+  box.appendChild(h('div',{class:'phead'},
     h('b',null,'Activité'),
     h('span',{class:'sub'},a.title),
-    h('button',{class:'btn sm',type:'button',onclick:()=>{AS.open=false;renderAct();}},'Fermer')));
-  box.append(h('div',{class:'tabs',role:'tablist'},
-    h('button',{type:'button',role:'tab','aria-selected':AS.tab==='steps'?'true':'false',onclick:()=>{AS.tab='steps';renderAct();}},'Consignes'),
-    h('button',{type:'button',role:'tab','aria-selected':AS.tab==='qcm'?'true':'false',onclick:()=>{AS.tab='qcm';renderAct();}},'Questions ('+nq+')')));
-  const body=h('div',{class:'pbody'});
+    h('button',{class:'btn sm',type:'button',onclick:function(){AS.open=false;renderAct();}},'Fermer')));
+  var tabSteps=h('button',{type:'button',class:'',role:'tab','aria-selected':AS.tab==='steps'?'true':'false',onclick:function(){AS.tab='steps';renderAct();}},'Consignes');
+  var tabQcm=h('button',{type:'button',role:'tab','aria-selected':AS.tab==='qcm'?'true':'false',onclick:function(){AS.tab='qcm';renderAct();}},'Questions ('+nq+')');
+  if (AS.tab==='steps')tabSteps.setAttribute('aria-selected','true');
+  else tabQcm.setAttribute('aria-selected','true');
+  box.appendChild(h('div',{class:'tabs',role:'tablist'},tabSteps,tabQcm));
+  var body=h('div',{class:'pbody'});
   if (AS.tab==='steps'){
-    body.append(h('p',{class:'small'},a.level+' · environ '+a.time));
-    if (a.notation)body.append(h('div',{class:'notation',html:a.notation}));
-    body.append(h('div',{class:'goal'},h('b',null,'Objectif. '),a.goal));
-    body.append(h('ol',{class:'steps'},a.steps.map(s=>h('li',{html:s}))));
-    body.append(h('div',{class:'defi'},
+    body.appendChild(h('p',{class:'small'},a.level+' · environ '+a.time));
+    if (a.notation)body.appendChild(h('div',{class:'notation',html:a.notation}));
+    body.appendChild(h('div',{class:'goal'},h('b',null,'Objectif. '),a.goal));
+    body.appendChild(h('ol',{class:'steps'},a.steps.map(function(s){return h('li',{html:s});})));
+    body.appendChild(h('div',{class:'defi'},
       h('b',null,'Défi'),
       h('p',{html:a.defi.q}),
       h('details',null,h('summary',null,'Voir la réponse'),h('p',{html:a.defi.a}))));
-    if (a.course)body.append(h('p',null,h('button',{class:'btn',type:'button',onclick:()=>openCourse(a.course)},'Voir le cours : '+courseSection(a.course).t)));
-    body.append(h('p',null,h('button',{class:'btn pri',type:'button',onclick:()=>{AS.tab='qcm';renderAct();}},'Passer aux questions')));
+    if (a.course)body.appendChild(h('p',null,h('button',{class:'btn',type:'button',onclick:function(){openCourse(a.course);}},'Voir le cours')));
+    body.appendChild(h('p',null,h('button',{class:'btn pri',type:'button',onclick:function(){AS.tab='qcm';renderAct();}},'Passer aux questions')));
   } else {
-    const s=actState(),show=s.checked||s.shown;
-    a.qcm.forEach((q,i)=>{
-      const fs=h('fieldset',{class:'q'},h('legend',null,(i+1)+'. '+q.q));
-      q.o.forEach((o,j)=>{
-        const good=show&&j===q.a;
-        const bad=s.checked&&!s.shown&&s.a[i]===j&&j!==q.a;
-        const inp=h('input',{type:'radio',name:'q'+i,checked:show&&s.shown?j===q.a:s.a[i]===j,disabled:show});
-        inp.addEventListener('change',()=>{s.a[i]=j;actSave();renderAct();});
-        fs.append(h('label',{class:'opt'+(good?' good':'')+(bad?' bad':'')},inp,h('span',null,o+(good?'  ✓':'')+(bad?'  ✗':''))));
-      });
-      if (show){const miss=s.a[i]==null&&!s.shown;fs.append(h('p',{class:'why'},(miss?'Sans réponse. ':'')+q.w));}
-      body.append(fs);
-    });
-    const done=Object.keys(s.a).length;
-    body.append(h('p',{class:'small'},s.shown?'Réponses affichées.':s.checked?'':done+' réponse(s) sur '+nq+'.'));
-    if (s.checked&&!s.shown)body.append(h('p',{class:'score'},'Score : '+actScore(a)+' / '+nq));
-    const row=h('div',{class:'files'});
-    if (!show)row.append(h('button',{class:'btn pri',type:'button',onclick:()=>{s.checked=true;actSave();renderAct();}},'Corriger'));
-    row.append(h('button',{class:'btn',type:'button',onclick:()=>{s.shown=true;actSave();renderAct();}},'Afficher les réponses'));
-    if (show)row.append(h('button',{class:'btn',type:'button',onclick:()=>{AS.st[AS.key]={a:{},checked:false,shown:false};actSave();renderAct();}},'Recommencer'));
-    body.append(row);
+    var s=actState(), show=s.checked||s.shown;
+    for (var i=0;i<a.qcm.length;i++){
+      (function(i){
+        var q=a.qcm[i];
+        var fs=h('fieldset',{class:'q'},h('legend',null,(i+1)+'. '+q.q));
+        for (var j=0;j<q.o.length;j++){
+          (function(j){
+            var good=show&&j===q.a;
+            var bad=s.checked&&!s.shown&&s.a[i]===j&&j!==q.a;
+            var inp=h('input',{type:'radio',name:'q'+i});
+            inp.checked=show&&s.shown?j===q.a:s.a[i]===j;
+            inp.disabled=!!show;
+            inp.addEventListener('change',function(){s.a[i]=j;actSave();renderAct();});
+            var cls='opt';
+            if (good)cls+=' good';
+            if (bad)cls+=' bad';
+            fs.appendChild(h('label',{class:cls},inp,h('span',null,q.o[j]+(good?'  ✓':'')+(bad?'  ✗':''))));
+          })(j);
+        }
+        if (show){
+          var miss=s.a[i]==null&&!s.shown;
+          fs.appendChild(h('p',{class:'why'},(miss?'Sans réponse. ':'')+q.w));
+        }
+        body.appendChild(fs);
+      })(i);
+    }
+    var done=0;
+    for (var k in s.a)if(s.a[k]!=null)done++;
+    body.appendChild(h('p',{class:'small'},s.shown?'Réponses affichées.':s.checked?'':done+' réponse(s) sur '+nq+'.'));
+    if (s.checked&&!s.shown)body.appendChild(h('p',{class:'score'},'Score : '+actScore(a)+' / '+nq));
+    var row=h('div',{class:'files'});
+    if (!show)row.appendChild(h('button',{class:'btn pri',type:'button',onclick:function(){s.checked=true;actSave();renderAct();}},'Corriger'));
+    row.appendChild(h('button',{class:'btn',type:'button',onclick:function(){s.shown=true;actSave();renderAct();}},'Afficher les réponses'));
+    if (show)row.appendChild(h('button',{class:'btn',type:'button',onclick:function(){AS.st[AS.key]={a:{},checked:false,shown:false};actSave();renderAct();}},'Recommencer'));
+    body.appendChild(row);
   }
-  box.append(body);
-  body.scrollTop=keep;
+  box.appendChild(body);
 }
 
 function renderCourse(){
-  const box=$('#course'),btn=$('#bCourse'),work=$('#work'),modes=$('#modes');
+  var box=$('#course'), btn=$('#bCourse'), work=$('#work'), modes=$('#modes');
   btn.setAttribute('aria-pressed',CS.open?'true':'false');
-  btn.classList.toggle('pri',CS.open);
-  box.hidden=!CS.open;work.hidden=CS.open;modes.hidden=CS.open;
+  if (CS.open)btn.classList.add('pri');else btn.classList.remove('pri');
+  box.hidden=!CS.open;
+  work.hidden=CS.open;
+  modes.hidden=CS.open;
   if (!CS.open){box.innerHTML='';return;}
   box.innerHTML='';
-  const cur=courseSection(CS.id),idx=COURSE.indexOf(cur);
-  const go=id=>{CS.id=id;renderCourse();};
-  const nav=h('nav',{class:'ctoc','aria-label':'Sommaire du cours'},COURSE.map((s,i)=>
-    h('button',{type:'button',class:s.id===cur.id?'on':'','aria-current':s.id===cur.id?'true':'false',onclick:()=>go(s.id)},(i+1)+'. '+s.t)));
-  const sel=h('select',{class:'ctoc-sel','aria-label':'Choisir une section',onchange:e=>go(e.target.value)},
-    COURSE.map((s,i)=>h('option',{value:s.id,selected:s.id===cur.id},(i+1)+'. '+s.t)));
-  const art=h('article',{class:'cbody'});
-  art.append(h('p',{class:'ckick'},'Cours · section '+(idx+1)+' sur '+COURSE.length));
-  art.append(h('h2',null,cur.t));
-  const content=typeof cur.h==='function'?cur.h():cur.h;
-  art.append(h('div',{class:'math',html:content}));
-  art.append(h('div',{class:'cpn'},
-    idx>0?h('button',{class:'btn',type:'button',onclick:()=>go(COURSE[idx-1].id)},'← '+COURSE[idx-1].t):h('span'),
-    idx<COURSE.length-1?h('button',{class:'btn pri',type:'button',onclick:()=>go(COURSE[idx+1].id)},COURSE[idx+1].t+' →'):h('span')));
-  const top=h('div',{class:'ctop'},
+  var cur=courseSection(CS.id);
+  var idx=COURSE.indexOf(cur);
+  var nav=h('nav',{class:'ctoc','aria-label':'Sommaire'},COURSE.map(function(s,i){
+    return h('button',{type:'button',class:s.id===cur.id?'on':'',onclick:function(){CS.id=s.id;renderCourse();}},(i+1)+'. '+s.t);
+  }));
+  var sel=h('select',{class:'ctoc-sel',onchange:function(e){CS.id=e.target.value;renderCourse();}},
+    COURSE.map(function(s,i){return h('option',{value:s.id,selected:s.id===cur.id},(i+1)+'. '+s.t);}));
+  var art=h('article',{class:'cbody'});
+  art.appendChild(h('p',{class:'ckick'},'Cours · section '+(idx+1)+' sur '+COURSE.length));
+  art.appendChild(h('h2',null,cur.t));
+  var content;
+  try{content=typeof cur.h==='function'?cur.h():cur.h;}
+  catch(e){content='<p style="color:#c0281f">Erreur dans la section : '+e.message+'</p>';}
+  art.appendChild(h('div',{class:'math',html:content}));
+  var cpn=h('div',{class:'cpn'});
+  if (idx>0)cpn.appendChild(h('button',{class:'btn',type:'button',onclick:function(){CS.id=COURSE[idx-1].id;renderCourse();}},'← '+COURSE[idx-1].t));
+  else cpn.appendChild(h('span'));
+  if (idx<COURSE.length-1)cpn.appendChild(h('button',{class:'btn pri',type:'button',onclick:function(){CS.id=COURSE[idx+1].id;renderCourse();}},COURSE[idx+1].t+' →'));
+  else cpn.appendChild(h('span'));
+  art.appendChild(cpn);
+  var top=h('div',{class:'ctop'},
     h('b',null,'Cours : performances des SLCI'),
-    h('button',{class:'btn pri sm',type:'button',onclick:()=>{CS.open=false;renderCourse();}},'Retour à l’atelier'));
-  box.append(top,sel,h('div',{class:'cwrap'},nav,art));
+    h('button',{class:'btn pri sm',type:'button',onclick:function(){CS.open=false;renderCourse();}},'Retour'));
+  box.appendChild(top);
+  box.appendChild(sel);
+  box.appendChild(h('div',{class:'cwrap'},nav,art));
   box.scrollTop=0;
 }
 function openCourse(id){if(id)CS.id=id;CS.open=true;renderCourse();}
 
-/* ===================== aide ===================== */
-function closeDlg(){const d=$('#dlg');d.hidden=true;d.innerHTML='';}
+/* ====== aide ====== */
+function closeDlg(){var d=$('#dlg');d.hidden=true;d.innerHTML='';}
 function openDlg(title,body){
-  const d=$('#dlg');d.innerHTML='';d.hidden=false;
-  d.append(h('div',{class:'dlgbox',role:'dialog','aria-label':title},
+  var d=$('#dlg');d.innerHTML='';d.hidden=false;
+  d.appendChild(h('div',{class:'dlgbox',role:'dialog'},
     h('header',null,h('b',null,title),h('button',{class:'btn sm',type:'button',onclick:closeDlg},'Fermer')),
     h('div',{class:'dbody'},body)));
-  d.onclick=ev=>{if(ev.target===d)closeDlg();};
+  d.onclick=function(ev){if(ev.target===d)closeDlg();};
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#dlg').hidden)closeDlg();});
-$('#bHelp').addEventListener('click',()=>{
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#dlg').hidden)closeDlg();});
+$('#bHelp').addEventListener('click',function(){
   openDlg('Aide',h('div',{html:
-    '<p>Page interactive sur les <b>performances des SLCI</b> :</p>'+
-    '<ul>'+
-    '<li><b>Précision</b> — écarts en régime permanent (Dirac, échelon, rampe, parabole) ; influence de la classe α et du gain K_BO de la FTBO ; perturbation en échelon.</li>'+
-    '<li><b>Rapidité</b> — t₅% et bande passante à −3 dB sur la réponse à un échelon.</li>'+
-    '<li><b>Stabilité</b> — pôles BF, marges de gain et de phase.</li>'+
-    '</ul>'+
-    '<h3>Notations</h3>'+
-    '<p><b>G(p)</b> : système ; <b>C(p)</b> : correcteur ; <b>L(p) = C(p)·G(p)</b> : FTBO ; <b>T(p) = L(p)/(1+L(p))</b> : FTBF.</p>'+
-    '<h3>Point clé</h3>'+
-    '<p>Dans le tableau des écarts, le gain utilisé est <b>K_BO = lim<sub>p→0</sub> p<sup>α</sup>·L(p)</b>, gain de la FTBO. Ce n’est PAS Kp.</p>'+
-    '<h3>Perturbation</h3>'+
-    '<p>La perturbation pert(t) démarre en régime permanent (à t_pert ≈ 0,85·t_settling) pour que son effet soit visible.</p>'}));
+    '<p>Page interactive sur les <b>performances des SLCI</b> : Précision (écarts, K_BO), Rapidité (t₅%, bande passante), Stabilité (pôles BF, marges).</p>'
+    +'<h3>Notations</h3>'
+    +'<p><b>G(p)</b> : système ; <b>C(p)</b> : correcteur ; <b>L(p) = C(p)·G(p)</b> : FTBO ; <b>T(p)</b> : FTBF.</p>'
+    +'<h3>Point clé</h3>'
+    +'<p>Dans le tableau des écarts, <b>K_BO = lim<sub>p→0</sub> p<sup>α</sup>·L(p)</b> est le gain de la FTBO. Ce n’est PAS Kp.</p>'
+    +'<h3>Perturbation</h3>'
+    +'<p>pert(t) démarre en régime permanent pour que son effet soit visible.</p>'}));
 });
 
-/* ===================== rendu ===================== */
+/* ====== rendu ====== */
 function renderTabs(){
-  const seg=$('#tabs');seg.innerHTML='';
-  TABS.forEach(t=>seg.append(h('button',{type:'button',role:'tab','aria-pressed':t.id===CUR?'true':'false',onclick:()=>{
-    CUR=t.id;AS.key=t.id;AS.tab='steps';render();
-  }},t.t)));
+  var seg=$('#tabs');seg.innerHTML='';
+  TABS.forEach(function(t){
+    var b=h('button',{type:'button',role:'tab','aria-pressed':t.id===CUR?'true':'false',onclick:function(){
+      CUR=t.id;AS.key=t.id;AS.tab='steps';
+      render();
+    }},t.t);
+    seg.appendChild(b);
+  });
 }
 function render(){
   renderTabs();
-  $('#hint').textContent=TABS.find(t=>t.id===CUR).hint;
-  const root=$('#ws');root.innerHTML='';
+  var hint=$('#hint');
+  for (var i=0;i<TABS.length;i++)if(TABS[i].id===CUR)hint.textContent=TABS[i].hint;
+  var root=$('#ws');root.innerHTML='';
   if (CUR==='precision')mountPrecision(root);
   else if (CUR==='rapidite')mountRapidite(root);
   else mountStabilite(root);
   renderAct();
 }
 
-$('#bAct').addEventListener('click',()=>{
+$('#bAct').addEventListener('click',function(){
   if (CS.open){CS.open=false;renderCourse();}
   AS.open=!AS.open;
   renderAct();
 });
-$('#bCourse').addEventListener('click',()=>{
+$('#bCourse').addEventListener('click',function(){
   CS.open=!CS.open;
   renderCourse();
 });
 
-/* ===================== démarrage ===================== */
-window.onerror=function(msg,src,line,col,err){
-  console.error('ERREUR JS :', msg, 'ligne', line, 'col', col, err);
-  const ws=document.getElementById('ws');
-  if (ws) ws.innerHTML='<div style="padding:20px;background:#fff3cd;border:2px solid #c00;border-radius:8px;font-family:monospace;font-size:13px;line-height:1.5;margin:12px"><b>Erreur JavaScript interceptée :</b><br>'+msg+'<br><small>ligne '+line+', colonne '+col+'</small><br><br><b>Envoie-moi ce message.</b></div>';
-};
-AS.open=!isSmall();
-AS.key=CUR;
-try { render(); } catch(e) {
-  console.error(e);
-  const ws=document.getElementById('ws');
-  if (ws) ws.innerHTML='<div style="padding:20px;background:#fff3cd;border:2px solid #c00;border-radius:8px;font-family:monospace;font-size:13px;line-height:1.5;margin:12px"><b>Erreur au démarrage :</b><br>'+(e.message||e)+'<br><pre style="white-space:pre-wrap;font-size:11px">'+(e.stack||'')+'</pre></div>';
+/* ====== démarrage ====== */
+try{
+  AS.open=!isSmall();
+  AS.key=CUR;
+  render();
+  var boot=document.getElementById('boot');
+  if (boot)boot.style.display='none';
+}catch(e){
+  var boot2=document.getElementById('boot');
+  if (boot2){
+    boot2.innerHTML='<div style="padding:20px;max-width:600px;background:#fff5d6;border:2px solid #c00;border-radius:8px;font-family:monospace;font-size:13px;line-height:1.5"><b>Erreur au démarrage :</b><br><br>'+e.message+'<br><br><pre style="white-space:pre-wrap;font-size:11px;max-height:200px;overflow:auto">'+(e.stack||'')+'</pre><br><b>Copie ce message pour diagnostic.</b></div>';
+    boot2.style.background='#f8f8f8';
+  }
+  throw e;
 }
+})();
 </script>
 </body>
 </html>
