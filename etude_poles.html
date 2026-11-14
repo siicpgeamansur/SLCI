@@ -150,6 +150,8 @@ fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
 }
 @media (prefers-reduced-motion:no-preference){.btn{transition:border-color .12s,background .12s}}
 </style>
+</head>
+<body>
 <div id="app">
   <header class="band"><div class="inner row">
     <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><line x1="2" y1="13" x2="24" y2="13" stroke="#5a6068" stroke-width="1"/><line x1="13" y1="2" x2="13" y2="24" stroke="#5a6068" stroke-width="1"/><g stroke="var(--accent)" stroke-width="2"><line x1="6" y1="7" x2="10" y2="11"/><line x1="10" y1="7" x2="6" y2="11"/></g><g stroke="var(--accent)" stroke-width="2"><line x1="6" y1="17" x2="10" y2="21"/><line x1="10" y1="17" x2="6" y2="21"/></g><circle cx="19" cy="9" r="2" fill="none" stroke="var(--ok)" stroke-width="1.6"/></svg><span>Atelier Étude des pôles <small>SII · CPGE</small></span></div>
@@ -1002,15 +1004,15 @@ function mountQ6(root) {
     for (let i = 1; i < n; i++) A[i][i - 1] = 1;
     const E = expm(A.map(r => r.map(v => v * dt)), n);
     let x = new Array(n).fill(0); x[0] = 1;
-    const t = [], y = [];
+    const times = [], y = [];
     for (let s = 0; s <= N; s++) {
-      t.push(s * dt); y.push(ft.k * x[n - 1]);
+      times.push(s * dt); y.push(ft.k * x[n - 1]);
       if (s === N) break;
       const nx = new Array(n).fill(0);
       for (let i = 0; i < n; i++) { let a = 0; for (let j = 0; j < n; j++) a += E[i][j] * x[j]; nx[i] = a; }
       x = nx;
     }
-    return { t, y };
+    return { t: times, y };
   }
   function autoT(list) {
     const stab = [], uns = [];
