@@ -1,0 +1,1195 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Atelier Étude des pôles</title><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
+  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;
+  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-ui)}
+button,input,select,textarea{font:inherit;color:inherit}
+.inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+.band{background:var(--bar);border-bottom:1px solid var(--line);flex:none}
+.row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:7px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.01em}
+.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.files{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.sm{padding:3px 8px;font-size:12px}
+:is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;padding:7px 14px;font-weight:500;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.work{flex:1;min-height:0;display:flex;gap:10px;padding-block:10px}
+#stage{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+#hint{flex:none;padding:6px 12px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
+#scroller{flex:1;min-height:0;overflow:auto}
+.phead{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex:none}
+.phead b{font-size:15px}
+.phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.pbody{overflow:auto;padding:12px;flex:1;min-height:0}
+.fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--fg)}
+input[type=range]{width:100%;padding:0;accent-color:var(--accent)}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.small{font-size:12px;color:var(--muted);margin:0 0 9px}
+#dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(640px,100%);max-height:88%;display:flex;flex-direction:column}
+.dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlgbox header b{font-size:16px}
+.dlgbox .dbody{padding:14px 16px;overflow:auto}
+.dlgbox h3{margin:14px 0 4px;font-size:14px}.dlgbox p,.dlgbox li{margin:4px 0;font-size:13.5px}
+#act{flex:none;width:clamp(280px,24vw,340px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);min-height:0;max-height:100%}
+#act .pbody{font-size:13.5px}
+.goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:8px 10px;margin:0 0 10px}
+.steps{margin:0 0 10px;padding-left:20px}.steps li{margin-bottom:9px}
+.defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:0 0 12px}.defi p{margin:6px 0}
+.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+fieldset.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px 6px;margin:0 0 10px;min-width:0}
+fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
+.opt{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:6px;cursor:pointer}
+.opt input{margin-top:3px;width:auto;flex:none}
+.opt.good{background:rgba(30,122,46,.15)}.opt.bad{background:rgba(192,40,31,.15)}
+.why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
+.score{font-weight:600;font-size:15px;margin:4px 0 8px}
+#course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
+.ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
+.cwrap{flex:1;min-height:0;display:flex;gap:28px;padding-block:14px}
+.ctoc{flex:none;width:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px}
+.ctoc button:hover{background:var(--panel2)}
+.ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto}
+.cbody{flex:1;min-width:0;overflow:auto;max-width:860px;padding-right:6px}
+.ckick{color:var(--muted);font-size:12.5px;margin:0}
+.cbody h2{font-size:26px;margin:2px 0 12px;text-wrap:balance}
+.cbody h3{font-size:16.5px;margin:22px 0 6px}
+.cbody p,.cbody li{font-size:14.5px;line-height:1.6}
+.cbody ul,.cbody ol{padding-left:22px}.cbody li{margin-bottom:4px}
+.cbody table{display:block;overflow-x:auto;max-width:100%}
+.ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
+.ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.ctable th{background:var(--panel2);font-weight:600}
+.analogy{background:#fff6e0;border-left:3px solid #e08a00;border-radius:0 8px 8px 0;padding:8px 12px;margin:10px 0;font-size:14px}
+.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
+.gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
+.cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
+#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:980px}
+#ws h2{font-size:24px;margin:0 0 8px;text-wrap:balance}
+#ws h3{font-size:16.5px;margin:24px 0 6px}
+#ws p,#ws li{font-size:14.5px;line-height:1.55}
+#ws .small{font-size:12.5px}
+.opts{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 10px}.opts .fld{margin:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.stat{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat span{font-size:12px;color:var(--muted)}.stat b{font-size:14px;font-family:var(--font-mono);overflow-wrap:anywhere}
+.verdict{border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14px;background:var(--panel2);border:1px solid var(--line)}
+.verdict.yes{background:rgba(30,122,46,.15);border-color:var(--ok)}.verdict.no{background:rgba(192,40,31,.13);border-color:var(--bad)}.verdict.warn{background:rgba(154,91,0,.13);border-color:var(--warn)}
+.verdict.goal{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+.dwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.dt{border-collapse:collapse;width:100%;font-size:13.5px}
+.dt th,.dt td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.dt thead th{background:var(--panel2);font-weight:600}
+.dt td.m{font-family:var(--font-mono);font-size:12.5px}
+.dt tr:last-child td{border-bottom:0}
+.bar{display:flex;align-items:center;gap:8px;font-size:13px;margin:3px 0}
+.bar .lab{width:170px;color:var(--muted);font-size:12.5px}
+.bar .track{flex:1;background:var(--panel2);border-radius:4px;height:14px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent)}
+.bar .fill.ok{background:var(--ok)}.bar .fill.bad{background:var(--bad)}.bar .fill.warn{background:#e08a00}
+.bar .val{width:80px;text-align:right;font-family:var(--font-mono);font-size:12.5px}
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:10px 0;font-size:13px}
+.flow .bx{border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:5px 10px;font-weight:500}
+.flow .ar{color:var(--muted);font-size:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:820px){
+  .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
+  #act{position:fixed;left:0;right:0;bottom:0;width:auto;height:62%;max-height:none;border-radius:14px 14px 0 0;z-index:35;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
+  body.act-open #ws{padding-bottom:calc(62vh + 20px)}
+  .work{flex-direction:column;gap:8px}
+  .two{grid-template-columns:1fr}
+  .bar .lab{width:120px}
+  .bar .val{width:64px}
+}
+@media (prefers-reduced-motion:no-preference){.btn{transition:border-color .12s,background .12s}}
+</style>
+<div id="app">
+  <header class="band"><div class="inner row">
+    <div class="brand"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><line x1="2" y1="13" x2="24" y2="13" stroke="#5a6068" stroke-width="1"/><line x1="13" y1="2" x2="13" y2="24" stroke="#5a6068" stroke-width="1"/><g stroke="var(--accent)" stroke-width="2"><line x1="6" y1="7" x2="10" y2="11"/><line x1="10" y1="7" x2="6" y2="11"/></g><g stroke="var(--accent)" stroke-width="2"><line x1="6" y1="17" x2="10" y2="21"/><line x1="10" y1="17" x2="6" y2="21"/></g><circle cx="19" cy="9" r="2" fill="none" stroke="var(--ok)" stroke-width="1.6"/></svg><span>Atelier Étude des pôles <small>SII · CPGE</small></span></div>
+    <div class="files">
+      <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
+      <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
+      <button class="btn" id="bHelp" type="button">Aide</button>
+    </div>
+  </div></header>
+  <div class="band" id="modes"><div class="inner row"><div class="seg" id="wsSeg" role="tablist" aria-label="Ateliers"></div></div></div>
+  <main class="inner work" id="work">
+    <section id="stage"><div id="hint"></div><div id="scroller"><div id="ws"></div></div></section>
+    <aside id="act" hidden aria-label="Activité"></aside>
+  </main>
+  <section id="course" hidden aria-label="Cours"></section>
+</div>
+<div id="dlg" hidden></div>
+
+<script>
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
+  return el;
+}
+function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
+const KEYS = { act: 'atelier-poles-v1' };
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+const WORKSHOPS = [];
+
+/*LOGIC-START*/
+const R2D = 180 / Math.PI, D2R = Math.PI / 180;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmtN = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+const fmt = (x, d = 2) => { if (!isFinite(x)) return x > 0 ? '∞' : '−∞'; const r = Math.round(x * 10 ** d) / 10 ** d; return String(Object.is(r, -0) ? 0 : r).replace('.', ','); };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const dB = m => 20 * Math.log10(Math.max(m, 1e-12));
+
+/* ---------- complexes ---------- */
+const Cx = {
+  add: (a, b) => ({ re: a.re + b.re, im: a.im + b.im }),
+  sub: (a, b) => ({ re: a.re - b.re, im: a.im - b.im }),
+  mul: (a, b) => ({ re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re }),
+  div: (a, b) => { const d = b.re * b.re + b.im * b.im || 1e-30; return { re: (a.re * b.re + a.im * b.im) / d, im: (a.im * b.re - a.re * b.im) / d }; },
+  abs: a => Math.hypot(a.re, a.im)
+};
+
+/* ---------- polynômes (coefficients du degré le plus haut au plus bas) ---------- */
+function polyMulRoot(poly, r) {
+  const out = poly.map(() => ({ re: 0, im: 0 }));
+  out.push({ re: 0, im: 0 });
+  for (let i = 0; i < poly.length; i++) {
+    out[i] = Cx.add(out[i], poly[i]);
+    out[i + 1] = Cx.sub(out[i + 1], Cx.mul(poly[i], r));
+  }
+  return out;
+}
+function polyFromRoots(k, roots) {
+  let poly = [{ re: k, im: 0 }];
+  for (const r of roots) poly = polyMulRoot(poly, r);
+  return poly.map(c => c.re);
+}
+function polyvalC(coef, p) { let r = { re: 0, im: 0 }; for (const c of coef) r = Cx.add(Cx.mul(r, p), { re: c, im: 0 }); return r; }
+function deriv(coef) { const n = coef.length - 1, out = []; for (let i = 0; i < n; i++) out.push(coef[i] * (n - i)); return out.length ? out : [0]; }
+function rootsOf(coefIn) {
+  let c = coefIn.slice();
+  while (c.length > 1 && Math.abs(c[0]) < 1e-14) c.shift();
+  const n = c.length - 1;
+  if (n <= 0) return [];
+  const a = c.map(v => v / c[0]);
+  if (n === 1) return [{ re: -a[1], im: 0 }];
+  if (n === 2) {
+    const disc = a[1] * a[1] - 4 * a[2];
+    if (disc >= 0) { const s = Math.sqrt(disc); return [{ re: (-a[1] + s) / 2, im: 0 }, { re: (-a[1] - s) / 2, im: 0 }]; }
+    const s = Math.sqrt(-disc) / 2;
+    return [{ re: -a[1] / 2, im: s }, { re: -a[1] / 2, im: -s }];
+  }
+  const rad = 1 + Math.max(...a.slice(1).map(Math.abs));
+  let zs = [];
+  for (let i = 0; i < n; i++) { const th = 2 * Math.PI * i / n + 0.3; zs.push({ re: rad * Math.cos(th), im: rad * Math.sin(th) }); }
+  for (let it = 0; it < 900; it++) {
+    let maxd = 0; const nz = [];
+    for (let i = 0; i < n; i++) {
+      let num = { re: 0, im: 0 };
+      for (const cc of a) num = Cx.add(Cx.mul(num, zs[i]), { re: cc, im: 0 });
+      let den = { re: 1, im: 0 };
+      for (let j = 0; j < n; j++) if (j !== i) den = Cx.mul(den, Cx.sub(zs[i], zs[j]));
+      const d = Cx.div(num, den);
+      maxd = Math.max(maxd, Cx.abs(d));
+      nz.push(Cx.sub(zs[i], d));
+    }
+    zs = nz;
+    if (maxd < 1e-13) break;
+  }
+  return zs.map(z => Math.abs(z.im) < 1e-7 * (1 + Math.abs(z.re)) ? { re: z.re, im: 0 } : z);
+}
+
+/* ---------- fonction de transfert {k, zeros, poles} ---------- */
+function mkFT(k, poles, zeros) {
+  const ens = arr => { const out = []; for (const r of arr) { out.push({ re: r.re, im: r.im }); if (Math.abs(r.im) > 1e-12) out.push({ re: r.re, im: -r.im }); } return out; };
+  return { k: k, poles: ens(poles || []), zeros: ens(zeros || []) };
+}
+function ftPoly(ft) { return { num: polyFromRoots(ft.k, ft.zeros), den: polyFromRoots(1, ft.poles) }; }
+function ftMag(ft, w) {
+  let m = Math.abs(ft.k);
+  for (const z of ft.zeros) m *= Math.hypot(-z.re, w - z.im);
+  for (const p of ft.poles) m /= Math.hypot(-p.re, w - p.im);
+  return m;
+}
+function ftPhase(ft, w) {
+  let ph = ft.k >= 0 ? 0 : -180;
+  for (const z of ft.zeros) ph += Math.atan2(w - z.im, -z.re) * R2D;
+  for (const p of ft.poles) ph -= Math.atan2(w - p.im, -p.re) * R2D;
+  return ph;
+}
+function ftEval(ft, w) {
+  let num = { re: ft.k, im: 0 }, den = { re: 1, im: 0 };
+  for (const z of ft.zeros) num = Cx.mul(num, { re: -z.re, im: w - z.im });
+  for (const p of ft.poles) den = Cx.mul(den, { re: -p.re, im: w - p.im });
+  return Cx.div(num, den);
+}
+function ftDC(ft) { if (ft.poles.some(p => Math.abs(p.re) < 1e-9 && Math.abs(p.im) < 1e-9)) return Infinity; const e = ftEval(ft, 0); return e.re; }
+function ftClass(ft) { return ft.poles.filter(p => Math.abs(p.re) < 1e-9 && Math.abs(p.im) < 1e-9).length; }
+function stabilityOf(ft) {
+  let rhp = 0, imag = 0, origin = 0;
+  for (const p of ft.poles) { if (p.re > 1e-9) rhp++; else if (Math.abs(p.re) <= 1e-9) { imag++; if (Math.abs(p.im) < 1e-9) origin++; } }
+  if (rhp > 0) return { txt: 'instable', cls: 'no', why: 'au moins un pôle à partie réelle strictement positive' };
+  if (origin >= 2) return { txt: 'instable', cls: 'no', why: 'pôle multiple à l\'origine (réponse en t·e⁰ᵗ)' };
+  if (imag > 0) return { txt: 'marginalement stable', cls: 'warn', why: 'pôle(s) sur l\'axe imaginaire : réponse qui ne s\'amortit pas' };
+  return { txt: 'stable', cls: 'yes', why: 'tous les pôles ont une partie réelle strictement négative' };
+}
+
+/* ---------- simulation (forme commandable + RK4) ---------- */
+function toSS(ft) {
+  const { num, den } = ftPoly(ft);
+  const n = den.length - 1;
+  if (n <= 0) return null;
+  const nn = new Array(n + 1).fill(0);
+  const off = n + 1 - num.length;
+  for (let i = 0; i < num.length; i++) nn[off + i] = num[i];
+  const d0 = den[0];
+  const a = den.slice(1).map(v => v / d0), b = nn.map(v => v / d0);
+  const A = [a.map(v => -v)];
+  for (let i = 1; i < n; i++) { const row = new Array(n).fill(0); row[i - 1] = 1; A.push(row); }
+  const B = []; for (let i = 0; i < n; i++) B.push(i === 0 ? 1 : 0);
+  const Cc = []; for (let i = 0; i < n; i++) Cc.push(b[i + 1] - b[0] * a[i]);
+  return { A, B, C: Cc, D: b[0], n };
+}
+function simBounds(ft) {
+  let slow = Infinity, fast = 0.5;
+  for (const p of ft.poles) {
+    const r = Math.abs(p.re), i = Math.abs(p.im);
+    if (r > 1e-9) slow = Math.min(slow, r);
+    fast = Math.max(fast, r, i);
+  }
+  if (!isFinite(slow)) slow = 1;
+  let tmax = clamp(8 / slow, 0.2, 120);
+  if (ft.poles.some(p => Math.abs(p.re) < 1e-9 && Math.abs(p.im) < 1e-9)) tmax = Math.min(tmax, 20);
+  const n = clamp(Math.ceil(tmax * fast * 25), 1500, 40000);
+  return { tmax, n };
+}
+function simulateStep(ft, tmax, nsteps) {
+  const ss = toSS(ft);
+  const out = x => { let s = ss.D; for (let i = 0; i < ss.n; i++) s += ss.C[i] * x[i]; return s; };
+  if (!ss) { return { t: [0, tmax], y: [0, 0], blown: false }; }
+  const n = ss.n, dt = tmax / nsteps;
+  let x = new Array(n).fill(0);
+  const t = [0], y = [out(x)];
+  const f = xx => { const dx = new Array(n).fill(0); for (let i = 0; i < n; i++) { let s = ss.B[i]; for (let j = 0; j < n; j++) s += ss.A[i][j] * xx[j]; dx[i] = s; } return dx; };
+  let blown = false;
+  for (let k = 1; k <= nsteps; k++) {
+    const k1 = f(x), x2 = x.map((v, i) => v + dt / 2 * k1[i]), k2 = f(x2);
+    const x3 = x.map((v, i) => v + dt / 2 * k2[i]), k3 = f(x3);
+    const x4 = x.map((v, i) => v + dt * k3[i]), k4 = f(x4);
+    x = x.map((v, i) => v + dt / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));
+    if (!isFinite(x[0]) || Math.abs(out(x)) > 1e7) { blown = true; break; }
+    t.push(k * dt); y.push(out(x));
+  }
+  return { t, y, blown };
+}
+/* réponse impulsionnelle : décomposition en modes (pôles simples) */
+function impulseModes(ft) {
+  const { num, den } = ftPoly(ft);
+  const dd = deriv(den);
+  return ft.poles.map(p => {
+    const A = Cx.div(polyvalC(num, p), polyvalC(dd, p));
+    return { pole: p, amp: A };
+  });
+}
+function impulseAt(modes, t) {
+  let s = 0;
+  for (const m of modes) { const e = Math.exp(m.pole.re * t) * Math.cos(m.pole.im * t), f = Math.exp(m.pole.re * t) * Math.sin(m.pole.im * t); s += m.amp.re * e - m.amp.im * f; }
+  return s;
+}
+
+/* ---------- tracés ---------- */
+function pzSvg(svg, o) {
+  const W = 520, H = 340, PAD = 34;
+  const pts = [...(o.poles || []), ...(o.zeros || [])];
+  if (o.traces) for (const tr of o.traces) for (const q of tr) pts.push(q);
+  let reMin = -1, reMax = 1, imMax = 1;
+  for (const p of pts) { reMin = Math.min(reMin, p.re); reMax = Math.max(reMax, p.re); imMax = Math.max(imMax, Math.abs(p.im)); }
+  const sp = reMax - reMin || 1;
+  reMin -= 0.10 * sp + 0.25; reMax += 0.10 * sp + 0.25;
+  imMax = imMax * 1.12 + 0.35;
+  const xspan = reMax - reMin, yspan = 2 * imMax;
+  const sc = Math.min((W - 2 * PAD) / xspan, (H - 2 * PAD) / yspan);
+  const cxD = (reMin + reMax) / 2;
+  const X = re => W / 2 + (re - cxD) * sc;
+  const Y = im => H / 2 - im * sc;
+  const x0 = X(reMin), x1 = X(reMax), y0 = Y(imMax), y1 = Y(-imMax);
+  let s = '';
+  /* zone instable */
+  if (X(0) < x1) s += '<rect x="' + X(0).toFixed(1) + '" y="' + y0.toFixed(1) + '" width="' + (x1 - X(0)).toFixed(1) + '" height="' + (y1 - y0).toFixed(1) + '" fill="rgba(192,40,31,.06)"/>';
+  const stepG = (() => { const raw = Math.max(xspan, yspan) / 8, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; })();
+  for (let v = Math.ceil(reMin / stepG) * stepG; v <= reMax + 1e-9; v += stepG) {
+    if (Math.abs(v) < 1e-9) continue;
+    s += '<line x1="' + X(v).toFixed(1) + '" y1="' + y0.toFixed(1) + '" x2="' + X(v).toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="#eef0f3"/>';
+  }
+  for (let v = stepG; v <= imMax; v += stepG) {
+    s += '<line x1="' + x0.toFixed(1) + '" y1="' + Y(v).toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" stroke="#eef0f3"/>';
+    s += '<line x1="' + x0.toFixed(1) + '" y1="' + Y(-v).toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + Y(-v).toFixed(1) + '" stroke="#eef0f3"/>';
+  }
+  /* axes */
+  s += '<line x1="' + x0.toFixed(1) + '" y1="' + Y(0).toFixed(1) + '" x2="' + x1.toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="#55555f" stroke-width="1.2"/>';
+  s += '<line x1="' + X(0).toFixed(1) + '" y1="' + y0.toFixed(1) + '" x2="' + X(0).toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="#55555f" stroke-width="1.2"/>';
+  for (let v = Math.ceil(reMin / stepG) * stepG; v <= reMax + 1e-9; v += stepG) if (Math.abs(v) > 1e-9) s += '<text x="' + X(v).toFixed(1) + '" y="' + (Y(0) + 13).toFixed(1) + '" text-anchor="middle" font-size="10" fill="#6a6a78">' + fmt(v, 1) + '</text>';
+  for (let v = stepG; v <= imMax; v += stepG) {
+    s += '<text x="' + (X(0) - 5).toFixed(1) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#6a6a78">' + fmt(v, 1) + 'j</text>';
+    s += '<text x="' + (X(0) - 5).toFixed(1) + '" y="' + (Y(-v) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#6a6a78">−' + fmt(v, 1) + 'j</text>';
+  }
+  s += '<text x="' + (x1 - 4) + '" y="' + (Y(0) - 6) + '" text-anchor="end" font-size="11" fill="#55555f">Re</text>';
+  s += '<text x="' + (X(0) + 6) + '" y="' + (y0 + 12) + '" font-size="11" fill="#55555f">Im</text>';
+  s += '<text x="' + (X(0) + (x1 - X(0)) / 2) + '" y="' + (y0 + 12) + '" text-anchor="middle" font-size="10.5" fill="#c0281f">zone instable</text>';
+  if (o.angle) {
+    const p = o.angle;
+    s += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(p.re).toFixed(1) + '" y2="' + Y(p.im).toFixed(1) + '" stroke="#1e7a2e" stroke-width="1.6" stroke-dasharray="4 3"/>';
+    s += '<circle cx="' + X(p.re).toFixed(1) + '" cy="' + Y(p.im).toFixed(1) + '" r="3" fill="#1e7a2e"/>';
+  }
+  if (o.traces) o.traces.forEach(tr => tr.forEach(q => { s += '<circle cx="' + X(q.re).toFixed(1) + '" cy="' + Y(q.im).toFixed(1) + '" r="1.6" fill="#b9c6d4"/>'; }));
+  for (const z of (o.zeros || [])) {
+    s += '<circle cx="' + X(z.re).toFixed(1) + '" cy="' + Y(z.im).toFixed(1) + '" r="5.5" fill="#fff" stroke="#1e7a2e" stroke-width="2"/>';
+    s += '<text x="' + (X(z.re) + 8).toFixed(1) + '" y="' + (Y(z.im) - 7).toFixed(1) + '" font-size="10.5" fill="#1e7a2e">z</text>';
+  }
+  for (const p of (o.poles || [])) {
+    const x = X(p.re), y = Y(p.im), r = 5.5;
+    s += '<line x1="' + (x - r).toFixed(1) + '" y1="' + (y - r).toFixed(1) + '" x2="' + (x + r).toFixed(1) + '" y2="' + (y + r).toFixed(1) + '" stroke="#2e6da4" stroke-width="2.2"/>';
+    s += '<line x1="' + (x - r).toFixed(1) + '" y1="' + (y + r).toFixed(1) + '" x2="' + (x + r).toFixed(1) + '" y2="' + (y - r).toFixed(1) + '" stroke="#2e6da4" stroke-width="2.2"/>';
+  }
+  if (!o.poles || !o.poles.length) s += '<text x="' + (W / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="#9aa3ad">aucun pôle</text>';
+  svg.innerHTML = s;
+}
+
+function bodeSvg(svg, o) {
+  const W = 640, H = 400, L = 56, R = 14, gT = 12, gB = 196, pT = 214, pB = 366;
+  const wmin = o.wmin, wmax = o.wmax, lw0 = Math.log10(wmin), lw1 = Math.log10(wmax);
+  const N = 240, ws = [];
+  for (let i = 0; i <= N; i++) ws.push(Math.pow(10, lw0 + (lw1 - lw0) * i / N));
+  let gmin = Infinity, gmax = -Infinity, pmin = Infinity, pmax = -Infinity;
+  for (const cv of o.curves) for (const w of ws) {
+    const v = cv.fn(w);
+    if (isFinite(v[0])) { gmin = Math.min(gmin, v[0]); gmax = Math.max(gmax, v[0]); }
+    if (v[1] !== null && isFinite(v[1])) { pmin = Math.min(pmin, v[1]); pmax = Math.max(pmax, v[1]); }
+  }
+  if (!isFinite(gmin)) { gmin = -40; gmax = 40; }
+  gmin = Math.min(Math.floor(gmin / 20) * 20, 0); gmax = Math.max(Math.ceil(gmax / 20) * 20, 20);
+  if (gmax - gmin < 40) gmax = gmin + 40;
+  if (!isFinite(pmin)) { pmin = -90; pmax = 0; }
+  pmin = Math.min(Math.floor(pmin / 45) * 45, -90); pmax = Math.max(Math.ceil(pmax / 45) * 45, 0);
+  const X = w => L + (Math.log10(w) - lw0) / (lw1 - lw0) * (W - L - R);
+  const Yg = d => gB - (clamp(d, gmin, gmax) - gmin) / (gmax - gmin) * (gB - gT);
+  const Yp = d => pB - (clamp(d, pmin, pmax) - pmin) / (pmax - pmin) * (pB - pT);
+  let s = '';
+  for (let e = Math.ceil(lw0); e <= Math.floor(lw1); e++) {
+    const w = Math.pow(10, e), x = X(w);
+    s += '<line x1="' + x + '" y1="' + gT + '" x2="' + x + '" y2="' + gB + '" stroke="#eceef2"/><line x1="' + x + '" y1="' + pT + '" x2="' + x + '" y2="' + pB + '" stroke="#eceef2"/>';
+    s += '<text x="' + x + '" y="' + (pB + 14) + '" text-anchor="middle" font-size="10.5" fill="#6a6a78">' + (e >= 0 ? fmtN(w) : fmt(w, -e)) + '</text>';
+  }
+  const gStep = (gmax - gmin) > 120 ? 40 : 20;
+  for (let g = gmin; g <= gmax + 1e-9; g += gStep) {
+    const y = Yg(g);
+    s += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="' + (g === 0 ? '#55555f' : '#e8e8ee') + '"/><text x="' + (L - 5) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + g + '</text>';
+  }
+  const pStep = (pmax - pmin) > 180 ? 90 : 45;
+  for (let p = pmin; p <= pmax + 1e-9; p += pStep) {
+    const y = Yp(p);
+    s += '<line x1="' + L + '" y1="' + y + '" x2="' + (W - R) + '" y2="' + y + '" stroke="' + (p === -180 ? '#d93a2b' : '#e8e8ee') + '"' + (p === -180 ? ' stroke-dasharray="5 4"' : '') + '/><text x="' + (L - 5) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + p + '</text>';
+  }
+  s += '<rect x="' + L + '" y="' + gT + '" width="' + (W - L - R) + '" height="' + (gB - gT) + '" fill="none" stroke="#55555f"/><rect x="' + L + '" y="' + pT + '" width="' + (W - L - R) + '" height="' + (pB - pT) + '" fill="none" stroke="#55555f"/>';
+  s += '<text transform="translate(12 ' + ((gT + gB) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11.5" fill="#1f1f28">gain (dB)</text><text transform="translate(12 ' + ((pT + pB) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11.5" fill="#1f1f28">phase (°)</text><text x="' + ((L + W - R) / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11.5" fill="#1f1f28">pulsation ω (rad/s)</text>';
+  (o.marks || []).forEach(m => {
+    if (m.w < wmin || m.w > wmax) return;
+    const x = X(m.w);
+    s += '<line x1="' + x + '" y1="' + gT + '" x2="' + x + '" y2="' + pB + '" stroke="#e08a00" stroke-dasharray="3 3" stroke-opacity=".8"/>';
+    s += '<text x="' + (x + 4) + '" y="' + (gT + 12) + '" font-size="10.5" fill="#9a5b00">' + m.label + '</text>';
+  });
+  o.curves.forEach(cv => {
+    const gp = [], pp = [];
+    for (const w of ws) { const v = cv.fn(w); gp.push(X(w).toFixed(1) + ',' + Yg(v[0]).toFixed(1)); if (v[1] !== null) pp.push(X(w).toFixed(1) + ',' + Yp(v[1]).toFixed(1)); }
+    const st = ' fill="none" stroke="' + cv.color + '" stroke-width="' + (cv.width || 2) + '"' + (cv.dash ? ' stroke-dasharray="' + cv.dash + '"' : '');
+    s += '<polyline' + st + ' points="' + gp.join(' ') + '"/>';
+    if (pp.length) s += '<polyline' + st + ' points="' + pp.join(' ') + '"/>';
+  });
+  o.curves.forEach((cv, i) => {
+    const x = L + 10, y = gT + 12 + i * 15;
+    s += '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 18) + '" y2="' + y + '" stroke="' + cv.color + '" stroke-width="2"' + (cv.dash ? ' stroke-dasharray="' + cv.dash + '"' : '') + '/><text x="' + (x + 24) + '" y="' + (y + 3.5) + '" font-size="11" fill="#1f1f28">' + cv.name + '</text>';
+  });
+  svg.innerHTML = s;
+}
+
+function timeSvg(svg, o) {
+  const W = 640, H = o.h || 250, L = 54, R = 14, T = 14, B = 34, tmax = o.tmax;
+  let ymin = o.ymin, ymax = o.ymax;
+  if (ymin === undefined || ymax === undefined) {
+    ymin = Infinity; ymax = -Infinity;
+    for (const c of o.curves) for (const v of c.y) if (isFinite(v)) { ymin = Math.min(ymin, v); ymax = Math.max(ymax, v); }
+    if (!isFinite(ymin)) { ymin = 0; ymax = 1; }
+    if (ymax - ymin < 1e-9) { ymin -= 0.5; ymax += 0.5; }
+    const pd = (ymax - ymin) * 0.08;
+    ymin -= pd; ymax += pd;
+  }
+  if (o.clip) { ymin = Math.max(ymin, -o.clip); ymax = Math.min(ymax, o.clip); }
+  const X = t => L + t / tmax * (W - L - R), Y = v => H - B - (clamp(v, ymin, ymax) - ymin) / (ymax - ymin) * (H - B - T);
+  const raw = (ymax - ymin) / 4, pw = Math.pow(10, Math.floor(Math.log10(raw))), mm = raw / pw;
+  const step = (mm < 1.5 ? 1 : mm < 3.5 ? 2 : mm < 7.5 ? 5 : 10) * pw;
+  let s = '<defs><clipPath id="' + (o.cid || 'clp') + '"><rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - B - T) + '"/></clipPath></defs>';
+  for (let v = Math.ceil(ymin / step) * step; v <= ymax + 1e-9; v += step) {
+    s += '<line x1="' + L + '" y1="' + Y(v) + '" x2="' + (W - R) + '" y2="' + Y(v) + '" stroke="' + (Math.abs(v) < 1e-9 ? '#55555f' : '#e8e8ee') + '"/><text x="' + (L - 5) + '" y="' + (Y(v) + 3.5) + '" text-anchor="end" font-size="10.5" fill="#6a6a78">' + fmt(v, 2) + '</text>';
+  }
+  for (let i = 0; i <= 5; i++) { const t = tmax * i / 5; s += '<line x1="' + X(t) + '" y1="' + T + '" x2="' + X(t) + '" y2="' + (H - B) + '" stroke="#f2f2f6"/><text x="' + X(t) + '" y="' + (H - B + 14) + '" text-anchor="middle" font-size="10.5" fill="#6a6a78">' + fmt(t, tmax < 5 ? 2 : 1) + '</text>'; }
+  s += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - B - T) + '" fill="none" stroke="#55555f"/>';
+  if (o.vlines) o.vlines.forEach(vl => { s += '<line x1="' + X(vl.t) + '" y1="' + T + '" x2="' + X(vl.t) + '" y2="' + (H - B) + '" stroke="' + vl.color + '" stroke-dasharray="4 3" stroke-opacity=".75"/><text x="' + (X(vl.t) + 3) + '" y="' + (T + 11) + '" font-size="10" fill="' + vl.color + '">' + vl.label + '</text>'; });
+  s += '<g clip-path="url(#' + (o.cid || 'clp') + ')">';
+  o.curves.forEach(c => {
+    if (c.dash) return;
+    s += '<polyline fill="none" stroke="' + c.color + '" stroke-width="' + (c.width || 2.2) + '" points="' + c.t.map((t, i) => X(t).toFixed(1) + ',' + Y(c.y[i]).toFixed(1)).join(' ') + '"/>';
+  });
+  s += '</g><g clip-path="url(#' + (o.cid || 'clp') + ')">';
+  o.curves.forEach(c => { if (!c.dash) return; s += '<polyline fill="none" stroke="' + c.color + '" stroke-width="' + (c.width || 1.6) + '" stroke-dasharray="' + c.dash + '" points="' + c.t.map((t, i) => X(t).toFixed(1) + ',' + Y(c.y[i]).toFixed(1)).join(' ') + '"/>'; });
+  s += '</g>';
+  s += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 5) + '" text-anchor="middle" font-size="11.5" fill="#1f1f28">temps (s)</text>';
+  o.curves.forEach((c, i) => {
+    if (!c.name) return;
+    const x = L + 12, y = T + 13 + i * 14;
+    s += '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 16) + '" y2="' + y + '" stroke="' + c.color + '" stroke-width="2"' + (c.dash ? ' stroke-dasharray="' + c.dash + '"' : '') + '/><text x="' + (x + 21) + '" y="' + (y + 3.5) + '" font-size="10.5" fill="#1f1f28">' + c.name + '</text>';
+  });
+  svg.innerHTML = s;
+}
+
+/* ---------- éléments d'interface ---------- */
+function statsHtml(list, id) { return '<div class="gstats"' + (id ? ' id="' + id + '"' : '') + '>' + list.map(k => '<div class="stat"><span>' + k[0] + '</span><b>' + k[1] + '</b></div>').join('') + '</div>'; }
+function chipsRow(items, cur, cb, label) {
+  return h('div', { class: 'chips', role: 'group', 'aria-label': label || '' }, items.map(it => h('button', { type: 'button', class: 'chip' + (cur === it[0] ? ' on' : ''), 'aria-pressed': cur === it[0] ? 'true' : 'false', onclick: () => cb(it[0]) }, it[1])));
+}
+function setChips(sel, items, cur, cb, label) { const el = $(sel); if (!el) return; el.innerHTML = ''; el.append(chipsRow(items, cur, cb, label)); }
+function slider(host, o) {
+  const wrap = h('div', { class: 'bar' }), lab = h('span', { class: 'lab' });
+  const rng = h('input', { type: 'range', min: o.min, max: o.max, step: o.step, 'aria-label': o.name, style: 'flex:1;width:auto' });
+  rng.value = o.get();
+  const upd = () => { lab.innerHTML = o.name + ' = <b>' + fmt(o.get(), o.dec === undefined ? 2 : o.dec) + '</b>' + (o.unit ? ' ' + o.unit : ''); };
+  rng.addEventListener('input', () => { o.set(parseFloat(rng.value)); upd(); if (o.onchange) o.onchange(); });
+  wrap.append(lab, rng); host.append(wrap); upd();
+  return { sync: () => { rng.value = o.get(); upd(); } };
+}
+function pzText(p) {
+  if (Math.abs(p.im) < 1e-9) return 'p = ' + fmt(p.re, 2);
+  return 'p = ' + fmt(p.re, 2) + ' ± ' + fmt(Math.abs(p.im), 2) + ' j';
+}
+function poleTable(ft) {
+  if (!ft.poles.length) return '<p class="small">Aucun pôle.</p>';
+  const seen = new Set(), rows = [];
+  for (const p of ft.poles) {
+    const key = fmt(p.re, 4) + '|' + fmt(Math.abs(p.im), 4);
+    const mult = ft.poles.filter(q => fmt(q.re, 4) === fmt(p.re, 4) && fmt(Math.abs(q.im), 4) === fmt(Math.abs(p.im), 4)).length;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const nat = Math.abs(p.im) < 1e-9 ? (Math.abs(p.re) < 1e-9 ? 'pôle à l\'origine' : 'pôle réel') : 'pôles complexes conjugués';
+    const st = p.re < -1e-9 ? '<span style="color:var(--ok)">stable</span>' : (Math.abs(p.re) <= 1e-9 ? '<span style="color:var(--warn)">limite</span>' : '<span style="color:var(--bad)">instable</span>');
+    rows.push('<tr><td class="m">' + pzText(p) + (mult > 1 ? ' ×' + mult : '') + '</td><td>' + nat + '</td><td class="m">' + fmt(p.re, 2) + '</td><td class="m">' + fmt(Math.abs(p.im), 2) + '</td><td>' + st + '</td></tr>');
+  }
+  return '<div class="dwrap"><table class="dt"><thead><tr><th>Pôle(s)</th><th>Nature</th><th>Re</th><th>|Im|</th><th>Stabilité</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div>';
+}
+function zeroTable(ft) {
+  if (!ft.zeros.length) return '<p class="small">Aucun zéro.</p>';
+  const seen = new Set(), rows = [];
+  for (const z of ft.zeros) {
+    const key = fmt(z.re, 4) + '|' + fmt(Math.abs(z.im), 4);
+    if (seen.has(key)) continue; seen.add(key);
+    rows.push('<tr><td class="m">' + pzText(z) + '</td><td>' + (Math.abs(z.im) < 1e-9 ? (Math.abs(z.re) < 1e-9 ? 'zéro à l\'origine' : 'zéro réel') : 'zéros complexes conjugués') + '</td></tr>');
+  }
+  return '<div class="dwrap"><table class="dt"><thead><tr><th>Zéro(s)</th><th>Nature</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div>';
+}
+function freqRange(ft) {
+  const mags = [...ft.poles, ...ft.zeros].map(p => Math.hypot(p.re, p.im)).filter(m => m > 1e-6);
+  let lo = mags.length ? Math.min(...mags) : 1, hi = mags.length ? Math.max(...mags) : 10;
+  lo = clamp(Math.pow(10, Math.floor(Math.log10(lo)) - 1), 1e-3, 1);
+  hi = clamp(Math.pow(10, Math.ceil(Math.log10(hi)) + 1), 10, 1e4);
+  return { wmin: lo, wmax: hi };
+}
+function ftBodeCurve(ft, name, color, dash) {
+  return { name: name, color: color, dash: dash, fn: w => [dB(ftMag(ft, w)), ftPhase(ft, w)] };
+}
+function drawPZ(sel, ft, extra) {
+  const svg = $(sel); if (!svg) return;
+  pzSvg(svg, Object.assign({ poles: ft.poles, zeros: ft.zeros }, extra || {}));
+}
+function drawTime(sel, ft, o) {
+  const svg = $(sel); if (!svg) return;
+  const b = simBounds(ft), tmax = (o && o.tmax) || b.tmax, n = (o && o.n) || b.n;
+  const S = simulateStep(ft, tmax, n);
+  timeSvg(svg, { tmax: tmax, curves: [{ name: (o && o.name) || 'réponse y(t)', color: '#2e6da4', t: S.t, y: S.y }], cid: 'c' + sel.replace(/[^a-z0-9]/gi, ''), clip: (o && o.clip) });
+  return S;
+}
+
+/* ================= Atelier 1 : pôles et zéros ================= */
+const LIB = [
+  { id: 'fo', name: '1er ordre', formula: 'H(p) = 1 / (1 + p)', k: 1, poles: [{ re: -1, im: 0 }], zeros: [], note: 'Un pôle réel négatif (p = −1) : réponse exponentielle amortie, système stable. La constante de temps vaut τ = 1/|p| = 1 s.' },
+  { id: 'so', name: '2e ordre', formula: 'H(p) = 1 / (p² + p + 1)', k: 1, poles: [{ re: -0.5, im: Math.sqrt(3) / 2 }], zeros: [], note: 'Deux pôles complexes conjugués : ωn = |p| = 1 rad/s et ζ = −Re(p)/|p| = 0,5. Réponse oscillante amortie.' },
+  { id: 'int', name: 'Classe 1', formula: 'H(p) = 1 / (p (1 + p))', k: 1, poles: [{ re: 0, im: 0 }, { re: -1, im: 0 }], zeros: [], note: 'Un pôle à l\'origine : la classe vaut 1, l\'erreur statique est nulle, mais la réponse à un échelon diverge en rampe.' },
+  { id: 'dbl', name: 'Pôle double', formula: 'H(p) = 1 / (1 + p)²', k: 1, poles: [{ re: -1, im: 0 }, { re: -1, im: 0 }], zeros: [], note: 'Pôle double en −1 : le mode est t·e^(−t). La réponse est plus lente qu\'un pôle simple, sans dépassement.' },
+  { id: 'unst', name: 'Pôle instable', formula: 'H(p) = 1 / (p − 1)', k: 1, poles: [{ re: 1, im: 0 }], zeros: [], note: 'Pôle à partie réelle positive : le mode e^(+t) diverge. Le système est instable.' },
+  { id: 'zero', name: 'Avec un zéro', formula: 'H(p) = 4 (p + 2) / ((p + 1)(p + 4))', k: 4, poles: [{ re: -1, im: 0 }, { re: -4, im: 0 }], zeros: [{ re: -2, im: 0 }], note: 'Les pôles fixent les modes e^(−t) et e^(−4t) ; le zéro en −2 règle leur dosage et crée un dépassement.' }
+];
+const Q1 = { lib: 'fo' };
+function mountQ1(root) {
+  root.innerHTML = '<h2>Pôles, zéros et fonction de transfert</h2>'
+    + '<p>Toute fonction de transfert rationnelle s\'écrit <b>H(p) = N(p)/D(p) = K · Π(p − zᵢ) / Π(p − pⱼ)</b>. Les <b>pôles</b> sont les racines du dénominateur, les <b>zéros</b> celles du numérateur. Les pôles commandent la <b>stabilité</b> et la <b>forme du régime transitoire</b> ; les zéros ne font que moduler l\'amplitude des modes.</p>'
+    + '<h3>Bibliothèque</h3><p class="small">Choisissez une fonction de transfert ; observez la position des pôles sur le plan complexe et la réponse associée.</p>'
+    + '<div id="q1-chips"></div>'
+    + '<div class="verdict goal" id="q1-form"></div>'
+    + '<div class="two"><div><h3>Plan complexe</h3><svg id="q1-map" viewBox="0 0 520 340" style="width:100%;max-width:560px;height:auto"></svg></div>'
+    + '<div><h3>Réponse indicielle</h3><svg id="q1-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg></div></div>'
+    + '<h3>Pôles</h3><div id="q1-ptab"></div><h3>Zéros</h3><div id="q1-ztab"></div>'
+    + statsHtml([['Classe', ''], ['Gain statique H(0)', ''], ['Stabilité', ''], ['Nombre de pôles', '']], 'q1-stats')
+    + '<p class="verdict" id="q1-msg"></p>'
+    + '<h3>Diagramme de Bode</h3><svg id="q1-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg>'
+    + '<div class="analogy"><b>À retenir :</b> la <b>partie réelle</b> d\'un pôle règle l\'amortissement (négative = amorti, nulle = entretenu, positive = divergent) ; sa <b>partie imaginaire</b> règle la pulsation des oscillations. Le <b>module</b> |p| donne l\'échelle de temps du mode associé.</div>';
+  const S = Q1;
+  const upd = () => {
+    setChips('#q1-chips', LIB.map(x => [x.id, x.name]), S.lib, id => { S.lib = id; upd(); }, 'Fonctions de transfert');
+    const preset = LIB.find(x => x.id === S.lib) || LIB[0];
+    const ft = mkFT(preset.k, preset.poles, preset.zeros);
+    $('#q1-form').innerHTML = '<b>' + preset.formula + '</b><br>' + preset.note;
+    drawPZ('#q1-map', ft);
+    drawTime('#q1-step', ft, { clip: 6 });
+    $('#q1-ptab').innerHTML = poleTable(ft);
+    $('#q1-ztab').innerHTML = zeroTable(ft);
+    const st = stabilityOf(ft), dc = ftDC(ft);
+    const b = $('#q1-stats').querySelectorAll('.stat b');
+    b[0].textContent = String(ftClass(ft));
+    b[1].textContent = isFinite(dc) ? fmt(dc, 3) : '∞ (intégrateur)';
+    b[2].textContent = st.txt;
+    b[3].textContent = String(ft.poles.length);
+    const m = $('#q1-msg'); m.className = 'verdict ' + st.cls;
+    m.innerHTML = 'Système <b>' + st.txt + '</b> : ' + st.why + '.';
+    const rg = freqRange(ft);
+    bodeSvg($('#q1-bode'), { wmin: rg.wmin, wmax: rg.wmax, curves: [ftBodeCurve(ft, 'H(jω)', '#2e6da4')], marks: ft.poles.filter(p => Math.hypot(p.re, p.im) > 1e-6).map(p => ({ w: Math.hypot(p.re, p.im), label: '|p|' })) });
+  };
+  upd();
+}
+WORKSHOPS.push({ id: 'q1', title: 'Pôles et zéros', hint: 'Repérez les pôles (×) et les zéros (○) sur le plan complexe et reliez-les à la réponse temporelle.',
+  mount: mountQ1, reset: () => { Object.assign(Q1, { lib: 'fo' }); } });
+
+/* ================= Atelier 2 : pôle réel, premier ordre ================= */
+const Q2 = { a: 1, K: 1 };
+function mountQ2(root) {
+  root.innerHTML = '<h2>Pôle réel et premier ordre</h2>'
+    + '<p>Un système du premier ordre s\'écrit <b>H(p) = K / (1 + τp) = (K/τ) / (p + 1/τ)</b>. Il possède un <b>unique pôle réel p₀ = −1/τ</b>. La constante de temps et le pôle sont donc liés par <b>τ = −1/p₀ = 1/|p₀|</b>.</p>'
+    + '<div id="q2-sl"></div>'
+    + '<div class="two"><div><h3>Plan complexe</h3><svg id="q2-map" viewBox="0 0 520 340" style="width:100%;max-width:560px;height:auto"></svg></div>'
+    + '<div><h3>Réponse indicielle</h3><svg id="q2-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg></div></div>'
+    + statsHtml([['Pôle p₀', ''], ['Constante de temps τ', ''], ['Valeur finale', ''], ['Temps à 63 %', ''], ['Temps à 95 %', '']], 'q2-stats')
+    + '<p class="verdict" id="q2-msg"></p>'
+    + '<h3>Diagramme de Bode</h3><svg id="q2-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg>'
+    + '<div class="analogy"><b>Règle fondamentale :</b> plus le pôle est <b>loin à gauche</b> (|p₀| grand), plus le système est <b>rapide</b>. Un pôle en −10 rad/s correspond à τ = 0,1 s ; un pôle en −0,1 rad/s correspond à τ = 10 s. La <b>distance à l\'axe imaginaire</b> est donc la mesure directe de la rapidité.</div>';
+  const S = Q2;
+  slider($('#q2-sl'), { name: '|p₀| = 1/τ', min: 0.1, max: 20, step: 0.05, dec: 2, unit: 'rad/s', get: () => S.a, set: v => { S.a = v; }, onchange: () => upd() });
+  slider($('#q2-sl'), { name: 'Gain K', min: 0.2, max: 5, step: 0.05, dec: 2, get: () => S.K, set: v => { S.K = v; }, onchange: () => upd() });
+  const upd = () => {
+    const ft = mkFT(S.K, [{ re: -S.a, im: 0 }], []);
+    drawPZ('#q2-map', ft);
+    const b = simBounds(ft);
+    const tmax = Math.max(4 / S.a, 0.1), n = clamp(Math.ceil(tmax * S.a * 60), 1500, 20000);
+    const sim = simulateStep(ft, tmax, n);
+    timeSvg($('#q2-step'), { tmax: tmax, cid: 'q2s', vlines: [{ t: 1 / S.a, color: '#1e7a2e', label: 'τ' }, { t: 3 / S.a, color: '#9a5b00', label: '3τ' }], curves: [{ name: 'y(t)', color: '#2e6da4', t: sim.t, y: sim.y }] });
+    const b2 = $('#q2-stats').querySelectorAll('.stat b');
+    b2[0].textContent = '−' + fmt(S.a, 2) + ' rad/s';
+    b2[1].textContent = fmt(1 / S.a, 3) + ' s';
+    b2[2].textContent = fmt(S.K, 3);
+    b2[3].textContent = fmt(1 / S.a, 3) + ' s';
+    b2[4].textContent = fmt(3 / S.a, 3) + ' s';
+    const m = $('#q2-msg'); m.className = 'verdict yes';
+    m.innerHTML = 'Le pôle est à <b>' + fmt(-S.a, 2) + ' rad/s</b> de l\'origine, donc τ = ' + fmt(1 / S.a, 3) + ' s. À t = τ, la sortie atteint 63 % de sa valeur finale ; à t = 3τ, elle en est à 95 %. <b>Doubler |p₀| divise le temps de réponse par deux.</b>';
+    const rg = freqRange(ft);
+    bodeSvg($('#q2-bode'), { wmin: rg.wmin, wmax: rg.wmax, curves: [ftBodeCurve(ft, 'H(jω)', '#2e6da4')], marks: [{ w: S.a, label: 'ω = 1/τ' }] });
+  };
+  upd();
+}
+WORKSHOPS.push({ id: 'q2', title: 'Pôle réel', hint: 'Déplacez le pôle sur l\'axe réel : la constante de temps et la rapidité varient en sens inverse de |p₀|.',
+  mount: mountQ2, reset: () => { Object.assign(Q2, { a: 1, K: 1 }); } });
+
+/* ================= Atelier 3 : pôles complexes, second ordre ================= */
+const Q3 = { zeta: 0.5, wn: 2 };
+function mountQ3(root) {
+  root.innerHTML = '<h2>Pôles complexes et second ordre</h2>'
+    + '<p>Un second ordre normalisé s\'écrit <b>H(p) = ωn² / (p² + 2ζωn p + ωn²)</b>. Ses pôles sont <b>p = −ζωn ± jωn√(1 − ζ²)</b> (pour ζ &lt; 1). On en déduit deux lectures graphiques :</p>'
+    + '<ul><li><b>ωn = |p|</b> : la distance du pôle à l\'origine fixe l\'échelle de temps.</li>'
+    + '<li><b>ζ = −Re(p)/|p| = cos θ</b>, où θ est l\'angle entre le pôle et l\'axe réel négatif. Plus le pôle est proche de l\'axe imaginaire, plus ζ est petit, plus ça oscille.</li></ul>'
+    + '<div id="q3-sl"></div>'
+    + '<div class="two"><div><h3>Plan complexe</h3><svg id="q3-map" viewBox="0 0 520 340" style="width:100%;max-width:560px;height:auto"></svg></div>'
+    + '<div><h3>Réponse indicielle</h3><svg id="q3-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg></div></div>'
+    + statsHtml([['Pôles', ''], ['ωn = |p|', ''], ['ζ = cos θ', ''], ['θ', ''], ['Dépassement D', ''], ['Pseudo-période', '']], 'q3-stats')
+    + '<p class="verdict" id="q3-msg"></p>'
+    + '<h3>Diagramme de Bode</h3><svg id="q3-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg>'
+    + '<div class="analogy"><b>Zone de bon amortissement :</b> un dépassement de 10 à 20 % correspond à ζ ≈ 0,45 à 0,6, c\'est-à-dire un angle θ ≈ 55° à 63°. Un ζ = 0,7 (θ = 45°) donne la réponse la plus rapide sans dépassement notable. ζ → 0 : les pôles se rapprochent de l\'axe imaginaire, la réponse oscille de plus en plus longtemps.</div>';
+  const S = Q3;
+  slider($('#q3-sl'), { name: 'Amortissement ζ', min: 0.05, max: 1.2, step: 0.01, dec: 2, get: () => S.zeta, set: v => { S.zeta = v; }, onchange: () => upd() });
+  slider($('#q3-sl'), { name: 'Pulsation propre ωn', min: 0.3, max: 10, step: 0.05, dec: 2, unit: 'rad/s', get: () => S.wn, set: v => { S.wn = v; }, onchange: () => upd() });
+  const upd = () => {
+    const z = Math.min(S.zeta, 0.999), wn = S.wn;
+    const re = -z * wn, im = wn * Math.sqrt(1 - z * z);
+    const ft = mkFT(wn * wn, [{ re: re, im: im }], []);
+    const svg = $('#q3-map');
+    pzSvg(svg, { poles: ft.poles, zeros: [], angle: { re: re, im: im } });
+    const b = simBounds(ft), tmax = clamp(6 / (z * wn), 0.3, 60), n = clamp(Math.ceil(tmax * wn * 30), 1500, 20000);
+    const sim = simulateStep(ft, tmax, n);
+    timeSvg($('#q3-step'), { tmax: tmax, cid: 'q3s', curves: [{ name: 'y(t)', color: '#2e6da4', t: sim.t, y: sim.y }] });
+    const D = Math.exp(-Math.PI * z / Math.sqrt(1 - z * z)) * 100;
+    const Tp = 2 * Math.PI / (wn * Math.sqrt(1 - z * z));
+    const th = Math.acos(z) * R2D;
+    const b2 = $('#q3-stats').querySelectorAll('.stat b');
+    b2[0].textContent = fmt(re, 2) + ' ± ' + fmt(im, 2) + 'j';
+    b2[1].textContent = fmt(wn, 2) + ' rad/s';
+    b2[2].textContent = fmt(z, 2);
+    b2[3].textContent = fmt(th, 1) + ' °';
+    b2[4].textContent = fmt(D, 1) + ' %';
+    b2[5].textContent = fmt(Tp, 2) + ' s';
+    const m = $('#q3-msg');
+    m.className = 'verdict ' + (z < 0.25 ? 'warn' : (z > 0.85 ? 'warn' : 'yes'));
+    let txt = 'Les pôles sont à <b>' + fmt(re, 2) + ' ± ' + fmt(im, 2) + 'j</b> : ωn = ' + fmt(wn, 2) + ' rad/s et ζ = cos θ = cos ' + fmt(th, 1) + '° = ' + fmt(z, 2) + '. ';
+    if (z < 0.25) txt += 'Zone très peu amortie : dépassement de ' + fmt(D, 0) + ' %, oscillations qui durent longtemps.';
+    else if (z > 0.85) txt += 'Zone sur-amortie : pas ou peu de dépassement, mais réponse plus lente que nécessaire.';
+    else txt += 'Dépassement de ' + fmt(D, 1) + ' % : c\'est une zone de compromis raisonnable.';
+    m.innerHTML = txt;
+    const rg = freqRange(ft);
+    bodeSvg($('#q3-bode'), { wmin: rg.wmin, wmax: rg.wmax, curves: [ftBodeCurve(ft, 'H(jω)', '#2e6da4')], marks: [{ w: wn, label: 'ωn' }] });
+  };
+  upd();
+}
+WORKSHOPS.push({ id: 'q3', title: 'Pôles complexes', hint: 'Déplacez ζ et ωn : les pôles tournent autour de l\'origine (ζ) et s\'en éloignent (ωn). L\'angle θ vérifie ζ = cos θ.',
+  mount: mountQ3, reset: () => { Object.assign(Q3, { zeta: 0.5, wn: 2 }); } });
+
+/* ================= Atelier 4 : pôle dominant ================= */
+const Q4 = { t1: 1, t2: 0.1 };
+function mountQ4(root) {
+  root.innerHTML = '<h2>Pôle dominant et ordre supérieur</h2>'
+    + '<p>Pour <b>H(p) = 1 / ((1 + τ₁p)(1 + τ₂p))</b>, les pôles sont <b>p₁ = −1/τ₁</b> et <b>p₂ = −1/τ₂</b>. Le mode associé à un pôle s\'amortit comme <b>e^(p t)</b> : il est d\'autant plus lent que le pôle est proche de l\'axe imaginaire. Le pôle <b>le plus proche de l\'axe imaginaire</b> est le <b>pôle dominant</b> : c\'est lui qui impose la dynamique de la réponse.</p>'
+    + '<div id="q4-sl"></div>'
+    + '<div class="two"><div><h3>Plan complexe</h3><svg id="q4-map" viewBox="0 0 520 340" style="width:100%;max-width:560px;height:auto"></svg></div>'
+    + '<div><h3>Réponse indicielle</h3><svg id="q4-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg></div></div>'
+    + statsHtml([['Pôle p₁', ''], ['Pôle p₂', ''], ['Rapport |p₂/p₁|', ''], ['Pôle dominant', ''], ['Temps à 95 % (exact)', ''], ['Temps à 95 % (1er ordre)', '']], 'q4-stats')
+    + '<p class="verdict" id="q4-msg"></p>'
+    + '<div class="analogy"><b>Règle d\'usage :</b> si |p₂| ≥ 5|p₁|, le pôle p₂ est négligeable : H se comporte comme un premier ordre de constante de temps τ₁. Si les deux pôles sont proches, on ne peut pas simplifier : les deux modes comptent. La réduction de modèle ne s\'applique qu\'aux pôles <b>lents</b> ; les pôles rapides (grand |Re|) disparaissent dans le régime transitoire court.</div>';
+  const S = Q4;
+  slider($('#q4-sl'), { name: 'Constante de temps τ₁', min: 0.05, max: 5, step: 0.05, dec: 2, unit: 's', get: () => S.t1, set: v => { S.t1 = v; }, onchange: () => upd() });
+  slider($('#q4-sl'), { name: 'Constante de temps τ₂', min: 0.02, max: 3, step: 0.01, dec: 2, unit: 's', get: () => S.t2, set: v => { S.t2 = v; }, onchange: () => upd() });
+  const upd = () => {
+    const p1 = -1 / S.t1, p2 = -1 / S.t2;
+    const ft = mkFT(1, [{ re: p1, im: 0 }, { re: p2, im: 0 }], []);
+    drawPZ('#q4-map', ft);
+    const tmax = clamp(8 * Math.max(S.t1, S.t2), 0.3, 120);
+    const n = clamp(Math.ceil(tmax * Math.max(1 / S.t1, 1 / S.t2) * 25), 1500, 30000);
+    const exact = simulateStep(ft, tmax, n);
+    const approx = simulateStep(mkFT(1, [{ re: Math.max(p1, p2), im: 0 }], []), tmax, n);
+    timeSvg($('#q4-step'), { tmax: tmax, cid: 'q4s', curves: [
+      { name: 'système exact (2 pôles)', color: '#2e6da4', t: exact.t, y: exact.y },
+      { name: 'approximation 1er ordre (pôle dominant)', color: '#e08a00', dash: '6 4', t: approx.t, y: approx.y }
+    ] });
+    const dom = Math.max(p1, p2), ratio = Math.max(Math.abs(p1), Math.abs(p2)) / Math.min(Math.abs(p1), Math.abs(p2));
+    const b2 = $('#q4-stats').querySelectorAll('.stat b');
+    b2[0].textContent = fmt(p1, 3) + ' rad/s';
+    b2[1].textContent = fmt(p2, 3) + ' rad/s';
+    b2[2].textContent = fmt(ratio, 2);
+    b2[3].textContent = 'p = ' + fmt(dom, 3);
+    b2[4].textContent = t95(exact) + ' s';
+    b2[5].textContent = t95(approx) + ' s';
+    const m = $('#q4-msg');
+    m.className = 'verdict ' + (ratio >= 5 ? 'yes' : (ratio < 2 ? 'warn' : ''));
+    if (ratio >= 5) m.innerHTML = 'Le pôle <b>' + fmt(dom, 2) + ' rad/s</b> est dominant (|p₂/p₁| = ' + fmt(ratio, 1) + ' ≥ 5) : le pôle rapide n\'agit que pendant le régime transitoire court. L\'approximation du premier ordre est excellente à 5 %.';
+    else if (ratio < 2) m.innerHTML = 'Les deux pôles sont <b>trop proches</b> (rapport ' + fmt(ratio, 2) + ') : aucun ne domine. L\'approximation du premier ordre est grossière, il faut garder les deux modes.';
+    else m.innerHTML = 'Le pôle <b>' + fmt(dom, 2) + ' rad/s</b> domine, mais le pôle rapide en ' + fmt(dom === p1 ? p2 : p1, 2) + ' rad/s est encore visible en début de réponse. La réduction est acceptable en première approximation, à vérifier.';
+  };
+  const t95 = S => {
+    const yf = S.y[S.y.length - 1];
+    for (let i = S.y.length - 1; i >= 0; i--) if (Math.abs(S.y[i] - yf) > 0.05 * Math.abs(yf)) return fmt(S.t[Math.min(i + 1, S.t.length - 1)], 2);
+    return '0';
+  };
+  upd();
+}
+WORKSHOPS.push({ id: 'q4', title: 'Pôle dominant', hint: 'Éloignez τ₂ de τ₁ : le pôle rapide devient négligeable et la réponse se rapproche du premier ordre.',
+  mount: mountQ4, reset: () => { Object.assign(Q4, { t1: 1, t2: 0.1 }); } });
+
+/* ================= Atelier 5 : stabilité ================= */
+const Q5 = { re: -0.8, im: 3 };
+function mountQ5(root) {
+  root.innerHTML = '<h2>Stabilité : position des pôles dans le plan complexe</h2>'
+    + '<p>Un système linéaire est <b>stable</b> si et seulement si <b>tous ses pôles sont dans le demi-plan gauche</b> (partie réelle strictement négative). Chaque pôle pᵢ contribue à la réponse impulsionnelle par un mode <b>e^(pᵢ t)</b> :</p>'
+    + '<ul><li><b>Re(p) &lt; 0</b> : le mode s\'amortit → système stable.</li>'
+    + '<li><b>Re(p) = 0</b> : le mode ne s\'amortit pas (constante ou sinusoïde entretenue) → système marginalement stable.</li>'
+    + '<li><b>Re(p) &gt; 0</b> : le mode diverge → système instable.</li></ul>'
+    + '<p>Déplacez la paire de pôles conjugués : σ = Re(p) règle l\'amortissement (ou la divergence), ω = Im(p) règle la pulsation des oscillations.</p>'
+    + '<div id="q5-sl"></div>'
+    + '<div class="two"><div><h3>Plan complexe</h3><svg id="q5-map" viewBox="0 0 520 340" style="width:100%;max-width:560px;height:auto"></svg></div>'
+    + '<div><h3>Réponse impulsionnelle h(t)</h3><svg id="q5-imp" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg></div></div>'
+    + statsHtml([['Pôles', ''], ['σ = Re(p)', ''], ['ω = Im(p)', ''], ['ζ = −σ/|p|', ''], ['Stabilité', ''], ['Mode temporel', '']], 'q5-stats')
+    + '<p class="verdict" id="q5-msg"></p>'
+    + '<h3>Réponse indicielle</h3><svg id="q5-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg>'
+    + '<div class="analogy"><b>Attention aux pôles à l\'origine :</b> un pôle simple en 0 donne une réponse en échelon (constante) : c\'est marginal. Deux pôles en 0 (double intégrateur) donnent une réponse en rampe : le système est en réalité <b>instable</b>. De même, une paire de pôles ±jω double (même pulsation, multiplicité 2) donne un mode t·sin(ωt) : instable.</div>';
+  const S = Q5;
+  slider($('#q5-sl'), { name: 'σ = Re(p)', min: -2, max: 1, step: 0.02, dec: 2, unit: 'rad/s', get: () => S.re, set: v => { S.re = v; }, onchange: () => upd() });
+  slider($('#q5-sl'), { name: 'ω = Im(p)', min: 0.5, max: 4, step: 0.05, dec: 2, unit: 'rad/s', get: () => S.im, set: v => { S.im = v; }, onchange: () => upd() });
+  const upd = () => {
+    const ft = mkFT(1, [{ re: S.re, im: S.im }], []);
+    drawPZ('#q5-map', ft);
+    const modes = impulseModes(ft);
+    const tmax = clamp(6 / Math.max(Math.abs(S.re), 0.05), 1, 40), n = clamp(Math.ceil(tmax * Math.max(Math.abs(S.re), S.im) * 40), 2000, 30000);
+    const t = [], y = [], envP = [], envN = [];
+    const A = Cx.abs(modes[0].amp);
+    for (let i = 0; i <= 400; i++) {
+      const tt = tmax * i / 400;
+      t.push(tt); y.push(impulseAt(modes, tt));
+      const e = 2 * A * Math.exp(S.re * tt);
+      envP.push(e); envN.push(-e);
+    }
+    timeSvg($('#q5-imp'), { tmax: tmax, cid: 'q5i', clip: 8, curves: [
+      { name: 'h(t) = Σ Aᵢ e^(pᵢ t)', color: '#2e6da4', t: t, y: y },
+      { name: 'enveloppe ±2|A|e^(σt)', color: '#9a5b00', dash: '5 4', t: t, y: envP },
+      { color: '#9a5b00', dash: '5 4', t: t, y: envN }
+    ] });
+    const sim = simulateStep(ft, tmax, n);
+    timeSvg($('#q5-step'), { tmax: tmax, cid: 'q5s', clip: 8, curves: [{ name: 'réponse indicielle', color: '#2e6da4', t: sim.t, y: sim.y }] });
+    const st = stabilityOf(ft);
+    const b2 = $('#q5-stats').querySelectorAll('.stat b');
+    b2[0].textContent = fmt(S.re, 2) + ' ± ' + fmt(S.im, 2) + 'j';
+    b2[1].textContent = fmt(S.re, 2) + ' rad/s';
+    b2[2].textContent = fmt(S.im, 2) + ' rad/s';
+    b2[3].textContent = fmt(Math.sqrt(S.re * S.re + S.im * S.im) > 1e-9 ? -S.re / Math.hypot(S.re, S.im) : 0, 2);
+    b2[4].textContent = st.txt;
+    b2[5].textContent = S.re < -0.02 ? 'e^(σt)·cos(ωt) amorti' : (Math.abs(S.re) <= 0.02 ? 'cos(ωt) entretenu' : 'e^(σt)·cos(ωt) divergent');
+    const m = $('#q5-msg'); m.className = 'verdict ' + st.cls;
+    if (S.re < -0.02) m.innerHTML = 'Les pôles sont dans le <b>demi-plan gauche</b> : la réponse impulsionnelle est une sinusoïde amortie, le système est stable. Plus |σ| est grand, plus l\'amortissement est rapide.';
+    else if (Math.abs(S.re) <= 0.02) m.innerHTML = 'Les pôles sont <b>sur l\'axe imaginaire</b> : la réponse est une sinusoïde d\'amplitude constante. C\'est le cas limite (oscillateur non amorti).';
+    else m.innerHTML = 'Les pôles sont dans le <b>demi-plan droit</b> : la réponse diverge exponentiellement, le système est <b>instable</b>.';
+  };
+  upd();
+}
+WORKSHOPS.push({ id: 'q5', title: 'Stabilité', hint: 'Faites glisser la paire de pôles de part et d\'autre de l\'axe imaginaire et observez la réponse impulsionnelle.',
+  mount: mountQ5, reset: () => { Object.assign(Q5, { re: -0.8, im: 3 }); } });
+
+/* ================= Atelier 6 : lieu des racines ================= */
+const Q6 = { K: 4 };
+function locusData() {
+  const traces = [], Ks = [];
+  for (let i = 0; i <= 140; i++) Ks.push(Math.pow(10, -1.5 + 3.4 * i / 140));
+  for (const K of Ks) traces.push(rootsOf([1, 4, 3, K]));
+  return traces;
+}
+const LOCUS = locusData();
+function mountQ6(root) {
+  root.innerHTML = '<h2>Lieu des racines : déplacement des pôles avec le gain</h2>'
+    + '<p>On ferme la boucle sur un gain K : la fonction de transfert en boucle fermée est <b>H_BF(p) = K·L(p) / (1 + K·L(p))</b>. Ses pôles sont les solutions de <b>1 + K·L(p) = 0</b>, c\'est-à-dire les racines de <b>D(p) + K·N(p)</b>. Quand K varie de 0 à ∞, les pôles se déplacent dans le plan complexe : c\'est le <b>lieu des racines</b>.</p>'
+    + '<p>Exemple : <b>L(p) = 1 / (p(p + 1)(p + 3))</b>, donc D(p) = p³ + 4p² + 3p. Les pôles en boucle fermée sont les racines de <b>p³ + 4p² + 3p + K = 0</b>.</p>'
+    + '<div id="q6-sl"></div>'
+    + '<div class="two"><div><h3>Lieu des racines</h3><svg id="q6-map" viewBox="0 0 520 340" style="width:100%;max-width:560px;height:auto"></svg></div>'
+    + '<div><h3>Réponse indicielle en boucle fermée</h3><svg id="q6-step" viewBox="0 0 640 250" style="width:100%;max-width:680px;height:auto"></svg></div></div>'
+    + statsHtml([['Gain K', ''], ['Pôles en BF', ''], ['Stabilité', ''], ['Gain critique K_c', '']], 'q6-stats')
+    + '<p class="verdict" id="q6-msg"></p>'
+    + '<div class="analogy"><b>Ce qu\'il faut retenir :</b> les branches du lieu partent des <b>pôles en boucle ouverte</b> (K = 0) et aboutissent aux <b>zéros</b> (ou à l\'infini si le système est strictement propre). Le lieu traverse l\'axe imaginaire pour un gain <b>K_c</b> : au-delà, le système devient instable. Ici K_c = 12 (à vérifier par le critère de Routh : p³+4p²+3p+K, ligne s¹ : (12 − K)/4, d\'où K &lt; 12).</div>';
+  const S = Q6;
+  const logK = () => Math.log10(S.K);
+  slider($('#q6-sl'), { name: 'log₁₀(K)', min: -1.5, max: 2, step: 0.01, dec: 2, get: logK, set: v => { S.K = Math.pow(10, v); }, onchange: () => upd() });
+  const upd = () => {
+    const poles = rootsOf([1, 4, 3, S.K]);
+    const ft = mkFT(S.K, poles, []);
+    pzSvg($('#q6-map'), { poles: poles, zeros: [], traces: LOCUS });
+    const b = simBounds(ft);
+    const tmax = clamp(b.tmax, 0.5, 40), n = clamp(b.n, 1500, 30000);
+    const sim = simulateStep(ft, tmax, n);
+    timeSvg($('#q6-step'), { tmax: tmax, cid: 'q6s', clip: 6, curves: [{ name: 'y(t)', color: '#2e6da4', t: sim.t, y: sim.y }] });
+    const st = stabilityOf(ft);
+    const b2 = $('#q6-stats').querySelectorAll('.stat b');
+    b2[0].textContent = fmt(S.K, 2);
+    b2[1].textContent = poles.map(p => Math.abs(p.im) < 1e-6 ? fmt(p.re, 2) : fmt(p.re, 2) + '±' + fmt(Math.abs(p.im), 2) + 'j').join(' ; ');
+    b2[2].textContent = st.txt;
+    b2[3].textContent = '12';
+    const m = $('#q6-msg'); m.className = 'verdict ' + st.cls;
+    if (S.K < 12) {
+      const real = poles.filter(p => Math.abs(p.im) < 1e-6);
+      m.innerHTML = 'K = ' + fmt(S.K, 2) + ' &lt; 12 : les trois pôles sont dans le demi-plan gauche, le système est stable.' + (real.length === 2 ? ' Deux d\'entre eux sont réels, le troisième est réel aussi : la réponse est apériodique.' : ' Une paire complexe conjuguée donne un régime oscillant amorti.');
+    } else {
+      m.innerHTML = 'K = ' + fmt(S.K, 2) + ' ≥ 12 : une paire de pôles a franchi l\'axe imaginaire. Le système est <b>instable</b> : la réponse diverge. Il faut réduire le gain.';
+    }
+  };
+  upd();
+}
+WORKSHOPS.push({ id: 'q6', title: 'Lieu des racines', hint: 'Augmentez K : les pôles en boucle fermée migrent depuis les pôles de la boucle ouverte et finissent par traverser l\'axe imaginaire.',
+  mount: mountQ6, reset: () => { Object.assign(Q6, { K: 4 }); } });
+/*LOGIC-END*/
+
+/* ---------- activités ---------- */
+const ACT = {
+  q1: {
+    title: 'Pôles et zéros', level: 'Niveau 1 · Découvrir', time: '20 min', course: 'definitions',
+    goal: 'Savoir lire une fonction de transfert : identifier les pôles, les zéros, la classe, le gain statique et la stabilité.',
+    steps: [
+      'Parcourez les six fonctions de transfert de la bibliothèque. Pour chacune, notez la position des pôles et la nature de la réponse.',
+      'Pour « 2e ordre », vérifiez que ωn = |p| et ζ = −Re(p)/|p|. Retrouvez le dépassement de 16 % environ.',
+      'Pour « classe 1 », observez que la réponse à un échelon diverge en rampe. Pourquoi le système n\'est-il pas instable pour autant ?',
+      'Pour « pôle double », comparez la réponse avec celle du 1er ordre de même pôle : laquelle est plus lente ?',
+      'Pour « avec un zéro », comparez la réponse avec celle de H = 4/((p+1)(p+4)) : quel effet a le zéro ?',
+      'Comparez la position du pôle et le gain dans le diagramme de Bode : à quelle pulsation la cassure apparaît-elle ?'
+    ],
+    defi: { q: 'Un système a pour pôles −2 et −5 et aucun zéro, avec un gain statique de 1. Écrivez H(p), donnez sa classe, sa stabilité, et estimez le temps de réponse à 5 %.',
+      a: 'H(p) = 10/((p+2)(p+5)) (pour que H(0) = 1). Classe 0, stable. Le pôle dominant est −2, donc τ ≈ 0,5 s et t5 % ≈ 1,5 s. Le pôle −5 est cinq fois plus rapide, il est négligeable.' },
+    qcm: [
+      { q: 'Les pôles d\'une fonction de transfert sont :', o: ['les racines du numérateur', 'les racines du dénominateur', 'les zéros de la dérivée', 'les coefficients du gain'], a: 1, w: 'H(p) = N(p)/D(p) : pôles = racines de D, zéros = racines de N.' },
+      { q: 'Un pôle situé à p = −4 rad/s correspond à une constante de temps :', o: ['τ = 4 s', 'τ = 0,25 s', 'τ = 16 s', 'τ = −0,25 s'], a: 1, w: 'τ = 1/|p| = 1/4 = 0,25 s.' },
+      { q: 'La classe d\'une fonction de transfert est :', o: ['le degré du numérateur', 'le nombre de pôles à l\'origine', 'le nombre de zéros', 'le nombre total de pôles'], a: 1, w: 'Un pôle en 0 (intégrateur) incrémente la classe, ce qui améliore la précision.' },
+      { q: 'Un système dont les pôles sont −1 ± 3j est :', o: ['stable et apériodique', 'stable et oscillant', 'instable', 'marginal'], a: 1, w: 'Partie réelle négative → stable ; partie imaginaire non nulle → oscillations.' },
+      { q: 'Les zéros d\'une fonction de transfert :', o: ['déterminent la stabilité', 'modulent l\'amplitude des modes', 'fixent la classe', 'n\'ont aucun effet'], a: 1, w: 'Les zéros ne conditionnent pas la stabilité, mais ils dosent les modes et peuvent créer des dépassements.' }
+    ]
+  },
+  q2: {
+    title: 'Pôle réel', level: 'Niveau 1 · Découvrir', time: '20 min', course: 'premier-ordre',
+    goal: 'Relier la position d\'un pôle réel à la constante de temps, à la rapidité et à la cassure du Bode.',
+    steps: [
+      'Placez |p₀| = 1 rad/s : τ = 1 s. Repérez sur la réponse le point à 63 % et le point à 95 %.',
+      'Doublez |p₀| : que devient le temps de réponse ? Que devient la cassure du Bode ?',
+      'Placez |p₀| très faible (0,1 rad/s) : le système est-il plus rapide ou plus lent ?',
+      'Faites varier K sans toucher à |p₀| : la position du pôle change-t-elle ? La rapidité change-t-elle ?',
+      'Vérifiez sur le Bode que la cassure à −20 dB/décade se produit à ω = 1/τ = |p₀|.'
+    ],
+    defi: { q: 'On veut un temps de réponse à 5 % inférieur à 0,3 s pour un premier ordre. Quelle condition sur le pôle ?',
+      a: 't5 % = 3τ ≤ 0,3 s donc τ ≤ 0,1 s, soit |p₀| ≥ 10 rad/s : le pôle doit être au moins à 10 rad/s à gauche de l\'axe imaginaire.' },
+    qcm: [
+      { q: 'Pour un premier ordre H(p) = K/(1 + τp), le pôle est :', o: ['en −τ', 'en −1/τ', 'en 1/τ', 'en τ'], a: 1, w: '1 + τp = 0 donne p = −1/τ.' },
+      { q: 'La réponse indicielle atteint 63 % de sa valeur finale à :', o: ['t = τ', 't = 2τ', 't = 3τ', 't = 5τ'], a: 0, w: 'À t = τ, 1 − e^(−1) ≈ 0,63. À 3τ, on est à 95 %.' },
+      { q: 'Un pôle plus éloigné de l\'axe imaginaire signifie :', o: ['un système plus lent', 'un système plus rapide', 'un système instable', 'un système oscillant'], a: 1, w: 'Plus |Re(p)| est grand, plus e^(−|Re|·t) décroît vite.' },
+      { q: 'Sur le diagramme de Bode, la cassure du premier ordre apparaît à :', o: ['ω = τ', 'ω = 1/τ = |p₀|', 'ω = K', 'ω = 1'], a: 1, w: 'Au-delà de ω = 1/τ, le gain décroît de −20 dB/décade ; la phase passe de 0 à −90°.' }
+    ]
+  },
+  q3: {
+    title: 'Pôles complexes', level: 'Niveau 2 · Comprendre', time: '25 min', course: 'second-ordre',
+    goal: 'Relier la position des pôles complexes conjugués à ωn, ζ, θ et au dépassement.',
+    steps: [
+      'Fixez ωn = 2 rad/s et faites varier ζ de 0,05 à 1 : décrivez la trajectoire des pôles.',
+      'À ζ = 0,7, notez θ. Vérifiez cos θ = ζ.',
+      'À ζ = 0,3, mesurez le dépassement. Retrouvez-le par D = 100·exp(−πζ/√(1−ζ²)).',
+      'Fixez ζ = 0,5 et doublez ωn : le dépassement change-t-il ? Le temps de réponse ?',
+      'Sur le Bode, où se trouve la résonance par rapport à ωn quand ζ est petit ?'
+    ],
+    defi: { q: 'On veut un dépassement de 10 %. Quelles valeurs de ζ et de θ cela impose-t-il ? Et si ωn = 4 rad/s, où sont les pôles ?',
+      a: 'D = 10 % donne ζ ≈ 0,59 (θ ≈ 54°). Les pôles sont à −ζωn ± jωn√(1−ζ²) = −2,36 ± j3,23 rad/s.' },
+    qcm: [
+      { q: 'Les pôles d\'un second ordre avec ζ < 1 sont :', o: ['réels et distincts', 'réels confondus', 'complexes conjugués', 'imaginaires purs'], a: 2, w: 'Pour 0 < ζ < 1, p = −ζωn ± jωn√(1−ζ²).' },
+      { q: 'Le module d\'un pôle vaut :', o: ['ζωn', 'ωn', 'ωn√(1−ζ²)', 'ζ'], a: 1, w: '|p| = √(ζ²ωn² + ωn²(1−ζ²)) = ωn.' },
+      { q: 'L\'amortissement ζ est égal à :', o: ['sin θ', 'cos θ', 'tan θ', 'θ'], a: 1, w: 'ζ = −Re(p)/|p| = cos θ où θ est l\'angle entre le pôle et l\'axe réel négatif.' },
+      { q: 'Quand ζ diminue, les pôles :', o: ['s\'éloignent de l\'axe imaginaire', 'se rapprochent de l\'axe imaginaire', 's\'éloignent de l\'origine', 'deviennent réels'], a: 1, w: 'ζ → 0 : les pôles tendent vers ±jωn, donc vers l\'axe imaginaire, et la réponse oscille de plus en plus.' },
+      { q: 'Le dépassement dépend principalement de :', o: ['ωn', 'ζ', 'du gain', 'de la classe'], a: 1, w: 'D = 100·exp(−πζ/√(1−ζ²)) : il ne dépend que de ζ.' }
+    ]
+  },
+  q4: {
+    title: 'Pôle dominant', level: 'Niveau 2 · Comprendre', time: '20 min', course: 'dominants',
+    goal: 'Identifier le pôle dominant d\'un système d\'ordre supérieur et juger de la validité d\'une réduction de modèle.',
+    steps: [
+      'Avec τ₁ = 1 s et τ₂ = 0,1 s, identifiez le pôle dominant. Le rapport |p₂/p₁| vaut-il plus de 5 ?',
+      'Superposez la réponse exacte et l\'approximation du premier ordre : l\'écart est-il visible ?',
+      'Rapprochez τ₂ de τ₁ : que devient l\'écart ? Que devient le verdict ?',
+      'Placez τ₂ très petit (pôle très rapide) : l\'approximation devient-elle exacte ?',
+      'Échangez les rôles de τ₁ et τ₂ : le résultat change-t-il ?'
+    ],
+    defi: { q: 'H(p) = 1/((1 + 2p)(1 + 0,05p)). Peut-on la réduire à un premier ordre ? Lequel ? Quel est l\'écart de temps de réponse ?',
+      a: 'Pôles : −0,5 et −20 rad/s, rapport 40 ≫ 5. On réduit à H ≈ 1/(1 + 2p) : τ = 2 s, t5 % ≈ 6 s. L\'écart avec le système exact est inférieur à 2 %.' },
+    qcm: [
+      { q: 'Le pôle dominant est :', o: ['le plus éloigné de l\'axe imaginaire', 'le plus proche de l\'axe imaginaire', 'celui de plus grande partie imaginaire', 'le pôle à l\'origine'], a: 1, w: 'C\'est le pôle dont le mode e^(pt) s\'amortit le plus lentement.' },
+      { q: 'On peut négliger un pôle si :', o: ['son module est très inférieur à celui du dominant', 'son module est au moins 5 fois supérieur à celui du dominant', 'il est à l\'origine', 'il est complexe'], a: 1, w: 'Un pôle rapide (grand module) s\'amortit très vite : son effet ne dure que le début du transitoire.' },
+      { q: 'Un système du troisième ordre avec pôles −0,5, −20 et −50 a pour comportement approximatif :', o: ['un premier ordre de τ = 2 s', 'un premier ordre de τ = 0,05 s', 'un second ordre oscillant', 'un intégrateur'], a: 0, w: 'Le pôle −0,5 domine ; les deux autres sont 40 et 100 fois plus rapides.' },
+      { q: 'Deux pôles réels −3 et −4 rad/s :', o: ['le premier domine nettement', 'aucun ne domine vraiment', 'le second domine', 'le système est instable'], a: 1, w: 'Rapport 1,33 : les deux modes comptent, la réduction à un premier ordre est grossière.' }
+    ]
+  },
+  q5: {
+    title: 'Stabilité', level: 'Niveau 3 · Appliquer', time: '25 min', course: 'stabilite',
+    goal: 'Lire la stabilité d\'un système directement sur la position de ses pôles et interpréter la réponse impulsionnelle.',
+    steps: [
+      'Placez σ = −0,8 et ω = 3 : la réponse impulsionnelle est-elle amortie ? Quelle est la pseudo-période ?',
+      'Amenez σ à 0 : que devient l\'amplitude ? Le système est-il stable ?',
+      'Passez σ à +0,5 : décrivez la réponse. Combien de temps met-elle à doubler d\'amplitude ?',
+      'Faites varier ω : quel effet sur la fréquence des oscillations ?',
+      'Vérifiez que l\'enveloppe tracée est bien ±2|A|e^(σt).'
+    ],
+    defi: { q: 'Un système a pour pôles −1, −2 ± 5j. Est-il stable ? Quel est son mode le plus lent ? Combien de temps met-il à s\'amortir à 5 % ?',
+      a: 'Tous les pôles ont une partie réelle négative : le système est stable. Le mode le plus lent est celui de plus faible |Re| : −1 (constante de temps 1 s). L\'autre paire a un amortissement plus rapide (|Re| = 2). Le régime transitoire s\'éteint à 5 % vers 3 s.' },
+    qcm: [
+      { q: 'Un système est stable si et seulement si :', o: ['tous ses pôles sont à partie réelle négative', 'tous ses pôles sont réels', 'tous ses zéros sont à partie réelle négative', 'son gain est positif'], a: 0, w: 'C\'est le critère fondamental : pôles dans le demi-plan gauche strict.' },
+      { q: 'Un pôle unique en p = 0 donne une réponse impulsionnelle :', o: ['nulle', 'constante (échelon)', 'en rampe', 'oscillante'], a: 1, w: '1/p correspond à l\'échelon unité : le système est marginalement stable.' },
+      { q: 'Deux pôles en p = 0 donnent une réponse impulsionnelle :', o: ['constante', 'en rampe', 'oscillante amortie', 'nulle'], a: 1, w: '1/p² correspond à t : le système est instable (réponse non bornée).' },
+      { q: 'Un pôle à partie réelle positive donne une réponse :', o: ['qui s\'amortit', 'constante', 'qui diverge exponentiellement', 'sinusoïdale entretenue'], a: 2, w: 'Le mode e^(σt) avec σ > 0 croît sans limite.' },
+      { q: 'Une paire de pôles ±jω (partie réelle nulle) donne :', o: ['une réponse amortie', 'une sinusoïde entretenue', 'une rampe', 'une divergence'], a: 1, w: 'Ce sont des pôles imaginaires purs : le système est marginalement stable (oscillateur).' }
+    ]
+  },
+  q6: {
+    title: 'Lieu des racines', level: 'Niveau 3 · Appliquer', time: '25 min', course: 'locus',
+    goal: 'Comprendre comment les pôles en boucle fermée se déplacent avec le gain et identifier le gain critique.',
+    steps: [
+      'À K très faible, où sont les pôles ? Sont-ils proches des pôles de la boucle ouverte (0, −1, −3) ?',
+      'Augmentez K : décrivez le trajet des trois branches.',
+      'Trouvez le K pour lequel les pôles sont exactement sur l\'axe imaginaire : c\'est le gain critique.',
+      'Au-delà, la réponse diverge-t-elle ? Vérifiez sur la réponse indicielle.',
+      'Pour K très grand, vers quoi tendent les branches ? Pourquoi ?'
+    ],
+    defi: { q: 'Pour L(p) = 1/(p(p+1)(p+3)), calculez le gain critique par le critère de Routh.',
+      a: 'Équation caractéristique : p³ + 4p² + 3p + K = 0. Tableau de Routh : ligne s³ : 1, 3 ; s² : 4, K ; s¹ : (12 − K)/4 ; s⁰ : K. Pour la stabilité, il faut 0 < K < 12 : le gain critique est K_c = 12.' },
+    qcm: [
+      { q: 'Le lieu des racines représente :', o: ['la position des zéros en fonction de K', 'la position des pôles en boucle fermée en fonction de K', 'le gain en fonction de la pulsation', 'la réponse impulsionnelle'], a: 1, w: 'Ce sont les racines de 1 + K·L(p) = 0 quand K varie.' },
+      { q: 'Pour K = 0, les pôles en boucle fermée sont :', o: ['aux zéros de L', 'aux pôles de L', 'à l\'infini', 'à l\'origine'], a: 1, w: '1 + 0·L = 0 n\'a de sens que si D(p) = 0 : les pôles en BF sont les pôles en BO.' },
+      { q: 'Quand K augmente, les pôles en boucle fermée :', o: ['restent fixes', 'se déplacent vers la droite', 'se déplacent vers la gauche', 'deviennent toujours réels'], a: 1, w: 'En général, l\'augmentation du gain pousse les pôles vers la droite, ce qui dégrade la stabilité.' },
+      { q: 'Le gain critique K_c est le gain pour lequel :', o: ['les pôles sont à l\'origine', 'un pôle traverse l\'axe imaginaire', 'le gain statique devient 1', 'les zéros disparaissent'], a: 1, w: 'À K = K_c, le système est à la limite de stabilité ; au-delà, il est instable.' }
+    ]
+  }
+};
+
+/* ---------- cours ---------- */
+const COURSE = [];
+COURSE.push({ id: 'definitions', t: 'Fonction de transfert, pôles et zéros', h: `
+<p>Pour un système linéaire à coefficients constants, la fonction de transfert est le rapport des transformées de Laplace de la sortie et de l'entrée, à conditions initiales nulles :</p>
+<div class="formula">H(p) = S(p)/E(p) = N(p)/D(p) = K · Π(p − zᵢ) / Π(p − pⱼ)</div>
+<p>Les <b>pôles</b> pⱼ sont les racines du dénominateur ; les <b>zéros</b> zᵢ sont les racines du numérateur. Comme H est à coefficients réels, ses pôles et zéros sont soit réels, soit <b>complexes conjugués</b>.</p>
+<h3>Trois lectures essentielles</h3>
+<table class="ctable"><thead><tr><th>Lecture</th><th>Sur quoi elle agit</th></tr></thead><tbody>
+<tr><td>Position des pôles</td><td>Stabilité et régime transitoire (modes e^(pⱼt))</td></tr>
+<tr><td>Position des zéros</td><td>Amplitude relative des modes, forme de la réponse, dépassement</td></tr>
+<tr><td>Pôles à l'origine</td><td>Classe du système, donc précision (erreur statique nulle dès la classe 1)</td></tr></tbody></table>
+<h3>Forme canonique et gain</h3>
+<p>On écrit souvent H sous forme canonique : <b>H(p) = K · Π(1 + τᵢ p) / Π(1 + τⱼ p)</b> ou <b>H(p) = K / (p^α Π(1 + τⱼ p))</b>, où α est la classe. Le <b>gain statique</b> est H(0) si la classe est nulle ; il est infini sinon.</p>
+<div class="analogy"><b>Piège fréquent :</b> un pôle en −1 et une constante de temps τ = 1 s sont la même information. On écrit indifféremment H = K/(p + 1) ou H = K/(1 + p), mais le pôle est −1 et la constante de temps est +1 s. Ne confondez pas « racine du dénominateur » et « coefficient du dénominateur ».</div>` });
+COURSE.push({ id: 'premier-ordre', t: 'Pôle réel : premier ordre', h: `
+<p>Un premier ordre s'écrit H(p) = K/(1 + τp). Son unique pôle est <b>p₀ = −1/τ</b>, donc <b>τ = 1/|p₀|</b>.</p>
+<h3>Réponse indicielle</h3>
+<div class="formula">s(t) = K (1 − e^(−t/τ))</div>
+<p>À t = τ, la sortie atteint 63 % de sa valeur finale ; à 3τ, 95 % ; à 5τ, 99 %. Le temps de réponse à 5 % vaut donc approximativement <b>t₅ % ≈ 3τ</b>.</p>
+<h3>Diagramme de Bode</h3>
+<ul><li>Gain : 20 log K pour ω ≪ 1/τ, puis décroissance de −20 dB/décade.</li>
+<li>Phase : 0° pour ω ≪ 1/τ, −45° en ω = 1/τ, −90° pour ω ≫ 1/τ.</li></ul>
+<p>La <b>cassure</b> du diagramme asymptotique se produit exactement à ω = 1/τ = |p₀| : la position du pôle se lit directement sur le Bode.</p>
+<div class="analogy"><b>Interprétation physique :</b> plus le pôle est loin à gauche de l'axe imaginaire, plus la fuite est rapide et plus le système rejoint vite sa consigne. C'est la <b>distance à l'axe imaginaire</b> qui mesure la rapidité, pas la valeur algébrique brute.</div>` });
+COURSE.push({ id: 'second-ordre', t: 'Pôles complexes : second ordre', h: `
+<p>Un second ordre normalisé s'écrit <b>H(p) = K ωn² / (p² + 2ζωn p + ωn²)</b> avec ωn &gt; 0 et 0 &lt; ζ &lt; 1. Les pôles sont :</p>
+<div class="formula">p₁,₂ = −ζωn ± j ωn √(1 − ζ²)</div>
+<h3>Lectures graphiques</h3>
+<ul><li><b>Module</b> : |p| = ωn. La distance à l'origine fixe l'échelle de temps.</li>
+<li><b>Partie réelle</b> : −ζωn. Elle fixe la vitesse d'amortissement de l'enveloppe.</li>
+<li><b>Partie imaginaire</b> : ωn√(1 − ζ²). Elle fixe la <b>pseudo-pulsation</b> des oscillations ; la pseudo-période vaut T = 2π / (ωn√(1 − ζ²)).</li>
+<li><b>Angle</b> θ entre le pôle et l'axe réel négatif : <b>ζ = cos θ</b>.</li></ul>
+<h3>Réponse indicielle</h3>
+<p>Dépassement : <b>D = 100 · exp(−πζ / √(1 − ζ²))</b> (en %). Il ne dépend que de ζ. Temps de réponse à 5 % : <b>t₅ % ≈ 3/(ζωn)</b> pour ζ modéré.</p>
+<table class="ctable"><thead><tr><th>ζ</th><th>θ</th><th>D</th></tr></thead><tbody>
+<tr><td>0,2</td><td>78°</td><td>53 %</td></tr>
+<tr><td>0,4</td><td>66°</td><td>25 %</td></tr>
+<tr><td>0,6</td><td>53°</td><td>9,5 %</td></tr>
+<tr><td>0,7</td><td>45°</td><td>4,6 %</td></tr></tbody></table>
+<div class="analogy"><b>Sur le plan complexe :</b> ζ constant = demi-droites issues de l'origine ; ωn constant = cercles centrés en 0. Le cahier des charges impose souvent une zone (secteur + disque) dans laquelle les pôles doivent se trouver.</div>` });
+COURSE.push({ id: 'stabilite', t: 'Stabilité', h: `
+<p>Un système linéaire est <b>stable</b> (au sens EBSB) si et seulement si <b>tous ses pôles sont à partie réelle strictement négative</b>.</p>
+<h3>Les trois zones du plan complexe</h3>
+<table class="ctable"><thead><tr><th>Zone</th><th>Mode temporel</th><th>Comportement</th></tr></thead><tbody>
+<tr><td>Re(p) &lt; 0</td><td>e^(−|σ|t)·cos(ωt)</td><td><b>stable</b> : amortissement exponentiel</td></tr>
+<tr><td>Re(p) = 0</td><td>constante ou cos(ωt)</td><td><b>marginal</b> : ni amorti ni divergent</td></tr>
+<tr><td>Re(p) &gt; 0</td><td>e^(+σt)·cos(ωt)</td><td><b>instable</b> : divergence exponentielle</td></tr></tbody></table>
+<h3>Cas particuliers à connaître</h3>
+<ul><li>Un pôle simple en 0 (classe 1) donne une réponse en échelon : marginalement stable. C'est le cas d'un intégrateur.</li>
+<li>Deux pôles en 0 (classe 2) donnent une réponse en rampe : <b>instable</b>.</li>
+<li>Une paire ±jω simple donne une oscillation entretenue : marginal.</li>
+<li>Une paire ±jω double donne t·sin(ωt) : <b>instable</b>.</li></ul>
+<h3>Conséquences</h3>
+<p>La stabilité ne dépend que des pôles : les zéros ne peuvent pas rendre stable un système instable. En revanche, la position des pôles dépend du gain en boucle fermée (voir le lieu des racines).</p>
+<div class="analogy"><b>Lien avec les marges :</b> en boucle fermée, les pôles sont les racines de 1 + L(p) = 0. Plus la marge de phase et la marge de gain sont grandes, plus les pôles sont loin de l'axe imaginaire, donc plus le système est stable et bien amorti.</div>` });
+COURSE.push({ id: 'dominants', t: 'Pôles dominants et ordre supérieur', h: `
+<p>Pour un système d'ordre supérieur, chaque pôle pⱼ engendre un mode e^(pⱼt). Le mode le plus lent est celui dont la partie réelle est la plus proche de zéro : c'est le <b>pôle dominant</b>.</p>
+<h3>Règle d'usage</h3>
+<p>Si un pôle a un module au moins <b>5 fois</b> supérieur à celui du pôle dominant, il est <b>négligeable</b> : son mode s'éteint très vite et n'affecte pas la réponse au-delà du transitoire court. On peut alors réduire le modèle à un premier ordre (ou à un second ordre avec les pôles complexes dominants).</p>
+<h3>Réduction de modèle</h3>
+<ul><li>Garder les pôles les plus proches de l'axe imaginaire.</li>
+<li>Ajuster le gain pour conserver le gain statique.</li>
+<li>Vérifier que la réponse réduite reste proche de l'originale sur l'horizon temporel utile.</li></ul>
+<div class="analogy"><b>Attention :</b> un pôle rapide mais un zéro situé au même endroit s'annulent approximativement (compensation). Si le pôle est <b>instable</b>, la compensation n'est jamais exacte en pratique : le pôle instable doit être déplacé par la commande, pas annulé par un zéro.</div>` });
+COURSE.push({ id: 'zeros', t: 'Rôle des zéros', h: `
+<p>Les zéros ne déterminent pas la stabilité (qui ne dépend que des pôles) mais ils <b>modulent l'amplitude des modes</b> et la <b>forme de la réponse</b>.</p>
+<h3>Effets typiques</h3>
+<ul><li>Un zéro proche de l'axe imaginaire accentue le mode associé et peut créer un <b>dépassement</b> même si les pôles sont bien amortis.</li>
+<li>Un zéro dans le demi-plan droit (<b>non-minimum de phase</b>) provoque une réponse qui commence par partir dans le <b>sens opposé</b> à la consigne.</li>
+<li>Un zéro à l'origine correspond à une <b>dérivation</b> : il augmente le gain en haute fréquence, donc la sensibilité aux bruits.</li>
+<li>Un zéro peut <b>compenser</b> un pôle (annulation pôle-zéro) : c'est le principe de la compensation de pôle en correcteur PI.</li></ul>
+<h3>Lien avec la synthèse des correcteurs</h3>
+<p>Le correcteur à avance de phase ajoute un zéro et un pôle, placés de part et d'autre de la bande utile. Le PI ajoute un pôle à l'origine (intégrateur) et un zéro qui compense le pôle dominant. L'emplacement relatif du zéro et du pôle fixe l'effet sur la marge de phase.</p>` });
+COURSE.push({ id: 'locus', t: 'Lieu des racines', h: `
+<p>On considère une boucle fermée à retour unitaire avec un gain K et une boucle ouverte L(p) = N(p)/D(p). La fonction de transfert en boucle fermée est :</p>
+<div class="formula">H_BF(p) = K·L(p) / (1 + K·L(p)) = K·N(p) / (D(p) + K·N(p))</div>
+<p>Ses pôles sont les solutions de <b>1 + K·L(p) = 0</b>, c'est-à-dire les racines de <b>D(p) + K·N(p)</b>.</p>
+<h3>Propriétés du lieu</h3>
+<ul><li><b>Points de départ</b> (K = 0) : les pôles de L, racines de D.</li>
+<li><b>Points d'arrivée</b> (K → ∞) : les zéros de L, ou l'infini si le système est strictement propre.</li>
+<li>Le nombre de branches est égal au degré du dénominateur.</li>
+<li>Le lieu est symétrique par rapport à l'axe réel (coefficients réels).</li>
+<li>La <b>condition des modules</b> donne K = −1/L(p) pour un point du lieu ; la <b>condition des arguments</b> donne arg L(p) = −180°.</li></ul>
+<h3>Gain critique</h3>
+<p>Le lieu traverse l'axe imaginaire pour une valeur particulière K_c : c'est le <b>gain critique</b>. Pour K &lt; K_c, le système est stable ; pour K &gt; K_c, il est instable. On le détermine par le critère de Routh sur D(p) + K·N(p).</p>
+<div class="analogy"><b>Lecture pratique :</b> le lieu montre en une figure toute l'influence du gain sur la stabilité et le régime transitoire. On y lit directement la valeur du gain qui rapproche les pôles de l'axe imaginaire (donc le réglage fin de la marge de stabilité).</div>` });
+COURSE.push({ id: 'vocabulaire', t: 'Vocabulaire', h: `
+<dl class="gloss">
+<dt>Pôle</dt><dd>Racine du dénominateur de la fonction de transfert. Détermine la stabilité et les modes temporels.</dd>
+<dt>Zéro</dt><dd>Racine du numérateur. Module l'amplitude des modes.</dd>
+<dt>Classe</dt><dd>Nombre de pôles à l'origine (nombre d'intégrateurs).</dd>
+<dt>Gain statique</dt><dd>H(0), si la classe est nulle.</dd>
+<dt>Pôle dominant</dt><dd>Pôle le plus proche de l'axe imaginaire ; impose la dynamique lente.</dd>
+<dt>Pôle rapide</dt><dd>Pôle éloigné de l'axe imaginaire ; son effet est bref, il peut être négligé.</dd>
+<dt>Pseudo-pulsation</dt><dd>Partie imaginaire des pôles complexes, ωd = ωn√(1−ζ²).</dd>
+<dt>Pseudo-période</dt><dd>Td = 2π/ωd, intervalle entre deux dépassements.</dd>
+<dt>Amortissement ζ</dt><dd>ζ = −Re(p)/|p| = cos θ. Règle le dépassement.</dd>
+<dt>Marge de stabilité</dt><dd>Distance des pôles à l'axe imaginaire ; reliée aux marges de phase et de gain.</dd>
+<dt>Lieu des racines</dt><dd>Courbe décrite par les pôles en boucle fermée quand le gain varie.</dd>
+<dt>Gain critique</dt><dd>Gain pour lequel un pôle traverse l'axe imaginaire (limite de stabilité).</dd>
+</dl>` });
+
+/* ---------- interface ---------- */
+const UI = { cur: 'q1' };
+const AS = { key: 'q1', tab: 'steps', open: false, st: lsGet(KEYS.act, {}), arm: null };
+const CS = { open: false, id: 'definitions' };
+function actSave() { lsSet(KEYS.act, AS.st); }
+function actState() { return AS.st[AS.key] || (AS.st[AS.key] = { a: {}, checked: false, shown: false }); }
+function actScore(a) { const s = actState(); return a.qcm.filter((q, i) => s.a[i] === q.a).length; }
+function wsById(id) { return WORKSHOPS.find(w => w.id === id) || WORKSHOPS[0]; }
+function renderSeg() {
+  const seg = $('#wsSeg'); seg.innerHTML = '';
+  WORKSHOPS.forEach((w, i) => seg.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': w.id === UI.cur ? 'true' : 'false', 'aria-selected': w.id === UI.cur ? 'true' : 'false', onclick: () => gotoWs(w.id) }, (i + 1) + '. ' + w.title)));
+}
+function mountWs() {
+  const w = wsById(UI.cur), root = $('#ws');
+  $('#hint').textContent = w.hint; root.innerHTML = '';
+  try { w.mount(root); }
+  catch (err) { root.innerHTML = '<p class="verdict no"><b>Erreur d\'affichage.</b> ' + esc(err && err.message || err) + '</p>'; if (window.console) console.error(err); }
+  const sc = $('#scroller'); if (sc) sc.scrollTop = 0;
+}
+function gotoWs(id) {
+  if (CS.open) { CS.open = false; renderCourse(); }
+  UI.cur = id; AS.key = id; AS.tab = 'steps';
+  renderSeg(); mountWs(); renderAct();
+}
+function renderAct() {
+  const box = $('#act'), btn = $('#bAct');
+  btn.setAttribute('aria-pressed', AS.open ? 'true' : 'false'); btn.classList.toggle('pri', AS.open);
+  document.body.classList.toggle('act-open', AS.open && !CS.open);
+  box.hidden = !AS.open;
+  if (!AS.open) { box.innerHTML = ''; return; }
+  const oldB = box.querySelector('.pbody'), tag = AS.key + '|' + AS.tab, keep = oldB && box.dataset.k === tag ? oldB.scrollTop : 0;
+  box.dataset.k = tag; box.innerHTML = '';
+  const a = ACT[AS.key];
+  const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
+  box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
+  const nq = a.qcm.length;
+  box.append(h('div', { class: 'tabs', role: 'tablist' },
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'steps' ? 'true' : 'false', onclick: () => { AS.tab = 'steps'; renderAct(); } }, 'Consignes'),
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'qcm' ? 'true' : 'false', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Quiz (' + nq + ')')));
+  const body = h('div', { class: 'pbody' });
+  if (AS.tab === 'steps') {
+    body.append(h('p', { class: 'small' }, a.level + ' · environ ' + a.time), h('div', { class: 'goal' }, h('b', null, 'Objectif. '), a.goal));
+    body.append(h('ol', { class: 'steps' }, a.steps.map(s => h('li', { html: s }))));
+    body.append(h('div', { class: 'defi' }, h('b', null, 'Défi'), h('p', { html: a.defi.q }), h('details', null, h('summary', null, 'Voir la réponse'), h('p', { html: a.defi.a }))));
+    if (a.course) body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: () => openCourse(a.course) }, 'Voir le cours : ' + courseSection(a.course).t)));
+    body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: ev => {
+      const b = ev.currentTarget;
+      if (!AS.arm) { b.textContent = 'Confirmer ? Votre travail sera effacé'; AS.arm = setTimeout(() => { b.textContent = 'Recommencer l’atelier'; AS.arm = null; }, 3500); return; }
+      clearTimeout(AS.arm); AS.arm = null; wsById(UI.cur).reset(); mountWs(); renderAct(); } }, 'Recommencer l’atelier')));
+    body.append(h('p', null, h('button', { class: 'btn pri', type: 'button', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Passer au quiz')));
+  } else {
+    const s = actState(), show = s.checked || s.shown;
+    a.qcm.forEach((q, i) => {
+      const fs = h('fieldset', { class: 'q' }, h('legend', { html: (i + 1) + '. ' + q.q }));
+      q.o.forEach((o, j) => {
+        const good = show && j === q.a, bad = s.checked && !s.shown && s.a[i] === j && j !== q.a;
+        const inp = h('input', { type: 'radio', name: 'q' + i, checked: show && s.shown ? j === q.a : s.a[i] === j, disabled: show });
+        inp.addEventListener('change', () => { s.a[i] = j; actSave(); renderAct(); });
+        fs.append(h('label', { class: 'opt' + (good ? ' good' : '') + (bad ? ' bad' : '') }, inp, h('span', { html: o + (good ? '  ✓' : '') + (bad ? '  ✗' : '') })));
+      });
+      if (show) { const miss = s.a[i] == null && !s.shown; fs.append(h('p', { class: 'why', html: (miss ? 'Sans réponse. ' : '') + q.w })); }
+      body.append(fs);
+    });
+    const done = Object.keys(s.a).length;
+    body.append(h('p', { class: 'small' }, s.shown ? 'Réponses affichées.' : s.checked ? '' : done + ' réponse(s) sur ' + nq + '.'));
+    if (s.checked && !s.shown) body.append(h('p', { class: 'score' }, 'Score : ' + actScore(a) + ' / ' + nq));
+    const row = h('div', { class: 'files' });
+    if (!show) row.append(h('button', { class: 'btn pri', type: 'button', onclick: () => { s.checked = true; actSave(); renderAct(); } }, 'Corriger'));
+    if (!s.shown) row.append(h('button', { class: 'btn', type: 'button', onclick: () => { s.shown = true; actSave(); renderAct(); } }, 'Afficher les réponses'));
+    if (show) row.append(h('button', { class: 'btn', type: 'button', onclick: () => { AS.st[AS.key] = { a: {}, checked: false, shown: false }; actSave(); renderAct(); } }, 'Recommencer'));
+    body.append(row);
+  }
+  box.append(body); body.scrollTop = keep;
+}
+$('#bAct').addEventListener('click', () => { if (CS.open) { CS.open = false; renderCourse(); } AS.open = !AS.open; renderAct(); });
+
+function courseSection(id) { return COURSE.find(s => s.id === id) || COURSE[0]; }
+function renderCourse() {
+  const box = $('#course'), btn = $('#bCourse'), work = $('#work');
+  btn.setAttribute('aria-pressed', CS.open ? 'true' : 'false'); btn.classList.toggle('pri', CS.open);
+  box.hidden = !CS.open; work.hidden = CS.open; $('#modes').hidden = CS.open;
+  document.body.classList.toggle('act-open', AS.open && !CS.open);
+  if (!CS.open) { box.innerHTML = ''; return; }
+  box.innerHTML = '';
+  const cur = courseSection(CS.id), idx = COURSE.indexOf(cur);
+  const go = id => { CS.id = id; renderCourse(); };
+  const nav = h('nav', { class: 'ctoc', 'aria-label': 'Sommaire du cours' }, COURSE.map((s, i) => h('button', { type: 'button', class: s.id === cur.id ? 'on' : '', 'aria-current': s.id === cur.id ? 'true' : 'false', onclick: () => go(s.id) }, (i + 1) + '. ' + s.t)));
+  const sel = h('select', { class: 'ctoc-sel', 'aria-label': 'Choisir une section', onchange: e => go(e.target.value) }, COURSE.map((s, i) => h('option', { value: s.id, selected: s.id === cur.id }, (i + 1) + '. ' + s.t)));
+  const art = h('article', { class: 'cbody' });
+  art.append(h('p', { class: 'ckick' }, 'Cours · section ' + (idx + 1) + ' sur ' + COURSE.length), h('h2', null, cur.t), h('div', { html: cur.h }));
+  art.append(h('div', { class: 'cpn' },
+    idx > 0 ? h('button', { class: 'btn', type: 'button', onclick: () => go(COURSE[idx - 1].id) }, '← ' + COURSE[idx - 1].t) : h('span'),
+    idx < COURSE.length - 1 ? h('button', { class: 'btn pri', type: 'button', onclick: () => go(COURSE[idx + 1].id) }, COURSE[idx + 1].t + ' →') : h('span')));
+  const top = h('div', { class: 'ctop' }, h('b', null, 'Cours : étude des pôles'), h('button', { class: 'btn pri sm', type: 'button', onclick: () => { CS.open = false; renderCourse(); } }, 'Retour à l’atelier'));
+  box.append(top, sel, h('div', { class: 'cwrap' }, nav, art));
+  box.scrollTop = 0;
+}
+function openCourse(id) { if (id) CS.id = id; CS.open = true; renderCourse(); }
+$('#bCourse').addEventListener('click', () => { CS.open = !CS.open; renderCourse(); });
+
+function closeDlg() { $('#dlg').hidden = true; $('#dlg').innerHTML = ''; }
+function openDlg(title, body) {
+  const d = $('#dlg'); d.innerHTML = ''; d.hidden = false;
+  d.append(h('div', { class: 'dlgbox', role: 'dialog', 'aria-label': title }, h('header', null, h('b', null, title), h('button', { class: 'btn sm', type: 'button', onclick: closeDlg }, 'Fermer')), h('div', { class: 'dbody' }, body)));
+  d.onclick = ev => { if (ev.target === d) closeDlg(); };
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#dlg').hidden) closeDlg(); });
+$('#bHelp').addEventListener('click', () => {
+  openDlg('Aide', h('div', { html: '<p>Six ateliers sur l\'étude des pôles d\'une fonction de transfert : vocabulaire, pôle réel, pôles complexes, pôle dominant, stabilité, lieu des racines.</p>' +
+    '<h3>Utilisation</h3><ul><li>Choisissez un atelier dans la barre du haut (elle défile sur petit écran), puis déplacez les curseurs.</li><li>Le <b>plan complexe</b> affiche les pôles (croix ×) et les zéros (cercles ○). La zone rosée est le demi-plan droit (instable).</li><li>Les courbes temporelles sont obtenues par intégration numérique (Runge-Kutta d\'ordre 4) du système, pas par une formule approchée.</li><li>Le bouton <b>Activité</b> affiche les consignes, un défi et un quiz avec correction. Sur téléphone, il s\'ouvre en bas de l\'écran.</li><li>Le bouton <b>Cours</b> reprend les notions.</li></ul>' +
+    '<h3>Modèle</h3><p>Fonctions de transfert rationnelles à coefficients réels ; pôles et zéros calculés numériquement (méthode de Durand-Kerner).</p><h3>Vos données</h3><p>Les réponses au quiz sont mémorisées dans ce navigateur uniquement.</p>' }));
+});
+(function init() { AS.open = !isSmall(); renderSeg(); mountWs(); renderAct(); renderCourse(); })();
+</script>
+
+</body></html>
