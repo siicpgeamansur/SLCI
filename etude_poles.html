@@ -116,7 +116,7 @@ fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
 .dt td.m{font-family:var(--font-mono);font-size:12.5px}
 .dt tr:last-child td{border-bottom:0}
 .bar{display:flex;align-items:center;gap:8px;font-size:13px;margin:3px 0}
-.bar .lab{width:220px;color:var(--muted);font-size:12.5px;white-space:nowrap;flex-shrink:0;}
+.bar .lab{width:240px;color:var(--muted);font-size:12.5px;white-space:nowrap;flex-shrink:0;}
 .bar .track{flex:1;background:var(--panel2);border-radius:4px;height:14px;overflow:hidden}
 .bar .fill{height:100%;background:var(--accent)}
 .bar .fill.ok{background:var(--ok)}.bar .fill.bad{background:var(--bad)}.bar .fill.warn{background:#e08a00}
@@ -185,7 +185,7 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
-const KEYS = { act: 'atelier-poles-v5' };
+const KEYS = { act: 'atelier-poles-v6' };
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
 const WORKSHOPS = [];
@@ -467,7 +467,7 @@ function bodeSvg(svg, o) {
 }
 
 function timeSvg(svg, o) {
-  const W = 640, H = o.h || 250, L = 54, R = 14, T = 14, B = 34, tmax = o.tmax;
+  const W = 640, H = o.h || 340, L = 54, R = 14, T = 14, B = 34, tmax = o.tmax;
   let ymin = o.ymin, ymax = o.ymax;
   if (ymin === undefined || ymax === undefined) {
     ymin = Infinity; ymax = -Infinity;
@@ -1117,8 +1117,8 @@ function mountQ6(root) {
     const tmax = autoT(act), N = 700, ts = [];
     for (let i = 0; i <= N; i++) ts.push(tmax * i / N);
     const resp = act.map(t => respond(t, S.input, tmax, N));
-    const sum = ts.map((_, i) => resp.reduce((a, r) => a + r[i], 0));
-    const pool = S.indiv ? [sum].concat(resp) : [sum];
+    const sum = ts.map((_, i) => resp.reduce((a, r) => a + r.y[i], 0));
+    const pool = S.indiv ? [sum].concat(resp.map(r => r.y)) : [sum];
     let mn = Infinity, mx = -Infinity; const abs = [];
     for (const arr of pool) for (const v of arr) { if (isFinite(v)) { mn = Math.min(mn, v); mx = Math.max(mx, v); abs.push(Math.abs(v)); } }
     abs.sort((a, b) => a - b);
@@ -1148,7 +1148,7 @@ function mountQ6(root) {
     if (S.input === 'rampe') s += '<polyline fill="none" style="stroke:var(--muted);stroke-width:1.2" stroke-dasharray="5 4" points="' + X(0) + ',' + Y(0) + ' ' + X(tmax) + ',' + Y(tmax) + '"/>';
     if (S.input === 'dirac') s += '<line x1="' + X(0) + '" y1="' + Y(0) + '" x2="' + X(0) + '" y2="' + T + '" style="stroke:var(--muted);stroke-width:1.5" stroke-dasharray="4 3"/>';
     const poly = (arr, style) => '<polyline fill="none" style="' + style + '" stroke-linejoin="round" points="' + arr.map((v, i) => X(ts[i]).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '"/>';
-    if (S.indiv) act.forEach((t, i) => { s += poly(resp[i], 'stroke:var(--c' + t.c + ');stroke-width:1.6;opacity:.85') });
+    if (S.indiv) act.forEach((t, i) => { s += poly(resp[i].y, 'stroke:var(--c' + t.c + ');stroke-width:1.6;opacity:.85') });
     s += poly(sum, 'stroke:var(--fg);stroke-width:2.8');
     s += '</g>';
     $q('#q6-chart').innerHTML = s;
