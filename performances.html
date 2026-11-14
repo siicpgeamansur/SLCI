@@ -1606,9 +1606,18 @@ $('#bCourse').addEventListener('click',()=>{
 });
 
 /* ===================== démarrage ===================== */
+window.onerror=function(msg,src,line,col,err){
+  console.error('ERREUR JS :', msg, 'ligne', line, 'col', col, err);
+  const ws=document.getElementById('ws');
+  if (ws) ws.innerHTML='<div style="padding:20px;background:#fff3cd;border:2px solid #c00;border-radius:8px;font-family:monospace;font-size:13px;line-height:1.5;margin:12px"><b>Erreur JavaScript interceptée :</b><br>'+msg+'<br><small>ligne '+line+', colonne '+col+'</small><br><br><b>Envoie-moi ce message.</b></div>';
+};
 AS.open=!isSmall();
 AS.key=CUR;
-render();
+try { render(); } catch(e) {
+  console.error(e);
+  const ws=document.getElementById('ws');
+  if (ws) ws.innerHTML='<div style="padding:20px;background:#fff3cd;border:2px solid #c00;border-radius:8px;font-family:monospace;font-size:13px;line-height:1.5;margin:12px"><b>Erreur au démarrage :</b><br>'+(e.message||e)+'<br><pre style="white-space:pre-wrap;font-size:11px">'+(e.stack||'')+'</pre></div>';
+}
 </script>
 </body>
 </html>
