@@ -52,6 +52,7 @@ button,input,select{font:inherit;color:inherit}
 .tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
 .tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
 .goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 11px;margin:0 0 10px}
+.notation{background:#f1f3f6;border-left:3px solid var(--muted);border-radius:6px;padding:8px 10px;margin:0 0 10px;font-size:12.5px;line-height:1.5}
 .steps{margin:0 0 10px;padding-left:20px}
 .steps li{margin-bottom:9px;font-size:13.5px}
 .defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:10px 0}
@@ -151,6 +152,7 @@ table.kv tr.hl td{background:var(--accent-soft)}
 .fr>span:first-child{border-bottom:1px solid currentColor;padding:0 3px}
 .fr>span:last-child{padding:0 3px}
 .math i,.formula i,.mi{font-family:'Times New Roman','STIX Two Text',serif;font-style:italic;font-size:1.06em}
+.svgwrap{display:flex;justify-content:center;margin:10px 0}
 @media (max-width:900px){
   .work{flex-direction:column}
   #act{width:100%;position:static;max-height:none}
@@ -216,7 +218,7 @@ function h(tag, attrs, ...kids){
   return el;
 }
 const isSmall=()=>{try{return window.matchMedia('(max-width:900px)').matches;}catch(e){return false;}};
-const KEYS={act:'slci-perf-qcm-v2'};
+const KEYS={act:'slci-perf-qcm-v3'};
 function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -403,11 +405,11 @@ const SYS={
   corr:{type:'P', Kp:2, Ti:1, Td:0.2},
   input:'echelon',
   amp:1,
-  dist:0
+  pert:0
 };
 const TABS=[
   {id:'precision',t:'Précision',hint:'Choisissez la classe de G(p), le correcteur et l’entrée. Le gain du tableau est celui de la FTBO : K_BO = lim p^α·FTBO(p).'},
-  {id:'rapidite',t:'Rapidité',hint:'Observez le temps de réponse à 5 %, la bande passante à −3 dB et l’influence du gain Kp.'},
+  {id:'rapidite',t:'Rapidité',hint:'La rapidité se mesure classiquement sur la réponse à un échelon. Observez t₅% et la bande passante à −3 dB.'},
   {id:'stabilite',t:'Stabilité',hint:'Pôles de la boucle fermée, marges de gain (cible 8–12 dB) et de phase (cible 45–60°) sur le diagramme de Bode.'}
 ];
 let CUR='precision';
@@ -429,25 +431,21 @@ function model(){
   const Pn=padd(Ld,Ln);
   let cls=0;
   for (let i=Ld.length-1;i>=0&&Math.abs(Ld[i])<1e-12;i--)cls++;
-  /* K_BO = gain de la FTBO adapté à sa classe = lim_{p→0} p^α·FTBO(p)
-     = Ln(0) / coefficient du terme en p^(cls) du dénominateur */
-  const LnLast = Ln[Ln.length-1];
-  const LdIdx = Ld.length - cls - 1;
-  const LdLast = LdIdx >= 0 ? Ld[LdIdx] : 0;
-  const K_BO = Math.abs(LdLast) < 1e-15 ? Infinity : LnLast / LdLast;
-  /* legacy - les mêmes valeurs mais labellisées séparément */
-  const Kpos = cls===0 ? K_BO : Infinity;
-  const Kv   = cls===1 ? K_BO : (cls>1 ? Infinity : 0);
-  const Ka   = cls===2 ? K_BO : (cls>2 ? Infinity : 0);
+  const LnLast=Ln[Ln.length-1];
+  const LdIdx=Ld.length-cls-1;
+  const LdLast=LdIdx>=0?Ld[LdIdx]:0;
+  const K_BO=Math.abs(LdLast)<1e-15?Infinity:LnLast/LdLast;
+  const Kpos=cls===0?K_BO:Infinity;
+  const Kv=cls===1?K_BO:(cls>1?Infinity:0);
+  const Ka=cls===2?K_BO:(cls>2?Infinity:0);
   const poles=roots(Pn);
   const stable=poles.length>0&&poles.every(z=>z.re<-1e-9);
   const P0=Pn[Pn.length-1];
-  const distGain=Math.abs(P0)<1e-12?0:(Ng[0]*Dc[Dc.length-1])/P0;
-  /* alpha1, K1 du correcteur (pour le tableau de perturbation) */
-  const alpha1 = C.type==='P' ? 0 : 1;
-  const K1 = C.type==='P' ? C.Kp : (C.Ti>1e-12 ? C.Kp/C.Ti : Infinity);
-  const K2 = P.K, alpha2 = P.classe;
-  return {Ng,Dg,Nc,Dc,Ln,Ld,Pn,cls,K_BO,Kpos,Kv,Ka,T1n:Ln,T1d:Pn,T2n:pmul(Ng,Dc),T2d:Pn,poles,stable,distGain,alpha1,K1,K2,alpha2};
+  const pertGain=Math.abs(P0)<1e-12?0:(Ng[0]*Dc[Dc.length-1])/P0;
+  const alpha1=C.type==='P'?0:1;
+  const K1=C.type==='P'?C.Kp:(C.Ti>1e-12?C.Kp/C.Ti:Infinity);
+  const K2=P.K,alpha2=P.classe;
+  return {Ng,Dg,Nc,Dc,Ln,Ld,Pn,cls,K_BO,Kpos,Kv,Ka,T1n:Ln,T1d:Pn,T2n:pmul(Ng,Dc),T2d:Pn,poles,stable,pertGain,alpha1,K1,K2,alpha2};
 }
 function timeFrame(M){
   let tmax=10;
@@ -459,25 +457,39 @@ function timeFrame(M){
   }
   return clamp(tmax,0.2,150);
 }
+function simTimeframe(M){
+  const base=timeFrame(M);
+  if (SYS.pert>0&&SYS.input==='echelon'){
+    const td=base*0.85;
+    return {base,td,tmax:base*2.5,hasPert:true};
+  }
+  return {base,td:0,tmax:base,hasPert:false};
+}
 function eSignal(t){
   const a=SYS.amp;
   if (SYS.input==='dirac')return 0;
   if (SYS.input==='echelon')return a;
   if (SYS.input==='rampe')return a*t;
+  if (SYS.input==='parabole')return 0.5*a*t*t;
   return 0;
 }
-function computeResponse(M,tmax,N){
-  const inp=SYS.input;let y1;
+function computeResponse(M,tf){
+  const N=900;
+  const {tmax,td,hasPert}=tf;
+  const inp=SYS.input,a=SYS.amp;
+  let y1;
   if (inp==='dirac'){
     const ss=tf2ss(M.T1n,M.T1d);
     y1=simulateSS(ss,()=>0,tmax,N,ss.B.slice());
   } else {
-    const a=SYS.amp;
-    const uf=inp==='echelon'?(()=>a):(t=>a*t);
+    let uf;
+    if (inp==='echelon')uf=()=>a;
+    else if (inp==='rampe')uf=t=>a*t;
+    else uf=t=>0.5*a*t*t;
     y1=simulateSS(tf2ss(M.T1n,M.T1d),uf,tmax,N);
   }
   let y2=null;
-  if (SYS.dist>0)y2=simulateSS(tf2ss(M.T2n,M.T2d),()=>SYS.dist,tmax,N);
+  if (hasPert)y2=simulateSS(tf2ss(M.T2n,M.T2d),t=>(t>=td?SYS.pert:0),tmax,N);
   const y=y1.map((p,i)=>[p[0],p[1]+(y2?y2[i][1]:0)]);
   return {y1,y2,y};
 }
@@ -550,14 +562,14 @@ function closedLoopBandwidth(M){
   return NaN;
 }
 
-/* ===================== schéma bloc ===================== */
+/* ===================== schémas SVG ===================== */
 function diagSVG(M){
   const P=SYS.plant,C=SYS.corr;
   const gTxt=P.forme==='A'?'K/(1+Tp)':'K/(1+2mp/ω₀+p²/ω₀²)';
   const gInt=P.classe===0?'':(P.classe===1?' × 1/p':' × 1/p²');
   const cTxt=C.type==='P'?'C(p) = Kp':C.type==='PI'?'C(p) = Kp(1 + 1/(Ti·p))':'C(p) = Kp(1 + 1/(Ti·p) + Td·p)';
-  const distTxt=SYS.dist>0?'d(t)':'d(t) = 0';
-  const boTxt = 'α = ' + M.cls + ' ; K_BO = ' + (isFinite(M.K_BO)?nf(M.K_BO,2):'∞');
+  const pertTxt=SYS.pert>0?'pert(t)':'pert(t) = 0';
+  const boTxt='α = '+M.cls+' ; K_BO = '+(isFinite(M.K_BO)?nf(M.K_BO,2):'∞');
   return '<svg viewBox="0 0 780 175" style="width:100%;height:auto" role="img" aria-label="Schéma bloc">'
   +'<defs><marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">'
   +'<path d="M0,0 L8,3 L0,6 Z" fill="#33475b"/></marker></defs>'
@@ -568,29 +580,230 @@ function diagSVG(M){
   +'<text x="82" y="106" font-size="14" fill="#33475b">−</text>'
   +'<line x1="90" y1="72" x2="116" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
   +'<rect x="118" y="46" width="168" height="52" rx="8" fill="#eef1f5" stroke="#33475b" stroke-width="2"/>'
-  +'<text x="202" y="66" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111">Correcteur</text>'
+  +'<text x="202" y="66" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111">Correcteur C(p)</text>'
   +'<text x="202" y="84" text-anchor="middle" font-size="11.5" fill="#5a6068">'+cTxt+'</text>'
   +'<line x1="286" y1="72" x2="314" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
   +'<circle cx="332" cy="72" r="16" fill="#fff" stroke="#33475b" stroke-width="2"/>'
   +'<text x="310" y="60" font-size="14" fill="#33475b">+</text>'
   +'<text x="340" y="50" font-size="14" fill="#33475b">+</text>'
-  +'<line x1="332" y1="16" x2="332" y2="54" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
-  +'<text x="340" y="14" font-size="12.5" fill="#5a6068">'+distTxt+'</text>'
+  +'<line x1="332" y1="16" x2="332" y2="54" stroke="#7b4fc2" stroke-width="2" marker-end="url(#ah)"/>'
+  +'<text x="340" y="14" font-size="12.5" fill="#7b4fc2">'+pertTxt+'</text>'
   +'<line x1="348" y1="72" x2="374" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
   +'<rect x="376" y="46" width="212" height="52" rx="8" fill="#dcebf8" stroke="#2e6da4" stroke-width="2"/>'
-  +'<text x="482" y="66" text-anchor="middle" font-size="13.5" font-weight="600" fill="#1b4a76">Système</text>'
+  +'<text x="482" y="66" text-anchor="middle" font-size="13.5" font-weight="600" fill="#1b4a76">Système G(p)</text>'
   +'<text x="482" y="84" text-anchor="middle" font-size="11.5" fill="#1b4a76">'+gTxt+gInt+'</text>'
   +'<line x1="588" y1="72" x2="640" y2="72" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
   +'<text x="648" y="66" font-size="13.5" fill="#111">s(t)</text>'
   +'<path d="M610,72 L610,145 L74,145 L74,90" fill="none" stroke="#33475b" stroke-width="2" marker-end="url(#ah)"/>'
   +'<text x="330" y="158" text-anchor="middle" font-size="11.5" fill="#5a6068">retour unitaire</text>'
-  +'<text x="700" y="36" font-size="11.5" fill="#5a6068">FTBO : '+boTxt+'</text>'
+  +'<text x="650" y="36" font-size="11.5" fill="#5a6068">FTBO : '+boTxt+'</text>'
   +'</svg>';
+}
+function genericLoopSVG(showPert){
+  const pert=showPert?'<line x1="467" y1="8" x2="467" y2="42" stroke="#7b4fc2" stroke-width="2" marker-end="url(#ahg)"/>'
+    +'<text x="478" y="14" font-size="12" fill="#7b4fc2">pert(t)</text>':'';
+  return '<svg viewBox="0 0 780 200" style="width:100%;height:auto;display:block;margin:8px auto" role="img" aria-label="Schéma bloc générique">'
+  +'<defs><marker id="ahg" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">'
+  +'<path d="M0,0 L8,3 L0,6 Z" fill="#33475b"/></marker></defs>'
+  +'<text x="4" y="70" font-size="13.5" fill="#111">Consigne</text>'
+  +'<text x="4" y="88" font-size="12" fill="#5a6068" font-style="italic">y_c(t)</text>'
+  +'<line x1="60" y1="78" x2="106" y2="78" stroke="#33475b" stroke-width="2" marker-end="url(#ahg)"/>'
+  +'<circle cx="122" cy="78" r="16" fill="#fff" stroke="#33475b" stroke-width="2"/>'
+  +'<text x="100" y="66" font-size="14" fill="#33475b">+</text>'
+  +'<text x="128" y="114" font-size="14" fill="#33475b">−</text>'
+  +'<line x1="138" y1="78" x2="176" y2="78" stroke="#33475b" stroke-width="2" marker-end="url(#ahg)"/>'
+  +'<text x="152" y="68" font-size="11.5" fill="#c0281f" font-style="italic">ε(t)</text>'
+  +'<rect x="178" y="52" width="160" height="52" rx="8" fill="#eef1f5" stroke="#33475b" stroke-width="2"/>'
+  +'<text x="258" y="72" text-anchor="middle" font-size="13.5" font-weight="600" fill="#111">Correcteur</text>'
+  +'<text x="258" y="90" text-anchor="middle" font-size="12" fill="#5a6068" font-style="italic">C(p)</text>'
+  +'<line x1="338" y1="78" x2="376" y2="78" stroke="#33475b" stroke-width="2" marker-end="url(#ahg)"/>'
+  +'<text x="352" y="68" font-size="11.5" fill="#5a6068" font-style="italic">u(t)</text>'
+  +'<rect x="378" y="52" width="180" height="52" rx="8" fill="#dcebf8" stroke="#2e6da4" stroke-width="2"/>'
+  +'<text x="468" y="72" text-anchor="middle" font-size="13.5" font-weight="600" fill="#1b4a76">Système</text>'
+  +'<text x="468" y="90" text-anchor="middle" font-size="12" fill="#1b4a76" font-style="italic">G(p)</text>'
+  +'<line x1="558" y1="78" x2="616" y2="78" stroke="#33475b" stroke-width="2" marker-end="url(#ahg)"/>'
+  +'<text x="626" y="72" font-size="13.5" fill="#111">Sortie</text>'
+  +'<text x="626" y="88" font-size="12" fill="#5a6068" font-style="italic">s(t)</text>'
+  +'<path d="M600,78 L600,155 L122,155 L122,96" fill="none" stroke="#33475b" stroke-width="2" marker-end="url(#ahg)"/>'
+  +'<rect x="380" y="135" width="130" height="38" rx="6" fill="#f1f3f6" stroke="#5a6068" stroke-width="1.5"/>'
+  +'<text x="445" y="158" text-anchor="middle" font-size="12.5" fill="#111">Capteur</text>'
+  +'<text x="445" y="172" text-anchor="middle" font-size="11" fill="#5a6068" font-style="italic">K_capt.</text>'
+  +pert
+  +'<text x="170" y="192" font-size="11.5" fill="#5a6068">Retour unitaire (K_capt.=1) → écart ε(t) = erreur μ(t) = y_c(t) − s(t)</text>'
+  +'<text x="170" y="30" font-size="12" fill="#1b4a76">FTBO : L(p) = C(p)·G(p)</text>'
+  +'</svg>';
+}
+
+/* SVG pour l'abaque t_red vs ξ */
+function tReduitOf(xi){
+  if (xi<=0)return NaN;
+  const dt=0.005,tmax=80;
+  let lastOut=0;
+  for (let t=0;t<=tmax;t+=dt){
+    let s;
+    if (xi<1-1e-6){const wd=Math.sqrt(1-xi*xi);s=1-Math.exp(-xi*t)*(Math.cos(wd*t)+xi/wd*Math.sin(wd*t));}
+    else if (xi<=1+1e-6){s=1-(1+t)*Math.exp(-t);}
+    else {const r=Math.sqrt(xi*xi-1),p1=-xi+r,p2=-xi-r;s=1-(p1*Math.exp(p2*t)-p2*Math.exp(p1*t))/(p1-p2);}
+    if (Math.abs(s-1)>0.05)lastOut=t;
+  }
+  const t5=lastOut+dt;
+  const wref=xi<1?Math.sqrt(1-xi*xi):1;
+  return t5*wref;
+}
+function abaqueSVG(){
+  const W=580,H=340,pad={l:55,r:25,t:22,b:48};
+  const N=80,pts=[];
+  for (let i=0;i<=N;i++){
+    const lx=-1+2*i/N;
+    const xi=Math.pow(10,lx);
+    const tr=tReduitOf(xi);
+    if (!isFinite(tr)||tr<=0)continue;
+    pts.push({xi,lx,tr,ltr:Math.log10(tr)});
+  }
+  const ltrmin=0,ltrmax=2;
+  const X=lx=>pad.l+(lx+1)/2*(W-pad.l-pad.r);
+  const Y=ltr=>H-pad.b-(ltr-ltrmin)/(ltrmax-ltrmin)*(H-pad.t-pad.b);
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:620px;height:auto;display:block;margin:8px auto" role="img" aria-label="Abaque t_red vs xi">';
+  svg+='<rect width="'+W+'" height="'+H+'" fill="#fff"/>';
+  for (let i=0;i<=4;i++){
+    const lx=-1+i*0.5;
+    svg+='<line x1="'+X(lx).toFixed(1)+'" y1="'+pad.t+'" x2="'+X(lx).toFixed(1)+'" y2="'+(H-pad.b)+'" stroke="#e4e7ec" stroke-width="1"/>';
+    const xv=Math.pow(10,lx);
+    const label=xv>=1?nf(xv,xv>=10?0:1):nf(xv,2);
+    svg+='<text x="'+X(lx).toFixed(1)+'" y="'+(H-pad.b+15)+'" text-anchor="middle" font-size="11" fill="#5a6068">'+label+'</text>';
+  }
+  for (let i=0;i<=2;i++){
+    svg+='<line x1="'+pad.l+'" y1="'+Y(i).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Y(i).toFixed(1)+'" stroke="#e4e7ec" stroke-width="1"/>';
+    svg+='<text x="'+(pad.l-5)+'" y="'+(Y(i)+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="#5a6068">'+(i===0?'1':i===1?'10':'100')+'</text>';
+  }
+  svg+='<line x1="'+pad.l+'" y1="'+(H-pad.b)+'" x2="'+(W-pad.r)+'" y2="'+(H-pad.b)+'" stroke="#5a6068" stroke-width="1.4"/>';
+  svg+='<line x1="'+pad.l+'" y1="'+pad.t+'" x2="'+pad.l+'" y2="'+(H-pad.b)+'" stroke="#5a6068" stroke-width="1.4"/>';
+  let path='';
+  pts.forEach((p,i)=>{path+=(i===0?'M':' L')+X(p.lx).toFixed(1)+','+Y(Math.min(p.ltr,ltrmax)).toFixed(1);});
+  svg+='<path d="'+path+'" fill="none" stroke="#2e6da4" stroke-width="2.4"/>';
+  const m1xi=0.69,m2xi=1;
+  const m1tr=tReduitOf(m1xi),m2tr=tReduitOf(m2xi);
+  const mx1=X(Math.log10(m1xi)),my1=Y(Math.min(Math.log10(m1tr),ltrmax));
+  const mx2=X(Math.log10(m2xi)),my2=Y(Math.min(Math.log10(m2tr),ltrmax));
+  svg+='<line x1="'+mx1.toFixed(1)+'" y1="'+my1.toFixed(1)+'" x2="'+mx1.toFixed(1)+'" y2="'+(H-pad.b)+'" stroke="#1e7a2e" stroke-width="1.2" stroke-dasharray="3,3"/>';
+  svg+='<line x1="'+pad.l+'" y1="'+my1.toFixed(1)+'" x2="'+mx1.toFixed(1)+'" y2="'+my1.toFixed(1)+'" stroke="#1e7a2e" stroke-width="1.2" stroke-dasharray="3,3"/>';
+  svg+='<circle cx="'+mx1.toFixed(1)+'" cy="'+my1.toFixed(1)+'" r="5" fill="#1e7a2e" stroke="#fff" stroke-width="2"/>';
+  svg+='<text x="'+(mx1+8).toFixed(1)+'" y="'+(my1-8).toFixed(1)+'" font-size="11.5" fill="#1e7a2e" font-weight="600">ξ = 0,69 → t_red ≈ '+nf(m1tr,1)+'</text>';
+  svg+='<line x1="'+mx2.toFixed(1)+'" y1="'+my2.toFixed(1)+'" x2="'+mx2.toFixed(1)+'" y2="'+(H-pad.b)+'" stroke="#d98a12" stroke-width="1.2" stroke-dasharray="3,3"/>';
+  svg+='<line x1="'+pad.l+'" y1="'+my2.toFixed(1)+'" x2="'+mx2.toFixed(1)+'" y2="'+my2.toFixed(1)+'" stroke="#d98a12" stroke-width="1.2" stroke-dasharray="3,3"/>';
+  svg+='<circle cx="'+mx2.toFixed(1)+'" cy="'+my2.toFixed(1)+'" r="5" fill="#d98a12" stroke="#fff" stroke-width="2"/>';
+  svg+='<text x="'+(mx2+8).toFixed(1)+'" y="'+(my2+4).toFixed(1)+'" font-size="11.5" fill="#d98a12" font-weight="600">ξ = 1 → t_red ≈ '+nf(m2tr,1)+'</text>';
+  svg+='<text x="'+((pad.l+W-pad.r)/2).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="12" fill="#111">ξ (échelle log)</text>';
+  svg+='<text x="14" y="'+((pad.t+H-pad.b)/2).toFixed(1)+'" text-anchor="middle" font-size="12" fill="#111" transform="rotate(-90 14 '+((pad.t+H-pad.b)/2).toFixed(1)+')">t_réduit = t₅%·ω_n</text>';
+  svg+='</svg>';
+  return svg;
+}
+
+/* SVG Bode avec marges (exemple fixe L(p)=10/((1+p)(1+0,1p)(1+0,05p))) */
+function bodeMargesSVG(){
+  const K=10,Ts=[1,0.1,0.05];
+  const wmin=0.1,wmax=200,N=250,pts=[];
+  let phPrev=null,off=0;
+  for (let i=0;i<=N;i++){
+    const w=wmin*Math.pow(wmax/wmin,i/N);
+    let magF=K,phRad=0;
+    for (const T of Ts){magF/=Math.sqrt(1+(T*w)**2);phRad-=Math.atan(T*w);}
+    let phDeg=phRad*180/PI;
+    if (phPrev!==null){while(phDeg+off-phPrev>180)off-=360;while(phDeg+off-phPrev<-180)off+=360;}
+    phDeg+=off;phPrev=phDeg;
+    pts.push({w,lw:Math.log10(w),magDB:20*Math.log10(magF),phDeg});
+  }
+  let wc=NaN,pm=NaN,w180=NaN,gm=NaN;
+  for (let i=0;i<N;i++){
+    if (isNaN(wc)&&pts[i].magDB>=0&&pts[i+1].magDB<0){
+      const u=pts[i].magDB/(pts[i].magDB-pts[i+1].magDB);
+      wc=pts[i].w*Math.pow(pts[i+1].w/pts[i].w,u);
+      pm=180+pts[i].phDeg+(pts[i+1].phDeg-pts[i].phDeg)*u;
+    }
+    if (isNaN(w180)&&pts[i].phDeg>=-180&&pts[i+1].phDeg<-180){
+      const u=(pts[i].phDeg+180)/(pts[i].phDeg-pts[i+1].phDeg);
+      w180=pts[i].w*Math.pow(pts[i+1].w/pts[i].w,u);
+      gm=-(pts[i].magDB+(pts[i+1].magDB-pts[i].magDB)*u);
+    }
+  }
+  const W=580,pad={l:55,r:25,t:15,b:25};
+  const Hg=180,Hp=150,yoffP=Hg+30,totalH=400;
+  const lwmin=Math.log10(wmin),lwmax=Math.log10(wmax);
+  const X=lw=>pad.l+(lw-lwmin)/(lwmax-lwmin)*(W-pad.l-pad.r);
+  const dBmin=-50,dBmax=30;
+  const Yg=dB=>pad.t+(dBmax-dB)/(dBmax-dBmin)*(Hg-pad.t-pad.b);
+  const phmin=-270,phmax=10;
+  const Yp=ph=>yoffP+pad.t+(phmax-ph)/(phmax-phmin)*(Hp-pad.t-pad.b);
+  let svg='<svg viewBox="0 0 '+W+' '+totalH+'" style="width:100%;max-width:640px;height:auto;display:block;margin:8px auto" role="img" aria-label="Bode avec marges">';
+  svg+='<rect width="'+W+'" height="'+totalH+'" fill="#fff"/>';
+  // Gain plot
+  for (let lx=0;lx<=Math.log10(wmax);lx+=1){
+    svg+='<line x1="'+X(lx).toFixed(1)+'" y1="'+pad.t+'" x2="'+X(lx).toFixed(1)+'" y2="'+(Hg-pad.b)+'" stroke="#e4e7ec" stroke-width="1"/>';
+    svg+='<text x="'+X(lx).toFixed(1)+'" y="'+(Hg-pad.b+13)+'" text-anchor="middle" font-size="10" fill="#5a6068">'+nf(Math.pow(10,lx),0)+'</text>';
+  }
+  for (const dB of [20,0,-20,-40]){
+    svg+='<line x1="'+pad.l+'" y1="'+Yg(dB).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Yg(dB).toFixed(1)+'" stroke="#e4e7ec" stroke-width="1"/>';
+    svg+='<text x="'+(pad.l-5)+'" y="'+(Yg(dB)+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#5a6068">'+dB+'</text>';
+  }
+  svg+='<line x1="'+pad.l+'" y1="'+(Hg-pad.b)+'" x2="'+(W-pad.r)+'" y2="'+(Hg-pad.b)+'" stroke="#5a6068" stroke-width="1.2"/>';
+  svg+='<line x1="'+pad.l+'" y1="'+pad.t+'" x2="'+pad.l+'" y2="'+(Hg-pad.b)+'" stroke="#5a6068" stroke-width="1.2"/>';
+  svg+='<line x1="'+pad.l+'" y1="'+Yg(0).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Yg(0).toFixed(1)+'" stroke="#1e7a2e" stroke-width="1.5" stroke-dasharray="6,4"/>';
+  svg+='<text x="'+(W-pad.r-4)+'" y="'+(Yg(0)-4).toFixed(1)+'" text-anchor="end" font-size="10.5" fill="#1e7a2e">0 dB</text>';
+  let pathG='';
+  pts.forEach((p,i)=>{pathG+=(i===0?'M':' L')+X(p.lw).toFixed(1)+','+Yg(clamp(p.magDB,dBmin,dBmax)).toFixed(1);});
+  svg+='<path d="'+pathG+'" fill="none" stroke="#2e6da4" stroke-width="2.2"/>';
+  if (isFinite(w180)&&isFinite(gm)){
+    const xw=X(Math.log10(w180)),y0=Yg(0),y180=Yg(clamp(-gm,dBmin,dBmax));
+    svg+='<line x1="'+xw.toFixed(1)+'" y1="'+y0.toFixed(1)+'" x2="'+xw.toFixed(1)+'" y2="'+y180.toFixed(1)+'" stroke="#7b4fc2" stroke-width="1.8"/>';
+    svg+='<polygon points="'+(xw-4).toFixed(1)+','+(y0+6).toFixed(1)+' '+(xw+4).toFixed(1)+','+(y0+6).toFixed(1)+' '+xw.toFixed(1)+','+(y0+1).toFixed(1)+'" fill="#7b4fc2"/>';
+    svg+='<polygon points="'+(xw-4).toFixed(1)+','+(y180-6).toFixed(1)+' '+(xw+4).toFixed(1)+','+(y180-6).toFixed(1)+' '+xw.toFixed(1)+','+(y180-1).toFixed(1)+'" fill="#7b4fc2"/>';
+    svg+='<text x="'+(xw+8).toFixed(1)+'" y="'+((y0+y180)/2).toFixed(1)+'" font-size="11" fill="#7b4fc2" font-weight="600">MG = '+nf(gm,1)+' dB</text>';
+  }
+  if (isFinite(wc)){
+    svg+='<line x1="'+X(Math.log10(wc)).toFixed(1)+'" y1="'+pad.t+'" x2="'+X(Math.log10(wc)).toFixed(1)+'" y2="'+(Hg-pad.b)+'" stroke="#c0281f" stroke-width="1.2" stroke-dasharray="3,3"/>';
+    svg+='<circle cx="'+X(Math.log10(wc)).toFixed(1)+'" cy="'+Yg(0).toFixed(1)+'" r="4" fill="#c0281f" stroke="#fff" stroke-width="1.5"/>';
+    svg+='<text x="'+(X(Math.log10(wc))+4).toFixed(1)+'" y="'+(Yg(0)-5).toFixed(1)+'" font-size="10.5" fill="#c0281f">ωc = '+nf(wc,1)+'</text>';
+  }
+  svg+='<text x="'+((pad.l+W-pad.r)/2).toFixed(1)+'" y="'+(Hg-4)+'" text-anchor="middle" font-size="11" fill="#111">|L(jω)| (dB)</text>';
+  // Phase plot
+  svg+='<rect x="0" y="'+(yoffP-8)+'" width="'+W+'" height="'+(Hp+20)+'" fill="#fff"/>';
+  for (let lx=0;lx<=Math.log10(wmax);lx+=1){
+    svg+='<line x1="'+X(lx).toFixed(1)+'" y1="'+(yoffP+pad.t)+'" x2="'+X(lx).toFixed(1)+'" y2="'+(yoffP+Hp-pad.b)+'" stroke="#e4e7ec" stroke-width="1"/>';
+  }
+  for (const ph of [0,-90,-180,-270]){
+    svg+='<line x1="'+pad.l+'" y1="'+Yp(ph).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Yp(ph).toFixed(1)+'" stroke="#e4e7ec" stroke-width="1"/>';
+    svg+='<text x="'+(pad.l-5)+'" y="'+(Yp(ph)+4).toFixed(1)+'" text-anchor="end" font-size="10" fill="#5a6068">'+ph+'°</text>';
+  }
+  svg+='<line x1="'+pad.l+'" y1="'+(yoffP+Hp-pad.b)+'" x2="'+(W-pad.r)+'" y2="'+(yoffP+Hp-pad.b)+'" stroke="#5a6068" stroke-width="1.2"/>';
+  svg+='<line x1="'+pad.l+'" y1="'+(yoffP+pad.t)+'" x2="'+pad.l+'" y2="'+(yoffP+Hp-pad.b)+'" stroke="#5a6068" stroke-width="1.2"/>';
+  svg+='<line x1="'+pad.l+'" y1="'+Yp(-180).toFixed(1)+'" x2="'+(W-pad.r)+'" y2="'+Yp(-180).toFixed(1)+'" stroke="#1e7a2e" stroke-width="1.5" stroke-dasharray="6,4"/>';
+  svg+='<text x="'+(W-pad.r-4)+'" y="'+(Yp(-180)-4).toFixed(1)+'" text-anchor="end" font-size="10.5" fill="#1e7a2e">-180°</text>';
+  let pathP='';
+  pts.forEach((p,i)=>{pathP+=(i===0?'M':' L')+X(p.lw).toFixed(1)+','+Yp(clamp(p.phDeg,phmin,phmax)).toFixed(1);});
+  svg+='<path d="'+pathP+'" fill="none" stroke="#2e6da4" stroke-width="2.2"/>';
+  if (isFinite(wc)&&isFinite(pm)){
+    const xwc=X(Math.log10(wc));
+    const phAtWc=pm-180;
+    const yPh180=Yp(-180),yPhWc=Yp(clamp(phAtWc,phmin,phmax));
+    svg+='<line x1="'+xwc.toFixed(1)+'" y1="'+yPh180.toFixed(1)+'" x2="'+xwc.toFixed(1)+'" y2="'+yPhWc.toFixed(1)+'" stroke="#7b4fc2" stroke-width="1.8"/>';
+    svg+='<polygon points="'+(xwc-4).toFixed(1)+','+(yPh180-6).toFixed(1)+' '+(xwc+4).toFixed(1)+','+(yPh180-6).toFixed(1)+' '+xwc.toFixed(1)+','+(yPh180-1).toFixed(1)+'" fill="#7b4fc2"/>';
+    svg+='<polygon points="'+(xwc-4).toFixed(1)+','+(yPhWc+6).toFixed(1)+' '+(xwc+4).toFixed(1)+','+(yPhWc+6).toFixed(1)+' '+xwc.toFixed(1)+','+(yPhWc+1).toFixed(1)+'" fill="#7b4fc2"/>';
+    svg+='<text x="'+(xwc+8).toFixed(1)+'" y="'+((yPh180+yPhWc)/2).toFixed(1)+'" font-size="11" fill="#7b4fc2" font-weight="600">Mφ = '+nf(pm,1)+'°</text>';
+  }
+  if (isFinite(wc))svg+='<line x1="'+X(Math.log10(wc)).toFixed(1)+'" y1="'+(yoffP+pad.t)+'" x2="'+X(Math.log10(wc)).toFixed(1)+'" y2="'+(yoffP+Hp-pad.b)+'" stroke="#c0281f" stroke-width="1.2" stroke-dasharray="3,3"/>';
+  if (isFinite(w180)){
+    svg+='<line x1="'+X(Math.log10(w180)).toFixed(1)+'" y1="'+(yoffP+pad.t)+'" x2="'+X(Math.log10(w180)).toFixed(1)+'" y2="'+(yoffP+Hp-pad.b)+'" stroke="#7b4fc2" stroke-width="1.2" stroke-dasharray="3,3"/>';
+    svg+='<circle cx="'+X(Math.log10(w180)).toFixed(1)+'" cy="'+Yp(-180).toFixed(1)+'" r="4" fill="#7b4fc2" stroke="#fff" stroke-width="1.5"/>';
+  }
+  svg+='<text x="'+((pad.l+W-pad.r)/2).toFixed(1)+'" y="'+(yoffP+Hp-4)+'" text-anchor="middle" font-size="11" fill="#111">arg L(jω) (°)</text>';
+  svg+='<text x="'+((pad.l+W-pad.r)/2).toFixed(1)+'" y="'+(yoffP+Hp+15)+'" text-anchor="middle" font-size="11" fill="#5a6068">ω (rad/s) — échelle log</text>';
+  svg+='</svg>';
+  return svg;
 }
 
 /* ===================== contrôles ===================== */
 function mkControls(onChange,opts){
-  opts=Object.assign({input:true,dist:true},opts||{});
+  opts=Object.assign({input:true,pert:true},opts||{});
   const host=h('div',{class:'blk'});
   function build(){
     const P=SYS.plant,C=SYS.corr;
@@ -620,13 +833,16 @@ function mkControls(onChange,opts){
     if (opts.input){
       const r4=h('div',{class:'ctrl'});
       r4.append(h('div',{class:'fld'},h('span',null,'Entrée e(t)'),
-        chips([['dirac','Dirac'],['echelon','Échelon'],['rampe','Rampe']],SYS.input,v=>{SYS.input=v;build();onChange();},'Entrée')));
-      if (SYS.input==='echelon'||SYS.input==='rampe')
-        r4.append(sld({label:'amplitude a',min:0.1,max:5,step:0.1,val:SYS.amp,d:1,on:v=>{SYS.amp=v;onChange();}}));
-      if (opts.dist){
-        r4.append(h('div',{class:'fld'},h('span',null,'Perturbation d(t)'),
-          chips([[0,'Aucune'],[1,'Échelon']],SYS.dist>0?1:0,v=>{SYS.dist=v?1:0;build();onChange();},'Perturbation')));
-        if (SYS.dist>0)r4.append(sld({label:'amplitude d',min:0.1,max:5,step:0.1,val:SYS.dist,d:1,on:v=>{SYS.dist=v;onChange();}}));
+        chips([['dirac','Dirac'],['echelon','Échelon'],['rampe','Rampe'],['parabole','Parabole']],SYS.input,
+          v=>{SYS.input=v;if(v!=='echelon')SYS.pert=0;build();onChange();},'Entrée')));
+      if (SYS.input!=='dirac')
+        r4.append(sld({label:SYS.input==='parabole'?'a (e(t)=a·t²/2)':'amplitude a',min:0.1,max:5,step:0.1,val:SYS.amp,d:1,on:v=>{SYS.amp=v;onChange();}}));
+      if (opts.pert&&SYS.input==='echelon'){
+        r4.append(h('div',{class:'fld'},h('span',null,'Perturbation pert(t)'),
+          chips([[0,'Aucune'],[1,'Échelon']],SYS.pert>0?1:0,
+            v=>{SYS.pert=v?1:0;build();onChange();},'Perturbation')));
+        if (SYS.pert>0)
+          r4.append(sld({label:'amplitude pert',min:0.1,max:5,step:0.1,val:SYS.pert,d:1,on:v=>{SYS.pert=v;onChange();}}));
       }
       host.append(r4);
     }
@@ -638,7 +854,7 @@ function mkControls(onChange,opts){
 
 /* ===================== onglet PRÉCISION ===================== */
 function cellVal(M,c,col){
-  const K=M.K_BO, a=SYS.amp;
+  const K=M.K_BO,a=SYS.amp;
   if (col===0)return c===0?a/(1+K):0;
   if (col===1)return c===0?Infinity:(c===1?a/K:0);
   if (col===2)return c<2?Infinity:(c===2?a/K:0);
@@ -650,7 +866,7 @@ function fmtVal(v){
   return nf(v,3);
 }
 function errTable(M){
-  const curCol=SYS.input==='echelon'?0:SYS.input==='rampe'?1:-1;
+  const curCol=SYS.input==='echelon'?0:SYS.input==='rampe'?1:SYS.input==='parabole'?2:-1;
   const dispCls=Math.min(M.cls,2);
   const txt=[
     ['a/(1+K_BO)','∞','∞'],
@@ -672,9 +888,9 @@ function errTable(M){
   const tbl=h('table',{class:'err'},
     h('thead',null,h('tr',null,
       h('th',null,'Classe α de la FTBO'),
-      h('th',null,'Échelon (amplitude a) — écart de position'),
+      h('th',null,'Échelon (ampl. a) — écart de position'),
       h('th',null,'Rampe (pente a) — écart de traînage'),
-      h('th',null,'Parabole — écart d’accélération'))),
+      h('th',null,'Parabole (coef. a/2) — écart d’accélération'))),
     h('tbody',null,rows));
   const wrap=h('div',null,tbl);
   if (M.cls>2)wrap.append(h('p',{class:'small'},'L(p) possède '+M.cls+' intégrateurs : tous les écarts sont nuls (la ligne 2 est mise en évidence par défaut).'));
@@ -687,107 +903,126 @@ function kboExpr(){
     if (P.classe===0)return 'K_BO = Kp · K = '+Kp+' × '+K+' = '+nf(P.K*C.Kp,3);
     return 'K_BO = Kp · K = '+Kp+' × '+K+' = '+nf(P.K*C.Kp,3)+' (gain de '+['position','vitesse','accélération'][Math.min(P.classe,2)]+')';
   }
-  return 'K_BO = (Kp · K) / Ti = ('+Kp+' × '+K+') / '+Ti+' = '+nf(P.K*C.Kp/C.Ti,3)+' (gain de '+['vitesse','accélération','accélération'][Math.min(P.classe,1)]+')';
+  return 'K_BO = (Kp · K) / Ti = ('+Kp+' × '+K+') / '+Ti+' = '+nf(P.K*C.Kp/C.Ti,3);
 }
 function mountPrecision(root){
   root.append(h('h2',null,'Précision des systèmes asservis'));
-  root.append(h('p',{html:'La <b>précision</b> mesure l’<b>écart ε(∞) = e(∞) − s(∞)</b> entre consigne et sortie en <b>régime permanent</b>. Cet écart dépend de la <b>classe α de la FTBO</b> L(p) = C(p)·G(p) — c’est-à-dire du nombre d’intégrateurs en boucle ouverte — et du <b>type d’entrée</b>.'}));
+  root.append(h('p',{html:'La <b>précision</b> mesure l’<b>écart ε(∞)</b> entre consigne et sortie en <b>régime permanent</b>. On note <i>G(p)</i> le système (procédé), <i>C(p)</i> le correcteur et <i>L(p) = C(p)·G(p)</i> la <b>fonction de transfert en boucle ouverte</b> (FTBO). L’écart dépend de la <b>classe α de L(p)</b> (nombre d’intégrateurs) et du <b>type d’entrée</b>.'}));
   const dg=h('div');root.append(dg);
   root.append(mkControls(()=>{draw();}));
 
-  const pb=plotBox('Réponse temporelle s(t) et consigne e(t)',{h:310,yl:'s(t)'});
-  const pe=plotBox('Écart ε(t) = e(t) − s(t) (grandeur en sortie du comparateur)',{h:185,yl:'ε(t)'});
+  const pb=plotBox('Réponse s(t) et consigne e(t)',{h:310,yl:'s(t)'});
+  const pe=plotBox('Écart ε(t) = e(t) − s(t)',{h:185,yl:'ε(t)'});
   root.append(pb.box,pe.box);
-  root.append(pleg([[COL.slate,'consigne e(t)','d'],[COL.blue,'sortie s(t)'],[COL.green,'valeur finale visée','d'],[COL.red,'écart ε(t)'],[COL.violet,'effet de d(t)','d']]));
+  root.append(pleg([[COL.slate,'consigne e(t)','d'],[COL.blue,'sortie s(t)'],[COL.green,'régime permanent','d'],[COL.orange,'début pert(t)','d'],[COL.red,'écart ε(t)'],[COL.violet,'effet de pert(t)','d']]));
   const res=h('div');root.append(res);
   const ana=h('div');root.append(ana);
 
   function draw(){
     const M=model();
     dg.innerHTML=diagSVG(M);
-    let tm=timeFrame(M);
-    if (SYS.input==='rampe')tm*=1.7;
-    const R=computeResponse(M,tm,900);
+    const tf=simTimeframe(M);
+    const R=computeResponse(M,tf);
+    const {tmax,td,hasPert}=tf;
     const eS=eSignal;
+    const yFinalSS=R.y[R.y.length-1][1];
+    let yInitSS=yFinalSS;
+    if (hasPert&&td>0){
+      const dt=tmax/900;
+      const iTd=Math.max(0,Math.round(td/dt)-8);
+      yInitSS=R.y[iTd][1];
+    }
     const yAll=R.y.map(p=>p[1]).filter(isFinite);
     const eAll=R.y.map(p=>eS(p[0])-p[1]).filter(isFinite);
     const ylo=Math.min(0,...yAll),yhi=Math.max(SYS.amp*1.02,...yAll);
     const elo=Math.min(0,...eAll),ehi=Math.max(0.01,...eAll);
-    pb.P.set(Object.assign(xAxis(tm),yAxisFor(ylo,yhi)));
-    pe.P.set(Object.assign(xAxis(tm),yAxisFor(elo,ehi)));
-    const yss=R.y[R.y.length-1][1];
+    pb.P.set(Object.assign(xAxis(tmax),yAxisFor(ylo,yhi)));
+    pe.P.set(Object.assign(xAxis(tmax),yAxisFor(elo,ehi)));
+
     pb.P.draw=P=>{
-      P.fn(eS,COL.slate,2,[6,4],0,tm);
-      P.seg(0,yss,tm,yss,COL.green,1.3,[5,4]);
+      P.fn(eS,COL.slate,2,[6,4],0,tmax);
+      P.seg(0,yFinalSS,tmax,yFinalSS,COL.green,1.3,[5,4]);
       P.line(R.y1,COL.blue,2.6);
       if (R.y2)P.line(R.y2,COL.violet,1.8,[4,3]);
       P.line(R.y,COL.ink,2.6);
-      P.dot(tm,yss,COL.green,4.5);
+      P.dot(tmax,yFinalSS,COL.green,4.5);
+      if (hasPert){
+        P.seg(td,P.o.ymin,td,P.o.ymax,COL.orange,1.4,[4,3]);
+        P.txt('pert(t) démarre',td,P.o.ymax,COL.orange,'left',11.5,6,10);
+      }
     };
     pe.P.draw=P=>{
-      P.seg(0,0,tm,0,COL.soft,1);
+      P.seg(0,0,tmax,0,COL.soft,1);
       P.line(R.y.map((p,i)=>[p[0],eS(p[0])-p[1]]),COL.red,2.4);
+      if (hasPert)P.seg(td,P.o.ymin,td,P.o.ymax,COL.orange,1.4,[4,3]);
     };
     pb.P.redraw();pe.P.redraw();
 
     res.innerHTML='';
-    res.append(stats([
+    const statData=[
       ['Classe α de la FTBO',String(M.cls)],
       ['Gain K_BO = lim p^α·FTBO',isFinite(M.K_BO)?nf(M.K_BO,3):'∞'],
-      ['Amplitude a de l’entrée',nf(SYS.amp,2)],
-      ['Écart statique (échelon)',M.cls===0?nf(SYS.amp/(1+M.K_BO),3):'0'],
-      ['Écart de traînage (rampe)',M.cls===0?'∞':(M.cls===1?nf(SYS.amp/M.K_BO,3):'0')],
-      ['Erreur ε(∞) mesurée',nf(Math.abs(eS(tm)-yss),3)]
-    ]));
+      ['Amplitude a de l’entrée',nf(SYS.amp,2)]
+    ];
+    if (hasPert){
+      const eI=SYS.amp-yInitSS,eF=SYS.amp-yFinalSS;
+      statData.push(['Écart avant pert(t)',nf(eI,3)],['Écart après pert(t)',nf(eF,3)],['Variation due à pert(t)',nf(eF-eI,3)]);
+    } else {
+      statData.push(
+        ['Écart de position (échelon)',M.cls===0?nf(SYS.amp/(1+M.K_BO),3):'0'],
+        ['Écart de traînage (rampe)',M.cls===0?'∞':(M.cls===1?nf(SYS.amp/M.K_BO,3):'0')],
+        ['Écart d’accélération (parabole)',M.cls<2?'∞':(M.cls===2?nf(SYS.amp/M.K_BO,3):'0')]
+      );
+    }
+    res.append(stats(statData));
 
-    /* Bloc d'avertissement sur K_BO */
     res.append(h('div',{class:'alert'},
       h('h3',null,'⚠ Le gain du tableau ci-dessous est le gain de la FTBO, pas celui du correcteur'),
-      h('p',{html:'Dans le tableau des écarts, <b>K_BO</b> désigne le gain de la <b>fonction de transfert en boucle ouverte</b> L(p) = C(p)·G(p). Ce n’est <b>pas</b> le gain Kp du correcteur.'}),
+      h('p',{html:'Dans le tableau des écarts, <b>K_BO</b> désigne le gain de la <b>FTBO</b> L(p) = C(p)·G(p). Ce n’est <b>pas</b> le gain Kp du correcteur.'}),
       h('div',{class:'mono',style:'background:#fff;padding:8px 10px;border-radius:6px;margin-top:6px;font-size:12.5px;color:#111'},
-        'FTBO(p) = C(p) · G(p) = K_BO · (1 + …) / (p^α · (1 + …))',
-        h('br'),
-        'K_BO = lim_{p→0} p^α · FTBO(p) = '+nf(M.K_BO,3)),
-      h('p',{style:'margin-top:8px',html:'<b>Application à votre modèle :</b> '+kboExpr()+'.'}),
-      h('p',{style:'margin-top:4px;font-size:12.5px;color:#7a4700'},'Le gain du correcteur seul Kp ne suffit jamais à calculer l’écart : c’est bien K_BO, qui intègre aussi le gain du système et la présence éventuelle d’une intégration, qui intervient.')
+        'L(p) = C(p) · G(p) = K_BO · (1 + …) / (p^α · (1 + …))',h('br'),
+        'K_BO = lim_{p→0} p^α · L(p) = '+nf(M.K_BO,3)),
+      h('p',{style:'margin-top:8px',html:'<b>Application à votre modèle :</b> '+kboExpr()+'.'})
     ));
 
-    res.append(h('h3',null,'Tableau des écarts en poursuite (absence de perturbation)'));
+    res.append(h('h3',null,'Tableau des écarts en poursuite (sans perturbation)'));
     res.append(errTable(M));
 
-    /* Analyse de la perturbation */
-    if (SYS.dist>0){
-      const d=SYS.dist;
+    if (hasPert){
+      const d=SYS.pert;
       let errPert;
-      if (M.alpha1===0){
-        errPert = M.alpha2===0 ? d*M.K2/(1+M.K1*M.K2) : d/M.K1;
-      } else errPert = 0;
-      const pert=h('div',{class:'blk',style:'border-left:4px solid var(--violet)'},
+      if (M.alpha1===0)errPert=M.alpha2===0?d*M.K2/(1+M.K1*M.K2):d/M.K1;
+      else errPert=0;
+      const eI=SYS.amp-yInitSS,eF=SYS.amp-yFinalSS;
+      res.append(h('div',{class:'blk',style:'border-left:4px solid var(--violet)'},
         h('h3',{style:'margin-top:0'},'Écart dû à la perturbation en échelon'),
-        h('p',{html:'Perturbation d(t) = d·u(t) d’amplitude <b>d = '+nf(d,2)+'</b>, injectée à l’entrée du système. On note F₁(p) la fonction de transfert <i>de l’entrée du comparateur à la perturbation</i> (ici F₁ = C(p)) et F₂(p) <i>de la perturbation à la sortie</i> (ici F₂ = G(p)).'}),
+        h('p',{html:'La perturbation pert(t) = pert·u(t − t_pert) démarre à <b>t_pert = '+nf(td,2)+' s</b>, une fois le régime permanent du système non perturbé établi. Amplitude <b>pert = '+nf(d,2)+'</b>. On note F₁ = C(p) (classe α₁, gain K₁) et F₂ = G(p) (classe α₂, gain K₂).'}),
         h('table',{class:'kv'},h('tbody',null,
-          h('tr',null,h('td',null,'α₁ (classe de F₁ = C)'),h('td',{class:'m'},String(M.alpha1)+' ('+SYS.corr.type+')')),
+          h('tr',null,h('td',null,'α₁ (classe de C = F₁)'),h('td',{class:'m'},String(M.alpha1)+' ('+SYS.corr.type+')')),
           h('tr',null,h('td',null,'K₁ = gain de F₁'),h('td',{class:'m'},isFinite(M.K1)?nf(M.K1,3):'∞')),
-          h('tr',null,h('td',null,'α₂ (classe de F₂ = G)'),h('td',{class:'m'},String(M.alpha2))),
-          h('tr',null,h('td',null,'K₂ = gain de G'),h('td',{class:'m'},nf(M.K2,3))),
-          h('tr',{class:'hl'},h('td',null,'Écart statique ε_s'),h('td',{class:'m'},nf(errPert,3)))
+          h('tr',null,h('td',null,'α₂ (classe de G = F₂)'),h('td',{class:'m'},String(M.alpha2))),
+          h('tr',null,h('td',null,'K₂ = gain de F₂'),h('td',{class:'m'},nf(M.K2,3))),
+          h('tr',null,h('td',null,'Écart avant pert'),h('td',{class:'m'},nf(eI,3))),
+          h('tr',null,h('td',null,'Écart après pert'),h('td',{class:'m'},nf(eF,3))),
+          h('tr',{class:'hl'},h('td',null,'Écart dû à pert seul'),h('td',{class:'m'},nf(errPert,3)))
         )),
         h('p',{style:'margin-top:6px;font-size:12.5px',html:
           M.alpha1===0
-            ? '<b>α₁ = 0</b> (correcteur P) : l’écart dû à la perturbation vaut d·K₂/(1 + K₁·K₂) = '+nf(errPert,3)+' pour α₂ = 0, ou d/K₁ pour α₂ ≥ 1. Un correcteur intégral (PI ou PID) le rejetterait.'
-            : '<b>α₁ ≥ 1</b> (correcteur '+SYS.corr.type+') : l’intégrateur du correcteur rejette l’échelon de perturbation. L’écart dû à une rampe ou une parabole de perturbation serait non nul (d/K₁ pour une rampe avec α₁ = 1).'
-        })
-      );
-      res.append(pert);
+            ? '<b>α₁ = 0</b> (correcteur P) : l’écart dû à la perturbation vaut pert·K₂/(1 + K₁·K₂) = '+nf(errPert,3)+' pour α₂ = 0, ou pert/K₁ pour α₂ ≥ 1. Un correcteur intégral (PI/PID) le rejetterait.'
+            : '<b>α₁ ≥ 1</b> (correcteur '+SYS.corr.type+') : l’intégrateur du correcteur rejette l’échelon de perturbation — l’écart dû à pert(t) seul est nul.'}));
     }
 
-    /* Verdict */
     const v=[];
-    if (M.cls===0)v.push('L(p) est de <b>classe 0</b> : un échelon laisse un écart de position <b>a/(1+K_BO) = '+nf(SYS.amp/(1+M.K_BO),3)+'</b>. Un correcteur intégral (PI ou PID) ferait passer L(p) en classe 1 et annulerait cet écart.');
-    else if (M.cls===1)v.push('L(p) est de <b>classe 1</b> : l’écart de position est <b>nul</b> pour un échelon, mais une rampe laisse un écart de traînage <b>a/K_BO = '+nf(SYS.amp/M.K_BO,3)+'</b>.');
-    else v.push('L(p) est de <b>classe '+M.cls+'</b> : les écarts de position et de traînage sont <b>nuls</b>.');
+    if (M.cls===0)v.push('L(p) est de <b>classe 0</b> : un échelon laisse un écart <b>a/(1+K_BO) = '+nf(SYS.amp/(1+M.K_BO),3)+'</b>. Un correcteur intégral ferait passer L(p) en classe 1.');
+    else if (M.cls===1)v.push('L(p) est de <b>classe 1</b> : écart de position nul, écart de traînage <b>a/K_BO = '+nf(SYS.amp/M.K_BO,3)+'</b> sur une rampe.');
+    else v.push('L(p) est de <b>classe '+M.cls+'</b> : les écarts de position, de traînage et d’accélération sont <b>nuls</b>.');
+    if (hasPert){
+      const eI=SYS.amp-yInitSS,eF=SYS.amp-yFinalSS;
+      if (Math.abs(eF-eI)<1e-6)v.push('La perturbation <b>n’a pas d’effet</b> : le système la rejette grâce à l’intégrateur du correcteur '+SYS.corr.type+'.');
+      else v.push('La perturbation <b>dégrade l’écart</b> de '+nf(Math.abs(eF-eI),3)+' : sans intégrateur, pert(t) n’est pas rejetée.');
+    }
     if (!M.stable)v.push('<b>Attention :</b> la boucle fermée est instable, les écarts ci-dessus n’ont pas de sens physique.');
-    res.append(verdict(v.join(' '),M.stable?(M.cls===0&&SYS.input!=='dirac'?'warn':'yes'):'no'));
+    res.append(verdict(v.join(' '),M.stable?(hasPert&&Math.abs(SYS.amp-yFinalSS-(SYS.amp-yInitSS))>1e-6?'warn':'yes'):'no'));
 
     ana.innerHTML='';ana.append(mkAnalysis(M));
   }
@@ -796,10 +1031,10 @@ function mountPrecision(root){
 
 /* ===================== onglet RAPIDITÉ ===================== */
 function mountRapidite(root){
-  root.append(h('h2',null,'Rapidité des systèmes asservis'));
-  root.append(h('p',{html:'La <b>rapidité</b> caractérise la vitesse avec laquelle la sortie rejoint sa valeur finale. On la mesure par le <b>temps de réponse à 5 %</b> t₅%, le <b>temps de montée</b> 10→90 % ou le <b>temps de pic</b>. Dans le domaine fréquentiel, c’est la <b>bande passante à −3 dB</b> : plus elle est large, plus le système est rapide.'}));
+  root.append(h('h2',null,'Rapidité — réponse indicielle et bande passante'));
+  root.append(h('p',{html:'La <b>rapidité</b> se mesure classiquement sur la <b>réponse à un échelon</b> (réponse indicielle) : on en extrait le <b>temps de réponse à 5 %</b> t₅%, le <b>temps de montée</b> 10→90 % et le <b>temps de pic</b>. Dans le domaine fréquentiel, l’indicateur équivalent est la <b>bande passante à −3 dB</b>.'}));
   const dg=h('div');root.append(dg);
-  root.append(mkControls(()=>{draw();},{input:false,dist:false}));
+  root.append(mkControls(()=>{draw();},{input:false,pert:false}));
 
   const p1=plotBox('Réponse indicielle (échelon unitaire)',{h:300,yl:'s(t)'});
   const p2=plotBox('Temps de réponse à 5 % en fonction du gain Kp',{h:300,xl:'Kp',yl:'t₅% (s)'});
@@ -865,7 +1100,7 @@ function mountRapidite(root){
     res.innerHTML='';
     const mm=marginsOf(bode(M));
     const bp=closedLoopBandwidth(M);
-    const trRed = isFinite(met.t5) && SYS.plant.forme==='B' ? met.t5*SYS.plant.w0 : NaN;
+    const trRed=isFinite(met.t5)&&SYS.plant.forme==='B'?met.t5*SYS.plant.w0:NaN;
     res.append(stats([
       ['Gain statique (valeur finale)',nfs(met.yss,3)],
       ['Temps de montée 10→90 %',isFinite(met.tr)?nf(met.tr,2)+' s':'—'],
@@ -881,12 +1116,9 @@ function mountRapidite(root){
       txt='Avec Kp = '+nf(kp0,1)+', le système atteint 95 % de sa valeur finale en <b>'+nf(met.t5,2)+' s</b>'
         +(isFinite(met.D)&&met.D>0.5?' avec un dépassement de '+nf(met.D,1)+' %':' sans dépassement notable')
         +'. Bande passante à −3 dB : <b>'+nf(bp,2)+' rad/s</b>.';
-      if (SYS.plant.forme==='A') {
-        txt += ' Pour un premier ordre, le cours donne <b>t₅% = 3τ</b> et <b>ω_c = 1/τ</b> : on retrouve bien ces ordres de grandeur sur la boucle fermée.';
-      } else {
-        txt += ' Pour un second ordre avec ξ ≈ 0,69, le <b>temps de réponse réduit</b> t₅%·ω₀ est minimal (≈ 3) ; à ξ = 1 il vaut ≈ 5. Ici t₅%·ω₀ = '+(isFinite(trRed)?nf(trRed,2):'—')+'.';
-      }
-      txt += ' Augmentez Kp pour accélérer la réponse : t₅% diminue, mais la marge de phase se dégrade ('+nf(mm.pm,0)+'° actuellement).';
+      if (SYS.plant.forme==='A')txt+=' Pour un premier ordre, t₅% ≈ 3τ et ω_c = 1/τ.';
+      else txt+=' Pour un second ordre, t_réduit = t₅%·ω_n est minimal (≈ 3) à ξ = 0,69 et vaut ≈ 5 à ξ = 1. Ici t₅%·ω₀ = '+(isFinite(trRed)?nf(trRed,2):'—')+'.';
+      txt+=' Augmentez Kp pour accélérer la réponse : t₅% diminue, mais la marge de phase se dégrade ('+nf(mm.pm,0)+'°).';
     }
     res.append(verdict(txt,M.stable?'yes':'no'));
     ana.innerHTML='';ana.append(mkAnalysis(M));
@@ -897,9 +1129,9 @@ function mountRapidite(root){
 /* ===================== onglet STABILITÉ ===================== */
 function mountStabilite(root){
   root.append(h('h2',null,'Stabilité des systèmes asservis'));
-  root.append(h('p',{html:'Un système est <b>stable EBSB</b> (entrée bornée, sortie bornée) si sa réponse libre tend vers 0 : tous les <b>pôles de la boucle fermée</b> doivent avoir une partie réelle strictement négative. En pratique on juge la stabilité sur la FTBO L(p) = C(p)·G(p) grâce à la <b>marge de gain</b> et à la <b>marge de phase</b> lues sur le diagramme de Bode.'}));
+  root.append(h('p',{html:'Un système est <b>stable EBSB</b> si sa réponse libre tend vers 0 : tous les <b>pôles de la boucle fermée</b> doivent avoir une partie réelle strictement négative. En pratique, on juge la stabilité sur la FTBO L(p) = C(p)·G(p) grâce à la <b>marge de gain</b> et à la <b>marge de phase</b> lues sur le diagramme de Bode.'}));
   const dg=h('div');root.append(dg);
-  root.append(mkControls(()=>{draw();},{input:false,dist:false}));
+  root.append(mkControls(()=>{draw();},{input:false,pert:false}));
 
   const p1=plotBox('Réponse indicielle de la boucle fermée',{h:280,yl:'s(t)'});
   const p2=plotBox('Pôles de la boucle fermée (plan complexe)',{h:280,xl:'Re',yl:'Im'});
@@ -908,7 +1140,7 @@ function mountStabilite(root){
   const p3=plotBox('Bode — module de L(jω) (dB)',{h:230,yl:'|L| (dB)',xl:'ω (rad/s), échelle log'});
   const p4=plotBox('Bode — phase de L(jω) (°)',{h:230,yl:'arg L (°)',xl:'ω (rad/s), échelle log'});
   root.append(p3.box,p4.box);
-  root.append(pleg([[COL.blue,'L(jω)'],[COL.red,'pulsation de coupure / marge'],[COL.green,'0 dB et −180°','d'],[COL.violet,'pôles BF','o']]));
+  root.append(pleg([[COL.blue,'L(jω)'],[COL.red,'pulsation de coupure'],[COL.green,'0 dB et −180°','d'],[COL.violet,'pôles BF / ω₁₈₀']]));
   const res=h('div');root.append(res);
   const ana=h('div');root.append(ana);
 
@@ -983,39 +1215,32 @@ function mountStabilite(root){
       ['Pulsation de coupure ωc',isFinite(mg.wc)?nf(mg.wc,2)+' rad/s':'—'],
       ['Pulsation à −180° ω₁₈₀',isFinite(mg.w180)?nf(mg.w180,2)+' rad/s':'—']
     ]));
-    /* rappel des cibles du cours */
-    res.append(h('div',{class:'blk',style:'font-size:13px'},
-      h('b',null,'Cibles usuelles du cours : '),
-      'marge de gain M_G entre <b>8 et 12 dB</b>, marge de phase M_φ entre <b>45° et 60°</b>.'
-    ));
+    res.append(h('div',{class:'blk',style:'font-size:13px'},h('b',null,'Cibles du cours : '),'M_G entre <b>8 et 12 dB</b>, M_φ entre <b>45° et 60°</b>.'));
     let txt;
     if (M.stable){
       const okG=!isFinite(mg.gm)||mg.gm>=8;
       const okP=!isFinite(mg.pm)||mg.pm>=45;
       txt='La boucle fermée est <b>stable</b>. '+(okG&&okP
         ?'Les marges sont dans les cibles (Mφ = '+nf(mg.pm,1)+'°, MG = '+(isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞')+').'
-        :'Attention, les marges sont en dessous des cibles : Mφ = '+nf(mg.pm,1)+'° (cible ≥ 45°), MG = '+(isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞')+' (cible ≥ 8 dB). Le système est stable mais peu robuste.');
-    } else {
-      txt='La boucle fermée est <b>instable</b> : '+pr.filter(z=>z.re>1e-9).length+' pôle(s) ont une partie réelle positive (croix rouges). Diminuez le gain Kp ou augmentez Ti.';
-    }
+        :'Attention, les marges sont en dessous des cibles : Mφ = '+nf(mg.pm,1)+'°, MG = '+(isFinite(mg.gm)?nf(mg.gm,1)+' dB':'∞')+'.');
+    } else txt='La boucle fermée est <b>instable</b> : '+pr.filter(z=>z.re>1e-9).length+' pôle(s) à partie réelle positive. Diminuez Kp ou augmentez Ti.';
     res.append(verdict(txt,M.stable?'yes':'no'));
     ana.innerHTML='';ana.append(mkAnalysis(M));
   }
   draw();
 }
 
-/* ===================== bloc d'analyse (sous les graphiques) ===================== */
 function mkAnalysis(M){
   const mg=marginsOf(bode(M));
   const bp=closedLoopBandwidth(M);
   return h('div',{class:'blk'},
-    h('h3',{style:'margin-top:0'},'Analyse du modèle — FTBO L(p) = C(p)·G(p)'),
+    h('h3',{style:'margin-top:0'},'Analyse du modèle — L(p) = C(p)·G(p)'),
     h('table',{class:'kv'},h('tbody',null,
       h('tr',null,h('td',null,'Classe α de la FTBO'),h('td',{class:'m'},String(M.cls))),
-      h('tr',{class:'hl'},h('td',null,'Gain de la FTBO K_BO'),h('td',{class:'m'},isFinite(M.K_BO)?nf(M.K_BO,3):'∞')),
-      h('tr',null,h('td',null,'Gain de position (α = 0)'),h('td',{class:'m'},M.cls===0?nf(M.Kpos,3):'∞')),
-      h('tr',null,h('td',null,'Gain de vitesse (α = 1)'),h('td',{class:'m'},M.cls===1?nf(M.Kv,3):(M.cls>1?'∞':'0'))),
-      h('tr',null,h('td',null,'Gain d’accélération (α = 2)'),h('td',{class:'m'},M.cls===2?nf(M.Ka,3):(M.cls>2?'∞':'0'))),
+      h('tr',{class:'hl'},h('td',null,'Gain K_BO de la FTBO'),h('td',{class:'m'},isFinite(M.K_BO)?nf(M.K_BO,3):'∞')),
+      h('tr',null,h('td',null,'Gain de position (α=0)'),h('td',{class:'m'},M.cls===0?nf(M.Kpos,3):'∞')),
+      h('tr',null,h('td',null,'Gain de vitesse (α=1)'),h('td',{class:'m'},M.cls===1?nf(M.Kv,3):(M.cls>1?'∞':'0'))),
+      h('tr',null,h('td',null,'Gain d’accélération (α=2)'),h('td',{class:'m'},M.cls===2?nf(M.Ka,3):(M.cls>2?'∞':'0'))),
       h('tr',null,h('td',null,'Écart de position a/(1+K_BO)'),h('td',{class:'m'},M.cls===0?nf(SYS.amp/(1+M.K_BO),3):'0')),
       h('tr',null,h('td',null,'Écart de traînage a/K_BO'),h('td',{class:'m'},M.cls===0?'∞':(M.cls===1?nf(SYS.amp/M.K_BO,3):'0'))),
       h('tr',null,h('td',null,'Bande passante à −3 dB'),h('td',{class:'m'},isFinite(bp)?nf(bp,2)+' rad/s':'—')),
@@ -1027,29 +1252,33 @@ function mkAnalysis(M){
 }
 
 /* ===================================================================
-   ACTIVITÉS (consignes + QCM)
+   ACTIVITÉS
    =================================================================== */
+const NOTATION = '<b>Notations.</b> <i>G(p)</i> = fonction de transfert du <b>système</b> (procédé) ; <i>C(p)</i> = fonction de transfert du <b>correcteur</b> ; <i>L(p) = C(p)·G(p)</i> = <b>fonction de transfert en boucle ouverte</b> (FTBO) ; <i>T(p) = L(p)/(1+L(p))</i> = <b>fonction de transfert en boucle fermée</b> (FTBF).';
+
 const ACT={
   precision:{
     title:'Précision',
     level:'Niveau 1 · Découvrir',
     time:'20 min',
     course:'precision-cours',
-    goal:'Relier la classe de L(p) et le type d’entrée aux écarts en régime permanent, en comprenant que le gain du tableau est K_BO (gain de la FTBO) et non Kp.',
+    notation: NOTATION,
+    goal:'Relier la classe α de L(p) et le type d’entrée aux écarts en régime permanent, en comprenant que le gain du tableau est K_BO (gain de la FTBO) et non Kp.',
     steps:[
-      'Avec le correcteur P (classe 0), lisez <b>K_BO</b> dans le bandeau jaune. Vérifiez que K_BO = Kp · K. Le tableau affiche alors a/(1+K_BO) pour l’échelon.',
-      'Augmentez Kp : K_BO augmente, l’écart a/(1+K_BO) diminue. L’écart ne s’annule jamais car la classe reste 0.',
+      'Correcteur P (classe 0) : lisez <b>K_BO</b> dans le bandeau jaune. Vérifiez K_BO = Kp·K. Le tableau affiche a/(1+K_BO) pour l’échelon.',
+      'Augmentez Kp : K_BO augmente, l’écart a/(1+K_BO) diminue sans jamais s’annuler (la classe reste 0).',
       'Passez au correcteur <b>PI</b> : la classe α passe à 1 et K_BO devient Kp·K/Ti (gain de vitesse). L’écart de position devient nul.',
-      'Choisissez l’entrée <b>rampe</b> avec le PI : l’écart de traînage vaut maintenant a/K_BO = a·Ti/(Kp·K). Il est fini, pas nul.',
-      'Ajoutez une perturbation en échelon : lisez l’écart résiduel. Il n’est rejeté que si α₁ ≥ 1 (PI/PID).'
+      'Choisissez l’entrée <b>rampe</b> avec le PI : l’écart de traînage vaut a/K_BO = a·Ti/(Kp·K). Fini, pas nul.',
+      'Choisissez l’entrée <b>parabole</b> (e(t)=a·t²/2, L=a/p³). Avec le PI (α=1) l’écart d’accélération diverge ; passez G(p) en classe 2 (via le sélecteur) pour l’annuler.',
+      'Ajoutez une perturbation en échelon : elle démarre en régime permanent. Lisez l’écart résiduel — il n’est rejeté que si α₁ ≥ 1 (PI/PID).'
     ],
-    defi:{q:'Un système de FTBO de classe 1 a un gain K_BO = 5 (Kv = 5 s⁻¹). On applique une rampe de pente a = 2. Quel est l’écart de traînage ?',a:'Écart de traînage : <b>a/K_BO = 2/5 = 0,4</b>. Attention, K_BO = Kv ici, c’est le gain de vitesse de la FTBO, pas le gain Kp du correcteur.'},
+    defi:{q:'FTBO de classe 1, K_BO = 5 (Kv = 5 s⁻¹). Rampe de pente a = 2. Écart de traînage ?',a:'Écart de traînage : <b>a/K_BO = 2/5 = 0,4</b>. Attention, K_BO = Kv est le gain de vitesse de la FTBO, pas le gain Kp du correcteur.'},
     qcm:[
-      {q:'Dans le tableau des écarts, K_BO désigne…',o:['le gain Kp du correcteur','le gain de la FTBO L(p) = C(p)·G(p)','le gain statique du système G(p) seul','le gain unitaire'],a:1,w:'K_BO = lim_{p→0} p^α · FTBO(p) : c’est le gain de la boucle ouverte, il intègre correcteur ET système.'},
-      {q:'Pour un correcteur P et un système de classe 0 de gain K = 3, Kp = 4, K_BO vaut…',o:['4','3','7','12'],a:3,w:'K_BO = Kp · K = 4 × 3 = 12. C’est bien le produit des deux gains, pas seulement Kp.'},
-      {q:'Pour un correcteur PI, Kp = 4, Ti = 2, K = 3, K_BO (gain de vitesse) vaut…',o:['12','6','4','0,66'],a:1,w:'K_BO = Kp·K/Ti = 4×3/2 = 6. La présence de 1/Ti reflète l’intégrateur du correcteur.'},
-      {q:'Un système de classe 1 répond à une rampe avec…',o:['un écart nul','un écart de traînage a/K_BO','un écart infini','des oscillations entretenues'],a:1,w:'Classe 1 : écart de position nul (échelon) mais écart de traînage a/K_BO (rampe).'},
-      {q:'Augmenter Kp réduit l’écart de position d’un système de classe 0 car…',o:['Kp apparaît dans la classe','K_BO = Kp·K augmente','cela ajoute un intégrateur','cela diminue K'],a:1,w:'La classe reste 0, donc l’écart a/(1+K_BO) diminue quand K_BO augmente — mais ne s’annule jamais.'}
+      {q:'Dans le tableau des écarts, K_BO désigne…',o:['le gain Kp du correcteur','le gain de la FTBO L(p) = C(p)·G(p)','le gain statique de G(p) seul','le gain unitaire'],a:1,w:'K_BO = lim_{p→0} p^α · L(p) : c’est le gain de la boucle ouverte, il intègre correcteur ET système.'},
+      {q:'P et G(p) de classe 0 avec K = 3, Kp = 4 : K_BO vaut…',o:['4','3','7','12'],a:3,w:'K_BO = Kp · K = 4 × 3 = 12. C’est bien le produit des deux gains.'},
+      {q:'PI avec Kp = 4, Ti = 2, K = 3 : K_BO (gain de vitesse) vaut…',o:['12','6','4','0,66'],a:1,w:'K_BO = Kp·K/Ti = 4×3/2 = 6. La présence de 1/Ti reflète l’intégrateur.'},
+      {q:'Un système de classe 1 répond à une rampe avec…',o:['un écart nul','un écart de traînage a/K_BO','un écart infini','des oscillations entretenues'],a:1,w:'Classe 1 : écart de position nul mais écart de traînage a/K_BO.'},
+      {q:'Pour annuler l’écart d’accélération (entrée parabole), il faut…',o:['un correcteur P avec Kp très grand','deux intégrateurs dans L(p) (α ≥ 2)','un dérivateur','réduire Kp'],a:1,w:'Table du cours : seul α ≥ 2 annule a/K_BO sur une parabole.'}
     ]
   },
   rapidite:{
@@ -1057,20 +1286,21 @@ const ACT={
     level:'Niveau 1 · Découvrir',
     time:'25 min',
     course:'rapidite-cours',
-    goal:'Mesurer t₅% et la bande passante, comprendre l’influence du gain et du dépassement.',
+    notation: NOTATION,
+    goal:'Mesurer t₅% et la bande passante sur la réponse à un échelon, comprendre l’influence du gain et du dépassement.',
     steps:[
-      'Premier ordre (T = 0,5 s), Kp = 2 : vérifiez que t₅% ≈ 3T et que la bande passante de la boucle fermée est proche de 1/T.',
-      'Augmentez Kp progressivement : t₅% diminue, la bande passante augmente (le système est plus rapide), mais le dépassement et la marge de phase se dégradent.',
-      'Passez au second ordre avec m = 0,3 : observez le dépassement et le temps de pic.',
+      'La rapidité se lit sur la <b>réponse à un échelon</b>. Avec T = 0,5 s, Kp = 2, vérifiez t₅% ≈ 3T et que la bande passante est proche de 1/T.',
+      'Augmentez Kp : t₅% diminue et la bande passante augmente (système plus rapide), mais le dépassement et la marge de phase se dégradent.',
+      'Passez au second ordre avec m = 0,3 : notez le dépassement et le temps de pic.',
       'Réglez m = 0,69 : vérifiez sur le graphique que t₅%·ω₀ ≈ 3 (temps de réponse réduit minimal du cours).',
-      'Passez m = 1 : t₅%·ω₀ devrait être proche de 5 (système le plus rapide sans dépassement).'
+      'Passez m = 1 : t₅%·ω₀ devrait être proche de 5 (le plus rapide sans dépassement).'
     ],
-    defi:{q:'Un premier ordre de constante τ = 0,4 s reçoit un échelon. Estimez t₅% et la bande passante.',a:'<b>t₅% ≈ 3τ = 1,2 s</b> et <b>ω_c = 1/τ = 2,5 rad/s</b>. Ces deux grandeurs sont liées : la bande passante est d’autant plus grande que le système est rapide.'},
+    defi:{q:'Premier ordre avec τ = 0,4 s. Estimez t₅% et la bande passante.',a:'<b>t₅% ≈ 3τ = 1,2 s</b> et <b>ω_c = 1/τ = 2,5 rad/s</b>. Ces deux grandeurs sont liées : plus le système est rapide, plus la bande passante est grande.'},
     qcm:[
-      {q:'Le temps de réponse à 5 % d’un premier ordre de constante τ vaut…',o:['τ','2τ','3τ environ','5τ'],a:2,w:'s(3τ) ≈ 0,95·KA : t₅% ≈ 3τ (plus précisément ln(20)·τ).'},
+      {q:'Sur quelle réponse mesure-t-on classiquement la rapidité ?',o:['Impulsionnelle','Indicielle (échelon)','À une rampe','À un sinus'],a:1,w:'Les indicateurs de rapidité (t₅%, temps de montée, dépassement) sont extraits de la réponse indicielle.'},
+      {q:'Le temps de réponse à 5 % d’un premier ordre de constante τ vaut…',o:['τ','2τ','3τ environ','5τ'],a:2,w:'s(3τ) ≈ 0,95·KA : t₅% ≈ 3τ (précisément ln(20)·τ).'},
       {q:'La bande passante à −3 dB d’un premier ordre est…',o:['ω_c = 1/τ','ω_c = τ','ω_c = 3τ','ω_c = 1/(3τ)'],a:0,w:'|H(jω)| = K/√(1+(τω)²) = K/√2 → ω = 1/τ.'},
-      {q:'Pour un second ordre, le temps de réponse réduit t₅%·ω₀ est minimal pour…',o:['m = 0,3','m = 0,69','m = 1','m = 2'],a:1,w:'Le cours donne t_réduit minimum = 3 à ξ = 0,69, et t_réduit = 5 à ξ = 1.'},
-      {q:'Augmenter Kp dans une boucle de classe 0…',o:['augmente t₅% et la bande passante','diminue t₅% et augmente la bande passante','ne change ni t₅% ni la bande passante','n’a aucun effet sur la stabilité'],a:1,w:'Augmenter le gain accélère la réponse et élargit la bande passante, mais dégrade les marges de stabilité.'}
+      {q:'Pour un second ordre, t_réduit = t₅%·ω_n est minimal pour…',o:['m = 0,3','m = 0,69','m = 1','m = 2'],a:1,w:'t_réduit minimum = 3 à ξ = 0,69 ; t_réduit = 5 à ξ = 1.'}
     ]
   },
   stabilite:{
@@ -1078,20 +1308,21 @@ const ACT={
     level:'Niveau 2 · Comprendre',
     time:'30 min',
     course:'stabilite-cours',
-    goal:'Relier les pôles de la boucle fermée et les marges au comportement du système, en comparant aux cibles usuelles (M_G 8–12 dB, M_φ 45–60°).',
+    notation: NOTATION,
+    goal:'Relier les pôles de la boucle fermée et les marges au comportement du système, en comparant aux cibles (M_G 8–12 dB, M_φ 45–60°).',
     steps:[
       'Premier ordre, Kp = 2 : vérifiez que la boucle fermée est stable et lisez les marges. Sont-elles dans les cibles ?',
-      'Augmentez Kp jusqu’à ce que la marge de phase passe sous 45° : le système devient plus rapide mais fragile.',
-      'Continuez à augmenter Kp jusqu’à l’instabilité : où se trouve la croix rouge dans le plan complexe ?',
+      'Augmentez Kp jusqu’à ce que la marge de phase passe sous 45° : plus rapide, plus fragile.',
+      'Continuez jusqu’à l’instabilité : où apparaît la croix rouge dans le plan complexe ?',
       'Passez au correcteur PI : qu’ajoute-t-il sur la phase de L(jω) ? La marge se dégrade-t-elle ?',
-      'Passez au second ordre m = 0,2 : comparez la marge de phase à m = 1. Concluez sur le lien amortissement / marge.'
+      'Passez au second ordre m = 0,2 : comparez la marge de phase à m = 1. Lien amortissement / marge.'
     ],
-    defi:{q:'Une boucle ouverte a M_φ = 25° et M_G = 5 dB. Est-elle robuste au sens du cours ?',a:'Non. Le cours vise <b>M_G entre 8 et 12 dB</b> et <b>M_φ entre 45 et 60°</b>. À 25° et 5 dB, le système est stable mais très proche de la limite : une variation de gain ou un retard suffirait à le déstabiliser.'},
+    defi:{q:'Mφ = 25°, MG = 5 dB. Robuste au sens du cours ?',a:'Non. Cibles : <b>M_G entre 8 et 12 dB</b>, <b>M_φ entre 45 et 60°</b>. À 25° et 5 dB, le système est stable mais proche de la limite.'},
     qcm:[
-      {q:'Un système est stable EBSB si…',o:['tous les pôles BF ont une partie réelle < 0','tous les pôles BF ont une partie réelle > 0','les pôles sont sur l’axe imaginaire','la marge de gain est nulle'],a:0,w:'Critère fondamental : les pôles de la FTBF doivent être dans le demi-plan gauche strict.'},
-      {q:'La marge de phase vaut…',o:['M_φ = arg L(jωc) − 180°','M_φ = arg L(jωc) + 180°','M_φ = |L(jωc)|','M_φ = −20·log|L(jω₁₈₀)|'],a:1,w:'M_φ = arg F(jω_0dB) + 180°, où ω_0dB est la pulsation pour laquelle |F(jω)| = 1.'},
+      {q:'Un système est stable EBSB si…',o:['tous les pôles BF ont une partie réelle < 0','tous les pôles BF ont une partie réelle > 0','les pôles sont sur l’axe imaginaire','la marge de gain est nulle'],a:0,w:'Les pôles de la FTBF doivent être dans le demi-plan gauche strict.'},
+      {q:'La marge de phase vaut…',o:['M_φ = arg L(jωc) − 180°','M_φ = arg L(jωc) + 180°','M_φ = |L(jωc)|','M_φ = −20·log|L(jω₁₈₀)|'],a:1,w:'M_φ = arg F(jω_0dB) + 180°, où ω_0dB vérifie |F(jω)| = 1.'},
       {q:'La marge de gain vaut…',o:['M_G = −20·log|L(jω₁₈₀)|','M_G = 20·log|L(jωc)|','M_G = 180° + arg L(jωc)','M_G = |L(jω₁₈₀)|'],a:0,w:'M_G = −20·log|F(jω₋₁₈₀°)|, où ω₋₁₈₀° vérifie arg F(jω) = −180°.'},
-      {q:'Une marge de gain de 6 dB signifie que…',o:['le gain peut être multiplié par 2 avant instabilité','le système est instable','le gain peut être divisé par 2','c’est la cible du cours'],a:0,w:'6 dB = 20·log₁₀(2) : le gain peut être multiplié par 2 avant que la marge soit nulle. La cible du cours est plutôt 8–12 dB.'}
+      {q:'Marge de gain de 6 dB ?',o:['gain peut être × 2 avant instabilité','système instable','gain peut être ÷ 2','cible du cours'],a:0,w:'6 dB = 20·log₁₀(2). La cible du cours est plutôt 8–12 dB.'}
     ]
   }
 };
@@ -1100,96 +1331,125 @@ const ACT={
    COURS
    =================================================================== */
 const COURSE=[
-  {id:'intro',t:'Performances d’un système asservi',h:`
+  {id:'intro',t:'Performances d’un système asservi',h: () => `
 <p>Un <b>système linéaire continu invariant</b> (SLCI) asservi est évalué sur trois grandes performances :</p>
 <ul>
 <li><b>Précision</b> — écart entre consigne et sortie en régime permanent.</li>
 <li><b>Rapidité</b> — vitesse avec laquelle la sortie rejoint sa valeur finale.</li>
 <li><b>Stabilité</b> — capacité de la boucle fermée à converger.</li>
 </ul>
-<h3>Boucle d’asservissement</h3>
-<div class="formula math">ε(p) = Y<sub>adapt</sub>(p) − Y<sub>capt</sub>(p) &nbsp;; en retour unitaire : <i>ε(p) = μ(p)</i></div>
-<p>La <b>fonction de transfert en boucle ouverte</b> (FTBO) L(p) = C(p)·G(p) gouverne la précision et la stabilité. La <b>fonction de transfert en boucle fermée</b> (FTBF) T(p) = L(p)/(1+L(p)) gouverne la rapidité.</p>
-<div class="formula math">FTBO(p) = CD(p) · CR(p) &nbsp;; &nbsp; FTBF(p) = ${fr('CD(p)', '1 + FTBO(p)')}</div>
-<p>La formule de Black est utilisée pour le calcul de la FTBF à partir de la chaîne directe CD(p) et de la chaîne de retour CR(p).</p>
-<div class="retain"><b>À retenir.</b> Précision, rapidité et stabilité ne peuvent pas être optimisées indépendamment : le réglage du correcteur est toujours un compromis.</div>`},
-  {id:'precision-cours',t:'Précision — erreurs et classe',h:`
-<h3>Erreur et écart</h3>
-<p>On distingue :</p>
+<h3>Structure d’une boucle d’asservissement</h3>
+${genericLoopSVG(false)}
+<h3>Notations</h3>
 <ul>
-<li><b>l’erreur</b> μ(t) = y<sub>cons</sub>(t) − y(t) — différence entre consigne et sortie ;</li>
-<li><b>l’écart</b> ε(t) — grandeur en sortie du comparateur.</li>
+<li><i>G(p)</i> — fonction de transfert du <b>système</b> (procédé).</li>
+<li><i>C(p)</i> — fonction de transfert du <b>correcteur</b>.</li>
+<li><i>L(p) = C(p)·G(p)</i> — <b>fonction de transfert en boucle ouverte</b> (FTBO).</li>
+<li><i>T(p) = L(p)/(1+L(p))</i> — <b>fonction de transfert en boucle fermée</b> (FTBF), formule de Black.</li>
 </ul>
-<p>À <b>retour unitaire</b>, ε(p) = μ(p).</p>
-<h3>Écart statique en poursuite</h3>
-<p>On note la FTBO sous la forme :</p>
-<div class="formula math">FTBO(p) = ${fr('K<sub>BO</sub> (1 + b<sub>1</sub> p + … + b<sub>m</sub> p<sup>m</sup>)', 'p<sup>α</sup> (1 + a<sub>1</sub> p + … + a<sub>k</sub> p<sup>k</sup>)')}</div>
-<p><b>K<sub>BO</sub></b> est le <b>gain de la FTBO</b> (à ne pas confondre avec le gain Kp du correcteur) et <b>α</b> est la <b>classe</b> de la FTBO (nombre d’intégrateurs).</p>
-<table class="ctable"><thead><tr><th>Entrée</th><th>α = 0</th><th>α = 1</th><th>α = 2</th></tr></thead><tbody>
-<tr><td>Échelon (ampl. a)</td><td>a / (1 + K<sub>BO</sub>)</td><td>0</td><td>0</td></tr>
-<tr><td>Rampe (pente a)</td><td>∞</td><td>a / K<sub>BO</sub></td><td>0</td></tr>
-<tr><td>Parabole</td><td>∞</td><td>∞</td><td>a / K<sub>BO</sub></td></tr></tbody></table>
-<p><b>Attention :</b> K<sub>BO</sub> est le gain de la FTBO, pas le gain du correcteur. Pour un correcteur P et un système du 1er ordre, K<sub>BO</sub> = Kp·K. Pour un correcteur PI, K<sub>BO</sub> = Kp·K/Ti (gain de vitesse).</p>
-<h3>Influence d’une perturbation</h3>
-<p>On note F<sub>1</sub>(p) = ${fr('K<sub>1</sub>(1 + …)', 'p<sup>α<sub>1</sub></sup>(1 + …)')} et F<sub>2</sub>(p) = ${fr('K<sub>2</sub>(1 + …)', 'p<sup>α<sub>2</sub></sup>(1 + …)')}.</p>
-<table class="ctable"><thead><tr><th>Perturbation</th><th>α<sub>1</sub> = 0</th><th>α<sub>1</sub> = 1</th><th>α<sub>1</sub> ≥ 2</th></tr></thead><tbody>
-<tr><td>Échelon</td><td>aK<sub>2</sub>/(1 + K<sub>1</sub>K<sub>2</sub>)</td><td>0</td><td>0</td></tr>
-<tr><td>Rampe</td><td>∞</td><td>a / K<sub>1</sub></td><td>0</td></tr>
-<tr><td>Parabole</td><td>∞</td><td>∞</td><td>a / K<sub>1</sub></td></tr></tbody></table>
-<div class="retain"><b>À retenir.</b> K<sub>BO</sub> = lim<sub>p→0</sub> p<sup>α</sup>·FTBO(p). Un intégrateur dans C(p) fait gagner une classe et améliore la précision, au prix d’une marge de phase plus faible.</div>`},
-  {id:'rapidite-cours',t:'Rapidité — temps de réponse et bande passante',h:`
-<h3>Premier ordre</h3>
-<div class="formula math">T(p) = ${fr('K', '1 + τp')} &nbsp;; pour un échelon : s(t) = K(1 − e<sup>−t/τ</sup>)</div>
+<p>La <b>classe α</b> de L(p) est le nombre d’intégrateurs (pôles en p = 0) ; le <b>gain K<sub>BO</sub></b> est le gain de la FTBO adapté à sa classe : K<sub>BO</sub> = lim<sub>p→0</sub> p<sup>α</sup>·L(p).</p>
+<div class="retain"><b>À retenir.</b> Précision, rapidité et stabilité ne peuvent pas être optimisées indépendamment : le réglage du correcteur est toujours un compromis.</div>`},
+  {id:'precision-cours',t:'Précision — erreurs et classe',h: () => `
+<h3>Signaux d’entrée et transformées de Laplace</h3>
+<table class="ctable"><thead><tr><th>Entrée</th><th>e(t)</th><th>E(p)</th></tr></thead><tbody>
+<tr><td>Impulsion de Dirac</td><td>a·δ(t)</td><td>a</td></tr>
+<tr><td>Échelon</td><td>a·u(t)</td><td>a/p</td></tr>
+<tr><td>Rampe</td><td>a·t·u(t)</td><td>a/p²</td></tr>
+<tr><td>Parabole</td><td>(a/2)·t²·u(t)</td><td>a/p³</td></tr>
+</tbody></table>
+<h3>Erreur et écart</h3>
 <ul>
-<li><b>t₅% ≈ 3τ</b> (plus précisément ln(20)·τ)</li>
+<li><b>Erreur</b> μ(t) = y<sub>cons</sub>(t) − y(t) — différence consigne/sortie ;</li>
+<li><b>Écart</b> ε(t) — grandeur en sortie du comparateur.</li>
+</ul>
+<p>À retour unitaire, ε(p) = μ(p).</p>
+<h3>FTBO et gain K<sub>BO</sub></h3>
+<p>On écrit la FTBO sous la forme :</p>
+<div class="formula math">L(p) = C(p)·G(p) = ${fr('K<sub>BO</sub> (1 + b<sub>1</sub> p + … + b<sub>m</sub> p<sup>m</sup>)', 'p<sup>α</sup> (1 + a<sub>1</sub> p + … + a<sub>k</sub> p<sup>k</sup>)')}</div>
+<p><b>K<sub>BO</sub></b> est le <b>gain de la FTBO</b> — pas le gain Kp du correcteur. α est la <b>classe de L(p)</b>.</p>
+<h3>Écart statique en poursuite</h3>
+<table class="ctable"><thead><tr><th>Entrée (ampl. a)</th><th>α = 0</th><th>α = 1</th><th>α = 2</th></tr></thead><tbody>
+<tr><td>Échelon</td><td>a/(1 + K<sub>BO</sub>)</td><td>0</td><td>0</td></tr>
+<tr><td>Rampe</td><td>∞</td><td>a/K<sub>BO</sub></td><td>0</td></tr>
+<tr><td>Parabole</td><td>∞</td><td>∞</td><td>a/K<sub>BO</sub></td></tr>
+</tbody></table>
+<div class="alert"><h3>⚠ Ne pas confondre Kp et K<sub>BO</sub></h3>
+<p>Kp est le gain du correcteur. K<sub>BO</sub> est le gain de la <b>FTBO</b> L(p) = C(p)·G(p). Pour un correcteur P et un premier ordre : K<sub>BO</sub> = Kp·K. Pour un PI : K<sub>BO</sub> = Kp·K/Ti. C’est K<sub>BO</sub> qui intervient dans les formules d’écart.</p></div>
+<h3>Influence d’une perturbation (régulation)</h3>
+<p>On note F<sub>1</sub>(p) = ${fr('K<sub>1</sub>(1 + …)', 'p<sup>α<sub>1</sub></sup>(1 + …)')} (de l’entrée comparateur à la perturbation) et F<sub>2</sub>(p) = ${fr('K<sub>2</sub>(1 + …)', 'p<sup>α<sub>2</sub></sup>(1 + …)')} (de la perturbation à la sortie).</p>
+<table class="ctable"><thead><tr><th>Perturbation</th><th>α<sub>1</sub> = 0</th><th>α<sub>1</sub> = 1</th><th>α<sub>1</sub> ≥ 2</th></tr></thead><tbody>
+<tr><td>Échelon</td><td>pert·K<sub>2</sub>/(1 + K<sub>1</sub>K<sub>2</sub>)</td><td>0</td><td>0</td></tr>
+<tr><td>Rampe</td><td>∞</td><td>pert/K<sub>1</sub></td><td>0</td></tr>
+<tr><td>Parabole</td><td>∞</td><td>∞</td><td>pert/K<sub>1</sub></td></tr>
+</tbody></table>
+<div class="retain"><b>À retenir.</b> K<sub>BO</sub> = lim<sub>p→0</sub> p<sup>α</sup>·L(p). Un intégrateur dans C(p) fait gagner une classe et améliore la précision, au prix d’une marge de phase plus faible.</div>`},
+  {id:'rapidite-cours',t:'Rapidité — temps de réponse et bande passante',h: () => `
+<p><b>La rapidité se mesure sur la réponse à un échelon</b> (réponse indicielle), dont on tire t₅%, le temps de montée et le temps de pic. Fréquentiellement, c’est la <b>bande passante à −3 dB</b>.</p>
+<h3>Premier ordre</h3>
+<div class="formula math">T(p) = ${fr('K', '1 + τp')} &nbsp;; &nbsp; s(t) = K(1 − e<sup>−t/τ</sup>)</div>
+<ul>
+<li><b>t₅% ≈ 3τ</b> (précisément ln(20)·τ)</li>
 <li><b>t<sub>63%</sub> = τ</b></li>
-<li><b>Bande passante à −3 dB</b> : ω<sub>c</sub> = 1/τ</li>
-<li>Pas de dépassement</li>
+<li><b>ω<sub>c</sub> (bande passante −3 dB) = 1/τ</b></li>
 </ul>
 <h3>Second ordre</h3>
 <div class="formula math">T(p) = ${fr('K', '1 + 2mp/ω₀ + p²/ω₀²')}</div>
 <ul>
 <li>Pseudo-pulsation : ω<sub>n</sub> = ω₀√(1 − m²)</li>
-<li><b>Dépassement</b> : D% = 100·exp(−mπ/√(1 − m²))</li>
-<li><b>Temps de pic</b> : t<sub>p</sub> = π/ω<sub>n</sub></li>
-<li><b>Temps de réponse à 5 %</b> : t₅% = t<sub>réduit</sub> / ω₀</li>
-<li><b>t<sub>réduit</sub> minimal = 3 à m = 0,69</b> (le plus rapide avec dépassement)</li>
-<li><b>t<sub>réduit</sub> = 5 à m = 1</b> (le plus rapide sans dépassement)</li>
+<li>Dépassement : D% = 100·exp(−mπ/√(1 − m²))</li>
+<li>Temps de pic : t<sub>p</sub> = π/ω<sub>n</sub></li>
+<li>Temps de réponse réduit : t<sub>réduit</sub> = t₅%·ω<sub>n</sub> (m &lt; 1) ou t₅%·ω₀ (m ≥ 1)</li>
+</ul>
+<h3>Abaque du temps de réponse réduit</h3>
+${abaqueSVG()}
+<p>Sur l’abaque ci-dessus :</p>
+<ul>
+<li>à <b>ξ = 0,69</b> (point vert), le temps de réponse réduit est <b>minimal</b>, égal à <b>t<sub>réduit</sub> ≈ 3</b> : c’est la réponse la plus rapide avec dépassement ;</li>
+<li>à <b>ξ = 1</b> (point orange), t<sub>réduit</sub> ≈ 5 : c’est la réponse la plus rapide <b>sans dépassement</b>.</li>
 </ul>
 <h3>Lien avec le gain Kp</h3>
-<p>Augmenter Kp augmente la pulsation propre de la boucle fermée : le système est plus rapide, mais le dépassement grandit et la marge de phase diminue.</p>
-<div class="retain"><b>À retenir.</b> Le temps de réponse à 5 % et la bande passante à −3 dB sont les deux indicateurs de rapidité.</div>`},
-  {id:'stabilite-cours',t:'Stabilité et marges',h:`
+<p>Augmenter Kp accélère la boucle fermée (t₅% diminue, bande passante augmente), mais dégrade le dépassement et la marge de phase.</p>
+<div class="retain"><b>À retenir.</b> t₅% et la bande passante à −3 dB sont les deux indicateurs de rapidité ; ξ ≈ 0,69 est le meilleur compromis.</div>`},
+  {id:'stabilite-cours',t:'Stabilité et marges',h: () => `
 <h3>Critère fondamental</h3>
 <p>Un système bouclé est <b>stable EBSB</b> si tous les pôles de la FTBF ont une partie réelle <b>strictement négative</b>.</p>
 <h3>Marges de stabilité</h3>
-<p>Le point critique −1 dans le plan complexe correspond à |L| = 1 (0 dB) et arg L = −180°. On définit :</p>
+<p>Le point critique −1 correspond à |L| = 1 (0 dB) et arg L = −180°. On définit :</p>
 <div class="formula math">M<sub>G</sub> = −20·log|L(jω<sub>−180°</sub>)| &nbsp;; &nbsp; M<sub>φ</sub> = arg L(jω<sub>0dB</sub>) + 180°</div>
 <p>où ω<sub>−180°</sub> est la pulsation pour laquelle arg L = −180°, et ω<sub>0dB</sub> celle pour laquelle |L| = 1.</p>
+<h3>Lecture graphique sur un exemple</h3>
+<p>Exemple : <i>L(p) = 10 / ((1+p)(1+0,1p)(1+0,05p))</i>.</p>
+${bodeMargesSVG()}
+<p>Sur cet exemple :</p>
+<ul>
+<li>la <b>marge de gain M<sub>G</sub></b> se lit à ω<sub>−180°</sub> ≈ 15 rad/s : c’est la distance verticale entre |L| et 0 dB, soit ≈ 10 dB ;</li>
+<li>la <b>marge de phase M<sub>φ</sub></b> se lit à ω<sub>0dB</sub> ≈ 7,5 rad/s : c’est la distance angulaire entre arg L et −180°, soit ≈ 40°.</li>
+</ul>
 <h3>Cibles usuelles</h3>
 <table class="ctable"><thead><tr><th>Indicateur</th><th>Bon</th><th>Limite</th><th>Mauvais</th></tr></thead><tbody>
 <tr><td>Marge de phase M<sub>φ</sub></td><td>&gt; 45°</td><td>30° à 45°</td><td>&lt; 30°</td></tr>
 <tr><td>Marge de gain M<sub>G</sub></td><td>8 à 12 dB</td><td>6 à 8 dB</td><td>&lt; 6 dB</td></tr></tbody></table>
-<h3>Influence du gain Kp</h3>
-<p>Augmenter Kp décale la courbe de module vers le haut : ω<sub>0dB</sub> augmente et la phase à cette pulsation est plus basse, donc M<sub>φ</sub> diminue. Il existe un gain critique au-delà duquel la boucle fermée devient instable.</p>
+<h3>Influence du gain</h3>
+<p>Augmenter Kp décale le module vers le haut : ω<sub>0dB</sub> augmente et arg L(ω<sub>0dB</sub>) est plus bas → M<sub>φ</sub> diminue.</p>
 <div class="retain"><b>À retenir.</b> Le critère algébrique est la position des pôles ; le critère graphique est la lecture des marges sur le Bode.</div>`},
-  {id:'bilan',t:'Bilan et vocabulaire',h:`
+  {id:'bilan',t:'Bilan et vocabulaire',h: () => `
 <h3>Choisir un compromis</h3>
 <table class="ctable"><thead><tr><th>Correcteur</th><th>Précision</th><th>Rapidité</th><th>Stabilité</th></tr></thead><tbody>
-<tr><td><b>P</b></td><td>réduite par Kp (K_BO augmente)</td><td>améliorée par Kp</td><td>dégradée par Kp</td></tr>
+<tr><td><b>P</b></td><td>réduite par Kp (K<sub>BO</sub> augmente)</td><td>améliorée par Kp</td><td>dégradée par Kp</td></tr>
 <tr><td><b>PI</b></td><td>position annulée (α = 1)</td><td>légèrement dégradée</td><td>marge plus faible</td></tr>
 <tr><td><b>PID</b></td><td>position annulée (α = 1)</td><td>améliorée (Td)</td><td>Mφ restaurée par Td</td></tr></tbody></table>
 <h3>Vocabulaire</h3>
 <dl class="gloss">
-<dt>FTBO L(p)</dt><dd>C(p)·G(p) ; sa classe et son gain K<sub>BO</sub> gouvernent les écarts et la stabilité.</dd>
-<dt>FTBF T(p)</dt><dd>L(p)/(1+L(p)) ; ses pôles déterminent la stabilité réelle et sa dynamique.</dd>
-<dt>Classe α</dt><dd>Nombre d’intégrateurs (pôles en p = 0) dans L(p).</dd>
-<dt>Gain K<sub>BO</sub></dt><dd>Gain de la FTBO adapté à sa classe : K<sub>BO</sub> = lim<sub>p→0</sub> p<sup>α</sup>·L(p).</dd>
-<dt>Écart statique</dt><dd>ε<sub>s</sub> = lim ε(t) en réponse à un échelon (poursuite).</dd>
-<dt>Écart de traînage</dt><dd>Écart résiduel en réponse à une rampe (poursuite).</dd>
+<dt>G(p)</dt><dd>Fonction de transfert du système (procédé).</dd>
+<dt>C(p)</dt><dd>Fonction de transfert du correcteur.</dd>
+<dt>L(p) = C(p)·G(p)</dt><dd>FTBO : sa classe et son gain K<sub>BO</sub> gouvernent les écarts et la stabilité.</dd>
+<dt>T(p)</dt><dd>FTBF = L(p)/(1+L(p)) ; ses pôles déterminent la stabilité réelle.</dd>
+<dt>Classe α</dt><dd>Nombre d’intégrateurs dans L(p).</dd>
+<dt>Gain K<sub>BO</sub></dt><dd>Gain de la FTBO : K<sub>BO</sub> = lim<sub>p→0</sub> p<sup>α</sup>·L(p).</dd>
+<dt>Écart statique</dt><dd>ε<sub>s</sub> = lim ε(t) en réponse à un échelon.</dd>
+<dt>Écart de traînage</dt><dd>Écart résiduel en réponse à une rampe.</dd>
 <dt>Temps de réponse à 5 %</dt><dd>Instant à partir duquel |s − s<sub>∞</sub>| ≤ 5 % |s<sub>∞</sub>|.</dd>
 <dt>Bande passante à −3 dB</dt><dd>Intervalle [0, ω<sub>c</sub>] où |T(jω)| ≥ |T(0)|/√2.</dd>
-<dt>Dépassement</dt><dd>D% = 100·(s<sub>max</sub> − s<sub>∞</sub>)/s<sub>∞</sub>.</dd>
 <dt>Marge de phase</dt><dd>M<sub>φ</sub> = arg L(jω<sub>0dB</sub>) + 180°.</dd>
 <dt>Marge de gain</dt><dd>M<sub>G</sub> = −20·log|L(jω<sub>−180°</sub>)|.</dd>
 </dl>
@@ -1227,6 +1487,7 @@ function renderAct(){
   const body=h('div',{class:'pbody'});
   if (AS.tab==='steps'){
     body.append(h('p',{class:'small'},a.level+' · environ '+a.time));
+    if (a.notation)body.append(h('div',{class:'notation',html:a.notation}));
     body.append(h('div',{class:'goal'},h('b',null,'Objectif. '),a.goal));
     body.append(h('ol',{class:'steps'},a.steps.map(s=>h('li',{html:s}))));
     body.append(h('div',{class:'defi'},
@@ -1244,8 +1505,7 @@ function renderAct(){
         const bad=s.checked&&!s.shown&&s.a[i]===j&&j!==q.a;
         const inp=h('input',{type:'radio',name:'q'+i,checked:show&&s.shown?j===q.a:s.a[i]===j,disabled:show});
         inp.addEventListener('change',()=>{s.a[i]=j;actSave();renderAct();});
-        fs.append(h('label',{class:'opt'+(good?' good':'')+(bad?' bad':'')},
-          inp,h('span',null,o+(good?'  ✓':'')+(bad?'  ✗':''))));
+        fs.append(h('label',{class:'opt'+(good?' good':'')+(bad?' bad':'')},inp,h('span',null,o+(good?'  ✓':'')+(bad?'  ✗':''))));
       });
       if (show){const miss=s.a[i]==null&&!s.shown;fs.append(h('p',{class:'why'},(miss?'Sans réponse. ':'')+q.w));}
       body.append(fs);
@@ -1279,7 +1539,8 @@ function renderCourse(){
   const art=h('article',{class:'cbody'});
   art.append(h('p',{class:'ckick'},'Cours · section '+(idx+1)+' sur '+COURSE.length));
   art.append(h('h2',null,cur.t));
-  art.append(h('div',{class:'math',html:cur.h}));
+  const content=typeof cur.h==='function'?cur.h():cur.h;
+  art.append(h('div',{class:'math',html:content}));
   art.append(h('div',{class:'cpn'},
     idx>0?h('button',{class:'btn',type:'button',onclick:()=>go(COURSE[idx-1].id)},'← '+COURSE[idx-1].t):h('span'),
     idx<COURSE.length-1?h('button',{class:'btn pri',type:'button',onclick:()=>go(COURSE[idx+1].id)},COURSE[idx+1].t+' →'):h('span')));
@@ -1303,26 +1564,25 @@ function openDlg(title,body){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#dlg').hidden)closeDlg();});
 $('#bHelp').addEventListener('click',()=>{
   openDlg('Aide',h('div',{html:
-    '<p>Page interactive sur les <b>performances des SLCI</b>, organisée en trois onglets :</p>'+
+    '<p>Page interactive sur les <b>performances des SLCI</b> :</p>'+
     '<ul>'+
-    '<li><b>Précision</b> — écarts en régime permanent, influence de la classe α et du gain K_BO de la FTBO.</li>'+
-    '<li><b>Rapidité</b> — t₅%, bande passante à −3 dB, influence du gain Kp.</li>'+
+    '<li><b>Précision</b> — écarts en régime permanent (Dirac, échelon, rampe, parabole) ; influence de la classe α et du gain K_BO de la FTBO ; perturbation en échelon.</li>'+
+    '<li><b>Rapidité</b> — t₅% et bande passante à −3 dB sur la réponse à un échelon.</li>'+
     '<li><b>Stabilité</b> — pôles BF, marges de gain et de phase.</li>'+
     '</ul>'+
-    '<h3>Le modèle</h3>'+
-    '<p>G(p) est défini par sa <b>classe</b> (nombre d’intégrateurs) et sa <b>forme</b> : premier ordre K/(1+Tp) ou second ordre K/(1+2mp/ω₀+p²/ω₀²).</p>'+
-    '<p>C(p) est P, PI ou PID. La boucle est à retour unitaire, avec possibilité d’injecter une perturbation d(t) en échelon.</p>'+
-    '<h3>Point clé : le gain du tableau est K_BO</h3>'+
-    '<p>Le tableau des écarts utilise le gain <b>K_BO de la FTBO L(p) = C(p)·G(p)</b>, défini par K_BO = lim<sub>p→0</sub> p<sup>α</sup>·L(p). Ce n’est pas le gain Kp du correcteur : K_BO intègre aussi le gain du système et la présence éventuelle d’une intégration.</p>'+
-    '<p class="small">Simulation numérique par Runge-Kutta d’ordre 4 ; racines du polynôme caractéristique par itération de Durand-Kerner.</p>'}));
+    '<h3>Notations</h3>'+
+    '<p><b>G(p)</b> : système ; <b>C(p)</b> : correcteur ; <b>L(p) = C(p)·G(p)</b> : FTBO ; <b>T(p) = L(p)/(1+L(p))</b> : FTBF.</p>'+
+    '<h3>Point clé</h3>'+
+    '<p>Dans le tableau des écarts, le gain utilisé est <b>K_BO = lim<sub>p→0</sub> p<sup>α</sup>·L(p)</b>, gain de la FTBO. Ce n’est PAS Kp.</p>'+
+    '<h3>Perturbation</h3>'+
+    '<p>La perturbation pert(t) démarre en régime permanent (à t_pert ≈ 0,85·t_settling) pour que son effet soit visible.</p>'}));
 });
 
 /* ===================== rendu ===================== */
 function renderTabs(){
   const seg=$('#tabs');seg.innerHTML='';
   TABS.forEach(t=>seg.append(h('button',{type:'button',role:'tab','aria-pressed':t.id===CUR?'true':'false',onclick:()=>{
-    CUR=t.id;AS.key=t.id;AS.tab='steps';
-    render();
+    CUR=t.id;AS.key=t.id;AS.tab='steps';render();
   }},t.t)));
 }
 function render(){
