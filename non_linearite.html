@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TP : Prise en compte des non-linéarités — PSI* SII</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
+  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;--run:#2e8b3a;
+  --node-stroke:#33475b;
+  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--font-ui)}
+button,input,select,textarea{font:inherit;color:inherit}
+.inner{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+.band{background:var(--bar);border-bottom:1px solid var(--line);flex:none}
+.row{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding-block:7px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;letter-spacing:.01em}
+.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.files{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);background:var(--panel);border-radius:7px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.sm{padding:3px 8px;font-size:12px}
+:is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;padding:7px 14px;font-weight:500;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.work{flex:1;min-height:0;display:flex;gap:10px;padding-block:10px}
+#stage{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:10px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+#hint{flex:none;padding:6px 12px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--bar)}
+#scroller{flex:1;min-height:0;overflow:auto}
+.phead{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex:none}
+.phead b{font-size:15px}
+.phead .sub{color:var(--muted);font-size:12.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:2px;padding:6px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.pbody{overflow:auto;padding:12px;flex:1;min-height:0}
+.fld{display:flex;flex-direction:column;gap:3px;margin-bottom:9px;font-size:12.5px;color:var(--muted)}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:5px 8px;color:var(--fg)}
+input[type=range]{width:100%;padding:0;accent-color:var(--accent)}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.small{font-size:12px;color:var(--muted);margin:0 0 9px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:60;max-width:90vw}
+#dlg{position:fixed;inset:0;background:rgba(10,16,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlgbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:min(640px,100%);max-height:88%;display:flex;flex-direction:column}
+.dlgbox header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dlgbox header b{font-size:16px}
+.dlgbox .dbody{padding:14px 16px;overflow:auto}
+.dlgbox h3{margin:14px 0 4px;font-size:14px}.dlgbox p,.dlgbox li{margin:4px 0;font-size:13.5px}
+#act{flex:none;width:clamp(280px,24vw,340px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--panel);min-height:0;max-height:100%}
+#act .pbody{font-size:13.5px}
+.goal{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:8px 10px;margin:0 0 10px}
+.steps{margin:0 0 10px;padding-left:20px}.steps li{margin-bottom:9px}
+.defi{border:1px dashed var(--accent);border-radius:8px;padding:8px 10px;margin:0 0 12px}.defi p{margin:6px 0}
+.defi summary{cursor:pointer;font-weight:500;color:var(--accent-ink)}
+fieldset.q{border:1px solid var(--line);border-radius:8px;padding:8px 10px 6px;margin:0 0 10px;min-width:0}
+fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
+.opt{display:flex;gap:8px;align-items:flex-start;padding:4px 6px;border-radius:6px;cursor:pointer}
+.opt input{margin-top:3px;width:auto;flex:none}
+.opt.good{background:rgba(30,122,46,.15)}.opt.bad{background:rgba(192,40,31,.15)}
+.why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
+.score{font-weight:600;font-size:15px;margin:4px 0 8px}
+#course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
+.ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
+.cwrap{flex:1;min-height:0;display:flex;gap:28px;padding-block:14px}
+.ctoc{flex:none;width:250px;overflow:auto;display:flex;flex-direction:column;gap:1px}
+.ctoc button{display:block;width:100%;text-align:left;padding:6px 10px;border:0;border-left:3px solid transparent;background:transparent;cursor:pointer;font-size:13.5px}
+.ctoc button:hover{background:var(--panel2)}
+.ctoc button.on{border-left-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.ctoc-sel{display:none;margin:8px max(16px,env(safe-area-inset-left,0px)) 0;width:auto}
+.cbody{flex:1;min-width:0;overflow:auto;max-width:860px;padding-right:6px}
+.ckick{color:var(--muted);font-size:12.5px;margin:0}
+.cbody h2{font-size:26px;margin:2px 0 12px;text-wrap:balance}
+.cbody h3{font-size:16.5px;margin:22px 0 6px}
+.cbody p,.cbody li{font-size:14.5px;line-height:1.6}
+.cbody ul,.cbody ol{padding-left:22px}.cbody li{margin-bottom:4px}
+.cbody table{display:block;overflow-x:auto;max-width:100%}
+.ctable{border-collapse:collapse;font-size:13.5px;margin:8px 0 12px}
+.ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
+.ctable th{background:var(--panel2);font-weight:600}
+.retain{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 12px;margin:16px 0 6px;font-size:14px}
+.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
+pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
+.cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
+#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:980px}
+#ws h2{font-size:24px;margin:0 0 8px;text-wrap:balance}
+#ws h3{font-size:16.5px;margin:24px 0 6px}
+#ws p,#ws li{font-size:14.5px;line-height:1.55}
+#ws .small{font-size:12.5px}
+.opts{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 10px}.opts .fld{margin:0}
+.opts input[type=range]{width:200px;max-width:100%}
+.opts input[type=text]{font-family:var(--font-mono);min-width:240px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 11px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.stat{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat span{font-size:12px;color:var(--muted)}.stat b{font-size:14px;font-family:var(--font-mono);overflow-wrap:anywhere}
+.verdict{border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14px;background:var(--panel2);border:1px solid var(--line)}
+.verdict.yes{background:rgba(30,122,46,.15);border-color:var(--ok)}.verdict.no{background:rgba(192,40,31,.13);border-color:var(--bad)}.verdict.warn{background:rgba(154,91,0,.13);border-color:var(--warn)}
+.dwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:8px 0}
+.dt{border-collapse:collapse;width:100%;font-size:13.5px}
+.dt th,.dt td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.dt thead th{background:var(--panel2);font-weight:600}
+.dt td.m{font-family:var(--font-mono);font-size:12.5px}
+.dt tr:last-child td{border-bottom:0}
+.stagebox{border:1px solid var(--line);border-radius:10px;padding:10px 10px 6px;background:#fff;margin:8px 0}
+.rowname{font-size:12px;color:var(--muted);margin:4px 2px 0}
+.bars{display:flex;align-items:flex-end;gap:4px;height:176px;padding-top:4px}
+.bars.short{height:120px}
+.bcol{flex:1 1 0;max-width:54px;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bcol .v{font:600 12px var(--font-mono);margin-bottom:2px}
+.bcol .b{width:100%;border-radius:5px 5px 0 0;background:#9fb4ca;border:1px solid #6f8aa6;min-height:3px}
+.bcol .i{font:11px var(--font-mono);color:var(--muted);margin-top:3px}
+.bcol.sorted .b{background:rgba(30,122,46,.75);border-color:var(--ok)}
+.bcol.scan .b{background:var(--accent);border-color:var(--accent-ink)}
+.bcol.key .b{background:#e8a33a;border-color:var(--warn)}
+.bcol.swap .b{background:#e8a33a;border-color:var(--warn)}
+.bcol.min .b{background:var(--violet);border-color:#52308f}
+.bcol.pivot .b{background:var(--bad);border-color:#8e1d15}
+.bcol.left .b{background:#b9d3ee;border-color:var(--accent)}
+.bcol.right .b{background:#f3d6a6;border-color:var(--warn)}
+.bcol.dim{opacity:.32}
+.bcol.empty .b{background:transparent;border:1px dashed var(--line)}
+.leg{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 6px}
+.leg i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px;border:1px solid #6f8aa6;background:#9fb4ca}
+.leg i.s{background:rgba(30,122,46,.75);border-color:var(--ok)}.leg i.c{background:var(--accent);border-color:var(--accent-ink)}.leg i.k{background:#e8a33a;border-color:var(--warn)}.leg i.m{background:var(--violet);border-color:#52308f}.leg i.p{background:var(--bad);border-color:#8e1d15}
+.cells{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 4px}
+.cell{width:40px;text-align:center}
+.cell .v{border:1px solid var(--line);border-radius:6px;padding:6px 0;font:600 14px var(--font-mono);background:#fff;min-height:33px}
+.cell .i{font:11px var(--font-mono);color:var(--muted);margin-top:2px}
+.cell.scan .v{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cell.key .v{background:#e8a33a;border-color:var(--warn)}
+.cell.sorted .v{background:rgba(30,122,46,.2);border-color:var(--ok)}
+.cell.zero .v{color:#9aa3ad}
+.cmpr{display:grid;grid-template-columns:120px 1fr 80px;gap:8px;align-items:center;font-size:13px;margin:3px 0}
+.cmpr i{display:block;height:12px;background:var(--accent);border-radius:3px;min-width:2px}
+.cmpr em{font-style:normal;font-family:var(--font-mono);text-align:right}
+.seqr{display:flex;gap:4px;flex-wrap:wrap}
+.card{border:1px solid var(--line);border-radius:6px;padding:2px 7px;font:600 12.5px var(--font-mono);background:#fff}
+.card.t1{border-color:#2e6da4;color:#1b4a76}.card.t2{border-color:#9a5b00;color:#7a4700}.card.t3{border-color:#7b4fc2;color:#52308f}.card.t4{border-color:#1e7a2e;color:#1e7a2e}.card.t5{border-color:#c0281f;color:#8e1d15}.card.t6{border-color:#33475b;color:#33475b}
+@media (max-width:820px){
+  .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
+  #act{position:fixed;left:0;right:0;bottom:0;width:auto;height:70%;max-height:none;border-radius:14px 14px 0 0;z-index:35;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .work{flex-direction:column;gap:8px}
+  .cell{width:30px}.cell .v{font-size:12px}
+  .cmpr{grid-template-columns:90px 1fr 70px}
+  .bcol .v{font-size:11px}
+}
+@media (prefers-reduced-motion:no-preference){.btn{transition:border-color .12s,background .12s}.bcol .b{transition:height .15s}}
+</style>
+<div id="app">
+  <header class="band"><div class="inner row">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="14" width="4" height="9" fill="var(--accent)"/>
+        <rect x="9" y="9" width="4" height="14" fill="var(--ok)"/>
+        <rect x="15" y="5" width="4" height="18" fill="var(--warn)"/>
+        <rect x="21" y="11" width="2.5" height="12" fill="var(--bad)"/>
+      </svg>
+      <span>TP : Non-linéarités <small>PSI* · SII</small></span>
+    </div>
+    <div class="files">
+      <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
+      <button class="btn" id="bCourse" type="button" aria-pressed="false">Cours</button>
+      <button class="btn" id="bHelp" type="button">Aide</button>
+    </div>
+  </div></header>
+  <div class="band" id="modes"><div class="inner row"><div class="seg" id="wsSeg" role="tablist" aria-label="Ateliers"></div></div></div>
+  <main class="inner work" id="work">
+    <section id="stage"><div id="hint"></div><div id="scroller"><div id="ws"></div></div></section>
+    <aside id="act" hidden aria-label="Activité"></aside>
+  </main>
+  <section id="course" hidden aria-label="Cours"></section>
+</div>
+<div id="dlg" hidden></div>
+<div id="toast" hidden></div>
+<script>
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v === false || v == null) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (v === true) el.setAttribute(k, '');
+    else el.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
+  return el;
+}
+function isSmall() { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } }
+const KEYS = { act: 'tp-nonlin-v1' };
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
+
+/* ---------- utilitaires SVG ---------- */
+function svgEl(tag, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+const NS = 'http://www.w3.org/2000/svg';
+
+/* ======================================================================
+   ATELIERS
+   ====================================================================== */
+
+const WORKSHOPS = [];
+
+/* ---- Atelier 1 : modélisation linéaire ---- */
+const M1 = { id: 'm1', title: 'Modélisation linéaire', hint: 'Identifiez les blocs du moteur à courant continu et le capteur potentiométrique.', 
+  mount: mountM1, reset: () => {} };
+
+function mountM1(root) {
+  root.innerHTML = '';
+  root.append(h('h2', 'Modélisation linéaire du système Maxpid'));
+  root.append(h('p', { html: 'Le système Maxpid est un bras motorisé par un <b>moteur à courant continu</b>, une <b>vis à billes</b> et un <b>mécanisme à trois barres</b>. Le modèle linéaire du moteur repose sur cinq équations.' }));
+  root.append(h('h3', 'Les cinq équations du moteur à courant continu'));
+  const eqs = [
+    ['(1)', 'u(t) = e(t) + L·di/dt + R·i(t)', 'Équation électrique de l’induit'],
+    ['(2)', 'c<sub>m</sub>(t) = K<sub>c</sub>·i(t)', 'Couple moteur proportionnel au courant'],
+    ['(3)', 'e(t) = K<sub>e</sub>·ω<sub>m</sub>(t)', 'Force contre-électromotrice proportionnelle à la vitesse'],
+    ['(4)', 'J·dω/dt = c<sub>m</sub>(t) − c<sub>pert</sub> − c<sub>f</sub>(t)', 'Équation mécanique de l’arbre moteur'],
+    ['(5)', 'θ<sub>m</sub>(t) = ∫ω<sub>m</sub>(t)·dt', 'Relation cinématique de position']
+  ];
+  const tbl = h('table', { class: 'ctable' });
+  tbl.append(h('thead', null, h('tr', null, ['N°', 'Équation', 'Rôle'].map(t => h('th', null, t)))));
+  const tbody = h('tbody');
+  eqs.forEach(e => tbody.append(h('tr', null, h('td', null, e[0]), h('td', { class: 'mono', html: e[1] }), h('td', null, e[2]))));
+  tbl.append(tbody);
+  root.append(tbl);
+  root.append(h('h3', 'Schéma-bloc du modèle linéaire'));
+  const svg = svgEl('svg', { viewBox: '0 0 720 220', width: '100%', style: 'max-width:720px;display:block;margin:8px auto;border:1px solid var(--line);border-radius:8px;background:#fff' });
+  const blocks = [
+    { x: 10, y: 90, w: 90, h: 50, t: 'Consigne', sub: 'θ<sub>c</sub>' },
+    { x: 130, y: 90, w: 90, h: 50, t: 'Adaptateur', sub: 'IHM' },
+    { x: 260, y: 90, w: 90, h: 50, t: 'Correcteur', sub: 'PI' },
+    { x: 390, y: 90, w: 110, h: 50, t: 'Moteur CC', sub: '5 équations' },
+    { x: 540, y: 90, w: 90, h: 50, t: 'Réducteur', sub: 'vis + bras' }
+  ];
+  blocks.forEach(b => {
+    svg.append(svgEl('rect', { x: b.x, y: b.y, width: b.w, height: b.h, rx: 6, fill: '#f1f3f6', stroke: '#33475b', 'stroke-width': 1.2 }));
+    const tx = svgEl('text', { x: b.x + b.w / 2, y: b.y + 22, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 600, fill: '#111' });
+    tx.textContent = b.t; svg.append(tx);
+    const ts = svgEl('text', { x: b.x + b.w / 2, y: b.y + 38, 'text-anchor': 'middle', 'font-size': 10.5, fill: '#5a6068' });
+    ts.textContent = b.sub.replace(/<[^>]+>/g, ''); svg.append(ts);
+  });
+  const arrows = [[100, 115, 130], [220, 115, 260], [350, 115, 390], [500, 115, 540], [630, 115, 660]];
+  arrows.forEach(a => {
+    svg.append(svgEl('line', { x1: a[0], y1: a[1], x2: a[2], y2: a[1], stroke: '#33475b', 'stroke-width': 1.2, 'marker-end': 'url(#ar)' }));
+  });
+  svg.append(svgEl('defs', null));
+  const defs = svg.querySelector('defs');
+  defs.innerHTML = '<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#33475b"/></marker>';
+  svg.append(svgEl('path', { d: 'M 660 115 L 690 115 L 690 190 L 60 190 L 60 140', fill: 'none', stroke: '#2e6da4', 'stroke-width': 1.2, 'stroke-dasharray': '5 3', 'marker-end': 'url(#ar)' }));
+  const ret = svgEl('text', { x: 375, y: 205, 'text-anchor': 'middle', 'font-size': 10.5, fill: '#2e6da4' });
+  ret.textContent = 'Capteur potentiométrique + CAN (retour unitaire)'; svg.append(ret);
+  root.append(svg);
+  root.append(h('p', { class: 'small', html: 'Le gain du capteur et de la conversion analogique/numérique est intégré dans la chaîne directe, ce qui conduit à un schéma-bloc à <b>retour unitaire</b>.' }));
+  root.append(h('div', { class: 'verdict' }, 'Le modèle linéaire permet d’appliquer les méthodes des SLCI : fonction de transfert, réponse indicielle, stabilité. Il n’est valable que dans un domaine restreint de fonctionnement.'));
+}
+
+/* ---- Atelier 2 : linéarisation ---- */
+const M2 = { id: 'm2', title: 'Linéarisation de β(θ)', hint: 'Comprenez pourquoi la loi β = f(θ) n’est pas linéaire et comment on la linéarise sur [40°, 60°].',
+  mount: mountM2, reset: () => {} };
+
+function mountM2(root) {
+  root.innerHTML = '';
+  root.append(h('h2', 'Linéarisation de la loi entrée-sortie'));
+  root.append(h('p', { html: 'La géométrie du mécanisme à trois barres donne la loi entrée-sortie entre l’angle du bras θ et l’angle du moteur β :' }));
+  root.append(h('div', { class: 'formula', html: 'β = (2π / p) · (170 − 10·√(177 + 112·cos θ − 128·sin θ))' }));
+  root.append(h('p', { html: 'Cette relation n’est <b>pas linéaire</b> : elle contient un cosinus, un sinus et une racine carrée. On ne peut donc pas utiliser directement les méthodes linéaires sur toute la plage de fonctionnement.' }));
+  root.append(h('h3', 'Linéarisation sur [40°, 60°]'));
+  root.append(h('p', { html: 'On exploite un fichier de régression pour approcher la courbe par une droite sur la plage utile. L’équation obtenue est :' }));
+  root.append(h('div', { class: 'formula', html: 'y = 107,327 · x − 1109,625' }));
+  root.append(h('p', { html: 'Le coefficient directeur vaut 107,327. On en déduit le gain statique équivalent :' }));
+  root.append(h('div', { class: 'formula', html: 'K<sub>es</sub> = Δθ / Δβ = 1 / 107 ≈ 9,35·10<sup>−3</sup>' }));
+  root.append(h('p', { html: 'La figure ci-dessous montre la courbe β(θ) et son approximation linéaire sur [40°, 60°].' }));
+  const svg = betaPlotSVG();
+  root.append(svg);
+  root.append(h('div', { class: 'verdict' }, 'La linéarisation permet d’utiliser les outils des SLCI sur une plage restreinte. Le gain K<sub>es</sub> ≈ 1/107 est le gain équivalent du capteur dans cette zone.'));
+}
+
+function betaPlotSVG() {
+  const W = 560, H = 300, mx = 55, my = 40;
+  const p = 4;
+  const f = th => (2 * Math.PI / p) * (170 - 10 * Math.sqrt(177 + 112 * Math.cos(th * Math.PI / 180) - 128 * Math.sin(th * Math.PI / 180)));
+  const thMin = 10, thMax = 85;
+  const pts = [];
+  for (let th = thMin; th <= thMax; th += 1) pts.push([th, f(th)]);
+  const bMin = Math.min(...pts.map(q => q[1])) - 5, bMax = Math.max(...pts.map(q => q[1])) + 5;
+  const x = th => mx + (th - thMin) / (thMax - thMin) * (W - 2 * mx);
+  const y = b => H - my - (b - bMin) / (bMax - bMin) * (H - 2 * my);
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', style: 'max-width:560px;display:block;margin:8px auto;border:1px solid var(--line);border-radius:8px;background:#fff' });
+  // grille
+  for (let th = thMin; th <= thMax; th += 15) {
+    svg.append(svgEl('line', { x1: x(th), y1: my, x2: x(th), y2: H - my, stroke: '#e3e7ec', 'stroke-width': 1 }));
+    const t = svgEl('text', { x: x(th), y: H - my + 16, 'text-anchor': 'middle', 'font-size': 10.5, fill: '#5a6068' });
+    t.textContent = th + '°'; svg.append(t);
+  }
+  // axes
+  svg.append(svgEl('line', { x1: mx, y1: H - my, x2: W - mx + 10, y2: H - my, stroke: '#33475b', 'stroke-width': 1.2 }));
+  svg.append(svgEl('line', { x1: mx, y1: my - 5, x2: mx, y2: H - my, stroke: '#33475b', 'stroke-width': 1.2 }));
+  const yl = svgEl('text', { x: mx + 4, y: my - 8, 'font-size': 11, fill: '#5a6068' }); yl.textContent = 'β (rad)'; svg.append(yl);
+  const xl = svgEl('text', { x: W - mx + 4, y: H - my + 28, 'text-anchor': 'end', 'font-size': 11, fill: '#5a6068' }); xl.textContent = 'θ'; svg.append(xl);
+  // courbe
+  let d = '';
+  pts.forEach((q, i) => { d += (i ? ' L ' : 'M ') + x(q[0]).toFixed(1) + ' ' + y(q[1]).toFixed(1); });
+  svg.append(svgEl('path', { d, fill: 'none', stroke: '#2e6da4', 'stroke-width': 2.2 }));
+  // zone de linéarisation
+  const x40 = x(40), x60 = x(60);
+  svg.append(svgEl('rect', { x: x40, y: my, width: x60 - x40, height: H - 2 * my, fill: 'rgba(46,109,164,0.08)', stroke: 'none' }));
+  // droite de régression visuelle (pente locale)
+  const b40 = f(40), b60 = f(60);
+  const slope = (b60 - b40) / (60 - 40);
+  const bAt = th => b40 + slope * (th - 40);
+  const ld = `M ${x(40)} ${y(bAt(40))} L ${x(60)} ${y(bAt(60))}`;
+  svg.append(svgEl('path', { d: ld, fill: 'none', stroke: '#c0281f', 'stroke-width': 2, 'stroke-dasharray': '6 4' }));
+  const lt = svgEl('text', { x: x(50), y: y(bAt(50)) - 12, 'text-anchor': 'middle', 'font-size': 10.5, fill: '#c0281f', 'font-weight': 600 });
+  lt.textContent = 'linéarisation'; svg.append(lt);
+  return svg;
+}
+
+/* ---- Atelier 3 : saturation ---- */
+const M3 = { id: 'm3', title: 'La saturation', hint: 'Étudiez l’effet de Kp, la tension maximale et le bloc saturation.',
+  mount: mountM3, reset: () => {} };
+
+function mountM3(root) {
+  root.innerHTML = '';
+  root.append(h('h2', 'La saturation'));
+  root.append(h('p', { html: 'La tension d’alimentation du moteur est limitée physiquement (protection électrique). Sur le système réel, on observe une phase de <b>1,5 s</b> pendant laquelle la tension reste constante à <b>21,6 V</b>.' }));
+  root.append(h('h3', 'Effet de Kp sur les performances (modèle linéaire)'));
+  const tbl = h('table', { class: 'ctable' });
+  tbl.append(h('thead', null, h('tr', null, ['Performance', 'Évolution quand Kp augmente'].map(t => h('th', null, t)))));
+  const tb = h('tbody');
+  [['Stabilité', 'Se dégrade'], ['Rapidité', 'S’améliore (à nuancer pour les grandes valeurs)'], ['Précision', 'Précise quel que soit Kp (système de classe 1)']].forEach(r => {
+    tb.append(h('tr', null, h('td', null, r[0]), h('td', null, r[1])));
+  });
+  tbl.append(tb); root.append(tbl);
+  root.append(h('h3', 'Caractéristique de saturation'));
+  const svg = saturationSVG();
+  root.append(svg);
+  root.append(h('p', { html: 'La saturation est une non-linéarité <b>discontinue</b> : au-delà de U<sub>max</sub>, la tension de sortie ne peut plus augmenter. Elle dégrade la rapidité du système mais n’a pas d’influence sur le régime permanent.' }));
+  root.append(h('div', { class: 'verdict' }, 'Intégrer un bloc saturation dans le modèle Scilab-Xcos permet de simuler le comportement non linéaire et de retrouver les observations faites sur le système réel.'));
+}
+
+function saturationSVG() {
+  const W = 480, H = 280, mx = 60, my = 40;
+  const Umax = 21.6, Umin = -21.6, UeMax = 30;
+  const x = u => mx + (u + UeMax) / (2 * UeMax) * (W - 2 * mx);
+  const y = s => H - my - (s - Umin) / (2 * Umax) * (H - 2 * my);
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', style: 'max-width:480px;display:block;margin:8px auto;border:1px solid var(--line);border-radius:8px;background:#fff' });
+  // axes
+  svg.append(svgEl('line', { x1: mx, y1: y(0), x2: W - mx + 10, y2: y(0), stroke: '#33475b', 'stroke-width': 1.2 }));
+  svg.append(svgEl('line', { x1: x(0), y1: my - 10, x2: x(0), y2: H - my + 10, stroke: '#33475b', 'stroke-width': 1.2 }));
+  const xl = svgEl('text', { x: W - mx, y: y(0) + 16, 'text-anchor': 'end', 'font-size': 11, fill: '#5a6068' }); xl.textContent = 'u<sub>e</sub>'; svg.append(xl);
+  const yl = svgEl('text', { x: x(0) + 4, y: my - 12, 'font-size': 11, fill: '#5a6068' }); yl.textContent = 'u<sub>s</sub>'; svg.append(yl);
+  // pente
+  svg.append(svgEl('path', { d: `M ${x(-UeMax)} ${y(-Umax)} L ${x(Umax)} ${y(Umax)} L ${x(UeMax)} ${y(Umax)}`, fill: 'none', stroke: '#2e6da4', 'stroke-width': 2.2 }));
+  svg.append(svgEl('path', { d: `M ${x(-UeMax)} ${y(-Umax)} L ${x(-Umax)} ${y(-Umax)}`, fill: 'none', stroke: '#2e6da4', 'stroke-width': 2.2 }));
+  // traits pointillés
+  svg.append(svgEl('line', { x1: mx, y1: y(Umax), x2: x(Umax), y2: y(Umax), stroke: '#c0281f', 'stroke-width': 1, 'stroke-dasharray': '4 3' }));
+  svg.append(svgEl('line', { x1: x(Umax), y1: y(Umax), x2: x(Umax), y2: y(0), stroke: '#c0281f', 'stroke-width': 1, 'stroke-dasharray': '4 3' }));
+  const lbl = svgEl('text', { x: x(Umax) + 6, y: y(Umax) - 6, 'font-size': 10.5, fill: '#c0281f', 'font-weight': 600 }); lbl.textContent = 'Umax = 21,6 V'; svg.append(lbl);
+  return svg;
+}
+
+/* ---- Atelier 4 : seuil et zone morte ---- */
+const M4 = { id: 'm4', title: 'Seuil et zone morte', hint: 'Distinguez frottement (non linéaire) et adhérence, et identifiez le bon bloc de modélisation.',
+  mount: mountM4, reset: () => {} };
+
+function mountM4(root) {
+  root.innerHTML = '';
+  root.append(h('h2', 'Seuil et zone morte'));
+  root.append(h('p', { html: 'Sur le système réel, on observe une <b>erreur en régime permanent</b> alors que le modèle comporte un intégrateur. Deux phénomènes se superposent :' }));
+  const tb = h('table', { class: 'ctable' });
+  tb.append(h('thead', null, h('tr', null, ['Phénomène', 'Origine', 'Non-linéarité ?'].map(t => h('th', null, t)))));
+  const b = h('tbody');
+  b.append(h('tr', null, h('td', null, 'Frottement'), h('td', null, 'Frottements visqueux/secs'), h('td', null, 'Non : le frottement peut être linéarisé')));
+  b.append(h('tr', null, h('td', null, 'Adhérence (stiction)'), h('td', null, 'Blocage tant que l’effort est inférieur au seuil'), h('td', null, 'Oui : phénomène non linéaire')));
+  tb.append(b); root.append(tb);
+  root.append(h('h3', 'Caractéristique du seuil et de la bande morte'));
+  const svg = deadzoneSVG();
+  root.append(svg);
+  root.append(h('p', { html: 'Le bloc <b>seuil</b> modélise l’adhérence seule : une fois le seuil franchi, le comportement redevient linéaire. Le bloc <b>bande morte</b> modélise à la fois l’adhérence et le frottement : le décalage subsiste même en mouvement.' }));
+  root.append(h('h3', 'Protocole expérimental'));
+  root.append(h('ul', null, 
+    h('li', null, 'Faire une succession d’essais en boucle ouverte en augmentant l’échelon de consigne jusqu’au début du mouvement.'),
+    h('li', null, 'Ou faire un essai avec une consigne en rampe et relever le courant pour lequel le bras se met à bouger. Connaissant K<sub>c</sub>, on en déduit le couple résistant d’adhérence.')
+  ));
+  root.append(h('div', { class: 'verdict' }, 'Le modèle « Maxpid saturation bande morte » permet de retrouver un modèle imprécis sans perturbation, fidèle au relevé expérimental.'));
+}
+
+function deadzoneSVG() {
+  const W = 480, H = 280, mx = 70, my = 40;
+  const smax = 20, emax = 5;
+  const x = e => mx + (e + emax) / (2 * emax) * (W - 2 * mx);
+  const y = s => H - my - (s + smax) / (2 * smax) * (H - 2 * my);
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', style: 'max-width:480px;display:block;margin:8px auto;border:1px solid var(--line);border-radius:8px;background:#fff' });
+  svg.append(svgEl('line', { x1: mx, y1: y(0), x2: W - mx + 10, y2: y(0), stroke: '#33475b', 'stroke-width': 1.2 }));
+  svg.append(svgEl('line', { x1: x(0), y1: my - 10, x2: x(0), y2: H - my + 10, stroke: '#33475b', 'stroke-width': 1.2 }));
+  const xl = svgEl('text', { x: W - mx, y: y(0) + 16, 'text-anchor': 'end', 'font-size': 11, fill: '#5a6068' }); xl.textContent = 'e'; svg.append(xl);
+  const yl = svgEl('text', { x: x(0) + 4, y: my - 12, 'font-size': 11, fill: '#5a6068' }); yl.textContent = 's'; svg.append(yl);
+  // bande morte
+  const dead = 1.2;
+  svg.append(svgEl('path', { d: `M ${x(-emax)} ${y(-smax)} L ${x(-dead)} ${y(-0.3)} L ${x(dead)} ${y(0.3)} L ${x(emax)} ${y(smax)}`, fill: 'none', stroke: '#2e6da4', 'stroke-width': 2.2 }));
+  // zone
+  svg.append(svgEl('rect', { x: x(-dead), y: y(0.3), width: x(dead) - x(-dead), height: y(-0.3) - y(0.3), fill: 'rgba(46,109,164,0.10)' }));
+  const txt = svgEl('text', { x: x(0), y: y(0) - 10, 'text-anchor': 'middle', 'font-size': 10.5, fill: '#2e6da4', 'font-weight': 600 });
+  txt.textContent = 'bande morte'; svg.append(txt);
+  return svg;
+}
+
+/* ---- Atelier 5 : correcteur PI ---- */
+const M5 = { id: 'm5', title: 'Correcteur PI et pompage', hint: 'Comprenez le rôle conjugué du correcteur intégral et du seuil (phénomène de pompage).',
+  mount: mountM5, reset: () => {} };
+
+function mountM5(root) {
+  root.innerHTML = '';
+  root.append(h('h2', 'Action du correcteur PI sur le seuil'));
+  root.append(h('p', { html: 'Le correcteur implanté dans la carte de commande est un <b>correcteur proportionnel-intégral</b> :' }));
+  root.append(h('div', { class: 'formula', html: 'C(p) = (2 / 255) · (K<sub>p</sub> + K<sub>I</sub> / (4p))' }));
+  root.append(h('p', { html: 'Sur le système réel, on règle K<sub>p</sub> = 50 et K<sub>I</sub> = 10. On observe alors un <b>phénomène de pompage</b> : la position angulaire oscille autour de la consigne au lieu de se stabiliser.' }));
+  root.append(h('h3', 'Interprétation'));
+  root.append(h('ul', null,
+    h('li', { html: 'Le correcteur intégral <b>accumule</b> l’erreur tant que celle-ci persiste : sa sortie augmente progressivement.' }),
+    h('li', { html: 'Tant que la commande reste inférieure au <b>seuil d’adhérence</b>, le moteur n’est pas alimenté : l’erreur ne diminue pas, l’intégrateur continue de charger.' }),
+    h('li', { html: 'Quand la commande franchit le seuil, le moteur démarre brutalement : le bras dépasse la consigne.' }),
+    h('li', { html: 'L’intégrateur se décharge alors, la commande redescend sous le seuil, le moteur s’arrête… et le cycle recommence.' })
+  ));
+  root.append(h('div', { class: 'verdict' }, 'Le correcteur intégral et le seuil ont un rôle <b>conjugué</b> : l’intégrateur « pousse » la commande jusqu’au seuil, ce qui provoque un cycle limite (pompage). C’est une interaction entre une non-linéarité et un correcteur linéaire.'));
+  root.append(h('h3', 'Schéma de principe du pompage'));
+  const svg = pumpingSVG();
+  root.append(svg);
+}
+
+function pumpingSVG() {
+  const W = 520, H = 240, mx = 55, my = 40;
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', style: 'max-width:520px;display:block;margin:8px auto;border:1px solid var(--line);border-radius:8px;background:#fff' });
+  svg.append(svgEl('line', { x1: mx, y1: H - my, x2: W - mx + 10, y2: H - my, stroke: '#33475b', 'stroke-width': 1.2 }));
+  svg.append(svgEl('line', { x1: mx, y1: my - 10, x2: mx, y2: H - my, stroke: '#33475b', 'stroke-width': 1.2 }));
+  const xl = svgEl('text', { x: W - mx, y: H - my + 16, 'text-anchor': 'end', 'font-size': 11, fill: '#5a6068' }); xl.textContent = 't'; svg.append(xl);
+  const yl = svgEl('text', { x: mx + 4, y: my - 12, 'font-size': 11, fill: '#5a6068' }); yl.textContent = 'θ'; svg.append(yl);
+  const thc = H / 2 + 10;
+  svg.append(svgEl('line', { x1: mx + 10, y1: thc, x2: W - mx, y2: thc, stroke: '#1e7a2e', 'stroke-width': 1.2, 'stroke-dasharray': '5 3' }));
+  const cons = svgEl('text', { x: W - mx - 4, y: thc - 6, 'text-anchor': 'end', 'font-size': 10, fill: '#1e7a2e' }); cons.textContent = 'consigne'; svg.append(cons);
+  let d = '';
+  for (let i = 0; i <= 300; i++) {
+    const t = i / 300 * 6 * Math.PI;
+    const decay = Math.exp(-0.08 * i / 300 * 6 * Math.PI);
+    const val = thc - 55 * decay * Math.sin(t * 1.6);
+    const px = mx + 10 + (W - 2 * mx - 10) * i / 300;
+    d += (i ? ' L ' : 'M ') + px.toFixed(1) + ' ' + val.toFixed(1);
+  }
+  svg.append(svgEl('path', { d, fill: 'none', stroke: '#c0281f', 'stroke-width': 2 }));
+  const ttl = svgEl('text', { x: mx + 12, y: my, 'font-size': 11, fill: '#c0281f', 'font-weight': 600 }); ttl.textContent = 'oscillation de pompage (amortie)'; svg.append(ttl);
+  return svg;
+}
+
+WORKSHOPS.push(M1, M2, M3, M4, M5);
+
+/* ======================================================================
+   ACTIVITÉS (QCM)
+   ====================================================================== */
+
+const ACT = {
+  m1: {
+    title: 'Modélisation linéaire', level: 'Niveau 1 · Découvrir', time: '25 min', course: 'modele',
+    goal: 'Identifier les équations du moteur à courant continu et comprendre la structure du schéma-bloc.',
+    steps: [
+      'Ouvrez le fichier « 01-Maxpid Linéaire.zcos » dans Scilab et repérez les blocs correspondant aux équations du moteur.',
+      'Associez chaque équation à son rôle : électrique, couple, force contre-électromotrice, mécanique, cinématique.',
+      'Localisez la fonction de transfert du capteur potentiométrique : où est-elle intégrée ? Pourquoi le retour est-il unitaire ?',
+      'Vérifiez que le modèle est bien causal : chaque équation utilise les grandeurs d’entrée pour calculer les grandeurs de sortie.',
+      'Identifiez la perturbation due au poids du bras : où intervient-elle dans le schéma-bloc ?'
+    ],
+    defi: { q: 'Pourquoi dit-on que le modèle est « linéaire » alors qu’il contient une équation J·dω/dt = c<sub>m</sub> − c<sub>pert</sub> − c<sub>f</sub> ?',
+      a: 'L’équation mécanique est linéaire <b>si</b> les couples sont des combinaisons linéaires des grandeurs (c<sub>m</sub> = K<sub>c</sub>·i, c<sub>f</sub> = f·ω par exemple). La linéarité vient du fait que les équations sont des équations différentielles linéaires à coefficients constants, sans termes non linéaires (produits, cos, seuils…).' },
+    qcm: [
+      { q: 'Quelle équation modélise la partie électrique de l’induit ?', o: ['c<sub>m</sub> = K<sub>c</sub>·i', 'u = e + L·di/dt + R·i', 'e = K<sub>e</sub>·ω', 'J·dω/dt = c<sub>m</sub> − c<sub>pert</sub>'], a: 1, w: 'C’est la loi des mailles appliquée à l’induit : la tension u se répartit entre la f.c.é.m. e, la chute ohmique R·i et la chute inductive L·di/dt.' },
+      { q: 'Que représente l’équation c<sub>m</sub> = K<sub>c</sub>·i ?', o: ['La conversion du courant en couple', 'La conversion de la vitesse en tension', 'La loi de Newton', 'La loi d’Ohm'], a: 0, w: 'Le couple moteur est proportionnel au courant d’induit : c’est la conversion électromécanique.' },
+      { q: 'Comment est intégré le capteur potentiométrique dans le schéma-bloc ?', o: ['Dans la chaîne de retour, avec un gain K<sub>capt</sub>', 'Dans la chaîne directe, avec un retour unitaire', 'En parallèle du moteur', 'Il n’est pas modélisé'], a: 1, w: 'Le choix a été fait d’intégrer le gain du capteur et de la conversion A/N dans la chaîne directe, ce qui donne un retour unitaire.' },
+      { q: 'Combien d’équations modélisent le moteur à courant continu dans son régime linéaire ?', o: ['3', '4', '5', '6'], a: 2, w: 'Le modèle comporte cinq équations : électrique, couple, f.c.é.m., mécanique et cinématique.' },
+      { q: 'Que représente e(t) = K<sub>e</sub>·ω<sub>m</sub>(t) ?', o: ['Le couple de frottement', 'La force contre-électromotrice', 'La position angulaire', 'Le courant d’induit'], a: 1, w: 'La f.c.é.m. est proportionnelle à la vitesse de rotation : c’est l’effet réciproque du moteur (il se comporte aussi en génératrice).' }
+    ]
+  },
+  m2: {
+    title: 'Linéarisation', level: 'Niveau 1 · Découvrir', time: '25 min', course: 'linea',
+    goal: 'Comprendre pourquoi β(θ) n’est pas linéaire et comment on obtient un gain équivalent K<sub>es</sub> sur [40°, 60°].',
+    steps: [
+      'Regardez l’expression de β(θ) : quels termes empêchent la linéarité ?',
+      'Tracez la courbe β(θ) sur [20°, 80°] : la courbure est-elle forte ?',
+      'Sur [40°, 60°], la courbe est presque une droite : on peut l’approcher par une régression linéaire.',
+      'Le fichier « maxpid_regression » donne y = 107,327·x − 1109,625. Identifiez le coefficient directeur.',
+      'En déduire K<sub>es</sub> = Δθ/Δβ. Pourquoi est-ce un gain équivalent ?'
+    ],
+    defi: { q: 'Pourquoi ne peut-on pas linéariser β(θ) sur tout l’intervalle [0°, 90°] ?',
+      a: 'Sur [0°, 90°], la courbe présente une courbure importante (la dérivée varie beaucoup). Une approximation affine y serait très imprécise. La linéarisation n’est valable que <b>localement</b>, autour d’un point de fonctionnement ou sur une plage restreinte.' },
+    qcm: [
+      { q: 'Pourquoi β = f(θ) n’est-elle pas linéaire ?', o: ['Parce qu’elle contient un cosinus, un sinus et une racine carrée', 'Parce qu’elle est définie sur un intervalle fini', 'Parce qu’elle dépend du temps', 'Parce qu’elle est périodique'], a: 0, w: 'La présence de fonctions trigonométriques et d’une racine carrée rend la relation non linéaire.' },
+      { q: 'Sur quelle plage linéarise-t-on la relation ?', o: ['[0°, 90°]', '[20°, 80°]', '[40°, 60°]', '[0°, 180°]'], a: 2, w: 'La linéarisation est faite sur la plage utile de fonctionnement [40°, 60°].' },
+      { q: 'Quelle est l’équation de la droite de régression ?', o: ['y = 107,327·x + 1109,625', 'y = 107,327·x − 1109,625', 'y = 1,073·x − 11,096', 'y = −107,327·x + 1109,625'], a: 1, w: 'Le fichier de régression donne y = 107,32700333464926·x − 1109,6250733021952.' },
+      { q: 'Que vaut K<sub>es</sub> ?', o: ['107', '1/107', '1070', '1/1070'], a: 1, w: 'K<sub>es</sub> = Δθ/Δβ = 1/107 ≈ 9,35·10<sup>−3</sup>.' },
+      { q: 'À quoi sert la linéarisation ?', o: ['À rendre le système plus rapide', 'À pouvoir appliquer les méthodes linéaires sur une plage restreinte', 'À supprimer la non-linéarité', 'À augmenter la précision'], a: 1, w: 'La linéarisation permet d’utiliser les outils des SLCI (fonction de transfert, réponse indicielle…) sur une plage de fonctionnement restreinte.' }
+    ]
+  },
+  m3: {
+    title: 'Saturation', level: 'Niveau 2 · Comprendre', time: '30 min', course: 'saturation',
+    goal: 'Relier l’effet de K<sub>p</sub> sur les performances linéaires à la présence de la saturation sur le système réel.',
+    steps: [
+      'Faites varier K<sub>p</sub> = [10, 50, 100, 250] dans le modèle linéaire. Observez la réponse à un échelon de 20°.',
+      'Relevez la tension maximale pour K<sub>p</sub> = 100. Pourquoi est-elle maximale au début de l’essai ?',
+      'Sur le système réel, on observe une tension constante de 21,6 V pendant 1,5 s. Que se passe-t-il ?',
+      'Comparez le modèle avec et sans saturation : quelles performances sont dégradées ?',
+      'Concluez : la saturation est-elle une non-linéarité ? Quel est son effet sur le régime permanent ?'
+    ],
+    defi: { q: 'Pourquoi la tension est-elle maximale au début de l’essai ?',
+      a: 'L’erreur est maximale à t = 0 (la consigne vient de changer) et elle est amplifiée par le correcteur proportionnel : u = K<sub>p</sub>·ε. La tension de commande demandée est donc maximale au début, puis elle diminue à mesure que l’erreur se réduit.' },
+    qcm: [
+      { q: 'Comment évolue la stabilité quand K<sub>p</sub> augmente ?', o: ['Elle s’améliore', 'Elle se dégrade', 'Elle ne change pas', 'Elle devient parfaite'], a: 1, w: 'Augmenter K<sub>p</sub> augmente le gain de boucle : la marge de stabilité diminue, le système devient plus oscillant.' },
+      { q: 'Comment évolue la rapidité quand K<sub>p</sub> augmente ?', o: ['Elle se dégrade', 'Elle s’améliore', 'Elle ne change pas', 'Elle devient nulle'], a: 1, w: 'Un gain plus élevé accélère la réponse (temps de réponse plus court), mais à nuancer pour les grandes valeurs de K<sub>p</sub>.' },
+      { q: 'Quelle est la valeur de la tension maximale observée sur le système réel ?', o: ['12 V', '21,6 V', '50 V', '100 V'], a: 1, w: 'La tension d’alimentation du moteur est limitée à 21,6 V pendant 1,5 s.' },
+      { q: 'Quel est l’effet de la saturation sur le régime permanent ?', o: ['Elle introduit une erreur statique', 'Elle n’a pas d’influence sur le régime permanent', 'Elle rend le système instable', 'Elle annule la consigne'], a: 1, w: 'La saturation dégrade la rapidité (le système met plus de temps à réagir) mais n’a pas d’influence sur le régime permanent.' },
+      { q: 'La saturation est-elle une non-linéarité ?', o: ['Non, c’est un phénomène linéaire', 'Oui, c’est une non-linéarité discontinue', 'Oui, c’est une non-linéarité continue', 'Non, c’est un bruit'], a: 1, w: 'La saturation est une non-linéarité discontinue : la caractéristique entrée-sortie présente un coude.' }
+    ]
+  },
+  m4: {
+    title: 'Seuil et zone morte', level: 'Niveau 2 · Comprendre', time: '30 min', course: 'seuil',
+    goal: 'Distinguer frottement et adhérence, et choisir le bon bloc de modélisation (seuil ou bande morte).',
+    steps: [
+      'Sur le système réel avec K<sub>p</sub> = 20, observez l’erreur en régime permanent. Est-ce conforme au modèle linéaire ?',
+      'Le modèle contient un intégrateur : pourquoi devrait-il annuler l’erreur ? Que manque-t-il ?',
+      'En boucle ouverte avec une tension faible, le système reste immobile : quel phénomène est en jeu ?',
+      'En boucle fermée avec une consigne sinusoïdale, le bras ne suit pas les petites amplitudes : pourquoi ?',
+      'Testez les blocs seuil et bande morte : lequel modélise l’adhérence seule ? lequel modélise adhérence + frottement ?'
+    ],
+    defi: { q: 'Pourquoi un système avec intégrateur peut-il avoir une erreur statique en présence d’adhérence ?',
+      a: 'L’intégrateur annule l’erreur <b>si</b> le système peut bouger. Avec l’adhérence, le moteur reste immobile tant que la commande n’a pas atteint le seuil. L’intégrateur accumule alors de l’erreur sans que le bras ne bouge, et le système finit par dépasser la consigne : c’est un cycle limite.' },
+    qcm: [
+      { q: 'Que provoque le frottement sur l’erreur en régime permanent ?', o: ['Rien', 'Une erreur statique', 'Une instabilité', 'Une oscillation entretenue'], a: 1, w: 'Le frottement s’oppose au mouvement : le système peut se stabiliser avec une erreur non nulle. Ce n’est pas une non-linéarité.' },
+      { q: 'L’adhérence (stiction) est-elle une non-linéarité ?', o: ['Non, c’est un frottement linéaire', 'Oui, c’est une non-linéarité de type seuil', 'Non, c’est un bruit', 'Oui, c’est une non-linéarité continue'], a: 1, w: 'L’adhérence est un phénomène non linéaire : le système reste bloqué tant que l’effort n’a pas atteint un seuil.' },
+      { q: 'Quel bloc modélise l’adhérence seule ?', o: ['Le bloc saturation', 'Le bloc seuil', 'Le bloc bande morte', 'Le bloc gain'], a: 1, w: 'Le bloc seuil modélise l’adhérence seule : une fois le seuil franchi, la courbe redevient linéaire.' },
+      { q: 'Quel bloc modélise l’adhérence et le frottement à la fois ?', o: ['Le bloc saturation', 'Le bloc seuil', 'Le bloc bande morte', 'Le bloc dérivée'], a: 2, w: 'Le bloc bande morte modélise l’adhérence et le frottement : le décalage subsiste même une fois le système en mouvement.' },
+      { q: 'Quel protocole permet de mettre en évidence le seuil ?', o: ['Un échelon de grande amplitude', 'Une rampe de consigne en boucle ouverte', 'Un bruit blanc', 'Un échelon de perturbation'], a: 1, w: 'On peut faire une rampe en boucle ouverte et relever la tension (ou le courant) à partir de laquelle le système se met à bouger.' }
+    ]
+  },
+  m5: {
+    title: 'Correcteur PI et pompage', level: 'Niveau 3 · Approfondir', time: '30 min', course: 'pi',
+    goal: 'Comprendre le rôle conjugué du correcteur intégral et du seuil dans le phénomène de pompage.',
+    steps: [
+      'Écrivez l’équation du correcteur PI : C(p) = (2/255)·(K<sub>p</sub> + K<sub>I</sub>/(4p)).',
+      'Expliquez l’action du terme intégral sur l’erreur : que fait-il tant que l’erreur n’est pas nulle ?',
+      'Sur le système réel avec K<sub>p</sub> = 50 et K<sub>I</sub> = 10, observez le pompage : la position oscille autour de la consigne.',
+      'Décrivez le cycle : intégrateur qui charge → franchissement du seuil → dépassement → décharge → arrêt → reprise.',
+      'Concluez sur le rôle conjugué du correcteur intégral et du seuil.'
+    ],
+    defi: { q: 'Pourquoi le pompage est-il un phénomène non linéaire ?',
+      a: 'Le pompage résulte de l’interaction entre un correcteur linéaire (l’intégrateur) et une non-linéarité (le seuil d’adhérence). Sans le seuil, l’intégrateur convergerait normalement. Avec le seuil, l’intégrateur ne peut pas « voir » que le système est bloqué : il continue à charger, ce qui crée une oscillation entretenue (cycle limite).' },
+    qcm: [
+      { q: 'Quelle est l’équation du correcteur PI ?', o: ['C(p) = (2/255)·(K<sub>p</sub> + K<sub>I</sub>/(4p))', 'C(p) = K<sub>p</sub> + K<sub>I</sub>·p', 'C(p) = K<sub>p</sub> / (1 + τp)', 'C(p) = K<sub>I</sub>/p'], a: 0, w: 'Le correcteur implanté dans la carte de commande est C(p) = (2/255)·(K<sub>p</sub> + K<sub>I</sub>/(4p)).' },
+      { q: 'Quel est le rôle du terme intégral ?', o: ['Augmenter le gain', 'Annuler l’erreur statique', 'Filtrer le bruit', 'Dériver l’erreur'], a: 1, w: 'L’intégrateur accumule l’erreur : tant qu’il reste une erreur, sa sortie augmente, ce qui finit par annuler l’erreur en régime permanent (si le système le peut).' },
+      { q: 'Qu’est-ce que le phénomène de pompage ?', o: ['Une oscillation entretenue autour de la consigne', 'Une divergence du système', 'Un bruit de mesure', 'Une saturation du moteur'], a: 0, w: 'Le pompage est une oscillation entretenue : la position angulaire oscille autour de la consigne sans se stabiliser.' },
+      { q: 'Pourquoi le pompage apparaît-il avec un correcteur PI et un seuil ?', o: ['Parce que le PI est instable', 'Parce que l’intégrateur charge tant que le seuil n’est pas franchi, puis dépasse la consigne', 'Parce que le moteur est trop puissant', 'Parce que le capteur est bruité'], a: 1, w: 'L’intégrateur ne « voit » pas le seuil : il continue à charger, le système dépasse la consigne, l’intégrateur se décharge, et le cycle recommence.' },
+      { q: 'Quel est le rôle conjugué du correcteur intégral et du seuil ?', o: ['Ils se compensent parfaitement', 'L’intégrateur pousse la commande jusqu’au seuil, ce qui crée un cycle limite', 'Le seuil annule l’action de l’intégrateur', 'Ils n’ont aucune interaction'], a: 1, w: 'L’intégrateur « pousse » la commande jusqu’au seuil, ce qui provoque un cycle limite (pompage). C’est l’interaction entre une non-linéarité et un correcteur linéaire.' }
+    ]
+  }
+};
+
+/* ======================================================================
+   COURS
+   ====================================================================== */
+
+const COURSE = [];
+COURSE.push({ id: 'intro', t: 'Limitations des méthodes linéaires', h: `
+<p><b>Un système est linéaire</b> s’il est décrit par des équations différentielles linéaires d’ordre fini à coefficients constants. On peut alors appliquer le principe de superposition : la sortie est une combinaison linéaire des réponses aux différentes entrées.</p>
+<p>Cette linéarité se traduit par une <b>courbe caractéristique linéaire passant par l’origine</b>. On peut alors associer au système un modèle de connaissance dans le domaine temporel ou de Laplace, et utiliser les méthodes des SLCI.</p>
+<h3>En pratique, aucun système n’est complètement linéaire</h3>
+<ul>
+<li>Certains constituants sont impossibles à modéliser par des modèles linéaires (diode, seuil, saturation…).</li>
+<li>Certains phénomènes ne peuvent pas être décrits par des modèles linéaires (adhérence, frottement sec, hystérésis…).</li>
+<li>Les méthodes linéaires ne sont donc applicables que dans un <b>domaine de fonctionnement restreint</b>.</li>
+</ul>
+<div class="retain"><b>À retenir.</b> Un système non linéaire ne peut pas être décrit par des équations différentielles linéaires à coefficients constants. Il n’existe pas de théorie générale : on utilise des méthodes adaptées à chaque classe de comportement.</div>` });
+
+COURSE.push({ id: 'nonlin', t: 'Non-linéarités dans les systèmes asservis', h: `
+<p>La caractéristique entrée/sortie d’un système présente fréquemment des distorsions dues aux non-linéarités. On distingue :</p>
+<ul>
+<li><b>Les non-linéarités continues</b> (courbures) : on mène alors des études locales (linéarisation autour d’un point de fonctionnement).</li>
+<li><b>Les non-linéarités discontinues</b> :
+  <ul>
+    <li>les <b>saturations</b> : au-delà d’une valeur maximale, la sortie ne peut plus augmenter ;</li>
+    <li>les <b>seuils</b> : il faut dépasser une valeur minimale pour que la sortie réagisse ;</li>
+    <li>les <b>hystérésis</b> : la sortie dépend de l’histoire du système.</li>
+  </ul>
+</li>
+</ul>
+<h3>Exemples</h3>
+<ul>
+<li>Une alimentation, un amplificateur ont nécessairement une tension maximale : c’est une saturation.</li>
+<li>Un pont de redressement présente des seuils dus aux diodes.</li>
+<li>Le comportement élastique des matériaux, l’électromagnétisme présentent des non-linéarités continues.</li>
+</ul>
+<div class="retain"><b>À retenir.</b> Les non-linéarités discontinues (saturation, seuil, hystérésis) sont les plus fréquentes dans les asservissements. Elles dégradent les performances et peuvent provoquer des cycles limites.</div>` });
+
+COURSE.push({ id: 'modele', t: 'Modélisation du moteur à courant continu', h: `
+<p>Le moteur à courant continu est modélisé par <b>cinq équations</b> dans son régime linéaire :</p>
+<div class="formula">(1) u(t) = e(t) + L·di/dt + R·i(t)</div>
+<div class="formula">(2) c<sub>m</sub>(t) = K<sub>c</sub>·i(t)</div>
+<div class="formula">(3) e(t) = K<sub>e</sub>·ω<sub>m</sub>(t)</div>
+<div class="formula">(4) J·dω/dt = c<sub>m</sub>(t) − c<sub>pert</sub> − c<sub>f</sub>(t)</div>
+<div class="formula">(5) θ<sub>m</sub>(t) = ∫ω<sub>m</sub>(t)·dt</div>
+<h3>Schéma-bloc</h3>
+<p>Le schéma-bloc fait apparaître :</p>
+<ul>
+<li>la <b>chaîne directe</b> : consigne → adaptateur → correcteur → moteur → réducteur → bras ;</li>
+<li>la <b>chaîne de retour</b> : capteur potentiométrique + conversion A/N.</li>
+</ul>
+<p>Dans le modèle Maxpid, le gain du capteur et de la conversion A/N est intégré dans la chaîne directe, ce qui conduit à un <b>retour unitaire</b>.</p>
+<div class="retain"><b>À retenir.</b> Le modèle linéaire du moteur CC permet d’appliquer les méthodes des SLCI. Il n’est valable que dans un domaine restreint de fonctionnement.</div>` });
+
+COURSE.push({ id: 'linea', t: 'Linéarisation', h: `
+<p>La loi entrée-sortie du mécanisme Maxpid est :</p>
+<div class="formula">β = (2π / p) · (170 − 10·√(177 + 112·cos θ − 128·sin θ))</div>
+<p>Cette relation n’est <b>pas linéaire</b> : elle contient un cosinus, un sinus et une racine carrée.</p>
+<h3>Principe de la linéarisation</h3>
+<p>Sur une plage restreinte [40°, 60°], on approche la courbe par une <b>droite de régression</b> :</p>
+<div class="formula">y = 107,327·x − 1109,625</div>
+<p>Le coefficient directeur vaut 107,327. On en déduit le gain statique équivalent :</p>
+<div class="formula">K<sub>es</sub> = Δθ / Δβ = 1 / 107 ≈ 9,35·10<sup>−3</sup></div>
+<p>Cette linéarisation permet d’utiliser les outils des SLCI sur la plage de fonctionnement considérée.</p>
+<div class="retain"><b>À retenir.</b> La linéarisation consiste à approcher localement une caractéristique non linéaire par une droite. Elle n’est valable que sur une plage restreinte autour du point de fonctionnement.</div>` });
+
+COURSE.push({ id: 'saturation', t: 'La saturation', h: `
+<p>La <b>saturation</b> est une non-linéarité discontinue : au-delà d’une valeur maximale, la sortie ne peut plus augmenter.</p>
+<h3>Sur le système Maxpid</h3>
+<p>La tension d’alimentation du moteur est limitée à <b>21,6 V</b> pendant <b>1,5 s</b>. Pendant cette phase, la vitesse de rotation est constante et la position angulaire évolue linéairement.</p>
+<h3>Effet de K<sub>p</sub> sur les performances (modèle linéaire)</h3>
+<table class="ctable"><thead><tr><th>Performance</th><th>Évolution quand K<sub>p</sub> augmente</th></tr></thead><tbody>
+<tr><td>Stabilité</td><td>Se dégrade</td></tr>
+<tr><td>Rapidité</td><td>S’améliore (à nuancer pour les grandes valeurs)</td></tr>
+<tr><td>Précision</td><td>Précise quel que soit K<sub>p</sub> (système de classe 1)</td></tr>
+</tbody></table>
+<h3>Conséquences</h3>
+<ul>
+<li>La saturation dégrade la <b>rapidité</b> : le système met plus de temps à réagir.</li>
+<li>Elle n’a <b>pas d’influence sur le régime permanent</b>.</li>
+<li>Elle protège électriquement les constituants.</li>
+</ul>
+<div class="retain"><b>À retenir.</b> La saturation est une non-linéarité discontinue qui limite la tension de commande. Elle dégrade la rapidité mais pas le régime permanent.</div>` });
+
+COURSE.push({ id: 'seuil', t: 'Seuil et bande morte', h: `
+<p>Le <b>seuil</b> et la <b>bande morte</b> sont des non-linéarités discontinues qui modélisent les phénomènes d’adhérence et de frottement.</p>
+<h3>Frottement et adhérence</h3>
+<ul>
+<li>Le <b>frottement</b> s’oppose au mouvement : il peut être linéarisé (frottement visqueux) ou non (frottement sec).</li>
+<li>L’<b>adhérence</b> (stiction) bloque le système tant que l’effort n’a pas atteint un seuil : c’est un phénomène non linéaire.</li>
+</ul>
+<h3>Modélisation</h3>
+<ul>
+<li>Le bloc <b>seuil</b> modélise l’adhérence seule : une fois le seuil franchi, la courbe redevient linéaire.</li>
+<li>Le bloc <b>bande morte</b> modélise l’adhérence et le frottement : le décalage subsiste même en mouvement.</li>
+</ul>
+<h3>Protocole expérimental</h3>
+<ul>
+<li>Faire une succession d’essais en boucle ouverte en augmentant l’échelon de consigne jusqu’au début du mouvement.</li>
+<li>Ou faire un essai avec une consigne en rampe et relever le courant pour lequel le système se met en mouvement.</li>
+</ul>
+<div class="retain"><b>À retenir.</b> Le seuil modélise l’adhérence seule ; la bande morte modélise adhérence + frottement. Ces non-linéarités expliquent l’erreur statique et le blocage à faible sollicitation.</div>` });
+
+COURSE.push({ id: 'pi', t: 'Correcteur PI et pompage', h: `
+<p>Le correcteur implanté dans la carte de commande est un <b>correcteur proportionnel-intégral</b> :</p>
+<div class="formula">C(p) = (2 / 255) · (K<sub>p</sub> + K<sub>I</sub> / (4p))</div>
+<h3>Rôle du terme intégral</h3>
+<p>L’intégrateur accumule l’erreur : tant que l’erreur n’est pas nulle, sa sortie augmente. Il permet d’annuler l’erreur statique en régime permanent.</p>
+<h3>Phénomène de pompage</h3>
+<p>Avec K<sub>p</sub> = 50 et K<sub>I</sub> = 10, on observe un <b>pompage</b> : la position angulaire oscille autour de la consigne. Le cycle est le suivant :</p>
+<ol>
+<li>L’intégrateur charge tant que l’erreur persiste.</li>
+<li>Tant que la commande est inférieure au seuil, le moteur ne bouge pas.</li>
+<li>La commande franchit le seuil : le moteur démarre brutalement.</li>
+<li>Le bras dépasse la consigne ; l’intégrateur se décharge.</li>
+<li>La commande redescend sous le seuil ; le moteur s’arrête.</li>
+<li>Le cycle recommence.</li>
+</ol>
+<div class="retain"><b>À retenir.</b> Le correcteur intégral et le seuil ont un rôle conjugué : l’intégrateur pousse la commande jusqu’au seuil, ce qui provoque un cycle limite (pompage).</div>` });
+
+COURSE.push({ id: 'bilan', t: 'Bilan', h: `
+<table class="ctable"><thead><tr><th>Non-linéarité</th><th>Type</th><th>Origine</th><th>Effet</th></tr></thead><tbody>
+<tr><td>Courbure β(θ)</td><td>Continue</td><td>Géométrie du mécanisme</td><td>Linéarisation locale</td></tr>
+<tr><td>Saturation</td><td>Discontinue</td><td>Limite de tension</td><td>Dégrade la rapidité</td></tr>
+<tr><td>Seuil</td><td>Discontinue</td><td>Adhérence</td><td>Blocage à faible sollicitation</td></tr>
+<tr><td>Bande morte</td><td>Discontinue</td><td>Adhérence + frottement</td><td>Erreur statique</td></tr>
+<tr><td>Pompage</td><td>Interaction</td><td>PI + seuil</td><td>Cycle limite</td></tr>
+</tbody></table>
+<h3>Démarche générale</h3>
+<ol>
+<li><b>Identifier</b> les non-linéarités présentes dans le système.</li>
+<li><b>Choisir</b> le type de modèle : linéaire (localement) ou non linéaire.</li>
+<li><b>Linéariser</b> si possible autour d’un point de fonctionnement.</li>
+<li><b>Simuler</b> le modèle non linéaire (Scilab-Xcos) pour retrouver les observations expérimentales.</li>
+<li><b>Conclure</b> sur les écarts entre modèle linéaire et comportement réel.</li>
+</ol>
+<div class="retain"><b>À retenir.</b> Les non-linéarités sont omniprésentes dans les systèmes réels. Leur prise en compte est indispensable pour comprendre et corriger les écarts par rapport au modèle linéaire.</div>` });
+
+COURSE.push({ id: 'gloss', t: 'Vocabulaire', h: `
+<dl class="gloss">
+<dt>SLCI</dt><dd>Système Linéaire Continu Invariant.</dd>
+<dt>Linéarisation</dt><dd>Approximation locale d’une caractéristique non linéaire par une droite.</dd>
+<dt>Saturation</dt><dd>Non-linéarité discontinue : la sortie est limitée à une valeur maximale.</dd>
+<dt>Seuil</dt><dd>Non-linéarité discontinue : il faut dépasser une valeur minimale pour que la sortie réagisse.</dd>
+<dt>Bande morte</dt><dd>Non-linéarité discontinue : zone où la sortie est nulle ou constante.</dd>
+<dt>Adhérence (stiction)</dt><dd>Blocage du système tant que l’effort n’a pas atteint un seuil.</dd>
+<dt>Cycle limite</dt><dd>Oscillation entretenue due à l’interaction entre une non-linéarité et un correcteur.</dd>
+<dt>Pompage</dt><dd>Cycle limite dû à l’interaction entre un correcteur intégral et un seuil.</dd>
+<dt>K<sub>es</sub></dt><dd>Gain statique équivalent après linéarisation.</dd>
+<dt>Régime permanent</dt><dd>État du système après disparition des transitoires.</dd>
+</dl>` });
+
+/* ======================================================================
+   INTERFACE
+   ====================================================================== */
+
+const UI = { cur: 'm1' };
+const AS = { key: 'm1', tab: 'steps', open: false, st: lsGet(KEYS.act, {}), arm: null };
+const CS = { open: false, id: 'intro' };
+
+function actSave() { lsSet(KEYS.act, AS.st); }
+function actState() { return AS.st[AS.key] || (AS.st[AS.key] = { a: {}, checked: false, shown: false }); }
+function actScore(a) { const s = actState(); return a.qcm.filter((q, i) => s.a[i] === q.a).length; }
+function wsById(id) { return WORKSHOPS.find(w => w.id === id) || WORKSHOPS[0]; }
+
+function renderSeg() {
+  const seg = $('#wsSeg'); seg.innerHTML = '';
+  WORKSHOPS.forEach((w, i) => {
+    seg.append(h('button', { type: 'button', role: 'tab', 'aria-pressed': w.id === UI.cur ? 'true' : 'false', 'aria-selected': w.id === UI.cur ? 'true' : 'false', onclick: () => gotoWs(w.id) }, (i + 1) + '. ' + w.title));
+  });
+}
+
+function mountWs() {
+  const w = wsById(UI.cur), root = $('#ws');
+  $('#hint').textContent = w.hint;
+  root.innerHTML = '';
+  w.mount(root);
+  const sc = $('#scroller'); if (sc) sc.scrollTop = 0;
+}
+
+function gotoWs(id) {
+  const old = wsById(UI.cur); if (old.leave) old.leave();
+  if (CS.open) { CS.open = false; renderCourse(); }
+  UI.cur = id; AS.key = id; AS.tab = 'steps';
+  renderSeg(); mountWs(); renderAct();
+}
+
+function renderAct() {
+  const box = $('#act'), btn = $('#bAct');
+  btn.setAttribute('aria-pressed', AS.open ? 'true' : 'false');
+  btn.classList.toggle('pri', AS.open);
+  box.hidden = !AS.open;
+  if (!AS.open) { box.innerHTML = ''; return; }
+  const oldB = box.querySelector('.pbody'), tag = AS.key + '|' + AS.tab, keep = oldB && box.dataset.k === tag ? oldB.scrollTop : 0;
+  box.dataset.k = tag;
+  box.innerHTML = '';
+  const a = ACT[AS.key];
+  const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
+  box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
+  const nq = a.qcm.length;
+  box.append(h('div', { class: 'tabs', role: 'tablist' },
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'steps' ? 'true' : 'false', onclick: () => { AS.tab = 'steps'; renderAct(); } }, 'Consignes'),
+    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'qcm' ? 'true' : 'false', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Questions (' + nq + ')')));
+  const body = h('div', { class: 'pbody' });
+  if (AS.tab === 'steps') {
+    body.append(h('p', { class: 'small' }, a.level + ' · environ ' + a.time));
+    body.append(h('div', { class: 'goal' }, h('b', null, 'Objectif. '), a.goal));
+    body.append(h('ol', { class: 'steps' }, a.steps.map(s => h('li', { html: s }))));
+    body.append(h('div', { class: 'defi' }, h('b', null, 'Défi'), h('p', { html: a.defi.q }), h('details', null, h('summary', null, 'Voir la réponse'), h('p', { html: a.defi.a }))));
+    if (a.course) body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: () => openCourse(a.course) }, 'Voir le cours : ' + courseSection(a.course).t)));
+    body.append(h('p', null, h('button', { class: 'btn', type: 'button', onclick: ev => {
+      const b = ev.currentTarget;
+      if (!AS.arm) {
+        b.textContent = 'Confirmer ? Votre travail sera effacé';
+        AS.arm = setTimeout(() => { b.textContent = 'Recommencer l’atelier'; AS.arm = null; }, 3500);
+        return;
+      }
+      clearTimeout(AS.arm); AS.arm = null;
+      wsById(UI.cur).reset();
+      mountWs(); renderAct();
+    } }, 'Recommencer l’atelier')));
+    body.append(h('p', null, h('button', { class: 'btn pri', type: 'button', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Passer aux questions')));
+  } else {
+    const s = actState(), show = s.checked || s.shown;
+    a.qcm.forEach((q, i) => {
+      const fs = h('fieldset', { class: 'q' }, h('legend', null, (i + 1) + '. ' + q.q));
+      q.o.forEach((o, j) => {
+        const good = show && j === q.a, bad = s.checked && !s.shown && s.a[i] === j && j !== q.a;
+        const inp = h('input', { type: 'radio', name: 'q' + i, checked: show && s.shown ? j === q.a : s.a[i] === j, disabled: show });
+        inp.addEventListener('change', () => { s.a[i] = j; actSave(); renderAct(); });
+        fs.append(h('label', { class: 'opt' + (good ? ' good' : '') + (bad ? ' bad' : '') }, inp, h('span', null, o + (good ? '  ✓' : '') + (bad ? '  ✗' : ''))));
+      });
+      if (show) { const miss = s.a[i] == null && !s.shown; fs.append(h('p', { class: 'why' }, (miss ? 'Sans réponse. ' : '') + q.w)); }
+      body.append(fs);
+    });
+    const done = Object.keys(s.a).length;
+    body.append(h('p', { class: 'small' }, s.shown ? 'Réponses affichées.' : s.checked ? '' : done + ' réponse(s) sur ' + nq + '.'));
+    if (s.checked && !s.shown) body.append(h('p', { class: 'score' }, 'Score : ' + actScore(a) + ' / ' + nq));
+    const row = h('div', { class: 'files' });
+    if (!show) row.append(h('button', { class: 'btn pri', type: 'button', onclick: () => { s.checked = true; actSave(); renderAct(); } }, 'Corriger'));
+    row.append(h('button', { class: 'btn', type: 'button', onclick: () => { s.shown = true; actSave(); renderAct(); } }, 'Afficher les réponses'));
+    if (show) row.append(h('button', { class: 'btn', type: 'button', onclick: () => { AS.st[AS.key] = { a: {}, checked: false, shown: false }; actSave(); renderAct(); } }, 'Recommencer'));
+    body.append(row);
+  }
+  box.append(body); body.scrollTop = keep;
+}
+
+function actToggle() { if (CS.open) { CS.open = false; renderCourse(); } AS.open = !AS.open; renderAct(); }
+$('#bAct').addEventListener('click', actToggle);
+
+function courseSection(id) { return COURSE.find(s => s.id === id) || COURSE[0]; }
+
+function renderCourse() {
+  const box = $('#course'), btn = $('#bCourse'), work = $('#work');
+  btn.setAttribute('aria-pressed', CS.open ? 'true' : 'false');
+  btn.classList.toggle('pri', CS.open);
+  box.hidden = !CS.open; work.hidden = CS.open; $('#modes').hidden = CS.open;
+  if (!CS.open) { box.innerHTML = ''; return; }
+  box.innerHTML = '';
+  const cur = courseSection(CS.id), idx = COURSE.indexOf(cur);
+  const go = id => { CS.id = id; renderCourse(); };
+  const nav = h('nav', { class: 'ctoc', 'aria-label': 'Sommaire du cours' }, COURSE.map((s, i) => h('button', { type: 'button', class: s.id === cur.id ? 'on' : '', 'aria-current': s.id === cur.id ? 'true' : 'false', onclick: () => go(s.id) }, (i + 1) + '. ' + s.t)));
+  const sel = h('select', { class: 'ctoc-sel', 'aria-label': 'Aller à une section', onchange: e => go(e.target.value) }, COURSE.map(s => h('option', { value: s.id, selected: s.id === cur.id }, s.t)));
+  const body = h('div', { class: 'cbody' });
+  body.append(h('p', { class: 'ckick' }, 'Cours · TP non-linéarités'));
+  body.append(h('h2', null, cur.t));
+  const content = h('div'); content.innerHTML = cur.h;
+  body.append(content);
+  const cpn = h('div', { class: 'cpn' });
+  if (idx > 0) cpn.append(h('button', { class: 'btn', type: 'button', onclick: () => go(COURSE[idx - 1].id) }, '← ' + COURSE[idx - 1].t));
+  cpn.append(h('span'));
+  if (idx < COURSE.length - 1) cpn.append(h('button', { class: 'btn pri', type: 'button', onclick: () => go(COURSE[idx + 1].id) }, COURSE[idx + 1].t + ' →'));
+  body.append(cpn);
+  const top = h('div', { class: 'ctop' }, h('b', null, 'Cours'), h('button', { class: 'btn', type: 'button', onclick: () => { CS.open = false; renderCourse(); } }, 'Fermer'));
+  box.append(top);
+  const wrap = h('div', { class: 'cwrap' }, nav, body);
+  box.append(sel); box.append(wrap);
+}
+$('#bCourse').addEventListener('click', () => { CS.open = !CS.open; renderCourse(); });
+function openCourse(id) { CS.open = true; CS.id = id; renderCourse(); }
+
+$('#bHelp').addEventListener('click', () => {
+  const dlg = $('#dlg'); dlg.hidden = false;
+  dlg.innerHTML = '';
+  const box = h('div', { class: 'dlgbox' },
+    h('header', null, h('b', null, 'Aide'), h('button', { class: 'btn sm', type: 'button', onclick: () => { dlg.hidden = true; } }, 'Fermer')),
+    h('div', { class: 'dbody', html: `
+      <p><b>TP : prise en compte des non-linéarités</b> — PSI*, sciences industrielles de l’ingénieur.</p>
+      <p>Cette page reprend le TP sur le système Maxpid : modélisation linéaire, linéarisation, saturation, seuil et bande morte, correcteur PI et pompage.</p>
+      <h3>Navigation</h3>
+      <ul>
+        <li>Les onglets <b>1 à 5</b> en haut ouvrent les ateliers.</li>
+        <li>Le bouton <b>Activité</b> ouvre le panneau de droite avec les consignes et le QCM.</li>
+        <li>Le bouton <b>Cours</b> affiche le cours complet avec sommaire.</li>
+        <li>Les QCM se corrigent automatiquement et le score s’affiche.</li>
+      </ul>
+      <h3>Les ateliers</h3>
+      <ol>
+        <li><b>Modélisation linéaire</b> : les cinq équations du moteur CC, le schéma-bloc.</li>
+        <li><b>Linéarisation</b> : la loi β(θ), la régression sur [40°, 60°], K<sub>es</sub>.</li>
+        <li><b>Saturation</b> : effet de K<sub>p</sub>, tension maximale, bloc saturation.</li>
+        <li><b>Seuil et bande morte</b> : frottement, adhérence, protocole expérimental.</li>
+        <li><b>Correcteur PI et pompage</b> : rôle conjugué de l’intégrateur et du seuil.</li>
+      </ol>
+      <p>Les figures sont des schémas de principe : les valeurs numériques (K<sub>es</sub> ≈ 1/107, U<sub>max</sub> = 21,6 V) sont celles du TP et de son corrigé.</p>` }));
+  dlg.append(box);
+});
+
+/* ---------- démarrage ---------- */
+renderSeg();
+mountWs();
+renderAct();
+</script>
+</body>
+</html>
