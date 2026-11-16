@@ -114,11 +114,9 @@ pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2)
 .dt th,.dt td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
 .dt thead th{background:var(--panel2);font-weight:600}
 .dt tr:last-child td{border-bottom:0}
-.qa{margin:8px 0;border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:#fff}
-.qa .qq{font-weight:600;color:var(--accent-ink);margin:0 0 4px;font-size:13.5px}
-.qa .aa{margin:0;font-size:13.5px;color:var(--fg)}
-.qa .aa b{color:var(--accent-ink)}
 .plot-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.xcos-img{border:1px solid var(--line);border-radius:8px;background:#fff;padding:10px;margin:10px 0;overflow-x:auto}
+.xcos-svg{display:block;margin:0 auto}
 @media (max-width:820px){
   .ctoc{display:none}.ctoc-sel{display:block}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}
   #act{position:fixed;left:0;right:0;bottom:0;width:auto;height:70%;max-height:none;border-radius:14px 14px 0 0;z-index:35;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -157,7 +155,7 @@ const $=(s,r)=>(r||document).querySelector(s);
 function h(tag,attrs,...kids){const el=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(v===false||v==null)continue;if(k==='class')el.className=v;else if(k==='html')el.innerHTML=v;else if(k.startsWith('on'))el.addEventListener(k.slice(2),v);else if(v===true)el.setAttribute(k,'');else el.setAttribute(k,v)}for(const k of kids.flat())if(k!=null&&k!==false)el.append(k.nodeType?k:document.createTextNode(k));return el}
 const NS='http://www.w3.org/2000/svg';
 function svgEl(tag,attrs){const el=document.createElementNS(NS,tag);if(attrs)for(const[k,v]of Object.entries(attrs))el.setAttribute(k,v);return el}
-const KEYS={act:'tp-nonlin-v2'};
+const KEYS={act:'tp-nonlin-v3'};
 function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 
@@ -227,18 +225,13 @@ function saturationSVG(){
   const X=u=>ml+(u+UeMax)/(2*UeMax)*(W-ml-mr);
   const Y=s=>H-mb-(s+Umax)/(2*Umax)*(H-mt-mb);
   const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:'max-width:520px;display:block;margin:8px auto;border:1px solid #b9bfc7;border-radius:8px;background:#fff'});
-  // grille
   for(let u=-30;u<=30;u+=10){svg.append(svgEl('line',{x1:X(u),y1:mt,x2:X(u),y2:H-mb,stroke:'#eef1f5','stroke-width':1}));}
-  // axes
   svg.append(svgEl('line',{x1:ml,y1:Y(0),x2:W-mr+6,y2:Y(0),stroke:'#33475b','stroke-width':1.2}));
   svg.append(svgEl('line',{x1:X(0),y1:mt-6,x2:X(0),y2:H-mb,stroke:'#33475b','stroke-width':1.2}));
-  // droites de saturation (pointillés)
   svg.append(svgEl('line',{x1:ml,y1:Y(Umax),x2:W-mr,y2:Y(Umax),stroke:'#9a5b00','stroke-width':1,'stroke-dasharray':'4 3'}));
   svg.append(svgEl('line',{x1:ml,y1:Y(-Umax),x2:W-mr,y2:Y(-Umax),stroke:'#9a5b00','stroke-width':1,'stroke-dasharray':'4 3'}));
-  // caractéristique : M(-UeMax,-Umax) → L(-Umax,-Umax) → L(Umax,Umax) → L(UeMax,Umax)
   const path=`M ${X(-UeMax)} ${Y(-Umax)} L ${X(-Umax)} ${Y(-Umax)} L ${X(Umax)} ${Y(Umax)} L ${X(UeMax)} ${Y(Umax)}`;
   svg.append(svgEl('path',{d:path,fill:'none',stroke:'#2e6da4','stroke-width':2.4}));
-  // labels
   const xl=svgEl('text',{x:W-mr+6,y:Y(0)-6,'text-anchor':'end','font-size':11,fill:'#5a6068'});xl.textContent='uₑ (V)';svg.append(xl);
   const yl=svgEl('text',{x:X(0)+6,y:mt-8,'font-size':11,fill:'#5a6068'});yl.textContent='uₛ (V)';svg.append(yl);
   const lum=svgEl('text',{x:X(Umax)+6,y:Y(Umax)-4,'font-size':10.5,fill:'#9a5b00','font-weight':600});lum.textContent='+Umax = 21,6 V';svg.append(lum);
@@ -246,30 +239,39 @@ function saturationSVG(){
   return svg;
 }
 
-function seuilBandeMorteSVG(){
+function seuilBandeMorteSVG(e_cur, uApp_cur){
   const W=560,H=300,ml=50,mr=20,mt=30,mb=40;
   const emax=30,smax=30;
   const X=e=>ml+(e+emax)/(2*emax)*(W-ml-mr);
   const Y=s=>H-mb-(s+smax)/(2*smax)*(H-mt-mb);
   const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:'max-width:560px;display:block;margin:8px auto;border:1px solid #b9bfc7;border-radius:8px;background:#fff'});
-  // grille
   for(let v=-30;v<=30;v+=10){svg.append(svgEl('line',{x1:X(v),y1:mt,x2:X(v),y2:H-mb,stroke:'#eef1f5','stroke-width':1}));}
-  // axes
   svg.append(svgEl('line',{x1:ml,y1:Y(0),x2:W-mr+6,y2:Y(0),stroke:'#33475b','stroke-width':1.2}));
   svg.append(svgEl('line',{x1:X(0),y1:mt-6,x2:X(0),y2:H-mb,stroke:'#33475b','stroke-width':1.2}));
-  // seuil caractéristique (discontinue, saut)
+  
+  // Seuil (discontinu)
   const s1=5;
   svg.append(svgEl('path',{d:`M ${X(-emax)} ${Y(-emax)} L ${X(-s1)} ${Y(-s1)} M ${X(-s1)} ${Y(0)} L ${X(s1)} ${Y(0)} M ${X(s1)} ${Y(s1)} L ${X(emax)} ${Y(emax)}`,fill:'none',stroke:'#2e6da4','stroke-width':2.2}));
-  // marquer les sauts
   svg.append(svgEl('line',{x1:X(s1),y1:Y(0),x2:X(s1),y2:Y(s1),stroke:'#2e6da4','stroke-width':1.2,'stroke-dasharray':'3 2'}));
   svg.append(svgEl('line',{x1:X(-s1),y1:Y(0),x2:X(-s1),y2:Y(-s1),stroke:'#2e6da4','stroke-width':1.2,'stroke-dasharray':'3 2'}));
-  // bande morte (continue, décalée)
+  
+  // Bande morte (continue, décalée)
   const d2=8;
   svg.append(svgEl('path',{d:`M ${X(-emax)} ${Y(-emax+d2)} L ${X(-d2)} ${Y(0)} L ${X(d2)} ${Y(0)} L ${X(emax)} ${Y(emax-d2)}`,fill:'none',stroke:'#c0281f','stroke-width':2.2}));
-  // labels
+  
+  // Point de fonctionnement
+  if(e_cur !== undefined && uApp_cur !== undefined) {
+    const clampedE = Math.max(-emax, Math.min(emax, e_cur));
+    const clampedU = Math.max(-smax, Math.min(smax, uApp_cur));
+    svg.append(svgEl('circle', {cx: X(clampedE), cy: Y(clampedU), r: 6, fill: '#e8a33a', stroke: '#9a5b00', 'stroke-width': 2}));
+    const lbl = svgEl('text', {x: X(clampedE) + 10, y: Y(clampedU) - 10, 'font-size': 11, fill: '#9a5b00', 'font-weight': 600});
+    lbl.textContent = `e=${clampedE.toFixed(1)}, u=${clampedU.toFixed(1)}`;
+    svg.append(lbl);
+  }
+
   const xl=svgEl('text',{x:W-mr+6,y:Y(0)-6,'text-anchor':'end','font-size':11,fill:'#5a6068'});xl.textContent='e';svg.append(xl);
   const yl=svgEl('text',{x:X(0)+6,y:mt-8,'font-size':11,fill:'#5a6068'});yl.textContent='u_app';svg.append(yl);
-  // légende
+  
   svg.append(svgEl('rect',{x:W-mr-180,y:mt+8,width:14,height:3,fill:'#2e6da4'}));
   const l1=svgEl('text',{x:W-mr-160,y:mt+13,'font-size':11,fill:'#111'});l1.textContent='seuil (adhérence seule)';svg.append(l1);
   svg.append(svgEl('rect',{x:W-mr-180,y:mt+26,width:14,height:3,fill:'#c0281f'}));
@@ -277,11 +279,249 @@ function seuilBandeMorteSVG(){
   return svg;
 }
 
+/* ====================== SVG XCOS ====================== */
+function xcosBlock(x,y,w,h,label,sub){
+  const g=svgEl('g');
+  g.append(svgEl('rect',{x,y,width:w,height:h,rx:4,fill:'#e8e8e8',stroke:'#555','stroke-width':1}));
+  g.append(svgEl('rect',{x:x+4,y:y+4,width:w-8,height:h-8,rx:2,fill:'#f8f8f8',stroke:'#ccc','stroke-width':1}));
+  const t=svgEl('text',{x:x+w/2,y:y+h/2+(sub?-3:4),'text-anchor':'middle','font-size':11,fill:'#000','font-family':'sans-serif'});
+  t.textContent=label; g.append(t);
+  if(sub){
+    const st=svgEl('text',{x:x+w/2,y:y+h/2+10,'text-anchor':'middle','font-size':9,fill:'#555','font-family':'sans-serif'});
+    st.textContent=sub; g.append(st);
+  }
+  return g;
+}
+function xcosSum(x,y,r){
+  const g=svgEl('g');
+  g.append(svgEl('circle',{cx:x,cy:y,r,fill:'#e8e8e8',stroke:'#555','stroke-width':1}));
+  g.append(svgEl('line',{x1:x-r*0.6,y1:y,x2:x+r*0.6,y2:y,stroke:'#000','stroke-width':1}));
+  g.append(svgEl('line',{x1:x,y1:y-r*0.6,x2:x,y2:y+r*0.6,stroke:'#000','stroke-width':1}));
+  return g;
+}
+function xcosArrow(x1,y1,x2,y2){
+  return svgEl('line',{x1,y1,x2,y2,stroke:'#2e6da4','stroke-width':1.5,'marker-end':'url(#arrXcos)'});
+}
+
+function buildXcosSVG1(){
+  const W=1200,H=320;
+  const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,class:'xcos-svg',width:'100%'});
+  svg.innerHTML='<defs><marker id="arrXcos" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2e6da4"/></marker></defs>';
+  // Echelon
+  svg.append(svgEl('rect',{x:20,y:120,width:40,height:40,fill:'#fff',stroke:'#555'}));
+  const p=svgEl('path',{d:'M25 150 L35 150 L35 130 L55 130',fill:'none',stroke:'#000','stroke-width':1.5});svg.append(p);
+  // Summer
+  svg.append(xcosSum(110,140,15));
+  // Gain1
+  svg.append(xcosBlock(150,120,50,40,'Kp'));
+  // Integrateur
+  svg.append(xcosBlock(220,160,50,40,'50·Ki/s'));
+  // Summer2
+  svg.append(xcosSum(310,140,15));
+  // Gain hacheur
+  svg.append(xcosBlock(350,120,60,40,'1.046e-3'));
+  // Summer3
+  svg.append(xcosSum(450,140,15));
+  // Electrique
+  svg.append(xcosBlock(490,110,80,60,'1','Ls+R'));
+  // Kc
+  svg.append(xcosBlock(590,120,40,40,'Kc'));
+  // Summer4
+  svg.append(xcosSum(670,140,15));
+  // Meca
+  svg.append(xcosBlock(710,110,80,60,'1','Js+f'));
+  // Reducteur1
+  svg.append(xcosBlock(820,120,40,40,'1/N'));
+  // Reducteur2
+  svg.append(xcosBlock(890,120,40,40,'1/s'));
+  // Kes
+  svg.append(xcosBlock(960,120,60,40,'Kes'));
+  // Scope
+  svg.append(xcosBlock(1060,115,40,40,''));
+  
+  // Flèches
+  svg.append(xcosArrow(60,140,95,140));
+  svg.append(xcosArrow(125,140,150,140));
+  svg.append(xcosArrow(200,140,220,180));
+  svg.append(xcosArrow(270,180,295,145));
+  svg.append(xcosArrow(200,140,295,140));
+  svg.append(xcosArrow(325,140,350,140));
+  svg.append(xcosArrow(410,140,435,140));
+  svg.append(xcosArrow(465,140,490,140));
+  svg.append(xcosArrow(570,140,590,140));
+  svg.append(xcosArrow(630,140,655,140));
+  svg.append(xcosArrow(685,140,710,140));
+  svg.append(xcosArrow(790,140,820,140));
+  svg.append(xcosArrow(860,140,890,140));
+  svg.append(xcosArrow(930,140,960,140));
+  svg.append(xcosArrow(1020,140,1060,140));
+  
+  // Boucles de retour
+  // Kc -> Summer3
+  svg.append(svgEl('path',{d:'M 610 160 L 610 200 L 450 200 L 450 155',fill:'none',stroke:'#2e6da4','stroke-width':1.5,'marker-end':'url(#arrXcos)'}));
+  // Sortie -> Summer1
+  svg.append(svgEl('path',{d:'M 1080 155 L 1080 260 L 110 260 L 110 155',fill:'none',stroke:'#2e6da4','stroke-width':1.5,'marker-end':'url(#arrXcos)'}));
+
+  return svg;
+}
+
+function buildXcosSVG2(){
+  const W=1250,H=380;
+  const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,class:'xcos-svg',width:'100%'});
+  svg.innerHTML='<defs><marker id="arrXcos" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2e6da4"/></marker></defs>';
+  
+  svg.append(svgEl('rect',{x:20,y:160,width:40,height:40,fill:'#fff',stroke:'#555'}));
+  const p=svgEl('path',{d:'M25 190 L35 190 L35 170 L55 170',fill:'none',stroke:'#000','stroke-width':1.5});svg.append(p);
+  
+  svg.append(xcosSum(100,180,15));
+  svg.append(xcosBlock(140,160,50,40,'Correcteur'));
+  svg.append(xcosBlock(210,160,50,40,'Limite'));
+  svg.append(xcosBlock(280,160,50,40,'Gain','hacheur'));
+  svg.append(xcosSum(380,180,15));
+  svg.append(xcosBlock(420,160,50,40,'1/Lm'));
+  svg.append(xcosBlock(490,160,50,40,'∫'));
+  svg.append(xcosBlock(560,160,50,40,'Km'));
+  
+  // Summer meca
+  svg.append(xcosSum(650,180,15));
+  
+  // Pertes par frottement (deadzone)
+  const frot=svgEl('g');
+  frot.append(svgEl('rect',{x:720,y:220,width:50,height:40,fill:'#e8e8e8',stroke:'#555'}));
+  const dz=svgEl('path',{d:'M725 250 L735 250 L735 235 L745 235',fill:'none',stroke:'#000','stroke-width':1.5});
+  frot.append(dz);
+  const dz2=svgEl('path',{d:'M745 235 L755 235 L755 235 L765 235',fill:'none',stroke:'#000','stroke-width':1.5});
+  frot.append(dz2); // simple representation
+  svg.append(frot);
+  
+  svg.append(xcosBlock(820,160,50,40,'1/K1²'));
+  svg.append(xcosBlock(890,160,50,40,'∫'));
+  svg.append(xcosBlock(960,160,50,40,'180/π'));
+  svg.append(xcosBlock(1040,160,40,40,''));
+  
+  // Flèches horizontales
+  svg.append(xcosArrow(60,180,85,180));
+  svg.append(xcosArrow(115,180,140,180));
+  svg.append(xcosArrow(190,180,210,180));
+  svg.append(xcosArrow(260,180,280,180));
+  svg.append(xcosArrow(330,180,365,180));
+  svg.append(xcosArrow(395,180,420,180));
+  svg.append(xcosArrow(470,180,490,180));
+  svg.append(xcosArrow(540,180,560,180));
+  svg.append(xcosArrow(610,180,635,180));
+  svg.append(xcosArrow(665,180,820,180)); // vers 1/K1²
+  svg.append(xcosArrow(870,180,890,180));
+  svg.append(xcosArrow(940,180,960,180));
+  svg.append(xcosArrow(1010,180,1040,180));
+  
+  // Boucle frottement
+  svg.append(svgEl('path',{d:'M 845 200 L 845 240 L 770 240',fill:'none',stroke:'#2e6da4','stroke-width':1.5,'marker-end':'url(#arrXcos)'}));
+  svg.append(svgEl('path',{d:'M 720 240 L 690 240 L 690 195 L 665 195',fill:'none',stroke:'#2e6da4','stroke-width':1.5,'marker-end':'url(#arrXcos)'}));
+  
+  // Boucles retour
+  // Rm sur l'accumulateur de vitesse
+  svg.append(svgEl('path',{d:'M 515 160 L 515 100 L 445 100 L 445 160',fill:'none',stroke:'#2e6da4','stroke-width':1.5,'marker-end':'url(#arrXcos)'}));
+  // Km feedback
+  svg.append(svgEl('path',{d:'M 585 160 L 585 120 L 395 120 L 395 165',fill:'none',stroke:'#2e6da4','stroke-width':1.5,'marker-end':'url(#arrXcos)'}));
+  // Sortie -> Summer
+  svg.append(svgEl('path',{d:'M 1060 200 L 1060 320 L 100 320 L 100 195',fill:'none',stroke:'#2e6da4','stroke-width':1.5,'marker-end':'url(#arrXcos)'}));
+  
+  return svg;
+}
+
+function buildXcosSVG3(){
+  const W=500,H=250;
+  const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,class:'xcos-svg',width:'100%'});
+  svg.innerHTML='<defs><marker id="arrXcos" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2e6da4"/></marker></defs>';
+  
+  svg.append(svgEl('rect',{x:20,y:80,width:40,height:40,fill:'#fff',stroke:'#555'}));
+  svg.append(svgEl('path',{d:'M25 110 L35 110 L35 90 L55 90',fill:'none',stroke:'#000','stroke-width':1.5}));
+  
+  svg.append(svgEl('rect',{x:20,y:140,width:40,height:40,fill:'#fff',stroke:'#555'}));
+  svg.append(svgEl('path',{d:'M25 170 L35 170 L35 150 L55 150',fill:'none',stroke:'#000','stroke-width':1.5}));
+  
+  svg.append(xcosSum(120,120,15));
+  svg.append(xcosBlock(170,100,50,40,''));
+  
+  // Bande morte
+  const bm=svgEl('g');
+  bm.append(svgEl('rect',{x:170,y:100,width:50,height:40,fill:'#e8e8e8',stroke:'#555'}));
+  const dz=svgEl('path',{d:'M175 130 L185 130 L185 115 L195 115 L195 115',fill:'none',stroke:'#000','stroke-width':1.5});
+  bm.append(dz);
+  svg.append(bm);
+  
+  svg.append(xcosBlock(260,100,40,40,''));
+  
+  svg.append(xcosArrow(60,100,105,115));
+  svg.append(xcosArrow(60,160,105,125));
+  svg.append(xcosArrow(135,120,170,120));
+  svg.append(xcosArrow(220,120,260,120));
+  
+  // Time 12s
+  svg.append(svgEl('rect',{x:180,y:190,width:80,height:30,fill:'#e8e8e8',stroke:'#555',rx:4}));
+  const t=svgEl('text',{x:220,y:210,'text-anchor':'middle','font-size':12,fill:'#000'});t.textContent='Time 12 s';svg.append(t);
+  
+  return svg;
+}
+
+function buildXcosSVG4(){
+  const W=500,H=250;
+  const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,class:'xcos-svg',width:'100%'});
+  svg.innerHTML='<defs><marker id="arrXcos" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2e6da4"/></marker></defs>';
+  
+  svg.append(svgEl('rect',{x:20,y:100,width:40,height:40,fill:'#fff',stroke:'#555'}));
+  svg.append(svgEl('path',{d:'M25 130 L35 130 L35 110 L55 110',fill:'none',stroke:'#000','stroke-width':1.5}));
+  
+  // Seuil (saturation)
+  const blk=svgEl('g');
+  blk.append(svgEl('rect',{x:120,y:100,width:50,height:40,fill:'#e8e8e8',stroke:'#555'}));
+  const sat=svgEl('path',{d:'M125 130 L135 130 L135 110 L155 110 L155 110',fill:'none',stroke:'#000','stroke-width':1.5});
+  blk.append(sat);
+  svg.append(blk);
+  
+  svg.append(xcosBlock(210,100,40,40,''));
+  
+  svg.append(xcosArrow(60,120,120,120));
+  svg.append(xcosArrow(170,120,210,120));
+  
+  // Time 5s
+  svg.append(svgEl('rect',{x:180,y:170,width:80,height:30,fill:'#e8e8e8',stroke:'#555',rx:4}));
+  const t=svgEl('text',{x:220,y:190,'text-anchor':'middle','font-size':12,fill:'#000'});t.textContent='Time 5 s';svg.append(t);
+  
+  return svg;
+}
+
+function buildXcosSVG5(){
+  const W=500,H=250;
+  const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,class:'xcos-svg',width:'100%'});
+  svg.innerHTML='<defs><marker id="arrXcos" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2e6da4"/></marker></defs>';
+  
+  svg.append(svgEl('rect',{x:20,y:100,width:40,height:40,fill:'#fff',stroke:'#555'}));
+  svg.append(svgEl('path',{d:'M25 130 L35 130 L35 110 L55 110',fill:'none',stroke:'#000','stroke-width':1.5}));
+  
+  // Bande morte
+  const blk=svgEl('g');
+  blk.append(svgEl('rect',{x:120,y:100,width:50,height:40,fill:'#e8e8e8',stroke:'#555'}));
+  const bm=svgEl('path',{d:'M125 130 L135 130 L145 130 L155 130 L155 130',fill:'none',stroke:'#000','stroke-width':1.5});
+  blk.append(bm);
+  svg.append(blk);
+  
+  svg.append(xcosBlock(210,100,40,40,''));
+  
+  svg.append(xcosArrow(60,120,120,120));
+  svg.append(xcosArrow(170,120,210,120));
+  
+  // Time 5s
+  svg.append(svgEl('rect',{x:180,y:170,width:80,height:30,fill:'#e8e8e8',stroke:'#555',rx:4}));
+  const t=svgEl('text',{x:220,y:190,'text-anchor':'middle','font-size':12,fill:'#000'});t.textContent='Time 5 s';svg.append(t);
+  
+  return svg;
+}
+
 /* ====================== ATELIERS ====================== */
 const WORKSHOPS=[];
 
-/* ---------- Q1/Q2 : Modèle linéaire ---------- */
-const M1={id:'m1',title:'Modélisation linéaire',hint:'Les 5 équations du moteur CC et le schéma-bloc du Maxpid.',mount:mountM1,reset:()=>{}};
+const M1={id:'m1',title:'Modélisation linéaire',hint:'Schéma-bloc en boucle fermée du Maxpid (asservissement).',mount:mountM1,reset:()=>{}};
 function mountM1(root){
   root.innerHTML='';
   root.append(h('h2','Modélisation linéaire du système Maxpid'));
@@ -299,42 +539,54 @@ function mountM1(root){
   const tbody=h('tbody');
   eqs.forEach(e=>tbody.append(h('tr',null,h('td',null,e[0]),h('td',{class:'mono',html:e[1]}),h('td',null,e[2]))));
   tbl.append(tbody);root.append(tbl);
-  root.append(h('h3','Schéma-bloc du modèle linéaire'));
+  root.append(h('h3','Schéma-bloc du modèle linéaire en boucle fermée'));
   root.append(schemaBlocSVG());
-  root.append(h('p',{class:'small',html:'Le gain du capteur potentiométrique et de la conversion A/N est intégré dans la chaîne directe, ce qui conduit à un schéma-bloc à <b>retour unitaire</b>.'}));
-  root.append(h('h3','Questions du TP'));
-  root.append(questionList([
-    {n:1,q:'Identifier les blocs correspondant aux cinq équations du moteur à courant continu dans le fichier « 01-Maxpid Linéaire.zcos ».',
-     a:'Dans le schéma Scilab-Xcos : <b>bloc 1</b> = fonction de transfert électrique 1/(Ls+R) ; <b>bloc 2</b> = gain K<sub>c</sub> (couple) ; <b>bloc 3</b> = gain K<sub>e</sub> (f.é.m.) ; <b>bloc 4</b> = intégrateur 1/(Js) de la mécanique ; <b>bloc 5</b> = intégrateur 1/s de la position.'},
-    {n:2,q:'Indiquer où se trouve la fonction de transfert correspondant au capteur potentiométrique.',
-     a:'Le capteur potentiométrique et la conversion analogique/numérique sont <b>intégrés dans la chaîne directe</b> (gain du capteur + gain du CAN + gain de l\'adaptateur IHM). Le retour est donc <b>unitaire</b>.'}
-  ]));
+  root.append(h('p',{class:'small',html:'Le gain du capteur potentiométrique et de la conversion A/N est intégré dans la chaîne directe, ce qui conduit à un schéma-bloc à <b>retour unitaire</b>. La consigne θ<sub>c</sub> est comparée à la position réelle θ<sub>r</sub> en sortie du réducteur.'}));
 }
 function schemaBlocSVG(){
-  const W=720,H=220;
+  const W=720,H=240;
   const svg=svgEl('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',style:'max-width:720px;display:block;margin:8px auto;border:1px solid #b9bfc7;border-radius:8px;background:#fff'});
   svg.innerHTML='<defs><marker id="arM1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#33475b"/></marker></defs>';
+  
+  // Consigne
+  svg.append(svgEl('rect',{x:10,y:90,w:80,h:50,rx:6,fill:'#f1f3f6',stroke:'#33475b','stroke-width':1.2}));
+  svg.append(svgEl('text',{x:50,y:112,'text-anchor':'middle','font-size':12,'font-weight':600,fill:'#111'})).textContent='Consigne';
+  svg.append(svgEl('text',{x:50,y:128,'text-anchor':'middle','font-size':10.5,fill:'#5a6068'})).textContent='θc';
+  
+  // Summer
+  const sum=svgEl('g');
+  sum.append(svgEl('circle',{cx:140,cy:115,r:16,fill:'#f1f3f6',stroke:'#33475b','stroke-width':1.2}));
+  sum.append(svgEl('text',{x:140,y:120,'text-anchor':'middle','font-size':16,'font-weight':600,fill:'#111'})).textContent='Σ';
+  svg.append(sum);
+  
+  // Blocs
   const blocks=[
-    {x:10,y:90,w:85,h:50,t:'Consigne',s:'θc'},
-    {x:125,y:90,w:90,h:50,t:'Adaptateur',s:'IHM'},
-    {x:245,y:90,w:90,h:50,t:'Correcteur',s:'PI'},
-    {x:365,y:90,w:110,h:50,t:'Moteur CC',s:'5 équations'},
-    {x:505,y:90,w:95,h:50,t:'Réducteur',s:'vis + bras'}
+    {x:190,y:90,w:90,h:50,t:'Correcteur',s:'C(p)'},
+    {x:310,y:90,w:90,h:50,t:'Moteur CC',s:'H(p)'},
+    {x:430,y:90,w:90,h:50,t:'Réducteur',s:'1/N'},
+    {x:550,y:90,w:90,h:50,t:'Loi E/S',s:'Kes'}
   ];
   blocks.forEach(b=>{
     svg.append(svgEl('rect',{x:b.x,y:b.y,width:b.w,height:b.h,rx:6,fill:'#f1f3f6',stroke:'#33475b','stroke-width':1.2}));
     const tx=svgEl('text',{x:b.x+b.w/2,y:b.y+22,'text-anchor':'middle','font-size':12,'font-weight':600,fill:'#111'});tx.textContent=b.t;svg.append(tx);
     const ts=svgEl('text',{x:b.x+b.w/2,y:b.y+38,'text-anchor':'middle','font-size':10.5,fill:'#5a6068'});ts.textContent=b.s;svg.append(ts);
   });
-  [[95,115,125],[215,115,245],[335,115,365],[475,115,505],[600,115,630]].forEach(a=>{
+  
+  // Sortie
+  svg.append(svgEl('text',{x:675,y:115,'font-size':12,'font-weight':600,fill:'#111'})).textContent='θr';
+  
+  // Flèches
+  [[90,115,122],[158,115,190],[280,115,310],[400,115,430],[520,115,550],[640,115,675]].forEach(a=>{
     svg.append(svgEl('line',{x1:a[0],y1:a[1],x2:a[2],y2:a[1],stroke:'#33475b','stroke-width':1.2,'marker-end':'url(#arM1)'}));
   });
-  svg.append(svgEl('path',{d:'M 630 115 L 670 115 L 670 190 L 55 190 L 55 140',fill:'none',stroke:'#2e6da4','stroke-width':1.2,'stroke-dasharray':'5 3','marker-end':'url(#arM1)'}));
-  const rt=svgEl('text',{x:375,y:207,'text-anchor':'middle','font-size':10.5,fill:'#2e6da4'});rt.textContent='Capteur potentiométrique + CAN (retour unitaire)';svg.append(rt);
+  
+  // Retour
+  svg.append(svgEl('path',{d:'M 675 115 L 710 115 L 710 200 L 140 200 L 140 132',fill:'none',stroke:'#2e6da4','stroke-width':1.2,'marker-end':'url(#arM1)'}));
+  const rt=svgEl('text',{x:425,y:215,'text-anchor':'middle','font-size':10.5,fill:'#2e6da4'});rt.textContent='Capteur potentiométrique + CAN (retour unitaire)';svg.append(rt);
+  
   return svg;
 }
 
-/* ---------- Q3/Q4 : linéarisation ---------- */
 const M2={id:'m2',title:'Linéarisation de β(θ)',hint:'Pourquoi β=f(θ) n\'est pas linéaire et comment on linéarise sur [40°, 60°].',mount:mountM2,reset:()=>{}};
 function mountM2(root){
   root.innerHTML='';
@@ -343,7 +595,6 @@ function mountM2(root){
   root.append(h('div',{class:'formula',html:'β = (2π / p) · (170 − 10·√(177 + 112·cos θ − 128·sin θ))'}));
   root.append(h('p',{html:'Cette relation n\'est <b>pas linéaire</b> : présence d\'un cosinus, d\'un sinus et d\'une racine carrée. On ne peut pas appliquer les méthodes linéaires sur toute la plage de fonctionnement.'}));
 
-  // Slider : plage de linéarisation
   const plageSlider=h('input',{type:'range',min:10,max:40,step:5,value:20});
   const plageVal=h('b',null,'20°');
   const centerSlider=h('input',{type:'range',min:20,max:70,step:5,value:50});
@@ -373,14 +624,6 @@ function mountM2(root){
   plageSlider.addEventListener('input',redraw);
   centerSlider.addEventListener('input',redraw);
   redraw();
-
-  root.append(h('h3','Questions du TP'));
-  root.append(questionList([
-    {n:3,q:'Justifier que la relation β=f(θ) n\'est pas linéaire.',
-     a:'La présence d\'un <b>cosinus</b>, d\'un <b>sinus</b> et d\'une <b>racine carrée</b> rend la relation non linéaire : on ne peut pas l\'écrire sous la forme β = a·θ + b.'},
-    {n:4,q:'Linéariser sur [40°, 60°], proposer une relation affine β = K·θ + θ₀. En déduire K<sub>es</sub>.',
-     a:'La régression sur [40°, 60°] donne la droite <b>y = 107,327·x − 1109,625</b>. Le coefficient directeur vaut K = 107,327, d\'où <b>K<sub>es</sub> = Δθ/Δβ = 1/107 ≈ 9,35·10<sup>−3</sup></b>.'}
-  ]));
 }
 function betaPlot(thMin,thMax){
   const W=560,H=300,ml=55,mr=20,mt=25,mb=40;
@@ -404,8 +647,7 @@ function betaPlot(thMin,thMax){
   return svg;
 }
 
-/* ---------- Q5–Q10 : saturation ---------- */
-const M3={id:'m3',title:'La saturation (avec curseurs)',hint:'Faites varier Kp et la tension maximale pour observer l\'effet de la saturation.',mount:mountM3,reset:()=>{}};
+const M3={id:'m3',title:'La saturation',hint:'Faites varier Kp et la tension maximale pour observer l\'effet de la saturation.',mount:mountM3,reset:()=>{}};
 function mountM3(root){
   root.innerHTML='';
   root.append(h('h2','La saturation : influence de K<sub>p</sub> et de U<sub>max</sub>'));
@@ -435,13 +677,10 @@ function mountM3(root){
     kpVal.textContent=String(Kp);
     umaxVal.textContent=Umax+' V';
     const sim=motorSim({Kp,useSat,Umax,thetaC:20,tMax:3,dt:0.004});
-    // métriques
     let tSettle='—',overshoot=0;
     const target=20;
-    // dépassement : max - target si > target
     const thmax=Math.max(...sim.theta);
     overshoot=Math.max(0,thmax-target);
-    // temps de réponse 5%
     const tol=0.05*target;
     for(let i=sim.theta.length-1;i>=0;i--){
       if(Math.abs(sim.theta[i]-target)>tol){tSettle=(i*0.004).toFixed(2);break;}
@@ -454,13 +693,11 @@ function mountM3(root){
       stat('t5%',tSettle+' s'),
       stat('u max',Math.max(...sim.u.map(Math.abs)).toFixed(1)+' V')
     );
-    // graphe θ
     plotTh.innerHTML='';
     plotTh.append(plotXY([
       {x:sim.t,y:sim.theta,color:'#2e6da4',label:'θ'},
       {x:[0,3],y:[20,20],color:'#1e7a2e',dashed:true,label:'consigne'}
     ],{xmin:0,xmax:3,ymin:0,ymax:30,xlabel:'t (s)',ylabel:'θ (°)',xfmt:v=>v.toFixed(1)}));
-    // graphe u
     plotU.innerHTML='';
     plotU.append(plotXY([
       {x:sim.t,y:sim.u,color:'#c0281f',label:'u (V)'}
@@ -473,27 +710,9 @@ function mountM3(root){
 
   root.append(h('h3','Caractéristique de saturation'));
   root.append(saturationSVG());
-
-  root.append(h('h3','Questions du TP'));
-  root.append(questionList([
-    {n:5,q:'Rappeler comment évoluent les performances du système linéaire sans perturbation en fonction de K<sub>p</sub>.',
-     a:'<b>Stabilité</b> : se dégrade quand Kp augmente. <b>Rapidité</b> : s\'améliore (à nuancer pour les grandes valeurs). <b>Précision</b> : précise quel que soit Kp (FTBO de classe 1).'},
-    {n:6,q:'Faire varier Kp = [10, 50, 100, 250] avec un échelon Δθ = 20°. Les performances prévues sont-elles vérifiées ?',
-     a:'Oui : le temps de réponse diminue quand Kp augmente (jusqu\'à ce que la saturation prenne le relais), et le dépassement augmente. Le système reste précis.'},
-    {n:7,q:'Pour Kp = 100, relever la valeur maximale de la tension. Justifier pourquoi elle est maximale au début.',
-     a:'La tension crête dans le modèle <b>linéaire</b> atteint ≈ 60 V, mais le système <b>réel</b> est limité à <b>21,6 V</b>. Elle est maximale au début car l\'erreur est maximale à t=0 (l\'échelon vient d\'être appliqué) et elle est amplifiée par le correcteur proportionnel : u = Kp·ε.'},
-    {n:8,q:'Quelle non-linéarité observe-t-on ? Relever sa valeur caractéristique.',
-     a:'On observe une <b>saturation</b> de la tension moteur à <b>21,6 V</b>, pendant une durée de <b>1,5 s</b>. Pendant cette phase, la tension est constante et la vitesse de rotation aussi : la position évolue linéairement.'},
-    {n:9,q:'Compléter le modèle à partir de la valeur mesurée.',
-     a:'On ajoute un bloc <b>saturation</b> (±21,6 V) en sortie du correcteur, avant le moteur.'},
-    {n:10,q:'Lancer la simulation et observer les courbes. Conclure sur les écarts en régime permanent et transitoire.',
-     a:'La saturation <b>dégrade la rapidité</b> (le système met plus de temps à réagir) mais n\'a <b>pas d\'influence sur le régime permanent</b>. C\'est confirmé par la comparaison des courbes avec et sans saturation.'}
-  ]));
 }
-function stat(label,val){return h('div',{class:'stat'},h('span',null,label),h('b',null,val))}
 
-/* ---------- Q11–Q18 : seuil / bande morte ---------- */
-const M4={id:'m4',title:'Seuil et zone morte (avec curseurs)',hint:'Comprenez l\'erreur statique due à l\'adhérence et choisissez le bon bloc de modélisation.',mount:mountM4,reset:()=>{}};
+const M4={id:'m4',title:'Seuil et zone morte',hint:'Comprenez l\'erreur statique due à l\'adhérence et choisissez le bon bloc de modélisation.',mount:mountM4,reset:()=>{}};
 function mountM4(root){
   root.innerHTML='';
   root.append(h('h2','Seuil et zone morte : erreur statique et adhérence'));
@@ -512,9 +731,10 @@ function mountM4(root){
   const statBox=h('div',{class:'gstats'});
   root.append(statBox);
   const plotRow=h('div',{class:'plot-row'});
-  const plotTh=h('div'),plotU=h('div');
+  const plotTh=h('div'),plotU=h('div'),plotCharac=h('div');
   plotRow.append(plotTh,plotU);
   root.append(plotRow);
+  root.append(plotCharac);
 
   function update(){
     const Kp=+kpSlider.value;
@@ -541,39 +761,21 @@ function mountM4(root){
     plotU.append(plotXY([
       {x:sim.t,y:sim.u,color:'#c0281f',label:'u appliqué'}
     ],{xmin:0,xmax:4,ymin:-5,ymax:5,xlabel:'t (s)',ylabel:'u (V)',xfmt:v=>v.toFixed(1),hlines:[{y:seuil,color:'#9a5b00'},{y:-seuil,color:'#9a5b00'}]}));
+    
+    // Point de fonctionnement instantané
+    const idx = Math.floor(sim.t.length / 2); // milieu pour avoir un point représentatif
+    const e_cur = 20 - sim.theta[idx];
+    const uApp_cur = sim.u[idx];
+    plotCharac.innerHTML='';
+    plotCharac.append(seuilBandeMorteSVG(e_cur, uApp_cur));
   }
   kpSlider.addEventListener('input',update);
   seuilSlider.addEventListener('input',update);
   useSeuilToggle.addEventListener('change',update);
   update();
-
-  root.append(h('h3','Caractéristiques du seuil et de la bande morte'));
-  root.append(seuilBandeMorteSVG());
-  root.append(h('p',{class:'small',html:'Le bloc <b>seuil</b> modélise l\'adhérence seule : une fois le seuil franchi, la courbe redevient linéaire. Le bloc <b>bande morte</b> modélise adhérence + frottement : le décalage subsiste même en mouvement.'}));
-
-  root.append(h('h3','Questions du TP'));
-  root.append(questionList([
-    {n:11,q:'Observer l\'erreur en régime permanent avec Kp = 20. Conforme au modèle ?',
-     a:'On observe une <b>erreur statique</b>, ce qui n\'est pas conforme au modèle qui contient un intégrateur (classe 1) et pas de perturbation.'},
-    {n:12,q:'Quel phénomène explique ce comportement ? Est-ce une non-linéarité ?',
-     a:'Le modèle ne tient pas compte des <b>frottements</b>. Ce n\'est <b>pas</b> une non-linéarité (le frottement peut être linéarisé).'},
-    {n:13,q:'Quel autre phénomène explique le blocage à faible sollicitation ?',
-     a:'On observe que le système reste immobile pour une faible sollicitation : c\'est un phénomène d\'<b>adhérence</b>, qui n\'est pas pris en compte dans le modèle. C\'<b>est</b> une non-linéarité.'},
-    {n:14,q:'Lequel des blocs seuil ou bande morte modélise l\'adhérence seule ? Lequel modélise adhérence + frottement ?',
-     a:'Le bloc <b>seuil</b> modélise l\'adhérence seule : une fois le seuil passé, la courbe redevient linéaire. Le bloc <b>bande morte</b> modélise adhérence + frottement : le décalage persiste en mouvement.'},
-    {n:15,q:'Proposer un protocole permettant de mettre en évidence le seuil.',
-     a:'<b>Protocole 1</b> : essais en boucle ouverte avec des échelons de consigne croissants jusqu\'au début du mouvement. <b>Protocole 2</b> : consigne en rampe, relevé du courant pour lequel le système se met en mouvement ; connaissant K<sub>c</sub>, on en déduit le couple résistant.'},
-    {n:16,q:'Compléter le modèle « Maxpid saturation bande morte ». Les évolutions sont-elles fidèles au relevé ?',
-     a:'On ajoute le bloc <b>bande morte</b> en sortie du correcteur. On retrouve bien le comportement imprécis en régime permanent (erreur statique) et le blocage à faible sollicitation, fidèles au relevé.'},
-    {n:17,q:'Simuler avec Kp = [100, 150, 250], observer la convergence et interpréter.',
-     a:'Les positions finales <b>ne convergent pas vers la même valeur</b> et dépendent de Kp : c\'est le « désordre » dû à la bande morte. Tant que la tension de commande est inférieure au seuil, le moteur n\'est pas alimenté et le bras s\'arrête dans la position courante.'},
-    {n:18,q:'Proposer un autre moyen de modéliser frottement et adhérence.',
-     a:'On peut associer un <b>seuil</b> (adhérence) et un <b>couple résistant</b> lié aux frottements (terme −sign(ω)·c<sub>f</sub> dans l\'équation mécanique).'}
-  ]));
 }
 
-/* ---------- Q19 : PI + pompage ---------- */
-const M5={id:'m5',title:'Correcteur PI et pompage (avec curseurs)',hint:'Manipulez Kp, Ki et le seuil pour observer le cycle limite (pompage).',mount:mountM5,reset:()=>{}};
+const M5={id:'m5',title:'Correcteur PI et pompage',hint:'Manipulez Kp, Ki et le seuil pour observer le cycle limite (pompage).',mount:mountM5,reset:()=>{}};
 function mountM5(root){
   root.innerHTML='';
   root.append(h('h2','Action du correcteur PI sur le seuil'));
@@ -604,7 +806,6 @@ function mountM5(root){
     kiVal.textContent=String(Ki);
     seuilVal.textContent=seuil.toFixed(1).replace('.',',')+' V';
     const sim=motorSim({Kp,Ki,seuil,useSeuil:true,useSat:false,thetaC:20,tMax:8,dt:0.005,Km:0.6,J:2,b:10});
-    // nombre d'oscillations (changements de signe de la dérivée)
     let nOsc=0,prev=0;
     for(let i=1;i<sim.theta.length;i++){
       const d=sim.theta[i]-sim.theta[i-1];
@@ -640,30 +841,170 @@ function mountM5(root){
     h('li',{html:'Quand la commande franchit le seuil, le moteur démarre brutalement : le bras dépasse la consigne.'}),
     h('li',{html:'L\'intégrateur se décharge, la commande redescend sous le seuil, le moteur s\'arrête… le cycle recommence.'})
   ));
-
-  root.append(h('h3','Question du TP'));
-  root.append(questionList([
-    {n:19,q:'Observer le pompage avec Kp = 50 et Ki = 10. Expliquer le rôle conjugué du correcteur intégral et du seuil.',
-     a:'Le correcteur intégral <b>pousse</b> la commande jusqu\'au seuil d\'adhérence. Une fois le seuil franchi, le moteur démarre et l\'intégrateur se décharge. La commande redescend sous le seuil, le moteur s\'arrête, le cycle recommence : c\'est un <b>cycle limite</b> (pompage) résultant de l\'interaction entre une non-linéarité (seuil) et un correcteur linéaire (intégrateur).'}
-  ]));
 }
 
-function questionList(items){
-  const box=h('div');
-  items.forEach(it=>{
-    const qa=h('div',{class:'qa'},
-      h('p',{class:'qq',html:`Question ${it.n}. ${it.q}`}),
-      h('details',null,
-        h('summary',null,'Voir le corrigé'),
-        h('p',{class:'aa',html:it.a})
-      )
-    );
-    box.append(qa);
-  });
-  return box;
+const M6={id:'m6',title:'Simulation du système',hint:'Schémas Scilab-Xcos du système Maxpid (modèles linéaire et non linéaires).',mount:mountM6,reset:()=>{}};
+function mountM6(root){
+  root.innerHTML='';
+  root.append(h('h2','Simulation du système sous Scilab-Xcos'));
+  root.append(h('p',{html:'Voici les schémas-blocs utilisés dans les fichiers Scilab-Xcos pour simuler le système Maxpid. Le premier correspond au modèle linéaire, le second intègre les non-linéarités (saturation, frottement). Les trois derniers sont des tests de blocs seuls.'}));
+  
+  root.append(h('h3','1. Modèle linéaire (01-Maxpid Linéaire.zcos)'));
+  root.append(h('div',{class:'xcos-img'}, buildXcosSVG1()));
+  root.append(h('p',{class:'small',html:'Modèle linéaire du moteur à courant continu. On reconnaît la boucle de courant (Kc) et la boucle de vitesse. Le retour de position se fait après le réducteur.'}));
+
+  root.append(h('h3','2. Modèle non linéaire complet (Maxpid saturation bande morte.zcos)'));
+  root.append(h('div',{class:'xcos-img'}, buildXcosSVG2()));
+  root.append(h('p',{class:'small',html:'Modèle non linéaire intégrant le hacheur, la saturation de tension, les pertes par frottement (bloc avec discontinuité) et l\'influence du poids.'}));
+
+  root.append(h('h3','3. Test des blocs seuil et bande morte (Seuil bande morte.zcos)'));
+  root.append(h('div',{class:'xcos-img'}, buildXcosSVG3()));
+  root.append(h('p',{class:'small',html:'Comparaison de deux rampes (Time 12s) pour visualiser l\'effet du seuil et de la bande morte sur un signal.'}));
+
+  root.append(h('h3','4. Test du bloc seuil seul'));
+  root.append(h('div',{class:'xcos-img'}, buildXcosSVG4()));
+  root.append(h('p',{class:'small',html:'Un bloc seuil (Time 5s) qui laisse passer le signal au-delà d\'un certain seuil.'}));
+
+  root.append(h('h3','5. Test du bloc bande morte seul'));
+  root.append(h('div',{class:'xcos-img'}, buildXcosSVG5()));
+  root.append(h('p',{class:'small',html:'Un bloc bande morte (Time 5s) qui annule le signal dans une zone centrale.'}));
 }
 
-WORKSHOPS.push(M1,M2,M3,M4,M5);
+WORKSHOPS.push(M1,M2,M3,M4,M5,M6);
+
+/* ====================== ACTIVITÉS ====================== */
+const ACT={
+  m1:{
+    title:'Modélisation linéaire',
+    level:'Niveau 1 · Découvrir',
+    time:'25 min',
+    course:'modele',
+    goal:'Identifier les équations du moteur à courant continu et la structure du schéma-bloc.',
+    steps:['Ouvrez le fichier « 01-Maxpid Linéaire.zcos » et repérez les 5 blocs du moteur.','Associez chaque équation à son rôle.','Localisez le capteur potentiométrique.','Vérifiez la causalité du modèle.'],
+    defi:{q:'Pourquoi dit-on que le modèle est linéaire alors que l\'équation J·dω/dt = c<sub>m</sub> − c<sub>pert</sub> − c<sub>f</sub> est présente ?',
+      a:'Les équations sont des équations différentielles linéaires à coefficients constants, sans terme non linéaire (produit, cos, seuil…).'},
+    qcm:[
+      {q:'Quelle équation modélise la partie électrique ?',o:['c<sub>m</sub>=K<sub>c</sub>·i','u = e + L·di/dt + R·i','e = K<sub>e</sub>·ω','J·dω/dt = c<sub>m</sub>−c<sub>pert</sub>−c<sub>f</sub>'],a:1,w:'Loi des mailles de l\'induit.'},
+      {q:'Que représente c<sub>m</sub> = K<sub>c</sub>·i ?',o:['Conversion courant → couple','Conversion vitesse → tension','Loi de Newton','Loi d\'Ohm'],a:0,w:'Conversion électromécanique.'},
+      {q:'Où est le capteur potentiométrique ?',o:['Chaîne de retour, gain K<sub>capt</sub>','Chaîne directe, retour unitaire','Parallèle au moteur','Non modélisé'],a:1,w:'Intégré dans la chaîne directe : retour unitaire.'},
+      {q:'Combien d\'équations modélisent le moteur ?',o:['3','4','5','6'],a:2,w:'Électrique, couple, f.é.m., mécanique, cinématique.'},
+      {q:'e(t) = K<sub>e</sub>·ω<sub>m</sub>(t) représente :',o:['Le couple','La f.é.m.','La position','Le courant'],a:1,w:'Force contre-électromotrice proportionnelle à la vitesse.'}
+    ],
+    tpQuestions:[
+      {n:1,q:'Identifier les blocs correspondant aux cinq équations qui modélisent le moteur à courant continu.',a:'<b>Bloc 1</b> : 1/(Ls+R) (électrique). <b>Bloc 2</b> : Kc (couple). <b>Bloc 3</b> : Ke (f.é.m.). <b>Bloc 4</b> : 1/(Js+f) (mécanique). <b>Bloc 5</b> : 1/s (cinématique).'},
+      {n:2,q:'Indiquer où se trouve la fonction de transfert correspondant au capteur potentiométrique.',a:'Le gain du capteur et de la conversion A/N est intégré dans la <b>chaîne directe</b>. Le retour est donc <b>unitaire</b>.'}
+    ]
+  },
+  m2:{
+    title:'Linéarisation',
+    level:'Niveau 1 · Découvrir',
+    time:'20 min',
+    course:'linea',
+    goal:'Comprendre pourquoi β(θ) n\'est pas linéaire et comment on obtient K<sub>es</sub>.',
+    steps:['Regardez l\'expression de β(θ).','Tracez la courbe sur [20°, 80°].','Sur [40°, 60°] la courbe est presque droite.','Identifiez le coefficient directeur de la régression.','En déduire K<sub>es</sub>.'],
+    defi:{q:'Pourquoi ne peut-on pas linéariser sur tout l\'intervalle [0°, 90°] ?',
+      a:'La courbure y est trop importante : une approximation affine serait imprécise. La linéarisation n\'est valable que <b>localement</b>.'},
+    qcm:[
+      {q:'Pourquoi β=f(θ) n\'est pas linéaire ?',o:['Cos, sin, racine carrée','Domaine fini','Dépend du temps','Périodique'],a:0,w:'Fonctions non linéaires.'},
+      {q:'Sur quelle plage linéarise-t-on ?',o:['[0°,90°]','[20°,80°]','[40°,60°]','[0°,180°]'],a:2,w:'Plage utile du Maxpid.'},
+      {q:'Équation de la régression ?',o:['y=107,327x+1109,625','y=107,327x−1109,625','y=1,073x−11','y=−107,327x+1109,625'],a:1,w:'Donnée par le fichier de régression.'},
+      {q:'K<sub>es</sub> = ?',o:['107','1/107','1070','1/1070'],a:1,w:'K<sub>es</sub> = Δθ/Δβ = 1/107.'},
+      {q:'À quoi sert la linéarisation ?',o:['Accélérer','Appliquer les méthodes SLCI localement','Supprimer la non-linéarité','Augmenter la précision'],a:1,w:'Valable sur une plage restreinte.'}
+    ],
+    tpQuestions:[
+      {n:3,q:'Justifier que la relation β=f(θ) n\'est pas linéaire.',a:'La présence d\'un <b>cosinus</b>, d\'un <b>sinus</b> et d\'une <b>racine carrée</b> rend la relation non linéaire.'},
+      {n:4,q:'Linéariser sur [40°, 60°], proposer une relation affine β = K·θ + θ₀. En déduire K<sub>es</sub>.',a:'La régression donne <b>y = 107,327·x − 1109,625</b>. Le coefficient directeur vaut K = 107,327, d\'où <b>K<sub>es</sub> = 1/107 ≈ 9,35·10<sup>−3</sup></b>.'}
+    ]
+  },
+  m3:{
+    title:'Saturation',
+    level:'Niveau 2 · Comprendre',
+    time:'30 min',
+    course:'sat',
+    goal:'Relier l\'effet de Kp à la saturation et retrouver le comportement du système réel.',
+    steps:['Faites varier Kp de 10 à 250 avec la saturation active puis inactive.','Pour Kp=100, relevez la tension maximale.','Comparez les temps de réponse.','Observez le régime permanent : est-il affecté ?'],
+    defi:{q:'Pourquoi la tension est-elle maximale au début de l\'essai ?',
+      a:'L\'erreur est maximale à t=0 (échelon) et elle est amplifiée par Kp : u = Kp·ε.'},
+    qcm:[
+      {q:'Stabilité quand Kp augmente ?',o:['S\'améliore','Se dégrade','Ne change pas','Parfaite'],a:1,w:'Gain de boucle plus élevé.'},
+      {q:'Rapidité quand Kp augmente ?',o:['Se dégrade','S\'améliore','Ne change pas','Nulle'],a:1,w:'Temps de réponse plus court.'},
+      {q:'Valeur de la tension max sur le système réel ?',o:['12 V','21,6 V','50 V','100 V'],a:1,w:'Limitation à 21,6 V.'},
+      {q:'Effet sur le régime permanent ?',o:['Erreur statique','Pas d\'influence','Instabilité','Consigne annulée'],a:1,w:'Saturation = rapidité dégradée, régime permanent inchangé.'},
+      {q:'La saturation est-elle une non-linéarité ?',o:['Non','Oui, discontinue','Oui, continue','Bruit'],a:1,w:'Caractéristique avec coude.'}
+    ],
+    tpQuestions:[
+      {n:5,q:'Rappeler comment évoluent les performances du système linéaire sans perturbation en fonction de Kp.',a:'<b>Stabilité</b> : se dégrade quand Kp augmente. <b>Rapidité</b> : s\'améliore. <b>Précision</b> : précise quel que soit Kp.'},
+      {n:6,q:'Faire varier Kp = [10, 50, 100, 250] avec un échelon Δθ = 20°. Les performances prévues sont-elles vérifiées ?',a:'Oui : le temps de réponse diminue quand Kp augmente, le dépassement augmente. Le système reste précis.'},
+      {n:7,q:'Pour Kp = 100, relever la valeur maximale de la tension. Justifier pourquoi elle est maximale au début.',a:'La tension crête dans le modèle <b>linéaire</b> atteint ≈ 60 V, mais le système <b>réel</b> est limité à <b>21,6 V</b>. Elle est maximale au début car l\'erreur est maximale à t=0.'},
+      {n:8,q:'Quelle non-linéarité observe-t-on ? Relever sa valeur caractéristique.',a:'On observe une <b>saturation</b> de la tension moteur à <b>21,6 V</b>, pendant <b>1,5 s</b>.'},
+      {n:9,q:'Compléter le modèle à partir de la valeur mesurée.',a:'On ajoute un bloc <b>saturation</b> (±21,6 V) en sortie du correcteur.'},
+      {n:10,q:'Lancer la simulation et observer les courbes. Conclure.',a:'La saturation <b>dégrade la rapidité</b> mais n\'a <b>pas d\'influence sur le régime permanent</b>.'}
+    ]
+  },
+  m4:{
+    title:'Seuil et zone morte',
+    level:'Niveau 2 · Comprendre',
+    time:'30 min',
+    course:'seuil',
+    goal:'Distinguer frottement et adhérence, choisir le bon bloc.',
+    steps:['Observez l\'erreur statique avec Kp=20.','En BO à faible tension, le système reste immobile.','Testez les blocs seuil et bande morte.','Identifiez lequel modélise l\'adhérence seule.'],
+    defi:{q:'Pourquoi un intégrateur peut-il avoir une erreur statique en présence d\'adhérence ?',
+      a:'L\'intégrateur annule l\'erreur <b>si</b> le système peut bouger. Avec l\'adhérence, le moteur reste bloqué tant que la commande n\'a pas atteint le seuil : l\'intégrateur accumule l\'erreur sans que le bras ne bouge.'},
+    qcm:[
+      {q:'Frottement → erreur statique ?',o:['Non','Oui'],a:1,w:'Le frottement peut créer une erreur statique.'},
+      {q:'Adhérence = non-linéarité ?',o:['Non','Oui, seuil','Non, bruit','Oui, continue'],a:1,w:'Blocage sous un seuil.'},
+      {q:'Bloc pour l\'adhérence seule ?',o:['Saturation','Seuil','Bande morte','Gain'],a:1,w:'Une fois le seuil franchi, retour au linéaire.'},
+      {q:'Bloc pour adhérence + frottement ?',o:['Saturation','Seuil','Bande morte','Dérivée'],a:2,w:'Décalage persistant.'},
+      {q:'Protocole pour mettre en évidence le seuil ?',o:['Grand échelon','Rampe en BO','Bruit blanc','Échelon de perturbation'],a:1,w:'Relevé du courant de démarrage.'}
+    ],
+    tpQuestions:[
+      {n:11,q:'Observer l\'erreur en régime permanent avec Kp = 20. Conforme au modèle ?',a:'On observe une <b>erreur statique</b>, ce qui n\'est pas conforme au modèle qui contient un intégrateur.'},
+      {n:12,q:'Quel phénomène explique ce comportement ? Est-ce une non-linéarité ?',a:'Le modèle ne tient pas compte des <b>frottements</b>. Ce n\'est <b>pas</b> une non-linéarité.'},
+      {n:13,q:'Quel autre phénomène explique le blocage à faible sollicitation ?',a:'On observe que le système reste immobile pour une faible sollicitation : c\'est un phénomène d\'<b>adhérence</b>. C\'<b>est</b> une non-linéarité.'},
+      {n:14,q:'Lequel des blocs seuil ou bande morte modélise l\'adhérence seule ? Lequel modélise adhérence + frottement ?',a:'Le bloc <b>seuil</b> modélise l\'adhérence seule. Le bloc <b>bande morte</b> modélise adhérence + frottement.'},
+      {n:15,q:'Proposer un protocole permettant de mettre en évidence le seuil.',a:'<b>Protocole 1</b> : essais en BO avec échelons croissants. <b>Protocole 2</b> : rampe en BO et relevé du courant de démarrage.'},
+      {n:16,q:'Compléter le modèle « Maxpid saturation bande morte ». Les évolutions sont-elles fidèles au relevé ?',a:'On ajoute le bloc <b>bande morte</b> en sortie du correcteur. On retrouve le comportement imprécis en régime permanent et le blocage.'},
+      {n:17,q:'Simuler avec Kp = [100, 150, 250], observer la convergence et interpréter.',a:'Les positions finales <b>ne convergent pas vers la même valeur</b> et dépendent de Kp. Tant que la tension est inférieure au seuil, le moteur n\'est pas alimenté et le bras s\'arrête.'},
+      {n:18,q:'Proposer un autre moyen de modéliser frottement et adhérence.',a:'On peut associer un <b>seuil</b> (adhérence) et un <b>couple résistant</b> lié aux frottements.'}
+    ]
+  },
+  m5:{
+    title:'Correcteur PI et pompage',
+    level:'Niveau 3 · Approfondir',
+    time:'25 min',
+    course:'pi',
+    goal:'Comprendre le rôle conjugué du correcteur intégral et du seuil.',
+    steps:['Écrivez C(p) = (2/255)(Kp + Ki/(4p)).','Observez le pompage avec Kp=50, Ki=10.','Décrivez le cycle.','Concluez sur le rôle conjugué.'],
+    defi:{q:'Pourquoi le pompage est-il un phénomène non linéaire ?',
+      a:'Il résulte de l\'interaction entre un correcteur linéaire (l\'intégrateur) et une non-linéarité (le seuil). Sans le seuil, l\'intégrateur convergerait normalement.'},
+    qcm:[
+      {q:'Équation du correcteur PI ?',o:['C=(2/255)(Kp+Ki/(4p))','C=Kp+Ki·p','C=Kp/(1+τp)','C=Ki/p'],a:0,w:'Correcteur implanté dans la carte.'},
+      {q:'Rôle du terme intégral ?',o:['Augmenter le gain','Annuler l\'erreur statique','Filtrer le bruit','Dériver'],a:1,w:'Accumule l\'erreur.'},
+      {q:'Qu\'est-ce que le pompage ?',o:['Oscillation entretenue','Divergence','Bruit','Saturation'],a:0,w:'Cycle limite.'},
+      {q:'Pourquoi le pompage apparaît ?',o:['PI instable','Intégrateur charge tant que le seuil n\'est pas franchi','Moteur trop puissant','Capteur bruité'],a:1,w:'Interaction intégrateur + seuil.'},
+      {q:'Rôle conjugué PI/seuil ?',o:['Compensation parfaite','Cycle limite','Annulation','Aucune'],a:1,w:'L\'intégrateur pousse la commande jusqu\'au seuil.'}
+    ],
+    tpQuestions:[
+      {n:19,q:'Observer le pompage avec Kp = 50 et Ki = 10. Expliquer le rôle conjugué du correcteur intégral et du seuil.',a:'Le correcteur intégral <b>pousse</b> la commande jusqu\'au seuil. Une fois le seuil franchi, le moteur démarre et l\'intégrateur se décharge. La commande redescend sous le seuil, le moteur s\'arrête : c\'est un <b>cycle limite</b>.'}
+    ]
+  },
+  m6:{
+    title:'Simulation du système',
+    level:'Niveau 1 · Découvrir',
+    time:'15 min',
+    course:'modele',
+    goal:'Associer les schémas Scilab-Xcos aux phénomènes physiques modélisés.',
+    steps:['Observez le schéma du modèle linéaire.','Repérez la boucle de courant et la boucle de vitesse.','Identifiez les blocs de saturation et de frottement sur le modèle non linéaire.'],
+    defi:{q:'Quelle est la différence principale entre les deux premiers schémas ?',
+      a:'Le premier est le modèle <b>linéaire</b> standard. Le second intègre les <b>non-linéarités</b> : bloc de saturation (limite de tension) et bloc de frottement (bande morte).'},
+    qcm:[
+      {q:'Dans le modèle linéaire, où se trouve la boucle de courant ?',o:['Autour du bloc électrique','Après le réducteur','Au niveau du capteur','Il n\'y en a pas'],a:0,w:'La boucle de courant est interne au moteur.'},
+      {q:'Quel bloc du modèle non linéaire modélise la saturation ?',o:['Limite de tension','Gain hacheur','Pertes par frottement','Correcteur'],a:0,w:'Le bloc "Limite de la source de tension".'},
+      {q:'Quel bloc du modèle non linéaire modélise les frottements ?',o:['Pertes par frottement','Correcteur','Gain hacheur','Accumulateur'],a:0,w:'Le bloc avec la caractéristique de bande morte.'}
+    ],
+    tpQuestions:[]
+  }
+};
 
 /* ====================== COURS ====================== */
 const COURSE=[];
@@ -761,70 +1102,6 @@ COURSE.push({id:'gloss',t:'Vocabulaire',h:`
 <dt>K<sub>es</sub></dt><dd>Gain statique équivalent après linéarisation.</dd>
 </dl>`});
 
-/* ====================== ACTIVITÉS QCM ====================== */
-const ACT={
-  m1:{title:'Modélisation linéaire',level:'Niveau 1 · Découvrir',time:'25 min',course:'modele',
-    goal:'Identifier les équations du moteur à courant continu et la structure du schéma-bloc.',
-    steps:['Ouvrez « 01-Maxpid Linéaire.zcos » et repérez les 5 blocs du moteur.','Associez chaque équation à son rôle.','Localisez le capteur potentiométrique.','Vérifiez la causalité du modèle.'],
-    defi:{q:'Pourquoi dit-on que le modèle est linéaire alors que l\'équation J·dω/dt = c<sub>m</sub> − c<sub>pert</sub> − c<sub>f</sub> est présente ?',
-      a:'Les équations sont des équations différentielles linéaires à coefficients constants, sans terme non linéaire (produit, cos, seuil…).'},
-    qcm:[
-      {q:'Quelle équation modélise la partie électrique ?',o:['c<sub>m</sub>=K<sub>c</sub>·i','u = e + L·di/dt + R·i','e = K<sub>e</sub>·ω','J·dω/dt = c<sub>m</sub>−c<sub>pert</sub>−c<sub>f</sub>'],a:1,w:'Loi des mailles de l\'induit.'},
-      {q:'Que représente c<sub>m</sub> = K<sub>c</sub>·i ?',o:['Conversion courant → couple','Conversion vitesse → tension','Loi de Newton','Loi d\'Ohm'],a:0,w:'Conversion électromécanique.'},
-      {q:'Où est le capteur potentiométrique ?',o:['Chaîne de retour, gain K<sub>capt</sub>','Chaîne directe, retour unitaire','Parallèle au moteur','Non modélisé'],a:1,w:'Intégré dans la chaîne directe : retour unitaire.'},
-      {q:'Combien d\'équations modélisent le moteur ?',o:['3','4','5','6'],a:2,w:'Électrique, couple, f.é.m., mécanique, cinématique.'},
-      {q:'e(t) = K<sub>e</sub>·ω<sub>m</sub>(t) représente :',o:['Le couple','La f.é.m.','La position','Le courant'],a:1,w:'Force contre-électromotrice proportionnelle à la vitesse.'}
-    ]},
-  m2:{title:'Linéarisation',level:'Niveau 1 · Découvrir',time:'20 min',course:'linea',
-    goal:'Comprendre pourquoi β(θ) n\'est pas linéaire et comment on obtient K<sub>es</sub>.',
-    steps:['Regardez l\'expression de β(θ).','Tracez la courbe sur [20°, 80°].','Sur [40°, 60°] la courbe est presque droite.','Identifiez le coefficient directeur de la régression.','En déduire K<sub>es</sub>.'],
-    defi:{q:'Pourquoi ne peut-on pas linéariser sur tout l\'intervalle [0°, 90°] ?',
-      a:'La courbure y est trop importante : une approximation affine serait imprécise. La linéarisation n\'est valable que <b>localement</b>.'},
-    qcm:[
-      {q:'Pourquoi β=f(θ) n\'est pas linéaire ?',o:['Cos, sin, racine carrée','Domaine fini','Dépend du temps','Périodique'],a:0,w:'Fonctions non linéaires.'},
-      {q:'Sur quelle plage linéarise-t-on ?',o:['[0°,90°]','[20°,80°]','[40°,60°]','[0°,180°]'],a:2,w:'Plage utile du Maxpid.'},
-      {q:'Équation de la régression ?',o:['y=107,327x+1109,625','y=107,327x−1109,625','y=1,073x−11','y=−107,327x+1109,625'],a:1,w:'Donnée par le fichier de régression.'},
-      {q:'K<sub>es</sub> = ?',o:['107','1/107','1070','1/1070'],a:1,w:'K<sub>es</sub> = Δθ/Δβ = 1/107.'},
-      {q:'À quoi sert la linéarisation ?',o:['Accélérer','Appliquer les méthodes SLCI localement','Supprimer la non-linéarité','Augmenter la précision'],a:1,w:'Valable sur une plage restreinte.'}
-    ]},
-  m3:{title:'Saturation',level:'Niveau 2 · Comprendre',time:'30 min',course:'sat',
-    goal:'Relier l\'effet de Kp à la saturation et retrouver le comportement du système réel.',
-    steps:['Faites varier Kp de 10 à 250 avec la saturation active puis inactive.','Pour Kp=100, relevez la tension maximale.','Comparez les temps de réponse.','Observez le régime permanent : est-il affecté ?'],
-    defi:{q:'Pourquoi la tension est-elle maximale au début de l\'essai ?',
-      a:'L\'erreur est maximale à t=0 (échelon) et elle est amplifiée par Kp : u = Kp·ε.'},
-    qcm:[
-      {q:'Stabilité quand Kp augmente ?',o:['S\'améliore','Se dégrade','Ne change pas','Parfaite'],a:1,w:'Gain de boucle plus élevé.'},
-      {q:'Rapidité quand Kp augmente ?',o:['Se dégrade','S\'améliore','Ne change pas','Nulle'],a:1,w:'Temps de réponse plus court.'},
-      {q:'Valeur de la tension max sur le système réel ?',o:['12 V','21,6 V','50 V','100 V'],a:1,w:'Limitation à 21,6 V.'},
-      {q:'Effet sur le régime permanent ?',o:['Erreur statique','Pas d\'influence','Instabilité','Consigne annulée'],a:1,w:'Saturation = rapidité dégradée, régime permanent inchangé.'},
-      {q:'La saturation est-elle une non-linéarité ?',o:['Non','Oui, discontinue','Oui, continue','Bruit'],a:1,w:'Caractéristique avec coude.'}
-    ]},
-  m4:{title:'Seuil et bande morte',level:'Niveau 2 · Comprendre',time:'30 min',course:'seuil',
-    goal:'Distinguer frottement et adhérence, choisir le bon bloc.',
-    steps:['Observez l\'erreur statique avec Kp=20.','En BO à faible tension, le système reste immobile.','Testez les blocs seuil et bande morte.','Identifiez lequel modélise l\'adhérence seule.'],
-    defi:{q:'Pourquoi un intégrateur peut-il avoir une erreur statique en présence d\'adhérence ?',
-      a:'L\'intégrateur annule l\'erreur <b>si</b> le système peut bouger. Avec l\'adhérence, le moteur reste bloqué tant que la commande n\'a pas atteint le seuil : l\'intégrateur accumule l\'erreur sans que le bras ne bouge, ce qui crée un cycle limite.'},
-    qcm:[
-      {q:'Frottement → erreur statique ?',o:['Non','Oui'],a:1,w:'Le frottement peut créer une erreur statique.'},
-      {q:'Adhérence = non-linéarité ?',o:['Non','Oui, seuil','Non, bruit','Oui, continue'],a:1,w:'Blocage sous un seuil.'},
-      {q:'Bloc pour l\'adhérence seule ?',o:['Saturation','Seuil','Bande morte','Gain'],a:1,w:'Une fois le seuil franchi, retour au linéaire.'},
-      {q:'Bloc pour adhérence + frottement ?',o:['Saturation','Seuil','Bande morte','Dérivée'],a:2,w:'Décalage persistant.'},
-      {q:'Protocole pour mettre en évidence le seuil ?',o:['Grand échelon','Rampe en BO','Bruit blanc','Échelon de perturbation'],a:1,w:'Relevé du courant de démarrage.'}
-    ]},
-  m5:{title:'Correcteur PI et pompage',level:'Niveau 3 · Approfondir',time:'25 min',course:'pi',
-    goal:'Comprendre le rôle conjugué du correcteur intégral et du seuil.',
-    steps:['Écrivez C(p) = (2/255)(Kp + Ki/(4p)).','Observez le pompage avec Kp=50, Ki=10.','Décrivez le cycle.','Concluez sur le rôle conjugué.'],
-    defi:{q:'Pourquoi le pompage est-il un phénomène non linéaire ?',
-      a:'Il résulte de l\'interaction entre un correcteur linéaire (l\'intégrateur) et une non-linéarité (le seuil). Sans le seuil, l\'intégrateur convergerait normalement.'},
-    qcm:[
-      {q:'Équation du correcteur PI ?',o:['C=(2/255)(Kp+Ki/(4p))','C=Kp+Ki·p','C=Kp/(1+τp)','C=Ki/p'],a:0,w:'Correcteur implanté dans la carte.'},
-      {q:'Rôle du terme intégral ?',o:['Augmenter le gain','Annuler l\'erreur statique','Filtrer le bruit','Dériver'],a:1,w:'Accumule l\'erreur.'},
-      {q:'Qu\'est-ce que le pompage ?',o:['Oscillation entretenue','Divergence','Bruit','Saturation'],a:0,w:'Cycle limite.'},
-      {q:'Pourquoi le pompage apparaît ?',o:['PI instable','Intégrateur charge tant que le seuil n\'est pas franchi','Moteur trop puissant','Capteur bruité'],a:1,w:'Interaction intégrateur + seuil.'},
-      {q:'Rôle conjugué PI/seuil ?',o:['Compensation parfaite','Cycle limite','Annulation','Aucune'],a:1,w:'L\'intégrateur pousse la commande jusqu\'au seuil.'}
-    ]}
-};
-
 /* ====================== INTERFACE ====================== */
 const UI={cur:'m1'};
 const AS={key:'m1',tab:'steps',open:false,st:lsGet(KEYS.act,{})};
@@ -864,7 +1141,7 @@ function renderAct(){
   box.dataset.k=tag;box.innerHTML='';
   const a=ACT[AS.key];
   const close=h('button',{class:'btn sm',type:'button',onclick:()=>{AS.open=false;renderAct()}},'Fermer');
-  box.append(h('div',{class:'phead'},h('b',null,'Activité'),h('span',{class:'sub'},a.title),close));
+  box.append(h('div',{class:'phead'},h('b',null,'Activité'),h('span',{class:'sub',html:a.title}),close));
   const nq=a.qcm.length;
   box.append(h('div',{class:'tabs',role:'tablist'},
     h('button',{type:'button',role:'tab','aria-selected':AS.tab==='steps'?'true':'false',onclick:()=>{AS.tab='steps';renderAct()}},'Consignes'),
@@ -874,6 +1151,21 @@ function renderAct(){
     body.append(h('p',{class:'small'},a.level+' · environ '+a.time));
     body.append(h('div',{class:'goal'},h('b',null,'Objectif. '),a.goal));
     body.append(h('ol',{class:'steps'},a.steps.map(s=>h('li',{html:s}))));
+    
+    // Questions du TP dans l'activité
+    if(a.tpQuestions && a.tpQuestions.length>0) {
+      body.append(h('h3',{style:'margin-top:20px;font-size:15px'},'Questions du TP'));
+      a.tpQuestions.forEach(it=>{
+        body.append(h('div',{class:'qa'},
+          h('p',{class:'qq',html:`Question ${it.n}. ${it.q}`}),
+          h('details',null,
+            h('summary',null,'Voir le corrigé'),
+            h('p',{class:'aa',html:it.a})
+          )
+        ));
+      });
+    }
+
     body.append(h('div',{class:'defi'},h('b',null,'Défi'),h('p',{html:a.defi.q}),h('details',null,h('summary',null,'Voir la réponse'),h('p',{html:a.defi.a}))));
     if(a.course)body.append(h('p',null,h('button',{class:'btn',type:'button',onclick:()=>openCourse(a.course)},'Voir le cours : '+courseSection(a.course).t)));
     body.append(h('p',null,h('button',{class:'btn pri',type:'button',onclick:()=>{AS.tab='qcm';renderAct()}},'Passer aux questions')));
@@ -918,7 +1210,7 @@ function renderCourse(){
   const sel=h('select',{class:'ctoc-sel','aria-label':'Aller à une section',onchange:e=>go(e.target.value)},COURSE.map(s=>h('option',{value:s.id,selected:s.id===cur.id},s.t)));
   const body=h('div',{class:'cbody'});
   body.append(h('p',{class:'ckick'},'Cours · TP non-linéarités'));
-  body.append(h('h2',null,cur.t));
+  body.append(h('h2',{html:cur.t}));
   const content=h('div');content.innerHTML=cur.h;body.append(content);
   const cpn=h('div',{class:'cpn'});
   if(idx>0)cpn.append(h('button',{class:'btn',type:'button',onclick:()=>go(COURSE[idx-1].id)},'← '+COURSE[idx-1].t));
