@@ -86,6 +86,7 @@ button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
 .tile.ta{border-color:var(--a)} .tile.tk{border-color:var(--k)} .tile.tb{border-color:var(--b)}
 .tile .l{font-size:.74rem;color:var(--muted)}
 .tile .v{font-family:var(--mono);font-size:1.12rem;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tile .s{font-family:var(--mono);font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;margin-top:2px}
 
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 0;font-size:.82rem;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
@@ -108,7 +109,7 @@ button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
   <header class="top">
     <div>
       <h1>Codeur incrémental</h1>
-      <p>Un disque à n fentes tourne entre une LED et un ou deux capteurs optiques. Réglez n, la vitesse et le nombre de capteurs, puis observez les créneaux et le comptage des fronts montants.</p>
+      <p>Un disque à n fentes tourne entre une LED et un ou deux capteurs optiques. Réglez n, la vitesse et le nombre de capteurs, puis observez les créneaux, le comptage des fronts montants et la vitesse angulaire mesurée avec sa précision.</p>
     </div>
     <div class="seg themes" role="radiogroup" aria-label="Thème d'affichage">
       <input type="radio" name="theme" id="thAuto" value="auto" checked><label for="thAuto">Auto</label>
@@ -153,7 +154,8 @@ button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
 
       <section class="panel" aria-label="Disque et capteurs">
         <h2>Disque et capteurs</h2>
-        <p class="sub">Chaque capteur associe une LED sous le disque et une photodiode au-dessus. Quand une fente passe devant, la lumière arrive à la photodiode et la tension vaut 5 V. B est placé un quart de pas après A.</p>
+        <p class="sub">Chaque capteur associe une LED sous le disque et une photodiode au-dessus. Quand une fente passe devant, la lumière arrive à la photodiode et la tension vaut 5 V. B est placé un quart de pas après A (90° électriques).</p>
+        <p class="sub"><b>Pourquoi un deuxième capteur ?</b> Avec A seul, on sait qu'une fente est passée, mais pas dans quel sens : une impulsion vers la droite et une impulsion vers la gauche sont identiques, et le compteur ne peut qu'augmenter. Le second capteur, décalé d'un quart de pas, lève l'ambiguïté : au front montant de A, B vaut 0 ou 1 selon le sens de rotation. Le compteur k devient alors signé (k + 1 ou k − 1) et, en comptant aussi les fronts descendants, on quadruple la résolution (décodage ×4 : 360°/(4n)).</p>
         <canvas id="disk" role="img" aria-label="Disque à fentes en rotation avec les capteurs A et B"></canvas>
       </section>
     </div>
@@ -164,10 +166,12 @@ button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
         <div class="tiles">
           <div class="tile ta"><div class="l">Période T mesurée (A)</div><div class="v" id="rT">—</div></div>
           <div class="tile ta"><div class="l">Fréquence f mesurée</div><div class="v" id="rF">—</div></div>
+          <div class="tile ta"><div class="l">Vitesse angulaire ω</div><div class="v" id="rOm">—</div><div class="s" id="rOms"></div></div>
           <div class="tile tk"><div class="l" id="rKl">k (signé)</div><div class="v" id="rK">0</div></div>
           <div class="tile tk"><div class="l">Δθ depuis la remise à zéro</div><div class="v" id="rD">0 °</div></div>
           <div class="tile tb"><div class="l">Sens détecté</div><div class="v" id="rS">—</div></div>
         </div>
+        <p class="note"><b>k</b> est le nombre de fronts montants de A comptés depuis la remise à zéro. Il est signé dès qu'il y a deux capteurs : <b>k + 1</b> quand B = 0 au front montant de A, <b>k − 1</b> quand B = 1. Avec A seul, on ajoute 1 à chaque front et le sens n'est pas connu.</p>
       </section>
 
       <section class="panel" aria-label="Chronogramme">
@@ -197,10 +201,16 @@ button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
         </div>
       </section>
 
-      <section class="panel" aria-label="Position angulaire relative">
-        <h2>Position angulaire relative Δθ</h2>
-        <p class="sub">Un codeur incrémental est un capteur relatif : il donne la variation d'angle Δθ depuis la remise à zéro, jamais la position absolue. La courbe est la somme des fronts montants comptés, avec la même échelle de temps que le chronogramme.</p>
-        <canvas id="stairs" role="img" aria-label="Compteur de fronts montants en escalier et angle Δθ correspondant"></canvas>
+      <section class="panel" aria-label="Position et vitesse angulaires">
+        <h2>Position / vitesse angulaire</h2>
+        <p class="sub">Un codeur incrémental est un capteur relatif : il donne la variation d'angle Δθ depuis la remise à zéro, jamais la position absolue. Choisissez d'afficher la position relative (escalier de k) ou la vitesse angulaire estimée avec son incertitude.</p>
+        <div style="max-width:340px;margin:0 0 12px">
+          <div class="seg" role="radiogroup" aria-label="Grandeur affichée">
+            <input type="radio" name="plot" id="plotPos" value="pos" checked><label for="plotPos">Position Δθ</label>
+            <input type="radio" name="plot" id="plotVel" value="vel"><label for="plotVel">Vitesse ω</label>
+          </div>
+        </div>
+        <canvas id="stairs" role="img" aria-label="Position angulaire relative ou vitesse angulaire selon le choix"></canvas>
         <p class="note" id="note"></p>
       </section>
     </div>
@@ -235,6 +245,18 @@ button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
         <p>On retrouve N à partir de la période lue sur le chronogramme.</p>
       </div>
       <div class="f">
+        <h3>Vitesse angulaire</h3>
+        <div class="math">ω = <span class="frac"><span class="u">360°</span><span>T</span></span> = <span class="frac"><span class="u">2π</span><span>T</span></span> <span class="u">rad/s</span></div>
+        <div class="num" id="f8"></div>
+        <p>Un tour complet (360°) correspond à n périodes T.</p>
+      </div>
+      <div class="f">
+        <h3>Incertitude sur la vitesse</h3>
+        <div class="math">δω = <span class="frac"><span>Δθ<sub class="u">min</sub></span><span>τ</span></span> = <span class="frac"><span class="u">360°</span><span>n · τ</span></span></div>
+        <div class="num" id="f7"></div>
+        <p>Sur une durée d'observation τ, le codeur ne délivre que n·N·τ/60 impulsions : l'incertitude relative vaut 1/(nombre d'impulsions). Plus n est grand, plus la mesure est précise.</p>
+      </div>
+      <div class="f">
         <h3>Variation angulaire relative</h3>
         <div class="math">Δθ = k × <span class="frac"><span class="u">360°</span><span>n</span></span></div>
         <div class="num" id="f5"></div>
@@ -257,7 +279,7 @@ var $=function(id){return document.getElementById(id);};
 var WMAX=20, DT=0.0005;
 function zoomToW(v){return Number((0.05*Math.pow(400,v/100)).toPrecision(2));}
 var W=zoomToW(80);
-var V={A:true,B:true,sup:false};
+var V={A:true,B:true,sup:false,plot:'pos'};
 var S={n:8,N:15,dir:1,two:true,run:true,phi:0,t:0,k:0,prevA:0,prevB:0,lastRise:null,prevRise:null,Tm:null,lastDir:null};
 var ts=[],As=[],Bs=[],Ks=[],head=0,evts=[];
 function mod(x,p){return ((x%p)+p)%p;}
@@ -445,7 +467,14 @@ function drawChrono(T){
   ctx.restore();
 }
 
+function omegaInfo(){
+  var om=(S.Tm!==null&&S.Tm>1e-9)?360/(S.n*S.Tm):6*S.N;
+  var dw=360/(S.n*W);
+  return {om:om,dw:dw};
+}
+
 function drawStairs(T){
+  if(V.plot==='vel'){drawVel(T);return;}
   var f=fit(sc),ctx=f.ctx,w=f.w,h=f.h;
   var ml=46,mr=62,mt=22,mb=26,pw=w-ml-mr,ph=h-mt-mb,t0=S.t-W,i,i0=startIdx(t0);
   var lo=Infinity,hi=-Infinity;
@@ -481,12 +510,49 @@ function drawStairs(T){
   ctx.beginPath();ctx.arc(X(S.t),Y(S.k),4.5,0,2*Math.PI);ctx.fill();ctx.stroke();
 }
 
+function drawVel(T){
+  var f=fit(sc),ctx=f.ctx,w=f.w,h=f.h;
+  var ml=64,mr=16,mt=22,mb=26,pw=w-ml-mr,ph=h-mt-mb,t0=S.t-W;
+  var oi=omegaInfo(),om=oi.om,dw=oi.dw;
+  var half=Math.max(4*dw,0.12*om,0.5);
+  var lo=Math.max(0,om-half),hi=om+half;
+  var X=function(t){return ml+(t-t0)/W*pw;};
+  var Y=function(v){return mt+ph-(v-lo)/(hi-lo)*ph;};
+  vgrid(ctx,T,ml,pw,mt,h-mb,h-8,t0);
+  var steps=[0.5,1,2,5,10,20,25,50,100,200,250,500,1000,2000,5000],st=5000,i;
+  for(i=0;i<steps.length;i++){if((hi-lo)/steps[i]<=6){st=steps[i];break;}}
+  ctx.font='11px '+T.mono;ctx.textBaseline='middle';
+  for(var g=Math.ceil(lo/st)*st;g<=hi+1e-9;g+=st){
+    var y=Y(g);
+    ctx.strokeStyle=g===0?T.muted:T.grid;ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+pw,y);ctx.stroke();
+    ctx.fillStyle=T.muted;ctx.textAlign='right';ctx.fillText(fmt(g,st<1?1:0),ml-6,y);
+  }
+  ctx.fillStyle=T.k;ctx.font='600 11px '+T.mono;ctx.textBaseline='alphabetic';
+  ctx.textAlign='left';ctx.fillText('ω (°/s)',4,12);
+  var vTop=Math.min(hi,om+dw),vBot=Math.max(lo,om-dw);
+  ctx.fillStyle=T.k;ctx.globalAlpha=0.15;
+  ctx.fillRect(ml,Y(vTop),pw,Y(vBot)-Y(vTop));
+  ctx.globalAlpha=1;
+  ctx.save();ctx.beginPath();ctx.rect(ml,mt-2,pw,ph+4);ctx.clip();
+  ctx.strokeStyle=T.k;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.moveTo(ml,Y(om));ctx.lineTo(ml+pw,Y(om));ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle=T.k;ctx.strokeStyle=T.panel;ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(ml+pw-6,Y(om),4.5,0,2*Math.PI);ctx.fill();ctx.stroke();
+  ctx.fillStyle=T.k;ctx.font='600 12px '+T.mono;ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.fillText('ω = '+fmt(om,1)+' ± '+fmt(dw,1)+' °/s',ml+8,mt+16);
+}
+
 var cache={};
 function setT(id,s){if(cache[id]!==s){cache[id]=s;$(id).textContent=s;}}
 function info(){
   var n=S.n,N=S.N,p=P(),f=n*N/60,T=60/(n*N),dd=S.k*p;
+  var oi=omegaInfo();
   setT('rT',S.Tm===null?'—':(S.Tm<1?fmt(S.Tm*1000,1)+' ms':fmt(S.Tm,3)+' s'));
   setT('rF',S.Tm===null?'—':fmt(1/S.Tm,2)+' Hz');
+  setT('rOm',fmt(oi.om,1)+' ± '+fmt(oi.dw,1)+' °/s');
+  setT('rOms','± '+fmt(100*oi.dw/oi.om,0)+' % sur '+fmtW(W));
   setT('rKl',S.two?'k (signé)':'k (impulsions)');
   setT('rK',(S.k>0?'+':'')+S.k);
   setT('rD',(S.k>0?'+':'')+fmt(dd,1)+' °');
@@ -496,11 +562,15 @@ function info(){
   setT('f2',n+' × '+N+' / 60 = '+fmt(f,2)+' Hz');
   setT('f3','60 / ('+n+' × '+N+') = '+fmt(T,3)+' s');
   setT('f4',S.Tm===null?'En attente de deux fronts montants de A':'60 / ('+n+' × '+fmt(S.Tm,3)+') = '+fmt(60/(n*S.Tm),1)+' tr/min');
+  setT('f8','360° / '+fmt(T,3)+' s = '+fmt(360/T,1)+' °/s = '+fmt(2*Math.PI/T,2)+' rad/s');
+  setT('f7','360° / ('+n+' × '+fmtW(W)+') = '+fmt(oi.dw,1)+' °/s');
   setT('f5',S.k+' × '+fmt(p,2)+'° = '+fmt(dd,1)+'°');
   setT('f6',S.two?('T/4 = '+fmt(T/4,3)+' s · B décalé de 360°/(4n) = '+fmt(sep(),2)+'° (un quart de pas)'):'Capteur B absent : pas de quadrature');
-  setT('note',S.two
-    ?'Avec A et B, k augmente dans un sens et diminue dans l\'autre : le sens se lit sur B au moment du front montant de A.'
-    :'Avec A seul, le sens est inconnu et k ne peut que croître. Passez en antihoraire pour voir l\'erreur : Δθ continue d\'augmenter.');
+  setT('note',V.plot==='vel'
+    ?'La vitesse angulaire se déduit de la période : ω = Δθ/T. La bande claire représente l\'incertitude due à la résolution du codeur, ±360°/(n·τ) : elle se resserre quand n augmente ou quand on observe plus longtemps.'
+    :(S.two
+      ?'Avec A et B, k augmente dans un sens et diminue dans l\'autre : le sens se lit sur B au moment du front montant de A.'
+      :'Avec A seul, le sens est inconnu et k ne peut que croître. Passez en antihoraire pour voir l\'erreur : Δθ continue d\'augmenter.'));
 }
 function ctrlText(){
   $('nOut').textContent=S.n;
@@ -544,6 +614,8 @@ $('chkB').addEventListener('change',function(e){V.B=e.target.checked;});
 $('viewSep').addEventListener('change',function(){V.sup=false;});
 $('viewSup').addEventListener('change',function(){V.sup=true;});
 $('zoom').addEventListener('input',function(e){W=zoomToW(+e.target.value);ctrlText();});
+$('plotPos').addEventListener('change',function(){V.plot='pos';});
+$('plotVel').addEventListener('change',function(){V.plot='vel';});
 
 reset();
 var i0,warm=Math.round(WMAX/DT);
