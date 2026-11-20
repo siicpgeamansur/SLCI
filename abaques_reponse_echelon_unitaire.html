@@ -3,7 +3,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;1,400&display=swap">
 <style>
-/* Mise en page à la GeoGebra : volet « Algèbre » à gauche (curseur ξ et valeurs), deux vues graphiques à droite sur fond blanc.
+/* Mise en page à la GeoGebra : volet « Algèbre » à gauche (curseurs ξ, K, ω₀, E₀ et valeurs), vues graphiques à droite sur fond blanc.
    Sur écran étroit, le volet passe au-dessus et les graphiques s'empilent. */
 :root {
   --bg: #ffffff;
@@ -18,6 +18,9 @@
   --ui: #6557d2;
   --curve: #1565c0;
   --band: #d32f2f;
+  --cons: #2e7d32;
+  --mk1: #e65100;
+  --mk2: #00838f;
   --font: 'Open Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
   color-scheme: light;
 }
@@ -50,7 +53,7 @@ header p { margin: 0; color: var(--muted); font-style: italic; overflow-wrap: an
 .app { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: start; }
 
 .view { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; min-width: 0; }
-.view > h2, .tab {
+.view > h2 {
   margin: 0;
   padding: 7px 12px;
   background: var(--head);
@@ -66,9 +69,11 @@ header p { margin: 0; color: var(--muted); font-style: italic; overflow-wrap: an
 .dot.blue { background: var(--curve); box-shadow: 0 0 0 1px var(--curve); }
 .dot.red { background: var(--band); box-shadow: 0 0 0 1px var(--band); }
 .dot.grey { background: var(--muted); box-shadow: 0 0 0 1px var(--muted); }
+.dot.green { background: var(--cons); box-shadow: 0 0 0 1px var(--cons); }
 .item .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .eq { display: flex; align-items: center; gap: 8px; }
 .eq label { font-style: italic; font-size: 1.05rem; }
+.eq .unit { color: var(--muted); font-size: 0.85rem; }
 .eq input[type="number"] {
   width: 6.5rem;
   font: inherit;
@@ -117,12 +122,16 @@ figure.view { margin: 0; display: flex; flex-direction: column; }
 .plot { min-width: 0; padding: 6px 8px 0; }
 .plot svg { display: block; width: 100%; height: auto; overflow: visible; }
 figcaption { color: var(--muted); font-size: 0.8rem; padding: 4px 12px 10px; text-wrap: pretty; }
+.key { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 4px; border-radius: 2px; }
+.key.cons { background: var(--cons); }
+.key.out { background: var(--curve); }
 
 figure.wide { grid-column: 1 / -1; }
 
 /* SVG */
 svg .curve-sub { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linejoin: round; }
 svg text { font-family: var(--font); font-size: 12px; fill: var(--fg); }
+svg .halo { paint-order: stroke; stroke: #ffffff; stroke-width: 3px; stroke-linejoin: round; }
 svg .axis-title { font-size: 13px; font-style: italic; }
 svg .tick-label { fill: var(--muted); }
 svg .g-major { stroke: var(--grid); stroke-width: 1; }
@@ -131,6 +140,8 @@ svg .axis { stroke: var(--axis); stroke-width: 1.4; }
 svg .arrow { fill: var(--axis); }
 svg .ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 5 4; opacity: 0.7; }
 svg .curve { fill: none; stroke: var(--curve); stroke-width: 2.4; stroke-linejoin: round; }
+svg .cons-line { fill: none; stroke: var(--cons); stroke-width: 2.2; stroke-linejoin: round; }
+svg .cons-label { fill: var(--cons); font-weight: 600; }
 svg .band-line { stroke: var(--band); stroke-width: 1.5; stroke-dasharray: 6 4; }
 svg .band-fill { fill: var(--band); opacity: 0.06; }
 svg .tr-line { stroke: var(--band); stroke-width: 1.8; }
@@ -143,6 +154,12 @@ svg .d1-seg { stroke: var(--ui); stroke-width: 3.2; stroke-linecap: round; }
 svg .d1-dot { fill: var(--ui); stroke: var(--panel); stroke-width: 2; }
 svg .d1-label { fill: var(--ui); font-weight: 600; }
 svg .pt-label { fill: var(--ui); font-weight: 600; }
+svg .mk1 { --mk: var(--mk1); }
+svg .mk2 { --mk: var(--mk2); }
+svg .mark-guide { stroke: var(--mk); stroke-width: 1.4; stroke-dasharray: 4 3; }
+svg .mark-tick { stroke: var(--mk); stroke-width: 2.4; }
+svg .mark-dot { fill: var(--mk); stroke: var(--panel); stroke-width: 2; }
+svg .mark-label { fill: var(--mk); font-weight: 600; }
 
 @media (max-width: 1100px) {
   .app { grid-template-columns: minmax(0, 1fr); }
@@ -158,42 +175,83 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
 <div class="wrap">
   <header>
     <h1>Réponse indicielle du second ordre</h1>
-    <p>H(p) = K / (1 + (2ξ/ω₀)·p + p²/ω₀²)</p>
+    <p>H(p) = S(p)/E(p) = K / (1 + (2ξ/ω₀)·p + p²/ω₀²), avec une consigne e(t) = E₀ (échelon)</p>
   </header>
 
   <div class="app">
-    <aside class="view" aria-label="Réglage du coefficient d'amortissement">
+    <aside class="view" aria-label="Réglage des paramètres">
       <h2>Algèbre</h2>
+
       <div class="item">
         <span class="dot" aria-hidden="true"></span>
         <div class="body">
           <div class="eq">
             <label for="z-num">ξ =</label>
-            <input type="number" id="z-num" min="0.1" max="10" step="0.01" inputmode="decimal">
+            <input type="number" id="z-num" min="0.1" max="10" step="any" inputmode="decimal">
           </div>
           <input type="range" id="z-range" min="0" max="1000" step="1" aria-label="Curseur de ξ (échelle logarithmique)">
           <div class="scale" aria-hidden="true"><span>0,1</span><span>1</span><span>10</span></div>
           <div class="presets" id="presets" role="group" aria-label="Valeurs usuelles de ξ"></div>
         </div>
       </div>
+
+      <div class="item">
+        <span class="dot" aria-hidden="true"></span>
+        <div class="body">
+          <div class="eq">
+            <label for="K-num">K =</label>
+            <input type="number" id="K-num" min="0.1" max="10" step="any" inputmode="decimal">
+          </div>
+          <input type="range" id="K-range" min="0" max="1000" step="1" aria-label="Curseur de K, le gain statique (échelle logarithmique)">
+          <div class="scale" aria-hidden="true"><span>0,1</span><span>1</span><span>10</span></div>
+        </div>
+      </div>
+
+      <div class="item">
+        <span class="dot" aria-hidden="true"></span>
+        <div class="body">
+          <div class="eq">
+            <label for="w-num">ω₀ =</label>
+            <input type="number" id="w-num" min="0.1" max="10" step="any" inputmode="decimal">
+            <span class="unit">rad/s</span>
+          </div>
+          <input type="range" id="w-range" min="0" max="1000" step="1" aria-label="Curseur de oméga zéro, la pulsation propre (échelle logarithmique)">
+          <div class="scale" aria-hidden="true"><span>0,1</span><span>1</span><span>10</span></div>
+        </div>
+      </div>
+
+      <div class="item">
+        <span class="dot green" aria-hidden="true"></span>
+        <div class="body">
+          <div class="eq">
+            <label for="E-num">E₀ =</label>
+            <input type="number" id="E-num" min="0.1" max="10" step="any" inputmode="decimal">
+          </div>
+          <input type="range" id="E-range" min="0" max="1000" step="1" aria-label="Curseur de E zéro, l'amplitude de l'échelon (échelle logarithmique)">
+          <div class="scale" aria-hidden="true"><span>0,1</span><span>1</span><span>10</span></div>
+        </div>
+      </div>
+
       <div aria-live="polite">
         <div class="item"><span class="dot grey" aria-hidden="true"></span><div class="body"><div class="line"><span class="k">Régime</span><span class="v" id="o-regime"></span></div></div></div>
         <div class="item"><span class="dot red" aria-hidden="true"></span><div class="body"><div class="line"><span class="k">Premier dépassement</span><span class="v" id="o-over"></span></div></div></div>
-        <div class="item"><span class="dot blue" aria-hidden="true"></span><div class="body"><div class="line"><span class="k"><i>t</i><sub>r5%</sub>·<i>ω</i><sub>0</sub> =</span><span class="v" id="o-tr"></span></div></div></div>
+        <div class="item"><span class="dot green" aria-hidden="true"></span><div class="body"><div class="line"><span class="k">Valeur finale <i>s</i>(∞) = <i>K</i>·<i>E</i><sub>0</sub> =</span><span class="v" id="o-fin"></span></div></div></div>
+        <div class="item"><span class="dot blue" aria-hidden="true"></span><div class="body"><div class="line"><span class="k"><i>t</i><sub>r5%</sub>·<i>ω</i><sub>0</sub> =</span><span class="v" id="o-trn"></span></div></div></div>
+        <div class="item"><span class="dot blue" aria-hidden="true"></span><div class="body"><div class="line"><span class="k"><i>t</i><sub>r5%</sub> =</span><span class="v" id="o-tr"></span></div></div></div>
       </div>
-      <p class="note">ω₀ = 1 rad/s et K = 1 : le temps est donc en secondes et <i>t</i><sub>r5%</sub>·ω₀ = <i>t</i><sub>r5%</sub>. ξ varie de 0,1 à 10.</p>
+      <p class="note">ξ, K, ω₀ et E₀ varient de 0,1 à 10. Le temps de réponse réduit <i>t</i><sub>r5%</sub>·ω₀ ne dépend que de ξ : le graphique 1 ne change pas avec K, ω₀ et E₀. Valeurs par défaut : K = 1, ω₀ = 1 rad/s, E₀ = 1.</p>
     </aside>
 
     <div class="charts">
       <figure class="view">
         <h2>Graphique 1 : temps de réponse à 5 % réduit</h2>
         <div class="plot" id="plotL"></div>
-        <figcaption>Chaque marche correspond à un dépassement de plus qui passe sous la bande ±5 %.</figcaption>
+        <figcaption>Chaque marche correspond à un dépassement de plus qui passe sous la bande ±5 %. Repères lus sur les axes : <b style="color:var(--mk1)">ξ = 0,69 (= ln 2)</b> donne <i>t</i><sub>r5%</sub>·ω₀ ≈ 2,9 ≃ 3, et <b style="color:var(--mk2)">ξ = 1</b> donne ≈ 4,7 ≃ 5.</figcaption>
       </figure>
       <figure class="view">
-        <h2>Graphique 2 : réponse à un échelon</h2>
+        <h2>Graphique 2 : réponse à un échelon E₀</h2>
         <div class="plot" id="plotR"></div>
-        <figcaption>La bande rouge est ±5 % de la valeur finale. La verticale rouge marque la dernière entrée dans cette bande. En violet, le premier dépassement D<sub>1</sub> (ξ &lt; 1), à l'instant du premier pic.</figcaption>
+        <figcaption><span class="key cons"></span>Consigne <i>e</i>(<i>t</i>) = <i>E</i><sub>0</sub>. <span class="key out"></span>Réponse <i>s</i>(<i>t</i>). La bande rouge est ±5 % de la valeur finale <i>K</i>·<i>E</i><sub>0</sub>. La verticale rouge marque la dernière entrée dans cette bande. En violet, le premier dépassement D<sub>1</sub> (ξ &lt; 1), à l'instant du premier pic.</figcaption>
       </figure>
       <figure class="view wide" id="figD" hidden>
         <h2>Graphique 3 : abaque des dépassements (ξ &lt; 1)</h2>
@@ -210,7 +268,7 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
   var $ = function (id) { return document.getElementById(id); };
   var fmt = function (x, d) { return x.toFixed(d).replace('.', ',').replace('-', '−'); };
 
-  /* Réponse indicielle normalisée S(t)/K, avec ω0 = 1 */
+  /* Réponse indicielle normalisée s(t)/(K·E0), en temps réduit τ = ω0·t */
   function step(z, t) {
     if (z < 1 - EPS) {
       var wd = Math.sqrt(1 - z * z);
@@ -232,7 +290,7 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
     return 0.5 * (a + b);
   }
 
-  /* Temps de réponse à 5 % (ω0 = 1) : dernière entrée dans la bande 1 ± 0,05 */
+  /* Temps de réponse à 5 % réduit t_r5%·ω0 : dernière entrée dans la bande 1 ± 0,05 */
   function settle(z) {
     var up = function (t) { return step(z, t) - (1 - BAND); };
     if (z < 1 - EPS) {
@@ -249,7 +307,7 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
     return bisect(up, 0, b);
   }
 
-  /* Courbe de gauche, calculée une fois, avec les sauts placés exactement */
+  /* Courbe du graphique 1, calculée une fois, avec les sauts placés exactement */
   var curve = (function () {
     var zs = [], N = 1400, i, k;
     for (i = 0; i <= N; i++) zs.push(ZMIN * Math.pow(ZMAX / ZMIN, i / N));
@@ -263,11 +321,18 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
     return zs.map(function (z) { return [z, settle(z)]; });
   })();
 
+  /* Repères du graphique 1 : ξ = ln 2 ≈ 0,69 → ≃ 3 ; ξ = 1 → ≃ 5 */
+  var MARKS = [
+    { z: Math.LN2, label: '0,69', cls: 'mk1' },
+    { z: 1, label: '1', cls: 'mk2' }
+  ];
+
   function niceCeil(x) {
     var e = Math.pow(10, Math.floor(Math.log10(x))), m = [1, 2, 5, 10];
     for (var i = 0; i < m.length; i++) if (m[i] * e >= x) return m[i] * e;
     return 10 * e;
   }
+  function decimals(stepValue) { return Math.max(0, Math.ceil(-Math.log10(stepValue) - 1e-9)); }
   function pow10Label(exp) {
     return '10<tspan dy="-5" font-size="9">' + (exp < 0 ? '−' : '') + Math.abs(exp) + '</tspan>';
   }
@@ -287,19 +352,31 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
       '<polygon class="arrow" points="' + x0 + ',' + (y1 - 12) + ' ' + (x0 - 4) + ',' + (y1 - 3) + ' ' + (x0 + 4) + ',' + (y1 - 3) + '"/>';
   }
 
+  /* Graphique 1 : t_r5%·ω0 en fonction de ξ */
   function drawLeft(z, tr) {
     var host = $('plotL');
     var W = Math.max(260, host.clientWidth - 16), H = Math.round(Math.max(300, W * 0.92));
-    var m = { l: 58, r: 22, t: 20, b: 48 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+    var m = { l: 68, r: 22, t: 20, b: 62 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
     var X = function (v) { return m.l + (Math.log10(v) + 1) / 2 * pw; };
     var Y = function (v) { return m.t + (1 - Math.log10(v) / 2) * ph; };
-    var s = '', d, k;
+    var s = '', labels = '', d, k;
     for (d = 0.1; d < 10; d *= 10) for (k = 2; k <= 9; k++) s += line('g-minor', X(d * k), m.t, X(d * k), m.t + ph);
     for (d = 1; d < 100; d *= 10) for (k = 2; k <= 9; k++) s += line('g-minor', m.l, Y(d * k), m.l + pw, Y(d * k));
     [0.1, 1, 10].forEach(function (v) { s += line('g-major', X(v), m.t, X(v), m.t + ph); });
     [1, 10, 100].forEach(function (v) { s += line('g-major', m.l, Y(v), m.l + pw, Y(v)); });
     s += line('ref', X(1), m.t, X(1), m.t + ph) + line('ref', m.l, Y(10), m.l + pw, Y(10));
     s += '<path class="curve" d="' + path(curve, X, Y) + '"/>';
+
+    MARKS.forEach(function (p) {
+      var v = settle(p.z), x = X(p.z), y = Y(v);
+      s += '<g class="' + p.cls + '">' + line('mark-guide', x, y, x, m.t + ph) + line('mark-guide', m.l, y, x, y) +
+        '<circle class="mark-dot" cx="' + x.toFixed(2) + '" cy="' + y.toFixed(2) + '" r="4.5"/></g>';
+      /* valeurs lues sur leurs axes : ξ sous l'axe horizontal, t_r5%·ω0 à gauche de l'axe vertical */
+      labels += '<g class="' + p.cls + '">' + line('mark-tick', x, m.t + ph, x, m.t + ph + 6) + line('mark-tick', m.l - 6, y, m.l, y) +
+        '<text class="mark-label halo" x="' + x.toFixed(2) + '" y="' + (m.t + ph + 35) + '" text-anchor="middle">' + p.label + '</text>' +
+        '<text class="mark-label halo" x="' + (m.l - 10) + '" y="' + (y + 4).toFixed(2) + '" text-anchor="end">' + fmt(v, 1) + ' ≃ ' + Math.round(v) + '</text></g>';
+    });
+
     s += line('cur-line', X(z), Y(1), X(z), Y(tr));
     s += '<circle class="cur-dot" cx="' + X(z).toFixed(2) + '" cy="' + Y(tr).toFixed(2) + '" r="5.5"/>';
     s += axes(m, pw, ph);
@@ -311,61 +388,77 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
       s += line('axis', m.l - 5, Y(Math.pow(10, e)), m.l, Y(Math.pow(10, e)));
       s += '<text class="tick-label" x="' + (m.l - 9) + '" y="' + (Y(Math.pow(10, e)) + 4).toFixed(2) + '" text-anchor="end">' + pow10Label(e) + '</text>';
     });
+    s += labels;
     s += '<text class="axis-title" x="' + (m.l + pw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">coefficient d’amortissement ξ</text>';
     s += '<text class="axis-title" transform="translate(15 ' + (m.t + ph / 2) + ') rotate(-90)" text-anchor="middle"><tspan>t</tspan><tspan dy="3" font-size="9">r5%</tspan><tspan dy="-3">·ω</tspan><tspan dy="3" font-size="9">0</tspan></text>';
-    host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Temps de réponse à 5 % réduit en fonction de ξ, pour ξ = ' + fmt(z, 3) + ' : ' + fmt(tr, 2) + '">' + s + '</svg>';
+    host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Temps de réponse à 5 % réduit en fonction de ξ, pour ξ = ' + fmt(z, 3) + ' : ' + fmt(tr, 2) + '. Repères : ξ = 0,69 donne environ 3, ξ = 1 donne environ 5.">' + s + '</svg>';
   }
 
-  function drawRight(z, tr) {
+  /* Graphique 2 : consigne e(t) = E0 et réponse s(t) */
+  function drawRight(trn) {
+    var z = P.z, K = P.K, w = P.w, E = P.E;
     var host = $('plotR');
     var W = Math.max(260, host.clientWidth - 16), H = Math.round(Math.max(290, W * 0.68));
-    var m = { l: 50, r: 22, t: 20, b: 48 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
-    var tmax = 50, YMAX = 1.8;
+    var m = { l: 58, r: 22, t: 20, b: 48 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+
+    var tmax = niceCeil(50 / w), tstep = tmax / 5, tdec = decimals(tstep);
+    var d1 = z < 1 - 1e-9 ? Math.exp(-Math.PI * z / Math.sqrt(1 - z * z)) : 0;
+    var fin = K * E;
+    var raw = Math.max(E, fin * (1 + Math.max(d1, BAND))) * 1.03;
+    var ystep = niceCeil(raw / 6), ymax = Math.ceil(raw / ystep - 1e-9) * ystep, nY = Math.round(ymax / ystep), ydec = decimals(ystep);
+
     var X = function (t) { return m.l + t / tmax * pw; };
-    var Y = function (v) { return m.t + (1 - v / YMAX) * ph; };
+    var Y = function (v) { return m.t + (1 - v / ymax) * ph; };
     var s = '', i, pts = [], N = 1000;
-    for (i = 0; i <= N; i++) { var t = tmax * i / N; pts.push([t, step(z, t)]); }
-    for (i = 0; i <= 5; i++) s += line('g-major', X(tmax * i / 5), m.t, X(tmax * i / 5), m.t + ph);
-    for (i = 0; i <= 9; i++) s += line(i % 1 === 0 ? 'g-major' : 'g-minor', m.l, Y(0.2 * i), m.l + pw, Y(0.2 * i));
-    s += '<rect class="band-fill" x="' + m.l + '" y="' + Y(1 + BAND).toFixed(2) + '" width="' + pw + '" height="' + (Y(1 - BAND) - Y(1 + BAND)).toFixed(2) + '"/>';
-    s += line('band-line', m.l, Y(1 + BAND), m.l + pw, Y(1 + BAND)) + line('band-line', m.l, Y(1 - BAND), m.l + pw, Y(1 - BAND));
-    s += '<clipPath id="clipR"><rect x="' + m.l + '" y="' + m.t + '" width="' + pw + '" height="' + ph + '"/></clipPath>';
+    for (i = 0; i <= N; i++) { var t = tmax * i / N; pts.push([t, fin * step(z, w * t)]); }
+    for (i = 0; i <= 5; i++) s += line('g-major', X(tstep * i), m.t, X(tstep * i), m.t + ph);
+    for (i = 0; i <= nY; i++) s += line('g-major', m.l, Y(ystep * i), m.l + pw, Y(ystep * i));
+
+    s += '<rect class="band-fill" x="' + m.l + '" y="' + Y(fin * (1 + BAND)).toFixed(2) + '" width="' + pw + '" height="' + (Y(fin * (1 - BAND)) - Y(fin * (1 + BAND))).toFixed(2) + '"/>';
+    s += line('band-line', m.l, Y(fin * (1 + BAND)), m.l + pw, Y(fin * (1 + BAND))) + line('band-line', m.l, Y(fin * (1 - BAND)), m.l + pw, Y(fin * (1 - BAND)));
+    s += '<clipPath id="clipR"><rect x="' + m.l + '" y="' + (m.t - 2) + '" width="' + pw + '" height="' + (ph + 2) + '"/></clipPath>';
+
+    /* consigne : échelon de 0 à E0 à l'instant t = 0 */
+    s += '<path class="cons-line" d="M' + X(0).toFixed(2) + ' ' + Y(0).toFixed(2) + 'L' + X(0).toFixed(2) + ' ' + Y(E).toFixed(2) + 'L' + X(tmax).toFixed(2) + ' ' + Y(E).toFixed(2) + '"/>';
     s += '<path class="curve" clip-path="url(#clipR)" d="' + path(pts, X, Y) + '"/>';
-    var sTr = step(z, tr), left = X(tr) > m.l + pw * 0.72;
-    var trTxt = '<tspan font-style="italic">t</tspan><tspan dy="3" font-size="9">r5%</tspan><tspan dy="-3"> = ' + fmt(tr, 1) + ' s</tspan>';
-    if (tr <= tmax) {
-      s += line('tr-line', X(tr), Y(0), X(tr), Y(sTr));
-      s += '<circle class="tr-dot" cx="' + X(tr).toFixed(2) + '" cy="' + Y(sTr).toFixed(2) + '" r="5"/>';
-      s += '<text class="tr-label" x="' + (X(tr) + (left ? -8 : 8)).toFixed(2) + '" y="' + (Y(0) - 8) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + trTxt + '</text>';
+
+    var trs = trn / w, sTr = fin * step(z, trn), left = X(trs) > m.l + pw * 0.72;
+    var trTxt = '<tspan font-style="italic">t</tspan><tspan dy="3" font-size="9">r5%</tspan><tspan dy="-3"> = ' + fmt(trs, trs < 10 ? 2 : 1) + ' s</tspan>';
+    if (trs <= tmax) {
+      s += line('tr-line', X(trs), Y(0), X(trs), Y(sTr));
+      s += '<circle class="tr-dot" cx="' + X(trs).toFixed(2) + '" cy="' + Y(sTr).toFixed(2) + '" r="5"/>';
+      s += '<text class="tr-label halo" x="' + (X(trs) + (left ? -8 : 8)).toFixed(2) + '" y="' + (Y(0) - 8) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + trTxt + '</text>';
     } else {
-      s += '<text class="tr-label" x="' + (m.l + pw - 8) + '" y="' + (Y(0) - 8) + '" text-anchor="end">' + trTxt + ' (hors échelle)</text>';
+      s += '<text class="tr-label halo" x="' + (m.l + pw - 8) + '" y="' + (Y(0) - 8) + '" text-anchor="end">' + trTxt + ' (hors échelle)</text>';
     }
     if (z < 1 - 1e-9) {
-      var wd = Math.sqrt(1 - z * z), tp = Math.PI / wd, d1 = Math.exp(-Math.PI * z / wd), pk = 1 + d1;
+      var wd = Math.sqrt(1 - z * z), tp = Math.PI / (w * wd), pk = fin * (1 + d1);
       if (tp <= tmax) {
         var rightD = X(tp) > m.l + pw * 0.72;
         s += line('d1-guide', m.l, Y(pk), X(tp), Y(pk)) + line('d1-guide', X(tp), Y(0), X(tp), Y(pk));
-        s += line('d1-seg', X(tp), Y(1), X(tp), Y(pk));
+        s += line('d1-seg', X(tp), Y(fin), X(tp), Y(pk));
         s += '<circle class="d1-dot" cx="' + X(tp).toFixed(2) + '" cy="' + Y(pk).toFixed(2) + '" r="5"/>';
-        s += '<text class="d1-label" x="' + (X(tp) + (rightD ? -9 : 9)).toFixed(2) + '" y="' + (Y(pk) - 9).toFixed(2) + '" text-anchor="' + (rightD ? 'end' : 'start') + '"><tspan font-style="italic">D</tspan><tspan dy="3" font-size="9">1</tspan><tspan dy="-3"> = ' + fmt(d1 * 100, d1 < 0.1 ? 2 : 1) + ' %</tspan></text>';
+        s += '<text class="d1-label halo" x="' + (X(tp) + (rightD ? -9 : 9)).toFixed(2) + '" y="' + (Y(pk) - 9).toFixed(2) + '" text-anchor="' + (rightD ? 'end' : 'start') + '"><tspan font-style="italic">D</tspan><tspan dy="3" font-size="9">1</tspan><tspan dy="-3"> = ' + fmt(d1 * 100, d1 < 0.1 ? 2 : 1) + ' %</tspan></text>';
       }
     }
+    s += '<text class="cons-label halo" x="' + (m.l + pw - 6) + '" y="' + (Y(E) - 12).toFixed(2) + '" text-anchor="end"><tspan font-style="italic">E</tspan><tspan dy="3" font-size="9">0</tspan><tspan dy="-3"> = ' + fmt(E, 2) + '</tspan></text>';
+
     s += axes(m, pw, ph);
     for (i = 0; i <= 5; i++) {
-      var tv = tmax * i / 5;
+      var tv = tstep * i;
       s += line('axis', X(tv), m.t + ph, X(tv), m.t + ph + 5);
-      s += '<text class="tick-label" x="' + X(tv).toFixed(2) + '" y="' + (m.t + ph + 20) + '" text-anchor="middle">' + fmt(tv, tv % 1 ? 1 : 0) + '</text>';
+      s += '<text class="tick-label" x="' + X(tv).toFixed(2) + '" y="' + (m.t + ph + 20) + '" text-anchor="middle">' + fmt(tv, tdec) + '</text>';
     }
-    for (i = 0; i <= 9; i++) {
-      s += line('axis', m.l - 5, Y(0.2 * i), m.l, Y(0.2 * i));
-      s += '<text class="tick-label" x="' + (m.l - 9) + '" y="' + (Y(0.2 * i) + 4).toFixed(2) + '" text-anchor="end">' + fmt(0.2 * i, 1) + '</text>';
+    for (i = 0; i <= nY; i++) {
+      s += line('axis', m.l - 5, Y(ystep * i), m.l, Y(ystep * i));
+      s += '<text class="tick-label" x="' + (m.l - 9) + '" y="' + (Y(ystep * i) + 4).toFixed(2) + '" text-anchor="end">' + fmt(ystep * i, ydec) + '</text>';
     }
     s += '<text class="axis-title" x="' + (m.l + pw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">temps <tspan>t</tspan> en s</text>';
-    s += '<text class="axis-title" transform="translate(14 ' + (m.t + ph / 2) + ') rotate(-90)" text-anchor="middle">S(<tspan>t</tspan>) / K</text>';
-    host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Réponse indicielle S(t)/K pour ξ = ' + fmt(z, 3) + '">' + s + '</svg>';
+    s += '<text class="axis-title" transform="translate(14 ' + (m.t + ph / 2) + ') rotate(-90)" text-anchor="middle">e(<tspan>t</tspan>), s(<tspan>t</tspan>)</text>';
+    host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Consigne E0 = ' + fmt(E, 2) + ' et réponse s(t) pour ξ = ' + fmt(z, 3) + ', K = ' + fmt(K, 2) + ', ω0 = ' + fmt(w, 2) + ' rad/s">' + s + '</svg>';
   }
 
-  /* Abaque des dépassements D_k(ξ), ξ < 1 */
+  /* Graphique 3 : abaque des dépassements D_k(ξ), ξ < 1 */
   function drawThird(z) {
     var host = $('plotD');
     var W = Math.max(260, host.clientWidth - 16), H = Math.round(Math.min(420, Math.max(300, W * 0.42)));
@@ -417,52 +510,67 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
   }
 
   /* État et commandes */
-  var z = 0.13;
-  var range = $('z-range'), num = $('z-num');
-  var PRESETS = [0.13, 0.3, 0.5, 0.7, 1, 2, 5];
+  var P = { z: 0.13, K: 1, w: 1, E: 1 };
+  var PMIN = 0.1, PMAX = 10;
+  var CTRL = {};
+  ['z', 'K', 'w', 'E'].forEach(function (key) {
+    CTRL[key] = { num: $(key + '-num'), range: $(key + '-range') };
+  });
+
   var presetsEl = $('presets');
+  var PRESETS = [
+    { z: 0.13, label: '0,13' }, { z: 0.3, label: '0,30' }, { z: 0.5, label: '0,50' },
+    { z: Math.LN2, label: 'ln(2) = 0,69' }, { z: 1, label: '1' }, { z: 2, label: '2' }, { z: 5, label: '5' }
+  ];
   PRESETS.forEach(function (p) {
     var b = document.createElement('button');
     b.type = 'button';
-    b.textContent = fmt(p, p < 1 ? 2 : 0);
-    b.dataset.z = p;
-    b.addEventListener('click', function () { setZ(p, 'preset'); });
+    b.textContent = p.label;
+    b.dataset.z = p.z;
+    b.addEventListener('click', function () { setParam('z', p.z, 'preset'); });
     presetsEl.appendChild(b);
   });
 
-  function zToSlider(v) { return Math.round((Math.log10(v) + 1) / 2 * 1000); }
-  function sliderToZ(v) { return Math.round(Math.pow(10, -1 + 2 * v / 1000) * 1000) / 1000; }
+  function toSlider(v) { return Math.round(Math.log(v / PMIN) / Math.log(PMAX / PMIN) * 1000); }
+  function fromSlider(v) { return Number((PMIN * Math.pow(PMAX / PMIN, v / 1000)).toPrecision(3)); }
+  function shown(v) { return String(Number(v.toFixed(3))); }
 
   function render() {
-    var tr = settle(z);
+    var z = P.z, tr = settle(z);
     $('o-regime').textContent = z < 1 - 1e-9 ? 'pseudo-périodique' : (Math.abs(z - 1) < 1e-9 ? 'critique' : 'apériodique');
     $('o-over').textContent = z < 1 ? fmt(Math.exp(-Math.PI * z / Math.sqrt(1 - z * z)) * 100, 1) + ' %' : 'aucun';
-    $('o-tr').textContent = fmt(tr, 2);
+    $('o-fin').textContent = fmt(P.K * P.E, 2);
+    $('o-trn').textContent = fmt(tr, 2);
+    $('o-tr').textContent = fmt(tr / P.w, 2) + ' s';
     Array.prototype.forEach.call(presetsEl.children, function (b) {
       b.setAttribute('aria-pressed', Math.abs(parseFloat(b.dataset.z) - z) < 1e-9 ? 'true' : 'false');
     });
     drawLeft(z, tr);
-    drawRight(z, tr);
+    drawRight(tr);
     var fd = $('figD');
     fd.hidden = !(z < 1 - 1e-9);
     if (!fd.hidden) drawThird(z);
   }
 
-  function setZ(v, source) {
-    z = Math.min(ZMAX, Math.max(ZMIN, v));
-    if (source !== 'range') range.value = zToSlider(z);
-    if (source !== 'num') num.value = String(z);
+  function setParam(key, v, source) {
+    var c = CTRL[key];
+    P[key] = Math.min(PMAX, Math.max(PMIN, v));
+    if (source !== 'range') c.range.value = toSlider(P[key]);
+    if (source !== 'num') c.num.value = shown(P[key]);
     render();
   }
 
-  range.addEventListener('input', function () { setZ(sliderToZ(parseFloat(range.value)), 'range'); num.value = String(z); });
-  num.addEventListener('input', function () {
-    var v = parseFloat(num.value);
-    if (isFinite(v) && v >= ZMIN && v <= ZMAX) setZ(v, 'num');
-  });
-  num.addEventListener('change', function () {
-    var v = parseFloat(num.value);
-    setZ(isFinite(v) ? v : z, 'preset');
+  Object.keys(CTRL).forEach(function (key) {
+    var c = CTRL[key];
+    c.range.addEventListener('input', function () { setParam(key, fromSlider(parseFloat(c.range.value)), 'range'); });
+    c.num.addEventListener('input', function () {
+      var v = parseFloat(c.num.value);
+      if (isFinite(v) && v >= PMIN && v <= PMAX) setParam(key, v, 'num');
+    });
+    c.num.addEventListener('change', function () {
+      var v = parseFloat(c.num.value);
+      setParam(key, isFinite(v) ? v : P[key], 'preset');
+    });
   });
 
   var pending = false;
@@ -478,7 +586,11 @@ svg .pt-label { fill: var(--ui); font-weight: 600; }
     window.addEventListener('resize', onResize);
   }
 
-  setZ(z, 'init');
+  Object.keys(CTRL).forEach(function (key) {
+    CTRL[key].range.value = toSlider(P[key]);
+    CTRL[key].num.value = shown(P[key]);
+  });
+  render();
 })();
 </script>
 
