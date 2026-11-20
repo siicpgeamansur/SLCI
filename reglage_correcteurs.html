@@ -399,8 +399,8 @@ function bodeSvg(svg, o) {
   const mk = o.marks;
   if (mk && mk.wc && mk.wc >= wmin && mk.wc <= wmax) {
     const x = X(mk.wc);
-    s += '<line x1="' + x + '" y1="' + gT + '" x2="' + x + '" y2="' + pB + '" stroke="#e08a00" stroke-dasharray="3 3"/><circle cx="' + x + '" cy="' + Yg(0) + '" r="4.5" fill="#e08a00" stroke="#fff"/>';
-    s += '<text x="' + (x + 5) + '" y="' + (gT + 11) + '" font-size="11" fill="#9a5b00">ω₀dB = ' + fmt(mk.wc, 2) + '</text>';
+    s += '<line x1="' + x + '" y1="' + gT + '" x2="' + x + '" y2="' + pB + '" stroke="#0e9aa7" stroke-dasharray="3 3"/><circle cx="' + x + '" cy="' + Yg(0) + '" r="4.5" fill="#0e9aa7" stroke="#fff"/>';
+    s += '<text x="' + (x + 5) + '" y="' + (gT + 11) + '" font-size="11" fill="#0a6f79">ω₀dB = ' + fmt(mk.wc, 2) + '</text>';
     if (mk.phWc !== undefined) {
       const y1 = Yp(mk.phWc), y2 = Yp(-180);
       s += '<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '" stroke="#1e7a2e" stroke-width="4"/><circle cx="' + x + '" cy="' + y1 + '" r="4.5" fill="#1e7a2e" stroke="#fff"/>';
@@ -412,6 +412,13 @@ function bodeSvg(svg, o) {
     s += '<line x1="' + x + '" y1="' + Yg(0) + '" x2="' + x + '" y2="' + Yg(-mk.Mg) + '" stroke="#7b4fc2" stroke-width="4"/><circle cx="' + x + '" cy="' + Yp(-180) + '" r="4.5" fill="#7b4fc2" stroke="#fff"/>';
     s += '<text x="' + (x + 7) + '" y="' + (Yg(-mk.Mg / 2) + 4) + '" font-size="11.5" font-weight="600" fill="#7b4fc2" paint-order="stroke" stroke="#fff" stroke-width="3">Mg = ' + fmt(mk.Mg, 1) + ' dB</text>';
   }
+  if (o.breaks) o.breaks.forEach((b, i) => {
+  if (!(b.w >= wmin && b.w <= wmax)) return;
+  const x = X(b.w), ly = gB - 8 - i * 13, right = x > W - 150;
+  s += '<line x1="' + x + '" y1="' + gT + '" x2="' + x + '" y2="' + pB + '" stroke="' + b.color + '" stroke-width="1.6" stroke-dasharray="1 4"/>';
+  if (b.gdb !== undefined) s += '<circle cx="' + x + '" cy="' + Yg(b.gdb) + '" r="3.5" fill="' + b.color + '" stroke="#fff"/>';
+  s += '<text x="' + (right ? x - 5 : x + 5) + '" y="' + ly + '" text-anchor="' + (right ? 'end' : 'start') + '" font-size="11" font-weight="600" fill="' + b.color + '" paint-order="stroke" stroke="#fff" stroke-width="3">' + b.label + '</text>';
+});
   o.curves.forEach((cv, i) => { const x = L + 10, y = gT + 12 + i * 15; s += '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 18) + '" y2="' + y + '" stroke="' + cv.color + '" stroke-width="2"' + (cv.dash ? ' stroke-dasharray="' + cv.dash + '"' : '') + '/><text x="' + (x + 24) + '" y="' + (y + 3.5) + '" font-size="11" fill="#1f1f28">' + cv.name + '</text>'; });
   svg.innerHTML = s;
 }
@@ -476,7 +483,13 @@ function renderAnalysis(px, c, opt) {
   const curves = [{ name: 'H (non corrigée)', color: '#8a8f98', dash: '6 4', fn: w => { const r = plantFR(w, P); return [dB(r[0]), r[1]]; } }];
   curves.push({ name: 'C (correcteur)', color: '#e08a00', width: 2.2, fn: w => { const r = ctrlFR(w, c); return [dB(r[0]), r[1]]; } });
   curves.push({ name: 'C·H (corrigée)', color: '#2e6da4', width: 2.4, fn: w => { const r = loopFR(w, P, c); return [dB(r[0]), r[1]]; } });
-  bodeSvg($('#' + px + '-bode'), { curves, marks: A.wc ? { wc: A.wc, phWc: loopFR(A.wc, P, c)[1], M: A.M, w180: A.w180, Mg: A.Mg } : { w180: A.w180, Mg: A.Mg } });
+  const O = '#e08a00', brk = [];
+if (c.type === 'PI' && c.Ti > 0) brk.push({ w: 1 / c.Ti, color: O, label: '1/Tᵢ = ' + fmt(1 / c.Ti, 2), gdb: dB(ctrlFR(1 / c.Ti, c)[0]) });
+if (c.type === 'AV') {
+  brk.push({ w: 1 / (c.a * c.T), color: O, label: '1/(aT) = ' + fmt(1 / (c.a * c.T), 2), gdb: dB(ctrlFR(1 / (c.a * c.T), c)[0]) });
+  brk.push({ w: 1 / c.T, color: O, label: '1/T = ' + fmt(1 / c.T, 2), gdb: dB(ctrlFR(1 / c.T, c)[0]) });
+}
+bodeSvg($('#' + px + '-bode'), { curves, breaks: brk, marks: A.wc ? { wc: A.wc, phWc: loopFR(A.wc, P, c)[1], M: A.M, w180: A.w180, Mg: A.Mg } : { w180: A.w180, Mg: A.Mg } });
   stepSvg($('#' + px + '-step'), { tmax: A.tmax, curves: [{ name: 'sortie y(t)', color: '#2e6da4', t: A.S.t, y: A.S.y, yf: A.unstable ? null : A.yf }] });
   const b = $('#' + px + '-stats').querySelectorAll('.stat b');
   b[0].textContent = A.wc ? fmt(A.wc, 2) + ' rad/s' : '—';
@@ -928,7 +941,7 @@ WORKSHOPS.push({ id: 'qd', title: 'Boucles et Notch', hint: 'Boucle de vitesse (
 /* ================= Atelier : exemple de rédaction type (annexe du cours) ================= */
 const QR = { K: 218, M: 80, w: 40 };
 function mountQR(root) {
-  root.innerHTML = '<h2>Exemple de rédaction type : PI sur une boucle de vitesse</h2><p>Bras manipulateur collaboratif (Centrale-Supélec MP 2016). Cahier des charges de l\'asservissement de vitesse : <b>marge de phase</b> imposée, <b>écart statique nul</b> vis-à-vis d\'un échelon de consigne et d\'une perturbation constante, <b>pulsation de coupure à 0 dB</b> imposée. La FTBO non corrigée est un intégrateur : <b>FTBO<sub>nc</sub>(p) = K<sub>BO</sub> / p</b>.</p>' +
+  root.innerHTML = '<h2>Exemple de rédaction type : PI sur une boucle de vitesse</h2><p>Bras manipulateur collaboratif. Cahier des charges de l\'asservissement de vitesse : <b>marge de phase</b> imposée, <b>écart statique nul</b> vis-à-vis d\'un échelon de consigne et d\'une perturbation constante, <b>pulsation de coupure à 0 dB</b> imposée. La FTBO non corrigée est un intégrateur : <b>FTBO<sub>nc</sub>(p) = K<sub>BO</sub> / p</b>.</p>' +
     '<div class="opts"><label class="fld"><span>K<sub>BO</sub></span><input type="text" id="qr-K" class="mono"></label><label class="fld"><span>Marge de phase imposée (°)</span><input type="text" id="qr-M" class="mono"></label><label class="fld"><span>ω₀dB imposée (rad/s)</span><input type="text" id="qr-w" class="mono"></label></div>' +
     '<h3>Rédaction</h3><div id="qr-txt"></div><svg id="qr-bode" viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg>' +
     '<div class="analogy"><b>À retenir pour les concours :</b> suivez la démarche proposée par le sujet quand il y en a une. Ici le sujet fait <b>d\'abord</b> placer la phase (choix de Tᵢ), <b>puis</b> le gain (choix de Kᵢ) : c\'est la méthode « placement fréquentiel » en deux étapes sur une FTBO qui est déjà un intégrateur.</div>';
@@ -1350,6 +1363,7 @@ COURSE.push({ id: 'physique', t: 'Actions des correcteurs : approche physique', 
 <ul><li>P : commande proportionnelle à l'erreur ; I : proportionnelle au cumul des erreurs ; D : proportionnelle aux variations de l'erreur.</li><li>Associer les actions combine leurs effets, mais la mise en œuvre est plus complexe (paramètres interdépendants).</li><li>Au programme de CPGE : P, PI et avance de phase (version réaliste de la dérivée).</li></ul>` });
 COURSE.push({ id: 'proportionnel', t: 'Correcteur proportionnel', h: `
 <p><b>C(p) = Kp.</b> Un gain pur : il <b>ne modifie pas la phase</b> mais modifie, pour toutes les pulsations, le gain de la FTBO de <b>20 log Kp</b> : G<sub>dB,c</sub>(ω) = 20 log Kp + G<sub>dB,nc</sub>(ω) ; φ<sub>c</sub> = φ<sub>nc</sub>.</p>
+<div class="cbode" data-kind="P"></div>
 <h3>Influence sur les performances</h3>
 <table class="ctable"><thead><tr><th></th><th>Stabilité</th><th>Précision</th><th>Rapidité</th></tr></thead><tbody>
 <tr><td>Kp &lt; 1</td><td>↗ marges augmentées (Mg de |20 log Kp|, ω₀dB diminue)</td><td>↘ erreur augmentée (K<sub>BO,c</sub> = Kp·K<sub>BO,nc</sub>)</td><td>↘ ω₀dB et bande passante diminuées</td></tr>
@@ -1366,6 +1380,7 @@ COURSE.push({ id: 'proportionnel', t: 'Correcteur proportionnel', h: `
 COURSE.push({ id: 'integral', t: 'Correcteur intégral', h: `
 <p><b>C(p) = Kᵢ/p = 1/(Tᵢ p).</b> Il augmente le gain de la FTBO aux basses pulsations, le diminue aux hautes, et apporte un <b>déphasage de −90° pour toutes les pulsations</b> :</p>
 <p>G<sub>dB,c</sub>(ω) = G<sub>dB,nc</sub>(ω) + 20 log Kᵢ − 20 log ω ; φ<sub>c</sub>(ω) = φ<sub>nc</sub>(ω) − 90°.</p>
+<div class="cbode" data-kind="I"></div>
 <table class="ctable"><thead><tr><th>Performance</th><th>Effet</th></tr></thead><tbody>
 <tr><td>Précision</td><td>↗↗ annule l'erreur face à un échelon de consigne et, placé en amont, face à une perturbation en échelon</td></tr>
 <tr><td>Stabilité</td><td>↘↘ phase diminuée de 90° partout : marges fortement réduites</td></tr>
@@ -1374,6 +1389,7 @@ COURSE.push({ id: 'integral', t: 'Correcteur intégral', h: `
 COURSE.push({ id: 'pi', t: 'Correcteur PI : deux méthodes de réglage', h: `
 <p><b>C(p) = Kp + Kᵢ/p = Kp (1 + Tᵢ p)/(Tᵢ p)</b> avec <b>Tᵢ = Kp/Kᵢ</b> (attention : certains sujets écrivent C = Kp + 1/(Tᵢ p)). Intégral pur aux basses pulsations, proportionnel aux hautes ; cassure à ω = 1/Tᵢ, phase de −90° à 0°.</p>
 <p>Avantages : l'augmentation de la <b>classe</b> améliore la précision ; au-delà de 1/Tᵢ la phase n'est plus diminuée, donc la stabilité est peu dégradée <b>si</b> la cassure est bien choisie. Plus 1/Tᵢ est faible, plus Kᵢ est faible et plus le système est lent : c'est un compromis stabilité / rapidité tout en garantissant la précision.</p>
+<div class="cbode" data-kind="PI"></div>
 <h3>Méthode 1 : par marge de phase imposée (placement fréquentiel)</h3>
 <ol><li><b>Kp' (P seul, Kᵢ = 0)</b> : on règle Kp' pour la marge de phase imposée (graphiquement par translation Δ<sub>dB</sub>, ou analytiquement : ω₀dB' tel que Mφ = marge, puis |H<sub>c</sub>'(jω₀dB')| = 1).</li>
 <li><b>Tᵢ</b> : on place l'effet intégral loin de ω₀dB' : 1/Tᵢ ≪ ω₀dB', en général une décade : <b>1/Tᵢ = ω₀dB'/10</b>.</li>
@@ -1396,6 +1412,7 @@ COURSE.push({ id: 'avance', t: 'Correcteur à avance de phase', h: `
 <p><b>C(p) = Kp (1 + a T<sub>d</sub> p)/(1 + T<sub>d</sub> p)</b> avec <b>a &gt; 1</b>. Il augmente la phase dans une bande de fréquences, avec un maximum :</p>
 <p><b>φ<sub>m</sub> = arcsin((a − 1)/(a + 1))</b> en <b>ω<sub>m</sub> = 1/(T<sub>d</sub>√a)</b> (milieu, en échelle logarithmique, de 1/(aT<sub>d</sub>) et 1/T<sub>d</sub>). Gain : 0 dB (à Kp = 1) à basse fréquence, 20 log a à haute fréquence, 10 log a en ω<sub>m</sub>.</p>
 <table class="ctable"><thead><tr><th>a</th><th>2</th><th>4</th><th>10</th><th>20</th></tr></thead><tbody><tr><td>φ<sub>m</sub></td><td>19,5°</td><td>37°</td><td>55°</td><td>65°</td></tr></tbody></table>
+<div class="cbode" data-kind="AV"></div>
 <h3>Influence</h3><ul><li>Stabilité : ↗↗ (phase augmentée entre 1/(aT<sub>d</sub>) et 1/T<sub>d</sub>).</li><li>Précision : ↗ ou ↘ selon Kp, mais en pratique Kp modifie peu l'erreur permanente.</li><li>Rapidité : légèrement ↗ (le gain en haute fréquence augmente un peu ω₀dB).</li></ul>
 <h3>Réglage (trois étapes)</h3>
 <ol><li><b>a</b> : ω₀dB,nc (ou ω₀dB visée) et marge M<sub>φnc</sub> correspondante ; φ<sub>m</sub> = M<sub>imposée</sub> − M<sub>φnc</sub> ; <b>a = (1 + sin φ<sub>m</sub>)/(1 − sin φ<sub>m</sub>)</b>.</li>
@@ -1423,7 +1440,7 @@ COURSE.push({ id: 'boucles', t: 'Boucles complémentaires et filtre réjecteur',
 <h3>Filtre réjecteur (Notch)</h3>
 <p>Pour atténuer localement l'effet de perturbations sinusoïdales de fréquence connue : <b>C(p) = (ω<sub>R</sub>² + 2z₁ω<sub>R</sub>p + p²)/(ω<sub>R</sub>² + 2z₂ω<sub>R</sub>p + p²)</b>, où ω<sub>R</sub> est la pulsation à rejeter. Numérateur et dénominateur sont du second ordre à faible amortissement (z₁, z₂ &lt; 0,7). Le gain en ω<sub>R</sub> vaut z₁/z₂ : le puits est profond lorsque z₁ est petit devant z₂.</p>` });
 COURSE.push({ id: 'redaction', t: 'Exemple de rédaction type', h: `
-<p>Bras manipulateur collaboratif (Centrale-Supélec MP 2016). Cahier des charges de l'asservissement de vitesse : <b>Mφ = 80°</b> ; écart statique <b>nul</b> vis-à-vis d'un échelon de consigne et d'une perturbation constante ; <b>ω₀dB = 40 rad/s</b>. Pour une masse de 100 kg : FTBO<sub>nc</sub>(p) = K<sub>BO</sub>/p avec K<sub>BO</sub> = 218.</p>
+<p>Bras manipulateur collaboratif. Cahier des charges de l'asservissement de vitesse : <b>Mφ = 80°</b> ; écart statique <b>nul</b> vis-à-vis d'un échelon de consigne et d'une perturbation constante ; <b>ω₀dB = 40 rad/s</b>. Pour une masse de 100 kg : FTBO<sub>nc</sub>(p) = K<sub>BO</sub>/p avec K<sub>BO</sub> = 218.</p>
 <ul><li><b>Q12 (marge de phase)</b> : la FTBO<sub>nc</sub> est un intégrateur d'ordre 1, sa phase vaut −90° pour toutes les pulsations. Donc <b>Mφ = 90° &gt; 80°</b> : le critère de stabilité est satisfait.</li>
 <li><b>Q13 (pourquoi un PI)</b> : la FTBO est de classe 0 en amont de la perturbation, le critère de précision vis-à-vis de la perturbation constante n'est pas satisfait : d'où le correcteur PI C<sub>v</sub>(p) = Kᵢ(1 + 1/(Tᵢp)). Bode asymptotique : pente −20 dB/décade puis gain 20 log Kᵢ au-delà de 1/Tᵢ ; phase de −π/2 à 0.</li>
 <li><b>Q14 (réglage)</b> : FTBO<sub>c</sub>(p) = Kᵢ K<sub>BO</sub>(1 + Tᵢp)/(Tᵢp²). La rapidité impose ω₀dB = 40 rad/s ; Mφ = arg FTBO<sub>c</sub>(jω₀dB) + 180° = arctan(Tᵢω₀dB), donc <b>Tᵢ = tan 80°/40 = 0,14 s</b>. Puis |FTBO<sub>c</sub>(jω₀dB)| = 1 donne <b>Kᵢ = 0,18</b>.</li></ul>
@@ -1566,6 +1583,45 @@ function actToggle() { if (CS.open) { CS.open = false; renderCourse(); } AS.open
 $('#bAct').addEventListener('click', actToggle);
 
 function courseSection(id) { return COURSE.find(s => s.id === id) || COURSE[0]; }
+function courseBode(host) {
+  const kind = host.dataset.kind, S = { Kp: 2, Ki: 1, Ti: 1, K: 1, a: 6, T: 0.1 }, O = '#e08a00';
+  host.innerHTML = '<p class="small">Bode du correcteur seul (trait plein) et asymptotes de gain (pointillés). Déplacez les curseurs : les caractéristiques sont recalculées.</p><div class="cb-sl" style="max-width:680px"></div><svg viewBox="0 0 640 400" style="width:100%;max-width:680px;height:auto"></svg><div class="verdict goal cb-info"></div>';
+  const sl = host.querySelector('.cb-sl'), svg = host.querySelector('svg'), info = host.querySelector('.cb-info');
+  const draw = () => {
+    let fn, asy, brk = [], txt;
+    if (kind === 'P') {
+      fn = () => [dB(S.Kp), 0]; asy = fn;
+      txt = '<b>C(p) = Kp</b> : gain constant <b>20 log Kp = ' + fmt(dB(S.Kp), 1) + ' dB</b> et phase nulle pour toutes les pulsations. Kp translate la courbe de gain de la boucle ouverte sans toucher à la phase.';
+    } else if (kind === 'I') {
+      fn = w => [dB(S.Ki / w), -90]; asy = fn;
+      brk = [{ w: S.Ki, color: O, label: 'ω = Kᵢ (0 dB)', gdb: 0 }];
+      txt = '<b>C(p) = Kᵢ/p</b> : pente <b>−20 dB/décade</b>, phase <b>−90°</b> constante. Le gain vaut 0 dB à <b>ω = Kᵢ = ' + fmt(S.Ki, 2) + ' rad/s</b> (gain = 20 log(Kᵢ/ω)).';
+    } else if (kind === 'PI') {
+      const c = { type: 'PI', Kp: S.Kp, Ti: S.Ti }, w0 = 1 / S.Ti;
+      fn = w => { const r = ctrlFR(w, c); return [dB(r[0]), r[1]]; };
+      asy = w => w < w0 ? dB(S.Kp / (S.Ti * w)) : dB(S.Kp);
+      brk = [{ w: w0, color: O, label: '1/Tᵢ = ' + fmt(w0, 2), gdb: fn(w0)[0] }];
+      txt = '<b>C(p) = Kp (1 + Tᵢp)/(Tᵢp)</b>. <b>Pulsation de cassure ω = 1/Tᵢ = ' + fmt(w0, 2) + ' rad/s.</b><br>• Pour ω ≪ 1/Tᵢ : intégrateur, pente −20 dB/décade, phase −90°, gain ≈ Kᵢ/ω avec Kᵢ = Kp/Tᵢ = ' + fmt(S.Kp / S.Ti, 2) + ' s⁻¹.<br>• En ω = 1/Tᵢ : phase <b>−45°</b>, gain réel = 20 log Kp + 3 dB = ' + fmt(dB(S.Kp) + 3.01, 1) + ' dB.<br>• Pour ω ≫ 1/Tᵢ : gain <b>20 log Kp = ' + fmt(dB(S.Kp), 1) + ' dB</b>, phase → 0°.<br>• Phase en ω : −arctan(1/(Tᵢω)) ; une décade au-dessus de 1/Tᵢ, elle vaut −5,7°.';
+    } else {
+      const c = { type: 'AV', K: S.K, a: S.a, T: S.T }, w1 = 1 / (S.a * S.T), w2 = 1 / S.T, wm = 1 / (S.T * Math.sqrt(S.a)), pm = Math.asin((S.a - 1) / (S.a + 1)) * R2D;
+      fn = w => { const r = ctrlFR(w, c); return [dB(r[0]), r[1]]; };
+      asy = w => w < w1 ? dB(S.K) : w < w2 ? dB(S.K) + 20 * Math.log10(S.a * S.T * w) : dB(S.K * S.a);
+      brk = [{ w: w1, color: O, label: '1/(aT) = ' + fmt(w1, 2), gdb: fn(w1)[0] }, { w: wm, color: O, label: 'ωm = ' + fmt(wm, 2), gdb: fn(wm)[0] }, { w: w2, color: O, label: '1/T = ' + fmt(w2, 2), gdb: fn(w2)[0] }];
+      txt = '<b>C(p) = K (1 + aTp)/(1 + Tp), a &gt; 1</b> (T = T<sub>d</sub>).<br>• <b>Deux pulsations de cassure</b> : 1/(aT) = <b>' + fmt(w1, 2) + ' rad/s</b> (début de la montée, zéro) et 1/T = <b>' + fmt(w2, 2) + ' rad/s</b> (fin, pôle). Leur rapport vaut a = ' + fmt(S.a, 1) + '.<br>• <b>Phase maximale</b> φm = arcsin((a − 1)/(a + 1)) = <b>' + fmt(pm, 1) + ' °</b>, atteinte en <b>ωm = 1/(T√a) = √(1/(aT) · 1/T) = ' + fmt(wm, 2) + ' rad/s</b> (milieu des cassures en échelle log).<br>• Gain : basse fréquence <b>20 log K = ' + fmt(dB(S.K), 1) + ' dB</b> ; en ωm <b>20 log K + 10 log a = ' + fmt(dB(S.K) + 10 * Math.log10(S.a), 1) + ' dB</b> ; haute fréquence <b>20 log (K a) = ' + fmt(dB(S.K * S.a), 1) + ' dB</b>. Pente +20 dB/décade entre les cassures.';
+    }
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i <= 120; i++) { const w = Math.pow(10, -2 + 5 * i / 120), g = fn(w)[0]; lo = Math.min(lo, g); hi = Math.max(hi, g); }
+    bodeSvg(svg, { wmin: 0.01, wmax: 1000, gmin: Math.floor((lo - 10) / 20) * 20, gmax: Math.ceil((hi + 10) / 20) * 20, breaks: brk,
+      curves: [{ name: 'C (réel)', color: O, width: 2.4, fn }, { name: 'asymptotes de gain', color: O, width: 1.4, dash: '4 3', gainOnly: true, fn: w => [asy(w), 0] }] });
+    info.innerHTML = txt;
+  };
+  const mk = (name, key, min, max, step, dec, unit) => slider(sl, { name, min, max, step, dec, unit, get: () => S[key], set: v => { S[key] = v; }, onchange: draw });
+  if (kind === 'P') mk('Kp', 'Kp', 0.1, 50, 0.1, 1);
+  else if (kind === 'I') mk('Kᵢ', 'Ki', 0.1, 50, 0.1, 1, 's⁻¹');
+  else if (kind === 'PI') { mk('Kp', 'Kp', 0.1, 20, 0.1, 1); mk('Tᵢ', 'Ti', 0.05, 10, 0.05, 2, 's'); }
+  else { mk('K', 'K', 0.1, 20, 0.1, 1); mk('a', 'a', 1.5, 20, 0.1, 1); mk('T (= T_d)', 'T', 0.01, 1, 0.01, 2, 's'); }
+  draw();
+}
 function renderCourse() {
   const box = $('#course'), btn = $('#bCourse'), work = $('#work');
   btn.setAttribute('aria-pressed', CS.open ? 'true' : 'false'); btn.classList.toggle('pri', CS.open);
@@ -1584,6 +1640,7 @@ function renderCourse() {
     idx < COURSE.length - 1 ? h('button', { class: 'btn pri', type: 'button', onclick: () => go(COURSE[idx + 1].id) }, COURSE[idx + 1].t + ' →') : h('span')));
   const top = h('div', { class: 'ctop' }, h('b', null, 'Cours : réglage de correcteurs'), h('button', { class: 'btn pri sm', type: 'button', onclick: () => { CS.open = false; renderCourse(); } }, 'Retour à l’atelier'));
   box.append(top, sel, h('div', { class: 'cwrap' }, nav, art));
+  box.querySelectorAll('.cbode').forEach(courseBode);
   box.scrollTop = 0;
 }
 function openCourse(id) { if (id) CS.id = id; CS.open = true; renderCourse(); }
