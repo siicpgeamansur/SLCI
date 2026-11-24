@@ -3,19 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Représentation d'état et linéarisation · ITC</title>
+<title>Représentation d'état et linéarisation · SII</title>
 <style>
-/* Mise en page : barre d'outils en haut, onglets d'ateliers, zone de travail blanche,
-   panneau Activité à droite (feuille basse sur téléphone), vue Cours avec sommaire. */
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 :root{
   --font-ui:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
   --font-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
   --bg:#ffffff;--bar:#eeeeee;--panel:#ffffff;--panel2:#f1f3f6;--field:#ffffff;--line:#b9bfc7;
-  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;--run:#2e8b3a;
-  --node-stroke:#33475b;
-  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;
+  --fg:#111111;--muted:#5a6068;--accent:#2e6da4;--accent-fg:#ffffff;--accent-soft:#dcebf8;--accent-ink:#1b4a76;
+  --ok:#1e7a2e;--warn:#9a5b00;--bad:#c0281f;--violet:#7b4fc2;--orange:#e8a33a;
   color-scheme:light;
 }
 html,body{height:100%}
@@ -74,7 +71,6 @@ fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
 .opt.good{background:rgba(30,122,46,.15)}.opt.bad{background:rgba(192,40,31,.15)}
 .why{font-size:12.5px;color:var(--muted);margin:6px 4px 2px}
 .score{font-weight:600;font-size:15px;margin:4px 0 8px}
-/* cours */
 #course{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg)}
 .ctop,.cwrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .ctop{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding-block:8px;border-bottom:1px solid var(--line);background:var(--bar)}
@@ -95,12 +91,10 @@ fieldset.q legend{font-weight:600;padding:0 4px;max-width:100%}
 .ctable th,.ctable td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top}
 .ctable th{background:var(--panel2);font-weight:600}
 .retain{background:var(--accent-soft);color:var(--accent-ink);border-radius:8px;padding:9px 12px;margin:16px 0 6px;font-size:14px}
-.formula{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto}
-pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.eq{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto;line-height:2.05}
 .gloss{display:grid;grid-template-columns:max-content 1fr;gap:5px 18px;font-size:14px}.gloss dt{font-weight:600}.gloss dd{margin:0}
 .cpn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:24px 0 32px}
-/* ateliers */
-#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:980px}
+#ws{padding:16px max(16px,env(safe-area-inset-left,0px)) 30px;max-width:1000px}
 #ws h2{font-size:24px;margin:0 0 8px;text-wrap:balance}
 #ws h3{font-size:16.5px;margin:24px 0 6px}
 #ws p,#ws li{font-size:14.5px;line-height:1.55}
@@ -108,27 +102,25 @@ pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2)
 .opts{display:flex;gap:10px 18px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 10px}.opts .fld{margin:0}
 .opts input[type=range]{width:190px;max-width:100%}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
-.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:4px 11px;font-size:13px;cursor:pointer}
-.chip:hover{border-color:var(--accent)}.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:5px 12px 7px;font-size:13px;cursor:pointer;border-bottom:3px solid transparent;display:inline-flex;align-items:center;gap:7px}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:var(--panel2);border-bottom-color:var(--chip-color,var(--accent))}
+.chip .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--chip-color,var(--accent))}
 .gstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
 .stat{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);display:flex;flex-direction:column;gap:2px;min-width:0}
 .stat span{font-size:12px;color:var(--muted)}.stat b{font-size:14px;font-family:var(--font-mono);overflow-wrap:anywhere}
 .verdict{border-radius:8px;padding:9px 12px;margin:10px 0;font-size:14px;background:var(--panel2);border:1px solid var(--line)}
 .verdict.yes{background:rgba(30,122,46,.15);border-color:var(--ok)}.verdict.no{background:rgba(192,40,31,.13);border-color:var(--bad)}.verdict.warn{background:rgba(154,91,0,.13);border-color:var(--warn)}
 .stagebox{border:1px solid var(--line);border-radius:10px;padding:10px 10px 6px;background:#fff;margin:8px 0}
-/* formules et matrices */
-.eq{background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;margin:8px 0;font-size:15px;overflow-x:auto;line-height:2.05}
 .mat{display:inline-grid;grid-template-columns:auto auto;align-items:center;justify-items:center;gap:1px 14px;padding:1px 9px;border-left:2px solid var(--fg);border-right:2px solid var(--fg);vertical-align:middle;font-family:var(--font-mono);font-size:13.5px;margin:0 3px}
 .mat.c3{grid-template-columns:auto auto auto}
 .eq i,.formula i{font-style:italic}
-/* graphiques */
 .plot{width:100%;height:auto;display:block;touch-action:manipulation}
 .plot .gl{stroke:#e3e7ec;stroke-width:1}
 .plot .ax{stroke:#5a6068;stroke-width:1.3}
 .plot .tick{font:11px var(--font-mono);fill:#5a6068}
 .plot .lbl{font:12px var(--font-ui);fill:#111}
 .plot .cap{font:600 12px var(--font-ui);fill:#5a6068}
-/* circuits */
 .circ{width:100%;max-width:470px;height:auto;display:block;margin:0 auto}
 .circ .wire{stroke:#33475b;stroke-width:2;fill:none;stroke-linecap:round}
 .circ .comp{stroke:#33475b;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -136,9 +128,11 @@ pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2)
 .circ .sym{font:13px var(--font-mono);fill:#33475b}
 .circ .lbl{font:600 13px var(--font-ui);fill:#33475b}
 .circ .arr{fill:#2e6da4}
-.circ .hl{stroke:var(--accent)!important;stroke-width:3.2!important}
-.circ text.hl{fill:var(--accent)!important}
 .circ .mass{fill:#dcebf8;stroke:#33475b;stroke-width:2}
+.animbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.animbar .btn{font-size:12.5px;padding:4px 10px}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:4px 0 6px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px;border:1px solid #6f8aa6}
 @media (max-width:820px){
   .ctoc{display:none}.ctoc-sel{display:block}.cwrap{padding-top:8px}.cbody{padding-right:0}.gloss{grid-template-columns:1fr}.gloss dd{margin-bottom:6px}
   #act{position:fixed;left:0;right:0;bottom:0;width:auto;height:70%;max-height:none;border-radius:14px 14px 0 0;z-index:35;box-shadow:0 -8px 30px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -155,10 +149,12 @@ pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2)
       <svg width="28" height="26" viewBox="0 0 28 26" aria-hidden="true">
         <path d="M7 3h-4v20h4" fill="none" stroke="var(--accent)" stroke-width="2"/>
         <path d="M21 3h4v20h-4" fill="none" stroke="var(--accent)" stroke-width="2"/>
-        <rect x="8" y="7" width="3.6" height="3.6" fill="var(--ok)"/><rect x="16.4" y="7" width="3.6" height="3.6" fill="var(--warn)"/>
-        <rect x="8" y="15.4" width="3.6" height="3.6" fill="var(--bad)"/><rect x="16.4" y="15.4" width="3.6" height="3.6" fill="var(--violet)"/>
+        <rect x="8" y="7" width="3.6" height="3.6" fill="var(--ok)"/>
+        <rect x="16.4" y="7" width="3.6" height="3.6" fill="var(--warn)"/>
+        <rect x="8" y="15.4" width="3.6" height="3.6" fill="var(--bad)"/>
+        <rect x="16.4" y="15.4" width="3.6" height="3.6" fill="var(--violet)"/>
       </svg>
-      <span>Représentation d'état <small>ITC · PCSI / PSI*</small></span>
+      <span>Représentation d'état <small>SII · PCSI / PSI*</small></span>
     </div>
     <div class="files">
       <button class="btn" id="bAct" type="button" aria-pressed="false">Activité</button>
@@ -178,103 +174,85 @@ pre.code{font:12.5px/1.55 var(--font-mono);margin:8px 0;background:var(--panel2)
 
 <script>
 'use strict';
-/* ============================ utilitaires ============================ */
-const NS = 'http://www.w3.org/2000/svg';
-const $ = (s, r) => (r || document).querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const $=(s,r)=>(r||document).querySelector(s);
+function h(tag,attrs,...kids){const el=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(v===false||v==null)continue;if(k==='class')el.className=v;else if(k==='html')el.innerHTML=v;else if(k.startsWith('on'))el.addEventListener(k.slice(2),v);else if(v===true)el.setAttribute(k,'');else el.setAttribute(k,v);}for(const k of kids.flat())if(k!=null&&k!==false)el.append(k.nodeType?k:document.createTextNode(k));return el;}
+function sv(tag,attrs,...kids){const el=document.createElementNS(NS,tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(v==null||v===false)continue;el.setAttribute(k,v);}for(const k of kids.flat())if(k!=null&&k!==false)el.append(k.nodeType?k:document.createTextNode(k));return el;}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function fmt(x,d){d=d===undefined?2:d;if(!isFinite(x))return x>0?'+∞':'−∞';let s=x.toFixed(d);if(s.indexOf('.')>=0)s=s.replace(/0+$/,'').replace(/\.$/,'');if(s==='-0')s='0';return s.replace('-','−').replace('.',',');}
+const MAT=rows=>{const nc=Math.max(...rows.map(r=>r.length));return '<span class="mat'+(nc===3?' c3':'')+'">'+rows.flat().map(v=>'<span>'+v+'</span>').join('')+'</span>';};
+const EQ=html=>'<div class="eq">'+html+'</div>';
+function isSmall(){try{return window.matchMedia('(max-width:820px)').matches;}catch(e){return false;}}
+const KEYS={act:'etat-lineaire-v2'};
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 
-function h(tag, attrs, ...kids) {
-  const el = document.createElement(tag);
-  if (attrs) for (const [k, v] of Object.entries(attrs)) {
-    if (v === false || v == null) continue;
-    if (k === 'class') el.className = v;
-    else if (k === 'html') el.innerHTML = v;
-    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-    else if (v === true) el.setAttribute(k, '');
-    else el.setAttribute(k, v);
-  }
-  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
-  return el;
-}
-function sv(tag, attrs, ...kids) {
-  const el = document.createElementNS(NS, tag);
-  if (attrs) for (const [k, v] of Object.entries(attrs)) { if (v == null || v === false) continue; el.setAttribute(k, v); }
-  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
-  return el;
-}
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-function num(x, d) {
-  if (!isFinite(x)) return x > 0 ? '+∞' : '−∞';
-  let s = x.toFixed(d === undefined ? 2 : d);
-  if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
-  if (s === '-0') s = '0';
-  return s.replace('-', '−').replace('.', ',');
-}
-const M = rows => {
-  const nc = Math.max(...rows.map(r => r.length));
-  return '<span class="mat' + (nc === 3 ? ' c3' : '') + '">' + rows.flat().map(v => '<span>' + v + '</span>').join('') + '</span>';
-};
-const EQ = html => '<div class="eq">' + html + '</div>';
-const isSmall = () => { try { return window.matchMedia('(max-width:820px)').matches; } catch (e) { return false; } };
-const KEYS = { act: 'etat-lineaire-v1' };
-function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
-function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } }
-function chipRow(items, isOn, onClick) {
-  const box = h('div', { class: 'chips' });
-  items.forEach(it => {
-    const on = isOn(it[0]);
-    const b = h('button', { type: 'button', class: 'chip' + (on ? ' on' : ''), 'aria-pressed': on ? 'true' : 'false', onclick: () => onClick(it[0]) });
-    b.innerHTML = it[1];
-    box.append(b);
-  });
-  return box;
-}
-function stats(list) { return h('div', { class: 'gstats' }, list.map(k => h('div', { class: 'stat' }, h('span', null, k[0]), h('b', null, k[1])))); }
-function setMsg(sel, text, kind) { const m = $(sel); if (!m) return; m.innerHTML = text; m.className = 'verdict' + (kind ? ' ' + kind : ''); }
+/* ===== animation manager ===== */
+let animRaf=null,animRunning=false;
+function startAnim(fn){stopAnim();const t0=performance.now();animRunning=true;const loop=t=>{if(!animRunning)return;fn((t-t0)/1000);animRaf=requestAnimationFrame(loop);};animRaf=requestAnimationFrame(loop);}
+function stopAnim(){animRunning=false;if(animRaf){cancelAnimationFrame(animRaf);animRaf=null;}}
 
-/* tracé SVG générique */
-function plot(o) {
-  const W = o.W || 470, H = o.H || 250, m = o.m || { l: 46, r: 16, t: 12, b: 28 };
-  const [x0, x1] = o.xr, [y0, y1] = o.yr;
-  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r);
-  const Y = v => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
-  const root = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'plot' });
-  (o.xticks || []).forEach(t => root.append(sv('line', { x1: X(t.v), y1: m.t, x2: X(t.v), y2: H - m.b, class: 'gl' })));
-  (o.yticks || []).forEach(t => root.append(sv('line', { x1: m.l, y1: Y(t.v), x2: W - m.r, y2: Y(t.v), class: 'gl' })));
-  const yA = (y0 <= 0 && y1 >= 0) ? Y(0) : H - m.b;
-  const xA = (x0 <= 0 && x1 >= 0) ? X(0) : m.l;
-  root.append(sv('line', { x1: m.l, y1: yA, x2: W - m.r, y2: yA, class: 'ax' }));
-  root.append(sv('line', { x1: xA, y1: m.t, x2: xA, y2: H - m.b, class: 'ax' }));
-  (o.xticks || []).forEach(t => root.append(sv('text', { x: X(t.v), y: H - m.b + 16, class: 'tick', 'text-anchor': 'middle' }, t.label)));
-  (o.yticks || []).forEach(t => root.append(sv('text', { x: m.l - 6, y: Y(t.v) + 4, class: 'tick', 'text-anchor': 'end' }, t.label)));
-  (o.series || []).forEach(sr => {
-    if (!sr.pts.length) return;
-    const pts = sr.pts.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(' ');
-    root.append(sv('polyline', { points: pts, fill: 'none', stroke: sr.color || '#2e6da4', 'stroke-width': sr.w || 2, 'stroke-dasharray': sr.dash || null, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+/* ===== plotter générique ===== */
+function plot(o){
+  const W=o.W||480,H=o.H||240,m=o.m||{l:46,r:16,t:12,b:28};
+  const[x0,x1]=o.xr,[y0,y1]=o.yr;
+  const X=v=>m.l+(v-x0)/(x1-x0)*(W-m.l-m.r);
+  const Y=v=>H-m.b-(v-y0)/(y1-y0)*(H-m.t-m.b);
+  const root=sv('svg',{viewBox:'0 0 '+W+' '+H,class:'plot'});
+  (o.xticks||[]).forEach(t=>root.append(sv('line',{x1:X(t.v),y1:m.t,x2:X(t.v),y2:H-m.b,class:'gl'})));
+  (o.yticks||[]).forEach(t=>root.append(sv('line',{x1:m.l,y1:Y(t.v),x2:W-m.r,y2:Y(t.v),class:'gl'})));
+  const yA=(y0<=0&&y1>=0)?Y(0):H-m.b;
+  const xA=(x0<=0&&x1>=0)?X(0):m.l;
+  root.append(sv('line',{x1:m.l,y1:yA,x2:W-m.r,y2:yA,class:'ax'}));
+  root.append(sv('line',{x1:xA,y1:m.t,x2:xA,y2:H-m.b,class:'ax'}));
+  (o.xticks||[]).forEach(t=>root.append(sv('text',{x:X(t.v),y:H-m.b+16,class:'tick','text-anchor':'middle'},t.label)));
+  (o.yticks||[]).forEach(t=>root.append(sv('text',{x:m.l-6,y:Y(t.v)+4,class:'tick','text-anchor':'end'},t.label)));
+  (o.series||[]).forEach(sr=>{
+    if(!sr.pts.length)return;
+    const pts=sr.pts.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ');
+    root.append(sv('polyline',{points:pts,fill:'none',stroke:sr.color||'#2e6da4','stroke-width':sr.w||2,'stroke-dasharray':sr.dash||null,'stroke-linejoin':'round','stroke-linecap':'round'}));
   });
-  (o.dots || []).forEach(d => root.append(sv('circle', { cx: X(d.x), cy: Y(d.y), r: d.r || 4, fill: d.color || '#c0281f' })));
-  (o.texts || []).forEach(t => root.append(sv('text', { x: X(t.x), y: Y(t.y), class: 'cap', 'text-anchor': t.anchor || 'start' }, t.s)));
-  root._map = { X, Y, W, H, m, x0, x1, y0, y1 };
+  (o.dots||[]).forEach(d=>root.append(sv('circle',{cx:X(d.x),cy:Y(d.y),r:d.r||4,fill:d.color||'#c0281f'})));
+  (o.texts||[]).forEach(t=>root.append(sv('text',{x:X(t.x),y:Y(t.y),class:'cap','text-anchor':t.anchor||'start'},t.s)));
+  root._map={X,Y,W,H,m,x0,x1,y0,y1};
   return root;
 }
-/* intégration RK4 d'un système 2D */
-function rk4(f, ic, T, step) {
-  let p = ic.slice(); const pts = [p.slice()];
-  for (let t = 0; t < T; t += step) {
-    const k1 = f(p);
-    const k2 = f([p[0] + step / 2 * k1[0], p[1] + step / 2 * k1[1]]);
-    const k3 = f([p[0] + step / 2 * k2[0], p[1] + step / 2 * k2[1]]);
-    const k4 = f([p[0] + step * k3[0], p[1] + step * k3[1]]);
-    p = [p[0] + step / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]),
-         p[1] + step / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1])];
-    if (!isFinite(p[0]) || !isFinite(p[1]) || Math.abs(p[0]) > 60 || Math.abs(p[1]) > 60) break;
-    pts.push(p.slice());
+
+/* ===== intégrateurs ===== */
+function rk4(f,ic,T,step,stopCond){
+  let p=ic.slice();const pts=[[0,p.slice()]];let t=0;
+  while(t<T-step/2){
+    const k1=f(p);
+    const k2=f([p[0]+step/2*k1[0],p[1]+step/2*k1[1]]);
+    const k3=f([p[0]+step/2*k2[0],p[1]+step/2*k2[1]]);
+    const k4=f([p[0]+step*k3[0],p[1]+step*k3[1]]);
+    p=[p[0]+step/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]),p[1]+step/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1])];
+    t+=step;
+    if(!isFinite(p[0])||!isFinite(p[1]))break;
+    pts.push([t,p.slice()]);
+    if(stopCond&&stopCond(p,t))break;
+  }
+  return pts;
+}
+function integLinear(A,B,ic,T,dt){
+  const n=A.length;let x=ic.slice();const pts=[[0,x.slice()]];let t=0;
+  while(t<T-dt/2){
+    const f=x=>{const r=new Array(n).fill(0);for(let i=0;i<n;i++){for(let j=0;j<n;j++)r[i]+=A[i][j]*x[j];r[i]+=B[i][0];}return r;};
+    const k1=f(x);
+    const x2=x.map((v,i)=>v+dt/2*k1[i]);
+    const k2=f(x2);
+    const x3=x.map((v,i)=>v+dt/2*k2[i]);
+    const k3=f(x3);
+    const x4=x.map((v,i)=>v+dt*k3[i]);
+    const k4=f(x4);
+    x=x.map((v,i)=>v+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]));
+    t+=dt;pts.push([t,x.slice()]);
   }
   return pts;
 }
 
-/* ============================ Atelier 1 ============================ */
-const CIRCUIT_SVG = `
-<svg viewBox="0 0 440 210" class="circ" role="img" aria-label="Circuit RLC série">
+/* ===================== ATELIER 1 ===================== */
+const CIRCUIT=`<svg viewBox="0 0 440 210" class="circ" role="img" aria-label="Circuit RLC série">
   <g class="wire">
     <line x1="80" y1="50" x2="160" y2="50"/>
     <line x1="260" y1="50" x2="390" y2="50"/>
@@ -285,9 +263,9 @@ const CIRCUIT_SVG = `
     <line x1="80" y1="150" x2="80" y2="122"/>
     <line x1="80" y1="78" x2="80" y2="50"/>
   </g>
-  <path id="s1-res" class="comp" d="M160,50 l10,-14 l16,28 l16,-28 l16,28 l16,-28 l16,28 l10,-14"/>
+  <path class="comp" d="M160,50 l10,-14 l16,28 l16,-28 l16,28 l16,-28 l16,28 l10,-14"/>
   <path class="comp" d="M390,80 q16,10 0,20 q16,10 0,20 q16,10 0,20"/>
-  <g id="s1-cap">
+  <g>
     <line class="comp" x1="220" y1="134" x2="220" y2="166"/>
     <line class="comp" x1="236" y1="134" x2="236" y2="166"/>
   </g>
@@ -298,523 +276,640 @@ const CIRCUIT_SVG = `
   <text class="lbl" x="210" y="26" text-anchor="middle">R</text>
   <text class="lbl" x="417" y="114" text-anchor="middle">L</text>
   <text class="lbl" x="228" y="188" text-anchor="middle">C</text>
-  <g id="s1-cur">
-    <polygon class="arr" points="104,44 118,50 104,56"/>
-    <text class="lbl" x="111" y="34" text-anchor="middle">i(t)</text>
-  </g>
 </svg>`;
 
-const S1 = { R: 2, L: 1, C: 0.5, sel: ['i', 'q'] };
-const S1_VARS = [
-  ['i', '<i>i</i>(t) — courant'],
-  ['q', '<i>q</i>(t) — charge du condensateur'],
-  ['vR', '<i>v<sub>R</sub></i>(t) — tension aux bornes de R'],
-  ['vC', '<i>v<sub>C</sub></i>(t) — tension aux bornes de C']
+const S1={R:2,L:1,C:0.5,sel:['q','i']};
+const S1_VARS=[
+  ['i','<i>i</i>(t) — courant','#e8a33a'],
+  ['q','<i>q</i>(t) — charge','#1e7a2e'],
+  ['vR','<i>v<sub>R</sub></i>(t) — tension R','#2e6da4'],
+  ['vC','<i>v<sub>C</sub></i>(t) — tension C','#7b4fc2']
 ];
-const S1_DEP = {
-  'i+vR': ['<i>v<sub>R</sub></i>(t) = R · <i>i</i>(t)', 'la tension aux bornes de la résistance est proportionnelle au courant : les deux variables sont liées.'],
-  'q+vC': ['<i>v<sub>C</sub></i>(t) = <i>q</i>(t) / C', 'la tension aux bornes du condensateur est proportionnelle à sa charge : les deux variables sont liées.']
+/* 8 couples ordonnés valides + notation symbolique */
+const S1_MODELS={
+  'q,i':{x:['q','i'],desc:'<b>x</b> = (<i>q</i>, <i>i</i>)',A:[['0','1'],['−1/(LC)','−R/L']],B:[['0'],['1/L']],Af:(R,L,C)=>[[0,1],[-1/(L*C),-R/L]],Bf:(R,L,C)=>[[0],[1/L]],legend:['<i>q</i> (C)','<i>i</i> (A)']},
+  'i,q':{x:['i','q'],desc:'<b>x</b> = (<i>i</i>, <i>q</i>)',A:[['−R/L','−1/(LC)'],['1','0']],B:[['1/L'],['0']],Af:(R,L,C)=>[[-R/L,-1/(L*C)],[1,0]],Bf:(R,L,C)=>[[1/L],[0]],legend:['<i>i</i> (A)','<i>q</i> (C)']},
+  'vC,i':{x:['vC','i'],desc:'<b>x</b> = (<i>v<sub>C</sub></i>, <i>i</i>)',A:[['0','1/C'],['−1/L','−R/L']],B:[['0'],['1/L']],Af:(R,L,C)=>[[0,1/C],[-1/L,-R/L]],Bf:(R,L,C)=>[[0],[1/L]],legend:['<i>v<sub>C</sub></i> (V)','<i>i</i> (A)']},
+  'i,vC':{x:['i','vC'],desc:'<b>x</b> = (<i>i</i>, <i>v<sub>C</sub></i>)',A:[['−R/L','−1/L'],['1/C','0']],B:[['1/L'],['0']],Af:(R,L,C)=>[[-R/L,-1/L],[1/C,0]],Bf:(R,L,C)=>[[1/L],[0]],legend:['<i>i</i> (A)','<i>v<sub>C</sub></i> (V)']},
+  'vR,vC':{x:['vR','vC'],desc:'<b>x</b> = (<i>v<sub>R</sub></i>, <i>v<sub>C</sub></i>)',A:[['−R/L','−R/L'],['1/(RC)','0']],B:[['R/L'],['0']],Af:(R,L,C)=>[[-R/L,-R/L],[1/(R*C),0]],Bf:(R,L,C)=>[[R/L],[0]],legend:['<i>v<sub>R</sub></i> (V)','<i>v<sub>C</sub></i> (V)']},
+  'vC,vR':{x:['vC','vR'],desc:'<b>x</b> = (<i>v<sub>C</sub></i>, <i>v<sub>R</sub></i>)',A:[['0','1/(RC)'],['−R/L','−R/L']],B:[['0'],['R/L']],Af:(R,L,C)=>[[0,1/(R*C)],[-R/L,-R/L]],Bf:(R,L,C)=>[[0],[R/L]],legend:['<i>v<sub>C</sub></i> (V)','<i>v<sub>R</sub></i> (V)']},
+  'vR,q':{x:['vR','q'],desc:'<b>x</b> = (<i>v<sub>R</sub></i>, <i>q</i>)',A:[['−R/L','−R/(LC)'],['1/R','0']],B:[['R/L'],['0']],Af:(R,L,C)=>[[-R/L,-R/(L*C)],[1/R,0]],Bf:(R,L,C)=>[[R/L],[0]],legend:['<i>v<sub>R</sub></i> (V)','<i>q</i> (C)']},
+  'q,vR':{x:['q','vR'],desc:'<b>x</b> = (<i>q</i>, <i>v<sub>R</sub></i>)',A:[['0','1/R'],['−R/(LC)','−R/L']],B:[['0'],['R/L']],Af:(R,L,C)=>[[0,1/R],[-R/(L*C),-R/L]],Bf:(R,L,C)=>[[0],[R/L]],legend:['<i>q</i> (C)','<i>v<sub>R</sub></i> (V)']}
 };
-function mountS1(root) {
-  root.innerHTML =
-    '<h2>1. Choisir les variables d\'état d\'un circuit RLC</h2>' +
-    '<p>Le circuit RLC série de la figure est un système du <b>deuxième ordre</b> : deux éléments stockent de l\'énergie (la bobine et le condensateur). Il faut donc <b>exactement deux</b> variables d\'état, et elles doivent être <b>linéairement indépendantes</b>.</p>' +
-    '<div class="stagebox">' + CIRCUIT_SVG + '</div>' +
-    '<div class="opts">' +
-      '<label class="fld"><span>R = <b id="s1-Rout"></b> Ω</span><input type="range" id="s1-R" min="0.5" max="5" step="0.1"></label>' +
-      '<label class="fld"><span>L = <b id="s1-Lout"></b> H</span><input type="range" id="s1-L" min="0.2" max="2" step="0.1"></label>' +
-      '<label class="fld"><span>C = <b id="s1-Cout"></b> F</span><input type="range" id="s1-C" min="0.1" max="2" step="0.1"></label>' +
-    '</div>' +
-    '<h3>Cliquez sur deux variables candidates</h3>' +
-    '<div id="s1-chips"></div>' +
-    '<div id="s1-verdict" class="verdict"></div>' +
-    '<h3>Le modèle d\'état correspondant</h3>' +
-    '<div id="s1-model"></div>';
-  $('#s1-R').value = S1.R; $('#s1-L').value = S1.L; $('#s1-C').value = S1.C;
-  $('#s1-R').addEventListener('input', e => { S1.R = +e.target.value; drawS1(); });
-  $('#s1-L').addEventListener('input', e => { S1.L = +e.target.value; drawS1(); });
-  $('#s1-C').addEventListener('input', e => { S1.C = +e.target.value; drawS1(); });
+const S1_INVALID=[['q','vC'],['vC','q'],['i','vR'],['vR','i']];
+
+function mountS1(root){
+  root.innerHTML=
+    '<h2>1. Choisir les variables d\'état d\'un circuit RLC</h2>'+
+    '<p>Ce circuit RLC série est un système du <b>deuxième ordre</b> : deux éléments stockent de l\'énergie (la bobine <i>L</i> et le condensateur <i>C</i>). Il faut donc <b>exactement deux variables d\'état linéairement indépendantes</b>.</p>'+
+    '<div class="stagebox">'+CIRCUIT+'</div>'+
+    '<h3>Choisissez deux variables candidates</h3>'+
+    '<p class="small">L\'ordre de sélection détermine l\'ordre des composantes de <b>x</b>. Cliquez à nouveau sur une variable pour la retirer.</p>'+
+    '<div id="s1-chips"></div>'+
+    '<div id="s1-verdict" class="verdict"></div>'+
+    '<h3>Modèle d\'état correspondant</h3>'+
+    '<div id="s1-model"></div>'+
+    '<h3>Réponse temporelle à un échelon unité (v(t) = 1 pour t ≥ 0, x(0) = 0)</h3>'+
+    '<div class="opts">'+
+      '<label class="fld"><span>Amortissement (via R)</span><input type="range" id="s1-R" min="0.4" max="5" step="0.1"></label>'+
+      '<label class="fld"><span>Inductance L</span><input type="range" id="s1-L" min="0.2" max="2" step="0.1"></label>'+
+      '<label class="fld"><span>Capacité C</span><input type="range" id="s1-C" min="0.1" max="2" step="0.1"></label>'+
+    '</div>'+
+    '<div id="s1-plot"></div>';
+  $('#s1-R').value=S1.R;$('#s1-L').value=S1.L;$('#s1-C').value=S1.C;
+  $('#s1-R').addEventListener('input',e=>{S1.R=+e.target.value;drawS1();});
+  $('#s1-L').addEventListener('input',e=>{S1.L=+e.target.value;drawS1();});
+  $('#s1-C').addEventListener('input',e=>{S1.C=+e.target.value;drawS1();});
   drawS1();
 }
-function drawS1() {
-  $('#s1-Rout').textContent = num(S1.R, 1);
-  $('#s1-Lout').textContent = num(S1.L, 1);
-  $('#s1-Cout').textContent = num(S1.C, 1);
-  const box = $('#s1-chips'); box.innerHTML = '';
-  box.append(chipRow(S1_VARS, v => S1.sel.indexOf(v) >= 0, v => {
-    const i = S1.sel.indexOf(v);
-    if (i >= 0) S1.sel.splice(i, 1); else S1.sel.push(v);
-    drawS1();
-  }));
-  /* surlignage du schéma */
-  const on = v => S1.sel.indexOf(v) >= 0;
-  $('#s1-res').classList.toggle('hl', on('vR'));
-  $('#s1-cap').classList.toggle('hl', on('q') || on('vC'));
-  $('#s1-cur').classList.toggle('hl', on('i'));
-  $('#s1-cur').querySelector('text').classList.toggle('hl', on('i'));
-
-  /* verdict */
-  const vd = $('#s1-verdict');
-  const n = S1.sel.length;
-  if (n < 2) {
-    vd.className = 'verdict warn';
-    vd.innerHTML = '<b>Il manque au moins une variable d\'état.</b> Un système d\'ordre 2 se décrit avec deux variables d\'état simultanées : une seule ne suffit pas à connaître l\'état complet du circuit.';
-  } else if (n > 2) {
-    vd.className = 'verdict no';
-    vd.innerHTML = '<b>Trop de variables.</b> Dans un système d\'ordre 2, trois variables sont forcément liées : l\'une s\'écrit comme combinaison linéaire des deux autres. On parle de variables <i>dépendantes</i>.';
-  } else {
-    const key = S1.sel.slice().sort().join('+');
-    const dep = S1_DEP[key];
-    if (dep) {
-      vd.className = 'verdict no';
-      vd.innerHTML = '<b>Variables linéairement dépendantes.</b> En effet ' + dep[0] + ' : ' + dep[1] + ' Connaître l\'une donne l\'autre, ce n\'est donc pas un choix valide.';
-    } else {
-      vd.className = 'verdict yes';
-      vd.innerHTML = '<b>Bon choix : deux variables indépendantes.</b> Aucune ne s\'écrit comme combinaison linéaire de l\'autre ; le système d\'équations d\'état pourra être résolu. Rappel : la représentation n\'est pas unique, un autre couple indépendant donnerait des matrices différentes mais les mêmes valeurs propres.';
+function drawS1(){
+  const box=$('#s1-chips');box.innerHTML='';
+  S1_VARS.forEach(v=>{
+    const on=S1.sel.indexOf(v[0])>=0;
+    const b=h('button',{type:'button',class:'chip'+(on?' on':''),'aria-pressed':on?'true':'false',style:'--chip-color:'+v[2]});
+    b.innerHTML='<span class="dot"></span>'+v[1];
+    b.addEventListener('click',()=>{
+      const i=S1.sel.indexOf(v[0]);
+      if(i>=0)S1.sel.splice(i,1);else S1.sel.push(v[0]);
+      drawS1();
+    });
+    box.append(b);
+  });
+  const vd=$('#s1-verdict');
+  const n=S1.sel.length;
+  if(n<2){vd.className='verdict warn';vd.innerHTML='<b>Il manque au moins une variable d\'état.</b> Un système d\'ordre 2 se décrit avec deux variables d\'état simultanées.';}
+  else if(n>2){vd.className='verdict no';vd.innerHTML='<b>Trop de variables.</b> Trois variables pour un système d\'ordre 2 sont forcément liées. Revenez à deux variables.';}
+  else{
+    const key=S1.sel.join(',');
+    if(S1_INVALID.some(p=>p[0]===S1.sel[0]&&p[1]===S1.sel[1])){
+      const dep=(S1.sel[0]==='q'||S1.sel[0]==='vC')&&(S1.sel[1]==='q'||S1.sel[1]==='vC')
+        ?'<i>v<sub>C</sub></i> = <i>q</i>/<i>C</i> : les deux variables sont proportionnelles.'
+        :'<i>v<sub>R</sub></i> = <i>R·i</i> : les deux variables sont proportionnelles.';
+      vd.className='verdict no';vd.innerHTML='<b>Couple linéairement dépendant.</b> '+dep+' Choisissez une autre variable à la place.';
+    } else if(S1_MODELS[key]){
+      vd.className='verdict yes';vd.innerHTML='<b>Bon choix : deux variables indépendantes.</b> Le modèle d\'état ci-dessous correspond à ce couple.';
     }
   }
   /* modèle */
-  const R = S1.R, L = S1.L, C = S1.C;
-  const A = [['0', '1'], [num(-1 / (L * C)), num(-R / L)]];
-  const B = [['0'], [num(1 / L)]];
-  const Cm = [num(-1 / C), num(-R)];
-  $('#s1-model').innerHTML =
-    EQ('On choisit le vecteur d\'état <b>x</b> = ' + M([['<i>q</i>'], ['<i>i</i>']]) + ' , avec pour entrée <i>u</i> = <i>v</i>(<i>t</i>).') +
-    EQ('<i>dq</i>/<i>dt</i> = <i>i</i> &nbsp;&nbsp;;&nbsp;&nbsp; <i>di</i>/<i>dt</i> = − (1/<i>LC</i>) <i>q</i> − (<i>R</i>/<i>L</i>) <i>i</i> + (1/<i>L</i>) <i>v</i>(<i>t</i>)') +
-    EQ('<b>ẋ</b> = <b>A x</b> + <b>B</b> <i>u</i> avec <b>A</b> = ' + M([['0', '1'], ['−1/(LC)', '−R/L']]) + ' = ' + M(A) +
-       ' et <b>B</b> = ' + M([['0'], ['1/L']]) + ' = ' + M(B)) +
-    EQ('Sortie <i>y</i> = <i>v<sub>L</sub></i>(<i>t</i>) = − (1/<i>C</i>) <i>q</i> − <i>R i</i> + <i>v</i>(<i>t</i>) donc <b>C</b> = ' + M([Cm]) + ' et <b>D</b> = ' + M([['1']])) +
-    '<p class="small">Les valeurs numériques se mettent à jour avec les curseurs R, L et C ci-dessus.</p>';
+  const md=$('#s1-model');
+  if(n===2&&S1_MODELS[S1.sel.join(',')]){
+    const key=S1.sel.join(',');const M=S1_MODELS[key];
+    md.innerHTML=
+      EQ('On choisit '+M.desc+' et <i>u</i> = <i>v</i>(<i>t</i>).')+
+      EQ('<b>A</b> = '+MAT(M.A)+' &nbsp; <b>B</b> = '+MAT(M.B))+
+      '<p class="small">Le couple (<b>A</b>, <b>B</b>) dépend du choix — et de l\'ordre — des variables. Les valeurs propres de <b>A</b> sont les mêmes pour tous les couples valides.</p>';
+    /* réponse temporelle */
+    const A=M.Af(S1.R,S1.L,S1.C),B=M.Bf(S1.R,S1.L,S1.C);
+    const tr=integLinear(A,B,[0,0],15,0.02);
+    const y1=tr.map(p=>p[1][0]),y2=tr.map(p=>p[1][1]);
+    let ymin=0,ymax=0;
+    y1.forEach(v=>{ymin=Math.min(ymin,v);ymax=Math.max(ymax,v);});
+    y2.forEach(v=>{ymin=Math.min(ymin,v);ymax=Math.max(ymax,v);});
+    const pad=(ymax-ymin)*0.12+0.02;
+    const pbox=$('#s1-plot');pbox.innerHTML='';
+    pbox.append(plot({
+      W:520,H:240,xr:[0,15],yr:[ymin-pad,ymax+pad],
+      xticks:[{v:0,label:'0'},{v:3,label:'3'},{v:6,label:'6'},{v:9,label:'9'},{v:12,label:'12'},{v:15,label:'15 s'}],
+      yticks:[{v:ymin,label:fmt(ymin,2)},{v:0,label:'0'},{v:ymax,label:fmt(ymax,2)}],
+      series:[{pts:tr.map(p=>[p[0],p[1][0]]),color:'#2e6da4',w:2.2},{pts:tr.map(p=>[p[0],p[1][1]]),color:'#e8a33a',w:2.2}],
+      texts:[{x:8.4,y:ymax+pad*0.5,s:'bleu : '+M.legend[0]+'   orange : '+M.legend[1]}]
+    }));
+  } else {
+    md.innerHTML='<p class="small">Sélectionnez exactement deux variables indépendantes pour afficher le modèle et sa réponse.</p>';
+    $('#s1-plot').innerHTML='';
+  }
 }
 
-/* ============================ Atelier 2 ============================ */
-const MASSE_SVG = `
-<svg viewBox="0 0 430 160" class="circ" role="img" aria-label="Système masse-ressort-amortisseur">
-  <rect x="8" y="20" width="12" height="120" fill="#33475b"/>
-  <g class="wire"><line x1="20" y1="55" x2="60" y2="55"/><line x1="20" y1="115" x2="70" y2="115"/></g>
-  <path class="comp" d="M60,55 l10,-13 l14,26 l14,-26 l14,26 l14,-26 l14,26 l10,-13"/>
-  <line class="wire" x1="150" y1="55" x2="240" y2="55"/>
-  <rect class="comp" x="90" y="103" width="46" height="24" fill="#fff"/>
-  <line class="wire" x1="70" y1="115" x2="90" y2="115"/>
-  <line class="comp" x1="105" y1="103" x2="105" y2="127"/>
-  <line class="wire" x1="136" y1="115" x2="240" y2="115"/>
-  <rect class="mass" x="240" y="35" width="72" height="80" rx="4"/>
-  <text class="lbl" x="276" y="82" text-anchor="middle">m</text>
-  <g class="wire"><line x1="312" y1="75" x2="380" y2="75" stroke-dasharray="0"/></g>
-  <polygon class="arr" points="392,75 370,67 370,83"/>
-  <text class="lbl" x="398" y="62" text-anchor="middle">F(t)</text>
-  <text class="lbl" x="128" y="34" text-anchor="middle">k</text>
-  <text class="lbl" x="112" y="146" text-anchor="middle">b</text>
-  <line class="wire" x1="240" y1="135" x2="330" y2="135"/>
-  <text class="lbl" x="290" y="152" text-anchor="middle">x(t)</text>
+/* ===================== ATELIER 2 : masse-ressort avec animation ===================== */
+const S2={m:1,b:0.6,k:4};
+const S2_SVG=`<svg viewBox="0 0 440 150" class="circ" role="img" aria-label="Système masse-ressort-amortisseur">
+  <rect x="8" y="20" width="10" height="110" fill="#33475b"/>
+  <path id="s2-spring" class="comp" d="" />
+  <line id="s2-damper" x1="18" y1="70" x2="118" y2="70" stroke="#33475b" stroke-width="1.5"/>
+  <rect id="s2-cyl" x="18" y="60" width="60" height="20" fill="#fff" stroke="#33475b" stroke-width="1.5"/>
+  <rect id="s2-mass" class="mass" x="118" y="30" width="60" height="60" rx="4"/>
+  <text id="s2-mlbl" x="148" y="66" text-anchor="middle" font-size="15" fill="#33475b">m</text>
+  <line x1="118" y1="108" x2="118" y2="126" stroke="#5a6068" stroke-dasharray="3 3"/>
+  <text x="118" y="142" text-anchor="middle" font-size="11" fill="#5a6068">x = 0</text>
+  <line id="s2-marker" x1="118" y1="100" x2="118" y2="132" stroke="#2e6da4" stroke-width="2"/>
+  <line x1="178" y1="60" x2="240" y2="60" stroke="#c0281f" stroke-width="2"/>
+  <polygon points="240,60 230,54 230,66" fill="#c0281f"/>
+  <text x="252" y="55" font-size="12" fill="#c0281f">F(t) = 0</text>
+  <text x="370" y="142" text-anchor="middle" font-size="11" fill="#5a6068">ressort + amortisseur</text>
 </svg>`;
+let S2_traj=null,S2_tmax=10;
 
-const S2 = { m: 1, b: 0.6, k: 4, order: 0 };
-function mountS2(root) {
-  root.innerHTML =
-    '<h2>2. Des équations aux matrices A, B, C, D</h2>' +
-    '<p>Un chariot de masse <i>m</i> est relié à un bâti par un ressort de raideur <i>k</i> et un amortisseur de coefficient <i>b</i>. La loi de Newton donne <i>m ẍ</i> + <i>b ẋ</i> + <i>k x</i> = <i>F</i>(<i>t</i>) : équation différentielle du <b>deuxième ordre</b>, donc deux variables d\'état.</p>' +
-    '<div class="stagebox">' + MASSE_SVG + '</div>' +
-    '<div class="opts">' +
-      '<label class="fld"><span>m = <b id="s2-mout"></b> kg</span><input type="range" id="s2-m" min="0.5" max="4" step="0.1"></label>' +
-      '<label class="fld"><span>b = <b id="s2-bout"></b> N·s/m</span><input type="range" id="s2-b" min="0" max="4" step="0.1"></label>' +
-      '<label class="fld"><span>k = <b id="s2-kout"></b> N/m</span><input type="range" id="s2-k" min="0.5" max="10" step="0.5"></label>' +
-    '</div>' +
-    '<h3>Deux choix possibles pour le vecteur d\'état</h3>' +
-    '<div id="s2-chips"></div>' +
-    '<div id="s2-model"></div>' +
-    '<div id="s2-eig"></div>';
-  $('#s2-m').value = S2.m; $('#s2-b').value = S2.b; $('#s2-k').value = S2.k;
-  ['m', 'b', 'k'].forEach(v => $('#' + 's2-' + v).addEventListener('input', e => { S2[v] = +e.target.value; drawS2(); }));
-  drawS2();
+function springPath(x0,y0,x1,n){
+  // zigzag à n motifs entre (x0,y0) et (x1,y0)
+  const L=x1-x0,seg=L/(2*n+1);let d='M '+x0+' '+y0+' ';
+  for(let i=1;i<=2*n;i++){const t=x0+seg*i;const y=y0+(i%2?-9:9);d+='L '+t+' '+y;}
+  d+='L '+x1+' '+y0;return d;
 }
-function drawS2() {
-  $('#s2-mout').textContent = num(S2.m, 1);
-  $('#s2-bout').textContent = num(S2.b, 1);
-  $('#s2-kout').textContent = num(S2.k, 1);
-  const m = S2.m, b = S2.b, k = S2.k;
-  const box = $('#s2-chips'); box.innerHTML = '';
-  box.append(chipRow([
-    ['0', '<i>x</i><sub>1</sub> = <i>x</i> (position), <i>x</i><sub>2</sub> = <i>ẋ</i> (vitesse)'],
-    ['1', '<i>x</i><sub>1</sub> = <i>ẋ</i> (vitesse), <i>x</i><sub>2</sub> = <i>x</i> (position)']
-  ], v => String(S2.order) === v, v => { S2.order = +v; drawS2(); }));
-  let html = '';
-  if (S2.order === 0) {
-    html += EQ('On pose <b>x</b> = ' + M([['<i>x</i>'], ['<i>ẋ</i>']]) + ' et <i>u</i> = <i>F</i>(<i>t</i>). Alors <i>ẋ</i><sub>1</sub> = <i>x</i><sub>2</sub> et <i>ẋ</i><sub>2</sub> = −(<i>k</i>/<i>m</i>)<i>x</i><sub>1</sub> − (<i>b</i>/<i>m</i>)<i>x</i><sub>2</sub> + (1/<i>m</i>)<i>F</i>.') +
-      EQ('<b>A</b> = ' + M([['0', '1'], ['−k/m', '−b/m']]) + ' = ' + M([['0', '1'], [num(-k / m), num(-b / m)]]) +
-         ' &nbsp; <b>B</b> = ' + M([['0'], ['1/m']]) + ' = ' + M([['0'], [num(1 / m)]]) +
-         ' &nbsp; <b>C</b> = ' + M([['1', '0']]) + ' &nbsp; <b>D</b> = ' + M([['0']]));
-  } else {
-    html += EQ('On pose <b>x</b> = ' + M([['<i>ẋ</i>'], ['<i>x</i>']]) + ' et <i>u</i> = <i>F</i>(<i>t</i>). Alors <i>ẋ</i><sub>1</sub> = −(<i>b</i>/<i>m</i>)<i>x</i><sub>1</sub> − (<i>k</i>/<i>m</i>)<i>x</i><sub>2</sub> + (1/<i>m</i>)<i>F</i> et <i>ẋ</i><sub>2</sub> = <i>x</i><sub>1</sub>.') +
-      EQ('<b>A</b> = ' + M([['−b/m', '−k/m'], ['1', '0']]) + ' = ' + M([[num(-b / m), num(-k / m)], ['1', '0']]) +
-         ' &nbsp; <b>B</b> = ' + M([['1/m'], ['0']]) + ' = ' + M([[num(1 / m)], ['0']]) +
-         ' &nbsp; <b>C</b> = ' + M([['0', '1']]) + ' &nbsp; <b>D</b> = ' + M([['0']]));
-  }
-  html += '<p class="small">La sortie est toujours la position <i>y</i> = <i>x</i>(<i>t</i>) ; seule la matrice <b>C</b> change selon le rang de la position dans le vecteur d\'état.</p>';
-  $('#s2-model').innerHTML = html;
-
-  /* valeurs propres */
-  const tr = -b / m, det = k / m, disc = tr * tr - 4 * det;
-  let l1, l2, nature;
-  if (disc >= 0) { const r = Math.sqrt(disc); l1 = (tr + r) / 2; l2 = (tr - r) / 2; nature = disc === 0 ? 'racine double (régime critique)' : 'deux racines réelles (régime apériodique)'; }
-  else { l1 = tr / 2; l2 = tr / 2; nature = 'deux racines complexes conjuguées (régime pseudo-périodique)'; }
-  const imag = disc < 0 ? Math.sqrt(-disc) / 2 : 0;
-  const s1 = disc < 0 ? num(l1) + ' ± ' + num(imag) + ' j' : num(l1);
-  const s2 = disc < 0 ? num(l2) + ' ∓ ' + num(imag) + ' j' : num(l2);
-  $('#s2-eig').innerHTML =
-    stats([['Équation caractéristique', 's² + (b/m)s + k/m = 0'], ['Valeurs propres λ₁', s1], ['Valeurs propres λ₂', s2], ['Nature', nature]]) +
-    '<div class="verdict"><b>Les deux représentations ont les mêmes valeurs propres.</b> Changer l\'ordre des variables d\'état change les matrices <b>A</b>, <b>B</b> et <b>C</b>, mais pas le polynôme caractéristique det(λ<b>I</b> − <b>A</b>) : le comportement du système est identique. C\'est la <i>non-unicité</i> de la représentation d\'état.</div>';
-}
-
-/* ============================ Atelier 3 ============================ */
-const S3 = { th: 0.9, c: 0.25, d: 0.6 };
-function mountS3(root) {
-  root.innerHTML =
-    '<h2>3. Linéariser autour d\'un point d\'équilibre</h2>' +
-    '<p>Pendule amorti (longueur ℓ, masse <i>m</i>, frottement <i>b</i>) : <i>θ̈</i> = −(<i>g</i>/ℓ) sin <i>θ</i> − (<i>b</i>/(<i>m</i>ℓ²)) <i>θ̇</i>. On note <i>x</i><sub>1</sub> = <i>θ</i>, <i>x</i><sub>2</sub> = <i>θ̇</i> et on normalise <i>g</i>/ℓ = 1. Le modèle d\'état s\'écrit :</p>' +
-    EQ('<i>ẋ</i><sub>1</sub> = <i>x</i><sub>2</sub> = <i>f</i><sub>1</sub>(<b>x</b>) &nbsp;&nbsp;;&nbsp;&nbsp; <i>ẋ</i><sub>2</sub> = −sin <i>x</i><sub>1</sub> − <i>c x</i><sub>2</sub> = <i>f</i><sub>2</sub>(<b>x</b>)') +
-    '<div class="opts">' +
-      '<label class="fld"><span>Point de linéarisation θ₀ = <b id="s3-thout"></b> rad</span><input type="range" id="s3-th" min="-3.14159" max="3.14159" step="0.01"></label>' +
-      '<label class="fld"><span>Amortissement c = <b id="s3-cout"></b></span><input type="range" id="s3-c" min="0" max="1" step="0.05"></label>' +
-      '<label class="fld"><span>Écart initial δ = <b id="s3-dout"></b> rad</span><input type="range" id="s3-d" min="0.05" max="1.2" step="0.05"></label>' +
-    '</div>' +
-    '<h3>1. La fonction non linéaire et sa tangente</h3>' +
-    '<div id="s3-plot1"></div>' +
-    '<div id="s3-verdict" class="verdict"></div>' +
-    '<h3>2. La matrice jacobienne en <b>x</b>₀</h3>' +
-    '<div id="s3-jac"></div>' +
-    '<h3>3. Réponse réelle et réponse du modèle linéarisé</h3>' +
-    '<div id="s3-plot2"></div>' +
-    '<div id="s3-cmp"></div>';
-  $('#s3-th').value = S3.th; $('#s3-c').value = S3.c; $('#s3-d').value = S3.d;
-  $('#s3-th').addEventListener('input', e => { S3.th = +e.target.value; drawS3(); });
-  $('#s3-c').addEventListener('input', e => { S3.c = +e.target.value; drawS3(); });
-  $('#s3-d').addEventListener('input', e => { S3.d = +e.target.value; drawS3(); });
-  drawS3();
-}
-function drawS3() {
-  const th0 = S3.th, c = S3.c, d = S3.d;
-  $('#s3-thout').textContent = num(th0);
-  $('#s3-cout').textContent = num(c);
-  $('#s3-dout').textContent = num(d);
-
-  /* --- graphe de f et tangente --- */
-  const pts = [];
-  for (let i = 0; i <= 240; i++) { const x = -Math.PI + 2 * Math.PI * i / 240; pts.push([x, -Math.sin(x)]); }
-  const slope = -Math.cos(th0);
-  const tan = [[-Math.PI, -Math.sin(th0) + slope * (-Math.PI - th0)], [Math.PI, -Math.sin(th0) + slope * (Math.PI - th0)]];
-  const p1 = $('#s3-plot1'); p1.innerHTML = '';
-  p1.append(plot({
-    W: 480, H: 240, xr: [-Math.PI, Math.PI], yr: [-1.7, 1.7],
-    xticks: [{ v: -Math.PI, label: '−π' }, { v: -Math.PI / 2, label: '−π/2' }, { v: 0, label: '0' }, { v: Math.PI / 2, label: 'π/2' }, { v: Math.PI, label: 'π' }],
-    yticks: [{ v: -1, label: '−1' }, { v: 0, label: '0' }, { v: 1, label: '1' }],
-    series: [{ pts: pts, color: '#2e6da4', w: 2.6 }, { pts: tan, color: '#c0281f', w: 2, dash: '7 5' }],
-    dots: [{ x: th0, y: -Math.sin(th0), color: '#c0281f', r: 5 }],
-    texts: [{ x: -Math.PI + 0.1, y: 1.5, s: '−sin θ (réel)' }, { x: 1.0, y: 1.5, s: 'tangente en θ₀' }]
-  }));
-  const eq = Math.abs(Math.sin(th0)) < 0.03;
-  const vd = $('#s3-verdict');
-  if (eq) {
-    const stable = Math.cos(th0) > 0;
-    vd.className = 'verdict ' + (stable ? 'yes' : 'no');
-    vd.innerHTML = stable
-      ? '<b>θ₀ = ' + num(th0) + ' rad est un point d\'équilibre stable.</b> La pente de la tangente vaut −cos θ₀ = ' + num(slope) + ' &lt; 0 : une petite perturbation est rappelée vers l\'équilibre. C\'est le pendule « en bas ».'
-      : '<b>θ₀ = ' + num(th0) + ' rad est un point d\'équilibre instable.</b> La pente vaut −cos θ₀ = ' + num(slope) + ' &gt; 0 : la moindre perturbation s\'amplifie. C\'est le pendule « en haut ».';
-  } else {
-    vd.className = 'verdict warn';
-    vd.innerHTML = '<b>θ₀ = ' + num(th0) + ' rad n\'est pas un point d\'équilibre</b> (sin θ₀ ≠ 0). La tangente est tracée, mais un modèle linéarisé n\'a de sens qu\'autour d\'un point d\'équilibre. Faites glisser le curseur vers 0 ou vers ±π.';
-  }
-
-  /* --- jacobienne --- */
-  const J = [['0', '1'], [num(slope), num(-c)]];
-  let eigs, nat;
-  const tr = -c, det = -slope, disc = tr * tr - 4 * det;
-  if (disc >= 0) {
-    const r = Math.sqrt(disc);
-    eigs = [num((tr + r) / 2), num((tr - r) / 2)];
-    nat = (tr + r) / 2 > 0 ? 'deux valeurs propres réelles, dont une positive → équilibre instable (nœud instable)' : 'deux valeurs propres réelles négatives → équilibre stable (nœud stable)';
-  } else {
-    const re = tr / 2, im = Math.sqrt(-disc) / 2;
-    eigs = [num(re) + ' ± ' + num(im) + ' j'];
-    nat = re < 0 ? 'valeurs propres complexes de partie réelle négative → foyer stable (oscillations amorties)' : 'valeurs propres complexes de partie réelle positive → foyer instable';
-  }
-  $('#s3-jac').innerHTML =
-    EQ('<b>A</b> = ∂<b>f</b>/∂<b>x</b> |<sub><b>x</b>₀</sub> = ' + M([['0', '1'], ['−cos θ₀', '−c']]) + ' = ' + M(J)) +
-    stats([['λ (valeurs propres)', eigs.join('  ;  ')], ['Interprétation', nat]]) +
-    '<p class="small">La matrice jacobienne s\'obtient en dérivant chaque ligne de <b>f</b> par rapport à chaque variable d\'état, puis en évaluant au point d\'équilibre.</p>';
-
-  /* --- simulation --- */
-  const fNL = p => [p[1], -Math.sin(p[0]) - c * p[1]];
-  const fL = p => [p[1], -Math.cos(th0) * (p[0] - th0) - c * p[1]];
-  const T = 10, st = 0.02;
-  const nl = rk4(fNL, [th0 + d, 0], T, st).map((p, i) => [i * st, p[0]]);
-  const li = rk4(fL, [th0 + d, 0], T, st).map((p, i) => [i * st, p[0]]);
-  let ymin = Infinity, ymax = -Infinity;
-  nl.forEach(p => { ymin = Math.min(ymin, p[1]); ymax = Math.max(ymax, p[1]); });
-  li.forEach(p => { ymin = Math.min(ymin, p[1]); ymax = Math.max(ymax, p[1]); });
-  const pad = (ymax - ymin) * 0.15 + 0.05;
-  const p2 = $('#s3-plot2'); p2.innerHTML = '';
-  p2.append(plot({
-    W: 480, H: 220, xr: [0, T], yr: [ymin - pad, ymax + pad],
-    xticks: [{ v: 0, label: '0' }, { v: 2, label: '2' }, { v: 4, label: '4' }, { v: 6, label: '6' }, { v: 8, label: '8' }, { v: 10, label: '10 s' }],
-    yticks: [{ v: ymin, label: num(ymin, 1) }, { v: 0, label: '0' }, { v: ymax, label: num(ymax, 1) }],
-    series: [{ pts: nl, color: '#2e6da4', w: 2.2 }, { pts: li, color: '#c0281f', w: 2, dash: '7 5' }],
-    texts: [{ x: 0.2, y: ymax + pad * 0.5, s: 'bleu : non linéaire — rouge pointillé : linéarisé' }]
-  }));
-  let ecart = 0;
-  const nmin = Math.min(nl.length, li.length);
-  for (let i = 0; i < nmin; i++) ecart = Math.max(ecart, Math.abs(nl[i][1] - li[i][1]));
-  $('#s3-cmp').innerHTML = '<div class="verdict">' + (
-    ecart < 0.05
-      ? '<b>Les deux courbes se superposent.</b> Le modèle linéarisé est une excellente approximation tant qu\'on reste au voisinage du point d\'équilibre.'
-      : '<b>Écart maximal : ' + num(ecart) + ' rad.</b> Plus l\'écart initial δ est grand, plus le modèle linéarisé s\'éloigne de la réalité : la linéarisation n\'est <i>valable que localement</i>.') + '</div>';
-}
-
-/* ============================ Atelier 4 ============================ */
-const S4 = { w: 1.5, z: 0.25, ic: [2, 0] };
-function mountS4(root) {
-  root.innerHTML =
-    '<h2>4. Trajectoires dans l\'espace d\'état</h2>' +
-    '<p>Un oscillateur linéarisé s\'écrit <b>ẋ</b> = <b>A x</b> avec <b>x</b> = (<i>x</i><sub>1</sub>, <i>x</i><sub>2</sub>). L\'<b>espace d\'état</b> est le plan dont les axes sont les variables d\'état : chaque solution est une courbe, appelée <i>trajectoire</i>. Le point courant est le <i>vecteur d\'état</i>.</p>' +
-    EQ('<b>A</b> = ' + M([['0', '1'], ['−ω₀²', '−2ζω₀']]) + ' <span style="font-size:13px;color:var(--muted)">(forme compagne d\'un second ordre)</span>') +
-    '<div class="opts">' +
-      '<label class="fld"><span>ω₀ = <b id="s4-wout"></b> rad/s</span><input type="range" id="s4-w" min="0.5" max="3" step="0.1"></label>' +
-      '<label class="fld"><span>ζ = <b id="s4-zout"></b></span><input type="range" id="s4-z" min="-0.3" max="2" step="0.05"></label>' +
-      '<button class="btn" id="s4-reset" type="button" style="margin-bottom:9px">Condition initiale par défaut</button>' +
-    '</div>' +
-    '<div class="leg" style="display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 6px">' +
-      '<span><b style="color:#9fb4ca">■</b> trajectoires quelconques</span><span><b style="color:#2e6da4">■</b> trajectoire choisie</span><span><b style="color:#c0281f">●</b> point de départ</span>' +
-    '</div>' +
-    '<div class="stagebox"><div id="s4-plot"></div></div>' +
-    '<p class="small">Cliquez dans le plan pour choisir une nouvelle condition initiale : la trajectoire bleue est recalculée.</p>' +
-    '<div id="s4-info"></div>';
-  $('#s4-w').value = S4.w; $('#s4-z').value = S4.z;
-  $('#s4-w').addEventListener('input', e => { S4.w = +e.target.value; drawS4(); });
-  $('#s4-z').addEventListener('input', e => { S4.z = +e.target.value; drawS4(); });
-  $('#s4-reset').addEventListener('click', () => { S4.ic = [2, 0]; drawS4(); });
-  drawS4();
-}
-function drawS4() {
-  const w = S4.w, z = S4.z;
-  $('#s4-wout').textContent = num(w, 1);
-  $('#s4-zout').textContent = num(z);
-  const A = [[0, 1], [-w * w, -2 * z * w]];
-  const f = p => [A[0][0] * p[0] + A[0][1] * p[1], A[1][0] * p[0] + A[1][1] * p[1]];
-  const XR = [-4, 4], YR = [-4, 4];
-  const series = [];
-  const R = 2.6;
-  for (let i = 0; i < 12; i++) {
-    const a = 2 * Math.PI * i / 12;
-    const ic = [R * Math.cos(a), R * Math.sin(a)];
-    series.push({ pts: rk4(f, ic, 8, 0.02), color: '#9fb4ca', w: 1.3 });
-  }
-  const main = rk4(f, S4.ic, 8, 0.02);
-  series.push({ pts: main, color: '#2e6da4', w: 2.4 });
-
-  const box = $('#s4-plot'); box.innerHTML = '';
-  const g = plot({
-    W: 470, H: 380, xr: XR, yr: YR,
-    xticks: [{ v: -4, label: '−4' }, { v: -2, label: '−2' }, { v: 0, label: '0' }, { v: 2, label: '2' }, { v: 4, label: '4' }],
-    yticks: [{ v: -4, label: '−4' }, { v: -2, label: '−2' }, { v: 0, label: '0' }, { v: 2, label: '2' }, { v: 4, label: '4' }],
-    series: series,
-    dots: [{ x: S4.ic[0], y: S4.ic[1], color: '#c0281f', r: 5 }],
-    texts: [{ x: 3.1, y: 3.6, s: 'x₁' }, { x: 0.15, y: 3.6, s: 'x₂' }]
+function mountS2(root){
+  root.innerHTML=
+    '<h2>2. Des équations aux matrices A, B, C, D</h2>'+
+    '<p>Un chariot de masse <i>m</i> est relié à un bâti par un ressort de raideur <i>k</i> et un amortisseur de coefficient <i>b</i>. Loi de Newton : <i>m ẍ</i> + <i>b ẋ</i> + <i>k x</i> = 0 (on étudie la <i>réponse libre</i> à une position initiale décalée). Équation du second ordre → <b>deux</b> variables d\'état.</p>'+
+    '<div class="stagebox">'+S2_SVG+'</div>'+
+    '<div class="animbar"><button class="btn" id="s2-pause" type="button">⏸ Pause</button><button class="btn" id="s2-reset" type="button">↺ Réinitialiser</button></div>'+
+    '<div class="legend"><span><b style="color:#2e6da4">■</b> position x(t)</span><span><b style="color:#c0281f">●</b> point courant</span></div>'+
+    '<div class="opts">'+
+      '<label class="fld"><span>Masse m = <b id="s2-mo"></b> kg</span><input type="range" id="s2-m" min="0.5" max="4" step="0.1"></label>'+
+      '<label class="fld"><span>Amortissement b = <b id="s2-bo"></b> N·s/m</span><input type="range" id="s2-b" min="0" max="4" step="0.1"></label>'+
+      '<label class="fld"><span>Raideur k = <b id="s2-ko"></b> N/m</span><input type="range" id="s2-k" min="0.5" max="10" step="0.5"></label>'+
+    '</div>'+
+    '<h3>Choix du vecteur d\'état</h3>'+
+    '<div id="s2-chips"></div>'+
+    '<div id="s2-model"></div>'+
+    '<h3>Position x(t)</h3>'+
+    '<div id="s2-plot"></div>'+
+    '<div id="s2-info"></div>';
+  $('#s2-m').value=S2.m;$('#s2-b').value=S2.b;$('#s2-k').value=S2.k;
+  ['m','b','k'].forEach(v=>$('#s2-'+v).addEventListener('input',e=>{S2[v]=+e.target.value;drawS2();}));
+  $('#s2-reset').addEventListener('click',()=>{drawS2();});
+  $('#s2-pause').addEventListener('click',()=>{
+    if(animRunning){stopAnim();$('#s2-pause').textContent='▶ Jouer';}
+    else{startAnim(animS2);$('#s2-pause').textContent='⏸ Pause';}
   });
-  box.append(g);
-  /* clic pour choisir une condition initiale */
-  g.addEventListener('click', e => {
-    const r = g.getBoundingClientRect();
-    const map = g._map;
-    const px = (e.clientX - r.left) / r.width * map.W;
-    const py = (e.clientY - r.top) / r.height * map.H;
-    const x = map.x0 + (px - map.m.l) / (map.W - map.m.l - map.m.r) * (map.x1 - map.x0);
-    const y = map.y1 - (py - map.m.t) / (map.H - map.m.t - map.m.b) * (map.y1 - map.y0);
-    if (x < XR[0] || x > XR[1] || y < YR[0] || y > YR[1]) return;
-    S4.ic = [clamp(x, -3.8, 3.8), clamp(y, -3.8, 3.8)];
+  drawS2();
+  startAnim(animS2);
+}
+function drawS2(){
+  $('#s2-mo').textContent=fmt(S2.m,1);
+  $('#s2-bo').textContent=fmt(S2.b,1);
+  $('#s2-ko').textContent=fmt(S2.k,1);
+  const kbox=$('#s2-chips');kbox.innerHTML='';
+  const order=S2_order||0;
+  const btns=[
+    {v:0,label:'<i>x</i><sub>1</sub> = <i>x</i> (position), <i>x</i><sub>2</sub> = <i>ẋ</i> (vitesse)'},
+    {v:1,label:'<i>x</i><sub>1</sub> = <i>ẋ</i> (vitesse), <i>x</i><sub>2</sub> = <i>x</i> (position)'}
+  ];
+  btns.forEach(b=>{
+    const on=order===b.v;
+    const el=h('button',{type:'button',class:'chip'+(on?' on':''),'aria-pressed':on?'true':'false',style:'--chip-color:#2e6da4'});
+    el.innerHTML='<span class="dot"></span>'+b.label;
+    el.addEventListener('click',()=>{S2_order=b.v;drawS2();});
+    kbox.append(el);
+  });
+  const m=S2.m,b=S2.b,k=S2.k;
+  let html='';
+  if(order===0){
+    html+=EQ('On pose <b>x</b> = '+MAT([['<i>x</i>'],['<i>ẋ</i>']])+'. Alors <i>ẋ</i><sub>1</sub> = <i>x</i><sub>2</sub> et <i>ẋ</i><sub>2</sub> = −(<i>k</i>/<i>m</i>)<i>x</i><sub>1</sub> − (<i>b</i>/<i>m</i>)<i>x</i><sub>2</sub>.')+
+      EQ('<b>A</b> = '+MAT([['0','1'],['−k/m','−b/m']])+' &nbsp; <b>B</b> = '+MAT([['0'],['1/m']])+' &nbsp; <b>C</b> = '+MAT([['1','0']])+' &nbsp; <b>D</b> = '+MAT([['0']]));
+  } else {
+    html+=EQ('On pose <b>x</b> = '+MAT([['<i>ẋ</i>'],['<i>x</i>']])+'. Alors <i>ẋ</i><sub>1</sub> = −(<i>b</i>/<i>m</i>)<i>x</i><sub>1</sub> − (<i>k</i>/<i>m</i>)<i>x</i><sub>2</sub> et <i>ẋ</i><sub>2</sub> = <i>x</i><sub>1</sub>.')+
+      EQ('<b>A</b> = '+MAT([['−b/m','−k/m'],['1','0']])+' &nbsp; <b>B</b> = '+MAT([['1/m'],['0']])+' &nbsp; <b>C</b> = '+MAT([['0','1']])+' &nbsp; <b>D</b> = '+MAT([['0']]));
+  }
+  html+='<p class="small">Les deux choix donnent les mêmes valeurs propres (voir ci-dessous).</p>';
+  $('#s2-model').innerHTML=html;
+
+  /* trajectoire x(t) : condition initiale x(0)=1, ẋ(0)=0 */
+  const f=p=>[p[1],-(k/m)*p[0]-(b/m)*p[1]];
+  const pts=rk4(f,[1,0],S2_tmax,0.01);
+  S2_traj=pts;
+  /* plot */
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1][0]);
+  let ymin=Math.min(...ys),ymax=Math.max(...ys);
+  const pad=(ymax-ymin)*0.15+0.05;
+  const pbox=$('#s2-plot');pbox.innerHTML='';
+  const g=plot({
+    W:520,H:230,xr:[0,S2_tmax],yr:[ymin-pad,ymax+pad],
+    xticks:[{v:0,label:'0'},{v:2,label:'2'},{v:4,label:'4'},{v:6,label:'6'},{v:8,label:'8'},{v:10,label:'10 s'}],
+    yticks:[{v:ymin,label:fmt(ymin,1)},{v:0,label:'0'},{v:ymax,label:fmt(ymax,1)}],
+    series:[{pts:pts.map(p=>[p[0],p[1][0]]),color:'#2e6da4',w:2.2}]
+  });
+  pbox.append(g);
+  /* info valeurs propres */
+  const tr=-b/m,det=k/m,disc=tr*tr-4*det;
+  let eig,nat,cls;
+  if(disc>=0){const r=Math.sqrt(disc);eig=fmt((tr+r)/2)+' et '+fmt((tr-r)/2);nat=(tr<0)?'nœud stable (régime apériodique)':'instable';cls=(tr<0)?'yes':'no';}
+  else{const re=tr/2,im=Math.sqrt(-disc)/2;eig=fmt(re)+' ± '+fmt(im)+' j';nat=(re<0)?'foyer stable (régime pseudo-périodique)':'instable';cls=(re<0)?'yes':'no';}
+  $('#s2-info').innerHTML=stats([['Équation caractéristique','s² + (b/m)s + k/m = 0'],['Valeurs propres',eig],['Nature',nat]])+
+    '<div class="verdict '+cls+'">'+(cls==='yes'?'Système stable : la position revient à 0.':'Système instable : la position diverge.')+'</div>';
+  /* relancer l'animation */
+  drawS2_frame(performance.now()/1000);
+}
+let S2_order=0;
+function drawS2_frame(tSec){
+  if(!S2_traj||!S2_traj.length)return;
+  const t=(tSec%S2_tmax);
+  /* indice par pas de temps */
+  const dt=0.01;
+  let i=Math.floor(t/dt);if(i>=S2_traj.length)i=S2_traj.length-1;
+  const pos=S2_traj[i][1][0];
+  /* échelle : amplitude max ~ 40px */
+  const amp=Math.max(0.1,...S2_traj.map(p=>Math.abs(p[1][0])));
+  const sc=40/amp;
+  const x0=118,disp=pos*sc;
+  const massEl=$('#s2-mass');if(!massEl)return;
+  massEl.setAttribute('x',x0+disp);
+  const mlbl=$('#s2-mlbl');if(mlbl)mlbl.setAttribute('x',x0+disp+30);
+  const spring=$('#s2-spring');if(spring)spring.setAttribute('d',springPath(18,40,x0+disp-2,6));
+  const damper=$('#s2-damper');if(damper){damper.setAttribute('x2',x0+disp);damper.setAttribute('x1',78);}
+  const mark=$('#s2-marker');if(mark)mark.setAttribute('x1',x0+disp);
+  /* point sur le graphe */
+  const pb=$('#s2-plot .plot');if(!pb)return;
+  const old=pb.querySelector('.dot-current');if(old)old.remove();
+  const g=pb;
+  const map=g._map;if(!map)return;
+  const cx=map.X(t),cy=map.Y(pos);
+  g.append(sv('circle',{cx:cx,cy:cy,r:5,fill:'#c0281f',class:'dot-current'}));
+}
+function animS2(tSec){drawS2_frame(tSec);}
+
+/* ===================== ATELIER 3 : pendule + linéarisation ===================== */
+const S3={th0:0.6,c:0.25,d:0.6};
+const S3_PEND=`<svg viewBox="0 0 240 210" class="circ" role="img" aria-label="Pendule réel et linéarisé">
+  <circle cx="120" cy="20" r="4" fill="#33475b"/>
+  <line x1="120" y1="20" x2="120" y2="170" stroke="#d0d5da" stroke-dasharray="3 3"/>
+  <line id="s3-rod-nl" x1="120" y1="20" x2="120" y2="120" stroke="#2e6da4" stroke-width="2.5"/>
+  <line id="s3-rod-li" x1="120" y1="20" x2="120" y2="120" stroke="#c0281f" stroke-width="1.8" stroke-dasharray="6 4"/>
+  <circle id="s3-ball-nl" cx="120" cy="120" r="13" fill="#2e6da4"/>
+  <circle id="s3-ball-li" cx="120" cy="120" r="9" fill="none" stroke="#c0281f" stroke-width="2"/>
+  <text x="8" y="205" font-size="11" fill="#2e6da4">● réel</text>
+  <text x="70" y="205" font-size="11" fill="#c0281f">○ linéarisé</text>
+</svg>`;
+let S3_nl=null,S3_li=null,S3_tmax=10;
+
+function mountS3(root){
+  root.innerHTML=
+    '<h2>3. Linéariser autour d\'un point d\'équilibre</h2>'+
+    '<p>Pendule amorti : <i>θ̈</i> = −(<i>g</i>/ℓ) sin <i>θ</i> − (<i>b</i>/(<i>m</i>ℓ²)) <i>θ̇</i>. On note <i>x</i><sub>1</sub> = <i>θ</i>, <i>x</i><sub>2</sub> = <i>θ̇</i>, on normalise <i>g</i>/ℓ = 1 et <i>c</i> = <i>b</i>/(<i>m</i>ℓ²). Modèle d\'état :</p>'+
+    EQ('<i>ẋ</i><sub>1</sub> = <i>x</i><sub>2</sub> &nbsp;&nbsp;;&nbsp;&nbsp; <i>ẋ</i><sub>2</sub> = −sin <i>x</i><sub>1</sub> − <i>c</i> <i>x</i><sub>2</sub>')+
+    '<div class="stagebox">'+S3_PEND+'</div>'+
+    '<div class="animbar"><button class="btn" id="s3-pause" type="button">⏸ Pause</button><button class="btn" id="s3-reset" type="button">↺ Réinitialiser</button></div>'+
+    '<div class="opts">'+
+      '<label class="fld"><span>Point de linéarisation θ₀ = <b id="s3-tho"></b> rad</span><input type="range" id="s3-th" min="-3.14159" max="3.14159" step="0.01"></label>'+
+      '<label class="fld"><span>Amortissement c = <b id="s3-co"></b></span><input type="range" id="s3-c" min="0" max="1" step="0.05"></label>'+
+      '<label class="fld"><span>Écart initial δ = <b id="s3-do"></b> rad</span><input type="range" id="s3-d" min="0.05" max="1.2" step="0.05"></label>'+
+    '</div>'+
+    '<h3>La fonction non linéaire et sa tangente en θ₀</h3>'+
+    '<div id="s3-plot1"></div>'+
+    '<div id="s3-verdict" class="verdict"></div>'+
+    '<h3>Matrice jacobienne en <b>x</b>₀</h3>'+
+    '<div id="s3-jac"></div>'+
+    '<h3>Réponse θ(t) : réel vs linéarisé</h3>'+
+    '<div id="s3-plot2"></div>'+
+    '<div id="s3-cmp"></div>';
+  $('#s3-th').value=S3.th0;$('#s3-c').value=S3.c;$('#s3-d').value=S3.d;
+  $('#s3-th').addEventListener('input',e=>{S3.th0=+e.target.value;drawS3();});
+  $('#s3-c').addEventListener('input',e=>{S3.c=+e.target.value;drawS3();});
+  $('#s3-d').addEventListener('input',e=>{S3.d=+e.target.value;drawS3();});
+  $('#s3-pause').addEventListener('click',()=>{
+    if(animRunning){stopAnim();$('#s3-pause').textContent='▶ Jouer';}
+    else{startAnim(animS3);$('#s3-pause').textContent='⏸ Pause';}
+  });
+  $('#s3-reset').addEventListener('click',()=>{drawS3();});
+  drawS3();
+  startAnim(animS3);
+}
+function drawS3(){
+  const th0=S3.th0,c=S3.c,d=S3.d;
+  $('#s3-tho').textContent=fmt(th0);
+  $('#s3-co').textContent=fmt(c);
+  $('#s3-do').textContent=fmt(d);
+  /* tangente / graphe */
+  const pts=[];for(let i=0;i<=240;i++){const x=-Math.PI+2*Math.PI*i/240;pts.push([x,-Math.sin(x)]);}
+  const slope=-Math.cos(th0);
+  const tan=[[-Math.PI,-Math.sin(th0)+slope*(-Math.PI-th0)],[Math.PI,-Math.sin(th0)+slope*(Math.PI-th0)]];
+  const p1=$('#s3-plot1');p1.innerHTML='';
+  p1.append(plot({
+    W:500,H:230,xr:[-Math.PI,Math.PI],yr:[-1.7,1.7],
+    xticks:[{v:-Math.PI,label:'−π'},{v:-Math.PI/2,label:'−π/2'},{v:0,label:'0'},{v:Math.PI/2,label:'π/2'},{v:Math.PI,label:'π'}],
+    yticks:[{v:-1,label:'−1'},{v:0,label:'0'},{v:1,label:'1'}],
+    series:[{pts:pts,color:'#2e6da4',w:2.6},{pts:tan,color:'#c0281f',w:2,dash:'7 5'}],
+    dots:[{x:th0,y:-Math.sin(th0),color:'#c0281f',r:5}],
+    texts:[{x:-Math.PI+0.1,y:1.5,s:'−sin θ (réel)'},{x:1.0,y:1.5,s:'tangente en θ₀'}]
+  }));
+  const eq=Math.abs(Math.sin(th0))<0.03;
+  const vd=$('#s3-verdict');
+  if(eq){
+    const stable=Math.cos(th0)>0;
+    vd.className='verdict '+(stable?'yes':'no');
+    vd.innerHTML=stable
+      ?'<b>θ₀ = '+fmt(th0)+' rad : point d\'équilibre stable.</b> Pente de la tangente = −cos θ₀ = '+fmt(slope)+' &lt; 0 : petite perturbation rappelée.'
+      :'<b>θ₀ = '+fmt(th0)+' rad : point d\'équilibre instable.</b> Pente = −cos θ₀ = '+fmt(slope)+' &gt; 0 : perturbation amplifiée.';
+  } else {
+    vd.className='verdict warn';
+    vd.innerHTML='<b>θ₀ = '+fmt(th0)+' rad n\'est pas un point d\'équilibre</b> (sin θ₀ ≠ 0). La tangente est tracée, mais un modèle linéarisé n\'a de sens qu\'en un point d\'équilibre.';
+  }
+  /* jacobienne */
+  const J=[['0','1'],[fmt(slope),fmt(-c)]];
+  const tr=-c,det=-slope,disc=tr*tr-4*det;
+  let eigTxt,nat;
+  if(disc>=0){const r=Math.sqrt(disc);eigTxt=fmt((tr+r)/2)+' ; '+fmt((tr-r)/2);nat=(tr+r)/2>0?'nœud instable':'nœud stable';}
+  else{const re=tr/2,im=Math.sqrt(-disc)/2;eigTxt=fmt(re)+' ± '+fmt(im)+' j';nat=re<0?'foyer stable (oscillations amorties)':'foyer instable';}
+  $('#s3-jac').innerHTML=
+    EQ('<b>A</b> = ∂<b>f</b>/∂<b>x</b>|<sub><b>x</b>₀</sub> = '+MAT([['0','1'],['−cos θ₀','−c']])+' = '+MAT(J))+
+    stats([['λ (valeurs propres)',eigTxt],['Interprétation',nat]]);
+  /* simulation */
+  const fNL=p=>[p[1],-Math.sin(p[0])-c*p[1]];
+  const fLI=p=>[p[1],-Math.cos(th0)*(p[0]-th0)-c*p[1]];
+  S3_nl=rk4(fNL,[th0+d,0],S3_tmax,0.02);
+  S3_li=rk4(fLI,[th0+d,0],S3_tmax,0.02);
+  const nlY=S3_nl.map(p=>p[1][0]),liY=S3_li.map(p=>p[1][0]);
+  let ymin=Math.min(...nlY,...liY),ymax=Math.max(...nlY,...liY);
+  const pad=(ymax-ymin)*0.15+0.05;
+  const p2=$('#s3-plot2');p2.innerHTML='';
+  p2.append(plot({
+    W:520,H:230,xr:[0,S3_tmax],yr:[ymin-pad,ymax+pad],
+    xticks:[{v:0,label:'0'},{v:2,label:'2'},{v:4,label:'4'},{v:6,label:'6'},{v:8,label:'8'},{v:10,label:'10 s'}],
+    yticks:[{v:ymin,label:fmt(ymin,1)},{v:0,label:'0'},{v:ymax,label:fmt(ymax,1)}],
+    series:[{pts:S3_nl.map(p=>[p[0],p[1][0]]),color:'#2e6da4',w:2.2},{pts:S3_li.map(p=>[p[0],p[1][0]]),color:'#c0281f',w:1.8,dash:'7 5'}],
+    texts:[{x:0.2,y:ymax+pad*0.5,s:'bleu : réel — rouge pointillé : linéarisé'}]
+  }));
+  let ecart=0;const nmin=Math.min(S3_nl.length,S3_li.length);
+  for(let i=0;i<nmin;i++)ecart=Math.max(ecart,Math.abs(S3_nl[i][1][0]-S3_li[i][1][0]));
+  $('#s3-cmp').innerHTML='<div class="verdict">'+(ecart<0.05
+    ?'<b>Les deux courbes se superposent.</b> Le modèle linéarisé est une excellente approximation locale.'
+    :'<b>Écart maximal : '+fmt(ecart)+' rad.</b> Plus δ est grand, plus le linéarisé s\'éloigne du réel : la linéarisation n\'est valable que <i>localement</i>.')+'</div>';
+  drawS3_frame(performance.now()/1000);
+}
+function drawS3_frame(tSec){
+  if(!S3_nl)return;
+  const t=tSec%S3_tmax;
+  const dt=0.02;
+  const i=Math.min(Math.floor(t/dt),S3_nl.length-1,j=S3_li.length-1);
+  const thN=S3_nl[i][1][0],thL=S3_li[Math.min(Math.floor(t/dt),S3_li.length-1)][1][0];
+  const cx=120,cy=20,L=100;
+  const bx=cx+L*Math.sin(thN),by=cy+L*Math.cos(thN);
+  const bx2=cx+L*Math.sin(thL),by2=cy+L*Math.cos(thL);
+  const nR=$('#s3-rod-nl');if(nR){nR.setAttribute('x2',bx);nR.setAttribute('y2',by);}
+  const nB=$('#s3-ball-nl');if(nB){nB.setAttribute('cx',bx);nB.setAttribute('cy',by);}
+  const lR=$('#s3-rod-li');if(lR){lR.setAttribute('x2',bx2);lR.setAttribute('y2',by2);}
+  const lB=$('#s3-ball-li');if(lB){lB.setAttribute('cx',bx2);lB.setAttribute('cy',by2);}
+  /* dots sur le graphe */
+  const g=$('#s3-plot2 .plot');if(!g)return;
+  g.querySelectorAll('.dot-cur').forEach(d=>d.remove());
+  const map=g._map;if(!map)return;
+  g.append(sv('circle',{cx:map.X(t),cy:map.Y(thN),r:5,fill:'#2e6da4',class:'dot-cur'}));
+  g.append(sv('circle',{cx:map.X(t),cy:map.Y(thL),r:4.5,fill:'#c0281f',class:'dot-cur'}));
+}
+function animS3(tSec){drawS3_frame(tSec);}
+
+/* ===================== ATELIER 4 : espace d'état ===================== */
+const S4={c:0.25,th0:1.0,ic:null};
+const S4_PEND=`<svg viewBox="0 0 200 200" class="circ" role="img" aria-label="Pendule et espace d'état">
+  <circle cx="100" cy="20" r="4" fill="#33475b"/>
+  <line x1="100" y1="20" x2="100" y2="160" stroke="#d0d5da" stroke-dasharray="3 3"/>
+  <line id="s4-rod-nl" x1="100" y1="20" x2="100" y2="120" stroke="#2e6da4" stroke-width="2.5"/>
+  <line id="s4-rod-li" x1="100" y1="20" x2="100" y2="120" stroke="#c0281f" stroke-width="1.8" stroke-dasharray="6 4"/>
+  <circle id="s4-ball-nl" cx="100" cy="120" r="12" fill="#2e6da4"/>
+  <circle id="s4-ball-li" cx="100" cy="120" r="8" fill="none" stroke="#c0281f" stroke-width="2"/>
+  <text x="6" y="196" font-size="10" fill="#2e6da4">● réel</text>
+  <text x="60" y="196" font-size="10" fill="#c0281f">○ linéarisé</text>
+</svg>`;
+let S4_nl=null,S4_li=null,S4_tmax=10,S4_phase=null;
+
+function mountS4(root){
+  root.innerHTML=
+    '<h2>4. Trajectoires dans l\'espace d\'état</h2>'+
+    '<p>Pour un système d\'ordre 2, l\'<b>espace d\'état</b> est un plan : chaque axe est une variable d\'état. À chaque instant, le <b>vecteur d\'état</b> <b>x</b>(<i>t</i>) = (<i>θ</i>(<i>t</i>), <i>ω</i>(<i>t</i>)) est un point de ce plan. La courbe qu\'il décrit est appelée <b>trajectoire</b>. La figure de droite montre plusieurs trajectoires ; le <b>point rouge</b> indique la position courante.</p>'+
+    EQ('<i>ẋ</i><sub>1</sub> = <i>x</i><sub>2</sub> &nbsp;;&nbsp; <i>ẋ</i><sub>2</sub> = −sin <i>x</i><sub>1</sub> − <i>c x</i><sub>2</sub> &nbsp; (réel) &nbsp;&nbsp;|&nbsp;&nbsp; <i>ẋ</i><sub>2</sub> = −<i>x</i><sub>1</sub> − <i>c x</i><sub>2</sub> &nbsp; (linéarisé en 0)')+
+    '<div class="stagebox" style="display:grid;grid-template-columns:minmax(180px,200px) 1fr;gap:12px;align-items:center">'+
+      '<div>'+S4_PEND+'</div>'+
+      '<div id="s4-phase"></div>'+
+    '</div>'+
+    '<div class="animbar"><button class="btn" id="s4-pause" type="button">⏸ Pause</button><button class="btn" id="s4-reset" type="button">↺ Réinitialiser</button></div>'+
+    '<div class="legend"><span><b style="color:#2e6da4">■</b> trajectoire réelle</span><span><b style="color:#c0281f">■</b> trajectoire linéarisée</span><span><b style="color:#c0281f">●</b> état courant</span><span><b style="color:#9fb4ca">■</b> autres trajectoires</span></div>'+
+    '<div class="opts">'+
+      '<label class="fld"><span>Amortissement c = <b id="s4-co"></b></span><input type="range" id="s4-c" min="0" max="1" step="0.05"></label>'+
+      '<label class="fld"><span>Amplitude initiale θ₀ = <b id="s4-to"></b> rad</span><input type="range" id="s4-t" min="0.1" max="3" step="0.05"></label>'+
+    '</div>'+
+    '<p class="small">Cliquez dans le plan de phase pour choisir une nouvelle condition initiale (point de départ de la trajectoire principale).</p>'+
+    '<div id="s4-info"></div>';
+  $('#s4-c').value=S4.c;$('#s4-t').value=S4.th0;
+  $('#s4-c').addEventListener('input',e=>{S4.c=+e.target.value;drawS4();});
+  $('#s4-t').addEventListener('input',e=>{S4.th0=+e.target.value;S4.ic=null;drawS4();});
+  $('#s4-pause').addEventListener('click',()=>{
+    if(animRunning){stopAnim();$('#s4-pause').textContent='▶ Jouer';}
+    else{startAnim(animS4);$('#s4-pause').textContent='⏸ Pause';}
+  });
+  $('#s4-reset').addEventListener('click',()=>{S4.ic=null;drawS4();});
+  drawS4();
+  startAnim(animS4);
+}
+function drawS4(){
+  const c=S4.c;
+  $('#s4-co').textContent=fmt(c);
+  $('#s4-to').textContent=fmt(S4.th0);
+  if(!S4.ic)S4.ic=[S4.th0,0];
+  const fNL=p=>[p[1],-Math.sin(p[0])-c*p[1]];
+  const fLI=p=>[p[1],-p[0]-c*p[1]];
+  S4_nl=rk4(fNL,S4.ic,S4_tmax,0.02);
+  S4_li=rk4(fLI,S4.ic,S4_tmax,0.02);
+  /* trajectoires de référence */
+  const refs=[];
+  [0.4,0.8,1.2,1.6,2.0,2.4].forEach(a=>{
+    refs.push(rk4(fNL,[a,0],S4_tmax,0.05).map(p=>[p[1][0],p[1][1]]));
+  });
+  /* graphe de phase */
+  const pbox=$('#s4-phase');pbox.innerHTML='';
+  const g=plot({
+    W:420,H:340,xr:[-Math.PI,Math.PI],yr:[-3.5,3.5],
+    xticks:[{v:-Math.PI,label:'−π'},{v:0,label:'0'},{v:Math.PI,label:'π'}],
+    yticks:[{v:-3,label:'−3'},{v:0,label:'0'},{v:3,label:'3'}],
+    series:[]
+  });
+  /* trajectoires de fond */
+  refs.forEach(tr=>{
+    if(tr.length<2)return;
+    g.append(sv('polyline',{points:tr.map(p=>g._map.X(p[0]).toFixed(1)+','+g._map.Y(p[1]).toFixed(1)).join(' '),fill:'none',stroke:'#bcd3e6','stroke-width':1.1}));
+  });
+  /* trajectoire principale : non linéaire et linéarisé */
+  const nlXY=S4_nl.map(p=>[p[1][0],p[1][1]]);
+  const liXY=S4_li.map(p=>[p[1][0],p[1][1]]);
+  g.append(sv('polyline',{points:nlXY.map(p=>g._map.X(p[0]).toFixed(1)+','+g._map.Y(p[1]).toFixed(1)).join(' '),fill:'none',stroke:'#2e6da4','stroke-width':2.4}));
+  g.append(sv('polyline',{points:liXY.map(p=>g._map.X(p[0]).toFixed(1)+','+g._map.Y(p[1]).toFixed(1)).join(' '),fill:'none',stroke:'#c0281f','stroke-width':1.8,'stroke-dasharray':'7 4'}));
+  /* point de départ */
+  g.append(sv('circle',{cx:g._map.X(S4.ic[0]),cy:g._map.Y(S4.ic[1]),r:5,fill:'#c0281f'}));
+  /* labels axes */
+  g.append(sv('text',{x:g._map.W-14,y:g._map.H-8,'text-anchor':'end',class:'cap'},'θ (rad)'));
+  g.append(sv('text',{x:8,y:16,class:'cap'},'ω = θ̇ (rad/s)'));
+  pbox.append(g);
+  /* clic pour changer la condition initiale */
+  g.addEventListener('click',e=>{
+    const r=g.getBoundingClientRect();
+    const mx=(e.clientX-r.left)/r.width*g._map.W;
+    const my=(e.clientY-r.top)/r.height*g._map.H;
+    const x=g._map.x0+(mx-g._map.m.l)/(g._map.W-g._map.m.l-g._map.m.r)*(g._map.x1-g._map.x0);
+    const y=g._map.y1-(my-g._map.m.t)/(g._map.H-g._map.m.t-g._map.m.b)*(g._map.y1-g._map.y0);
+    if(x<-Math.PI||x>Math.PI||y<-3.5||y>3.5)return;
+    S4.ic=[clamp(x,-Math.PI+0.05,Math.PI-0.05),clamp(y,-3.4,3.4)];
     drawS4();
   });
-
-  /* valeurs propres et nature */
-  const tr = -2 * z * w, det = w * w, disc = tr * tr - 4 * det;
-  let eigTxt, nature, cls;
-  if (disc >= 0) {
-    const r = Math.sqrt(disc);
-    eigTxt = num((tr + r) / 2) + ' et ' + num((tr - r) / 2);
-    if (tr < 0) { nature = 'deux valeurs propres réelles négatives : <b>nœud stable</b>, retour à l\'équilibre sans oscillation'; cls = 'yes'; }
-    else { nature = 'au moins une valeur propre réelle positive : <b>nœud instable</b>, éloignement de l\'équilibre'; cls = 'no'; }
-  } else {
-    const re = tr / 2, im = Math.sqrt(-disc) / 2;
-    eigTxt = num(re) + ' ± ' + num(im) + ' j';
-    if (re < 0) { nature = 'valeurs propres complexes conjuguées de partie réelle négative : <b>foyer stable</b>, spirale qui converge vers l\'origine'; cls = 'yes'; }
-    else if (re > 0) { nature = 'valeurs propres complexes de partie réelle positive : <b>foyer instable</b>, spirale divergente'; cls = 'no'; }
-    else { nature = 'valeurs propres imaginaires pures : <b>centre</b>, trajectoires elliptiques, équilibre marginalement stable'; cls = 'warn'; }
-  }
-  if (Math.abs(z) < 1e-9 && Math.abs(tr) < 1e-9) { nature = 'valeurs propres imaginaires pures (ζ = 0) : <b>centre</b>, oscillations entretenues, équilibre marginalement stable'; cls = 'warn'; }
-  $('#s4-info').innerHTML = stats([
-    ['ω₀', num(w, 1) + ' rad/s'], ['ζ', num(z)],
-    ['trace de A', num(tr)], ['déterminant de A', num(det)],
-    ['valeurs propres', eigTxt]
-  ]) + '<div class="verdict ' + cls + '">' + nature + '</div>' +
-     '<p class="small">Stabilité : l\'origine est asymptotiquement stable si et seulement si <b>toutes</b> les valeurs propres de <b>A</b> ont une partie réelle strictement négative (ici : ζ &gt; 0).</p>';
+  /* valeurs propres */
+  const A=[[0,1],[-1,-c]];
+  const tr=-c,det=1,disc=tr*tr-4*det;
+  let eig,nat,cls;
+  if(disc>=0){const r=Math.sqrt(disc);eig=fmt((tr+r)/2)+' ; '+fmt((tr-r)/2);nat='nœud '+(tr<0?'stable':'instable');cls=tr<0?'yes':'no';}
+  else{const re=tr/2,im=Math.sqrt(-disc)/2;eig=fmt(re)+' ± '+fmt(im)+' j';nat=(re<0)?'foyer stable':(re>0?'foyer instable':'centre');cls=(re<0)?'yes':(re>0?'no':'warn');}
+  $('#s4-info').innerHTML=stats([['Valeurs propres (linéarisé)','λ = '+eig],['Nature',nat]])+
+    '<div class="verdict '+cls+'">Le point (0, 0) est '+(cls==='yes'?'<b>stable</b> : toutes les trajectoires convergent.':cls==='no'?'<b>instable</b> : les trajectoires s\'éloignent.':'<b>marginalement stable</b> : trajectoires fermées.')+'</div>';
+  drawS4_frame(performance.now()/1000);
 }
+function drawS4_frame(tSec){
+  if(!S4_nl||!S4_li)return;
+  const t=tSec%S4_tmax;
+  const dt=0.02;
+  const iN=Math.min(Math.floor(t/dt),S4_nl.length-1);
+  const iL=Math.min(Math.floor(t/dt),S4_li.length-1);
+  const thN=S4_nl[iN][1][0],thL=S4_li[iL][1][0];
+  /* pendules */
+  const cx=100,cy=20,L=85;
+  const bxn=cx+L*Math.sin(thN),byn=cy+L*Math.cos(thN);
+  const bxl=cx+L*Math.sin(thL),byl=cy+L*Math.cos(thL);
+  const rN=$('#s4-rod-nl');if(rN){rN.setAttribute('x2',bxn);rN.setAttribute('y2',byn);}
+  const bN=$('#s4-ball-nl');if(bN){bN.setAttribute('cx',bxn);bN.setAttribute('cy',byn);}
+  const rL=$('#s4-rod-li');if(rL){rL.setAttribute('x2',bxl);rL.setAttribute('y2',byl);}
+  const bL=$('#s4-ball-li');if(bL){bL.setAttribute('cx',bxl);bL.setAttribute('cy',byl);}
+  /* points courants sur le plan de phase */
+  const g=$('#s4-phase .plot');if(!g)return;
+  g.querySelectorAll('.dot-cur').forEach(d=>d.remove());
+  const m=g._map;if(!m)return;
+  const pN=[S4_nl[iN][1][0],S4_nl[iN][1][1]];
+  const pL=[S4_li[iL][1][0],S4_li[iL][1][1]];
+  g.append(sv('circle',{cx:m.X(pN[0]),cy:m.Y(pN[1]),r:6,fill:'#2e6da4',stroke:'#fff','stroke-width':1.5,class:'dot-cur'}));
+  g.append(sv('circle',{cx:m.X(pL[0]),cy:m.Y(pL[1]),r:5,fill:'#c0281f',class:'dot-cur'}));
+}
+function animS4(tSec){drawS4_frame(tSec);}
 
-/* ============================ ateliers ============================ */
-const WORKSHOPS = [
-  { id: 's1', title: 'Variables d\'état', hint: 'Choisissez deux variables d\'état indépendantes pour un circuit RLC, puis lisez les matrices A, B, C, D.', mount: mountS1 },
-  { id: 's2', title: 'Des équations aux matrices', hint: 'Faites varier m, b, k et changez l\'ordre des variables d\'état : observez les matrices et les valeurs propres.', mount: mountS2 },
-  { id: 's3', title: 'Linéarisation', hint: 'Déplacez le point de linéarisation sur la courbe et comparez la réponse réelle à celle du modèle linéarisé.', mount: mountS3 },
-  { id: 's4', title: 'Espace d\'état', hint: 'Réglez ω₀ et ζ, cliquez dans le plan pour choisir une condition initiale et observer les trajectoires.', mount: mountS4 }
+/* ===================== ateliers ===================== */
+const WORKSHOPS=[
+  {id:'s1',title:'Variables d\'état',hint:'Choisissez deux variables indépendantes pour le circuit RLC, lisez le modèle d\'état et observez la réponse temporelle.',mount:mountS1,leave:()=>stopAnim()},
+  {id:'s2',title:'Écrire les matrices',hint:'Faites varier m, b, k et changez l\'ordre des variables d\'état ; observez la position x(t).',mount:mountS2,leave:()=>stopAnim()},
+  {id:'s3',title:'Linéarisation',hint:'Déplacez le point de linéarisation et comparez pendule réel et pendule linéarisé.',mount:mountS3,leave:()=>stopAnim()},
+  {id:'s4',title:'Espace d\'état',hint:'Réglez l\'amortissement et l\'amplitude ; cliquez dans le plan de phase pour changer la condition initiale.',mount:mountS4,leave:()=>stopAnim()}
 ];
 
-/* ============================ activités ============================ */
-const ACT = {
-  s1: {
-    title: 'Variables d\'état', level: 'Niveau 1 · Découvrir', time: '25 min',
-    goal: 'Comprendre ce qu\'est une variable d\'état, pourquoi il en faut un nombre minimal, et pourquoi elles doivent être linéairement indépendantes.',
-    steps: [
-      'Sur le circuit RLC, sélectionnez <i>i</i>(t) et <i>q</i>(t). Le verdict est-il favorable ? Lisez les équations d\'état affichées.',
-      'Remplacez <i>i</i>(t) par <i>v<sub>R</sub></i>(t) : que se passe-t-il ? Pourquoi <i>v<sub>R</sub></i> et <i>i</i> ne peuvent-ils pas être choisis ensemble ?',
-      'Essayez <i>q</i>(t) et <i>v<sub>C</sub></i>(t). Quelle relation lie ces deux variables ?',
-      'Sélectionnez trois variables : le verdict change-t-il ? Reliez cela à l\'ordre du système.',
-      'Faites varier R, L, C : quelles cases de la matrice <b>A</b> changent ? La structure de <b>A</b> change-t-elle ?'
+/* ===================== activités ===================== */
+const ACT={
+  s1:{title:'Variables d\'état',level:'Niveau 1 · Découvrir',time:'25 min',
+    goal:'Comprendre ce qu\'est une variable d\'état, pourquoi il en faut un nombre minimal, et pourquoi elles doivent être linéairement indépendantes.',
+    steps:[
+      'Sélectionnez <i>q</i>(t) puis <i>i</i>(t). Quel modèle d\'état s\'affiche ? Comparez avec le choix <i>i</i>(t) puis <i>q</i>(t) : les matrices changent, mais la réponse temporelle est-elle la même ?',
+      'Sélectionnez <i>v<sub>R</sub></i>(t) et <i>i</i>(t) : pourquoi le couple est-il refusé ? Quelle relation lie ces deux grandeurs ?',
+      'Sélectionnez <i>q</i>(t) et <i>v<sub>C</sub></i>(t) : même question.',
+      'Choisissez <i>v<sub>R</sub></i>(t) et <i>v<sub>C</sub></i>(t) : le couple est-il valide ? Pourquoi ?',
+      'Faites varier R, L, C : la réponse temporelle est-elle toujours oscillante ? Concluez sur le rôle de l\'amortissement.'
     ],
-    defi: {
-      q: 'Pourquoi un circuit comportant deux condensateurs et une bobine est-il d\'ordre 3 ? Combien de variables d\'état faut-il ?',
-      a: 'L\'ordre du système est le nombre d\'<b>éléments indépendants stockant de l\'énergie</b> : ici deux condensateurs et une bobine, soit <b>3</b> éléments (s\'ils sont indépendants). Il faut donc 3 variables d\'état, par exemple les deux tensions de condensateurs et le courant de la bobine — et 3 équations différentielles du premier ordre.'
-    },
-    qcm: [
-      { q: 'Combien de variables d\'état au minimum pour un circuit RLC série ?', o: ['1', '2', '3', 'Autant que de composants'], a: 1, w: 'L\'ordre du système est le nombre d\'éléments stockant de l\'énergie : la bobine et le condensateur, soit 2. Il faut donc 2 variables d\'état.' },
-      { q: 'Peut-on choisir i(t) et v_R(t) comme variables d\'état ?', o: ['Oui, ce sont deux grandeurs différentes', 'Non, car v_R = R·i : elles sont liées', 'Oui, mais seulement si R = 1 Ω', 'Non, car elles ont la même unité'], a: 1, w: 'v_R(t) s\'écrit comme combinaison linéaire de i(t) : les deux variables sont linéairement dépendantes, ce n\'est pas un jeu de variables d\'état valide.' },
-      { q: 'La représentation d\'état d\'un système est :', o: ['unique', 'pas unique : elle dépend du choix des variables d\'état', 'unique si le système est linéaire', 'toujours de dimension 2'], a: 1, w: 'Un même système admet une infinité de représentations d\'état selon le vecteur d\'état choisi ; toutes ont le même polynôme caractéristique.' },
-      { q: 'Les variables d\'état doivent être :', o: ['des tensions ou des courants', 'linéairement indépendantes et en nombre minimal', 'mesurables physiquement', 'toutes de même unité'], a: 1, w: 'C\'est la double exigence : un nombre minimal (l\'ordre du système) et l\'indépendance linéaire.' },
-      { q: 'Dans l\'équation de sortie y = Cx + Du, la sortie v_L s\'écrit :', o: ['uniquement en fonction de l\'entrée', 'comme combinaison linéaire des états et de l\'entrée', 'comme le produit des états', 'comme une dérivée des états'], a: 1, w: 'L\'équation de sortie est une combinaison linéaire des variables d\'état et des entrées : c\'est une équation algébrique, sans dérivée.' }
-    ]
-  },
-  s2: {
-    title: 'Écrire les matrices', level: 'Niveau 1 · Découvrir', time: '25 min',
-    goal: 'Savoir passer d\'un système d\'équations différentielles du premier ordre à la forme matricielle ẋ = Ax + Bu, y = Cx + Du.',
-    steps: [
-      'Lisez l\'équation m ẍ + b ẋ + k x = F(t). Pourquoi faut-il deux variables d\'état ?',
-      'Vérifiez à la main la première ligne de <b>A</b> dans le premier choix de variables. Retrouvez la deuxième ligne.',
-      'Recopiez <b>B</b> et <b>C</b>. Où apparaît la masse m ? Pourquoi ?',
-      'Changez l\'ordre des variables d\'état. Comparez les deux matrices <b>A</b>. Sont-elles égales ? Ont-elles les mêmes valeurs propres ?',
-      'Fixez m = 1 et k = 4. Faites varier b de 0 à 4 : à partir de quelle valeur passe-t-on d\'un régime pseudo-périodique à un régime apériodique ?'
+    defi:{q:'Pourquoi un circuit avec deux condensateurs et une bobine est-il d\'ordre 3 ? Combien de variables d\'état faut-il ?',a:'Ordre = nombre d\'<b>éléments indépendants stockant de l\'énergie</b> : deux condensateurs et une bobine, soit 3. Il faut donc 3 variables d\'état, par exemple les deux tensions de condensateurs et le courant de la bobine.'},
+    qcm:[
+      {q:'Combien de variables d\'état au minimum pour le circuit RLC série ?',o:['1','2','3','Autant que de composants'],a:1,w:'Deux éléments stockent de l\'énergie (L et C), donc deux variables d\'état au minimum.'},
+      {q:'Peut-on choisir i(t) et v_R(t) comme variables d\'état ?',o:['Oui, ce sont deux grandeurs différentes','Non, car v_R = R·i : elles sont liées','Oui, mais seulement si R = 1 Ω','Non, car elles ont la même unité'],a:1,w:'v_R s\'écrit comme combinaison linéaire de i : couple linéairement dépendant.'},
+      {q:'La représentation d\'état est :',o:['unique','pas unique : elle dépend du choix des variables','unique si le système est linéaire','toujours de dimension 2'],a:1,w:'Chaque choix indépendant donne une représentation différente, mais les valeurs propres sont conservées.'},
+      {q:'Les variables d\'état doivent être :',o:['des tensions ou des courants','linéairement indépendantes et en nombre minimal','mesurables physiquement','toutes de même unité'],a:1,w:'C\'est la double exigence.'},
+      {q:'Dans y = Cx + Du, la sortie s\'écrit :',o:['uniquement en fonction de l\'entrée','comme combinaison linéaire des états et de l\'entrée','comme le produit des états','comme une dérivée des états'],a:1,w:'L\'équation de sortie est algébrique, sans dérivée.'}
+    ]},
+  s2:{title:'Écrire les matrices',level:'Niveau 1 · Découvrir',time:'25 min',
+    goal:'Passer d\'une équation différentielle du second ordre à la forme matricielle ẋ = Ax + Bu, et observer la dynamique.',
+    steps:[
+      'Lisez l\'équation m ẍ + b ẋ + k x = 0. Pourquoi deux variables d\'état ?',
+      'Vérifiez à la main la deuxième ligne de A. Retrouvez B et C.',
+      'Changez l\'ordre des variables : les matrices changent-elles ? Les valeurs propres changent-elles ?',
+      'Réglez m = 1, k = 4, b = 0 : observez x(t) osciller indéfiniment. Augmentez b : que se passe-t-il ?',
+      'À partir de quelle valeur de b le régime devient-il apériodique (plus d\'oscillation) ?'
     ],
-    defi: {
-      q: 'Écrire la représentation d\'état du système m ẍ + b ẋ + k x = F en prenant x₁ = x et x₂ = ẋ, puis calculer det(λI − A).',
-      a: '<b>A</b> = ' + M([['0', '1'], ['−k/m', '−b/m']]) + ', <b>B</b> = ' + M([['0'], ['1/m']]) + ', <b>C</b> = ' + M([['1', '0']]) + ', <b>D</b> = 0.<br>det(λ<b>I</b> − <b>A</b>) = λ(λ + b/m) + k/m = <b>λ² + (b/m)λ + k/m</b> : on retrouve l\'équation caractéristique du second ordre.'
-    },
-    qcm: [
-      { q: 'Pour m ẍ + b ẋ + k x = F avec x₁ = x et x₂ = ẋ, la matrice A vaut :', o: [M([['0', '1'], ['−k/m', '−b/m']]), M([['0', '1'], ['−b/m', '−k/m']]), M([['1', '0'], ['0', '1']]), M([['−k/m', '−b/m'], ['0', '1']])], a: 0, w: 'ẋ₁ = x₂ et ẋ₂ = −(k/m)x₁ − (b/m)x₂ : d\'où A = ' + M([['0', '1'], ['−k/m', '−b/m']]) + '.' },
-      { q: 'La matrice B vaut :', o: [M([['1/m'], ['0']]), M([['0'], ['1/m']]), M([['1'], ['1']]), M([['0', '0']])], a: 1, w: 'L\'entrée F n\'agit que sur l\'équation de la vitesse : ẋ₂ contient le terme (1/m)F, donc B = ' + M([['0'], ['1/m']]) + '.' },
-      { q: 'Si on échange x₁ et x₂ dans le vecteur d\'état :', o: ['rien ne change', 'A, B et C changent mais les valeurs propres de A sont les mêmes', 'les valeurs propres changent aussi', 'le système n\'est plus linéaire'], a: 1, w: 'C\'est la non-unicité de la représentation : les matrices dépendent du choix des variables, le spectre et le comportement dynamique non.' },
-      { q: 'La sortie y = x (position) correspond à :', o: ['C = [1, 0] avec x₁ = x', 'C = [0, 1] avec x₁ = x', 'C = [1, 1]', 'D = 1'], a: 0, w: 'Si x₁ = x, alors y = x₁ = [1 0]·x. Avec l\'autre choix (x₂ = x), on aurait C = [0, 1].' },
-      { q: 'Pour un système d\'ordre n, la matrice A est de dimension :', o: ['n × 1', '1 × n', 'n × n', 'n × m'], a: 2, w: 'A est la matrice du système : elle est carrée n × n. B est n × m (m entrées), C est p × n (p sorties), D est p × m.' }
-    ]
-  },
-  s3: {
-    title: 'Linéarisation', level: 'Niveau 2 · Comprendre', time: '30 min',
-    goal: 'Savoir déterminer un point d\'équilibre, calculer la matrice jacobienne et interpréter la validité locale du modèle linéarisé.',
-    steps: [
-      'Placez θ₀ = 0 : le point est-il un équilibre ? Le verdict l\'indique-t-il ? Quelle est la pente de la tangente ?',
-      'Placez θ₀ = π : que devient le signe de la pente ? Le point est-il stable ?',
-      'Placez θ₀ = 0,5 rad (hors équilibre) : que dit le message ? Pourquoi la linéarisation n\'a-t-elle pas de sens ici ?',
-      'Revenez à θ₀ = 0 et augmentez δ de 0,05 à 1,2 : que devient l\'écart entre les deux courbes ?',
-      'Avec θ₀ = 0, augmentez l\'amortissement c jusqu\'à 1 : décrivez l\'évolution des valeurs propres de A.'
+    defi:{q:'Écrire la représentation d\'état du système m ẍ + b ẋ + k x = 0 en prenant x₁ = x et x₂ = ẋ, puis calculer det(λI − A).',a:'<b>A</b> = '+MAT([['0','1'],['−k/m','−b/m']])+', <b>B</b> = '+MAT([['0'],['1/m']])+', <b>C</b> = '+MAT([['1','0']])+', <b>D</b> = 0.<br>det(λ<b>I</b> − <b>A</b>) = λ² + (b/m)λ + k/m.'},
+    qcm:[
+      {q:'Pour m ẍ + b ẋ + k x = F avec x₁ = x et x₂ = ẋ, A vaut :',o:[MAT([['0','1'],['−k/m','−b/m']]),MAT([['0','1'],['−b/m','−k/m']]),MAT([['1','0'],['0','1']]),MAT([['−k/m','−b/m'],['0','1']])],a:0,w:'ẋ₁ = x₂, ẋ₂ = −(k/m)x₁ − (b/m)x₂.'},
+      {q:'B vaut :',o:[MAT([['1/m'],['0']]),MAT([['0'],['1/m']]),MAT([['1'],['1']]),MAT([['0','0']])],a:1,w:'L\'entrée n\'agit que sur la vitesse.'},
+      {q:'Si on échange x₁ et x₂ :',o:['rien ne change','A, B, C changent mais les valeurs propres de A sont les mêmes','les valeurs propres changent','le système n\'est plus linéaire'],a:1,w:'La non-unicité de la représentation.'},
+      {q:'La sortie y = x (position) correspond à :',o:['C = [1, 0] avec x₁ = x','C = [0, 1] avec x₁ = x','C = [1, 1]','D = 1'],a:0,w:'Si x₁ = x, alors y = x₁ = [1 0]·x.'},
+      {q:'Pour un système d\'ordre n, A est de dimension :',o:['n × 1','1 × n','n × n','n × m'],a:2,w:'A est carrée n × n.'}
+    ]},
+  s3:{title:'Linéarisation',level:'Niveau 2 · Comprendre',time:'30 min',
+    goal:'Déterminer un point d\'équilibre, calculer la jacobienne, interpréter la validité locale du modèle linéarisé.',
+    steps:[
+      'Placez θ₀ = 0 : le point est-il un équilibre ? Stable ?',
+      'Placez θ₀ = π : que devient la pente ? Stable ?',
+      'Placez θ₀ = 0,5 rad : que dit le message ? Pourquoi la linéarisation n\'a-t-elle pas de sens ?',
+      'Revenez à θ₀ = 0 et augmentez δ : l\'écart entre réel et linéarisé augmente-t-il ?',
+      'Augmentez c : décrivez l\'évolution des valeurs propres de A.'
     ],
-    defi: {
-      q: 'Déterminer tous les points d\'équilibre du pendule puis linéariser en chacun d\'eux.',
-      a: 'Équilibre : ẋ₁ = x₂ = 0 et −sin x₁ − c x₂ = 0, donc <b>sin x₁ = 0</b> et x₂ = 0 : les points d\'équilibre sont (kπ, 0), k ∈ ℤ.<br>Jacobienne : <b>A</b> = ' + M([['0', '1'], ['−cos x₁', '−c']]) + '.<br>En (0, 0) : <b>A</b> = ' + M([['0', '1'], ['−1', '−c']]) + ' → valeurs propres à partie réelle négative si c &gt; 0 : <b>stable</b>.<br>En (π, 0) : <b>A</b> = ' + M([['0', '1'], ['1', '−c']]) + ' → le déterminant vaut −1 &lt; 0 : deux valeurs propres réelles de signes opposés, <b>instable</b>.'
-    },
-    qcm: [
-      { q: 'Les points d\'équilibre du pendule θ̈ = −sin θ − c θ̇ sont :', o: ['(0, 0) seulement', '(kπ, 0) pour tout entier k', '(π/2, 0)', 'tous les points'], a: 1, w: 'Il faut θ̇ = 0 et sin θ = 0, soit θ = kπ. Le pendule en bas (θ = 0 mod 2π) est stable, en haut (θ = π mod 2π) il est instable.' },
-      { q: 'La matrice jacobienne s\'obtient en :', o: ['intégrant f entre 0 et t', 'dérivant chaque composante de f par rapport à chaque variable d\'état', 'prenant la transposée de A', 'prenant la transformée de Laplace'], a: 1, w: 'C\'est la matrice des dérivées partielles ∂f_i/∂x_j, évaluée au point d\'équilibre.' },
-      { q: 'Le point θ = 0 du pendule amorti (c > 0) est :', o: ['instable', 'asymptotiquement stable', 'marginalement stable', 'un centre'], a: 1, w: 'En θ = 0, A = ' + M([['0', '1'], ['−1', '−c']]) + ' : les deux valeurs propres ont une partie réelle strictement négative, l\'équilibre est asymptotiquement stable.' },
-      { q: 'Le point θ = π du pendule est :', o: ['stable', 'instable (selle)', 'un centre', 'indéterminé'], a: 1, w: 'det A = −1 &lt; 0 : les valeurs propres sont réelles et de signes opposés, c\'est un point selle, donc instable.' },
-      { q: 'La linéarisation est valable :', o: ['partout', 'au voisinage du point d\'équilibre', 'seulement pour les systèmes linéaires', 'seulement en régime permanent'], a: 1, w: 'C\'est une approximation au premier ordre (développement de Taylor) : elle est locale, comme le montre la comparaison des réponses pour δ grand.' }
-    ]
-  },
-  s4: {
-    title: 'Espace d\'état', level: 'Niveau 3 · Interpréter', time: '30 min',
-    goal: 'Relier les valeurs propres de A à la forme des trajectoires dans le plan d\'état, et savoir conclure sur la stabilité.',
-    steps: [
-      'Avec ω₀ = 1,5 et ζ = 0,25, décrivez l\'allure des trajectoires. Vers quel point convergent-elles ?',
-      'Réglez ζ = 0 : que deviennent les trajectoires ? Que valent les parties réelles des valeurs propres ?',
-      'Passez ζ = 1,5 : les trajectoires tournent-elles encore ? Comment s\'appelle ce régime ?',
-      'Réglez ζ négatif : que se passe-t-il ? Que deviennent les parties réelles des valeurs propres ?',
-      'Cliquez en différents points du plan pour changer la condition initiale : combien de trajectoires passent par un point donné ?'
+    defi:{q:'Déterminer les points d\'équilibre du pendule et linéariser en chacun d\'eux.',a:'Équilibre : ẋ₁ = x₂ = 0, −sin x₁ − c x₂ = 0, donc sin x₁ = 0 et x₂ = 0 : points (kπ, 0).<br>Jacobienne : A = '+MAT([['0','1'],['−cos x₁','−c']])+'.<br>En (0,0) : stable si c > 0. En (π,0) : det A = −1, deux valeurs propres réelles opposées, selle instable.'},
+    qcm:[
+      {q:'Points d\'équilibre du pendule :',o:['(0, 0) seulement','(kπ, 0) pour tout k','(π/2, 0)','tous les points'],a:1,w:'sin θ = 0 et θ̇ = 0.'},
+      {q:'La matrice jacobienne s\'obtient en :',o:['intégrant f','dérivant chaque composante de f par rapport aux variables d\'état','prenant la transposée de A','prenant la transformée de Laplace'],a:1,w:'Matrice des dérivées partielles ∂f_i/∂x_j.'},
+      {q:'Le point θ = 0 du pendule amorti (c > 0) est :',o:['instable','asymptotiquement stable','marginalement stable','un centre'],a:1,w:'A = [[0,1],[−1,−c]], valeurs propres à partie réelle négative.'},
+      {q:'Le point θ = π du pendule est :',o:['stable','instable (selle)','un centre','indéterminé'],a:1,w:'det A = −1 < 0 : selle.'},
+      {q:'La linéarisation est valable :',o:['partout','au voisinage du point d\'équilibre','seulement pour les systèmes linéaires','en régime permanent'],a:1,w:'Approximation au premier ordre, locale.'}
+    ]},
+  s4:{title:'Espace d\'état',level:'Niveau 3 · Interpréter',time:'30 min',
+    goal:'Relier les valeurs propres de A à la forme des trajectoires dans le plan de phase, et visualiser l\'état courant.',
+    steps:[
+      'Avec c = 0,25, observez les trajectoires : convergent-elles vers l\'origine ?',
+      'Réglez c = 0 : que deviennent-elles ? Que valent les parties réelles des valeurs propres ?',
+      'Réglez c = 1 : le point tourne-t-il encore ? Comment s\'appelle ce régime ?',
+      'Réglez c négatif : que se passe-t-il ?',
+      'Cliquez à différents endroits du plan : le point de départ change, la trajectoire aussi. Combien de trajectoires passent par un point donné ?'
     ],
-    defi: {
-      q: 'Montrer que pour A = ' + M([['0', '1'], ['−ω₀²', '−2ζω₀']]) + ', l\'origine est asymptotiquement stable si et seulement si ζ > 0.',
-      a: 'Le polynôme caractéristique est λ² + 2ζω₀λ + ω₀². Les deux racines ont une partie réelle strictement négative si et seulement si les coefficients sont de même signe : 2ζω₀ &gt; 0 et ω₀² &gt; 0, soit <b>ζ &gt; 0</b>. Pour ζ = 0, les valeurs propres sont ±jω₀ : trajectoires elliptiques autour de l\'origine (centre, marginalement stable). Pour ζ &lt; 0, la partie réelle est positive : spirale divergente.'
-    },
-    qcm: [
-      { q: 'Une trajectoire dans l\'espace d\'état est :', o: ['le graphe de x₂ en fonction du temps', 'la courbe décrite par le vecteur d\'état x(t)', 'la courbe de la sortie y(t)', 'le diagramme de Bode'], a: 1, w: 'L\'espace d\'état a pour axes les variables d\'état ; le point x(t) décrit une courbe appelée trajectoire.' },
-      { q: 'Si toutes les valeurs propres de A ont une partie réelle strictement négative :', o: ['les trajectoires divergent', 'les trajectoires convergent vers l\'origine', 'les trajectoires sont des cercles', 'on ne peut rien dire'], a: 1, w: 'C\'est la condition de stabilité asymptotique d\'un système linéaire ẋ = Ax : x(t) → 0 quand t → +∞, quelle que soit la condition initiale.' },
-      { q: 'Pour ζ = 0, les trajectoires sont :', o: ['des droites', 'des ellipses centrées à l\'origine', 'des spirales divergentes', 'des points'], a: 1, w: 'Les valeurs propres sont imaginaires pures ±jω₀ : le système est un oscillateur non amorti, l\'équilibre est un centre (marginalement stable).' },
-      { q: 'Pour ζ > 1, le régime est :', o: ['pseudo-périodique', 'apériodique : retour sans oscillation', 'critique', 'instable'], a: 1, w: 'Les deux valeurs propres sont réelles négatives : les trajectoires rejoignent l\'origine sans tourner, c\'est un nœud stable.' },
-      { q: 'L\'origine est un point d\'équilibre de ẋ = Ax :', o: ['seulement si A est inversible', 'toujours', 'jamais', 'seulement si det A > 0'], a: 1, w: 'ẋ = 0 en x = 0 puisque A·0 = 0, quelle que soit A. L\'étude de stabilité porte sur ce point d\'équilibre.' }
-    ]
-  }
+    defi:{q:'Montrer que pour A = '+MAT([['0','1'],['−ω₀²','−2ζω₀']])+', l\'origine est asymptotiquement stable ssi ζ > 0.',a:'Polynôme caractéristique : λ² + 2ζω₀λ + ω₀². Les deux racines ont une partie réelle strictement négative ssi les coefficients sont de même signe : 2ζω₀ > 0 et ω₀² > 0, donc ζ > 0. Pour ζ = 0 : centre (marginalement stable). Pour ζ < 0 : foyer instable.'},
+    qcm:[
+      {q:'Une trajectoire dans l\'espace d\'état est :',o:['le graphe de x₂ en fonction du temps','la courbe décrite par x(t)','la courbe de sortie y(t)','le diagramme de Bode'],a:1,w:'Le point x(t) décrit une courbe dans l\'espace d\'état.'},
+      {q:'Si toutes les valeurs propres de A ont une partie réelle strictement négative :',o:['les trajectoires divergent','elles convergent vers l\'origine','elles sont des cercles','on ne peut rien dire'],a:1,w:'Condition de stabilité asymptotique.'},
+      {q:'Pour ζ = 0, les trajectoires sont :',o:['des droites','des ellipses centrées à l\'origine','des spirales divergentes','des points'],a:1,w:'Valeurs propres ±jω₀ : centre.'},
+      {q:'Pour ζ > 1, le régime est :',o:['pseudo-périodique','apériodique','critique','instable'],a:1,w:'Deux valeurs propres réelles négatives.'},
+      {q:'L\'origine est un point d\'équilibre de ẋ = Ax :',o:['seulement si A est inversible','toujours','jamais','seulement si det A > 0'],a:1,w:'A·0 = 0 toujours.'}
+    ]}
 };
 
-/* ============================ cours ============================ */
-const COURSE = [];
-COURSE.push({ id: 'intro', t: 'Pourquoi l\'espace d\'état ?', h: `
+/* ===================== cours ===================== */
+const COURSE=[];
+COURSE.push({id:'intro',t:'Pourquoi l\'espace d\'état ?',h:`
 <p>La commande des systèmes utilise deux grandes familles d'outils.</p>
 <ul>
-<li>L'approche <b>classique</b> (ou <i>fréquentielle</i>) : on transforme l'équation différentielle en fonction de transfert <i>G</i>(<i>p</i>). Les calculs sont algébriques, rapides, et donnent immédiatement stabilité et réponse transitoire. Mais elle ne s'applique qu'aux systèmes <b>linéaires et invariants</b>, et mal aux systèmes à plusieurs entrées et sorties.</li>
-<li>L'approche <b>moderne</b> (ou <i>temporelle</i>), dite <b>représentation d'état</b> : on décrit le système par un système d'équations différentielles du premier ordre. Elle s'applique aussi aux systèmes multivariables, aux conditions initiales non nulles, aux systèmes variables dans le temps, et — après linéarisation — aux systèmes non linéaires.</li>
+<li>L'approche <b>classique</b> (fréquentielle) : on transforme l'équation différentielle en fonction de transfert <i>G</i>(<i>p</i>). Rapide, algébrique, mais limitée aux systèmes linéaires invariants et mal adaptée aux systèmes multi-entrées/multi-sorties.</li>
+<li>L'approche <b>moderne</b> (temporelle), dite <b>représentation d'état</b> : on décrit le système par un système d'équations différentielles du premier ordre. Elle s'applique aussi aux systèmes multivariables, aux conditions initiales non nulles, aux systèmes variables dans le temps et, après linéarisation, aux systèmes non linéaires.</li>
 </ul>
 <h3>Pourquoi « état » ?</h3>
-<p>L'<b>état</b> d'un système est l'ensemble minimal d'informations à connaître à l'instant <i>t</i>₀ pour pouvoir prédire toute l'évolution future, l'entrée étant connue. Pour un circuit, ce sont les tensions de condensateurs et les courants de bobines : les éléments qui stockent de l'énergie et gardent la mémoire du passé.</p>
-<div class="retain"><b>À retenir.</b> La représentation d'état décrit le système par des équations du premier ordre, sous forme matricielle : c'est l'outil adapté aux systèmes multivariables et aux calculs sur ordinateur.</div>` });
+<p>L'<b>état</b> d'un système est l'ensemble minimal d'informations à connaître à l'instant <i>t</i>₀ pour prédire toute l'évolution future, l'entrée étant connue. Pour un circuit, ce sont les tensions de condensateurs et les courants de bobines.</p>
+<div class="retain"><b>À retenir.</b> La représentation d'état décrit le système par des équations du premier ordre, sous forme matricielle : c'est l'outil adapté aux systèmes multivariables et aux calculs sur ordinateur.</div>`});
 
-COURSE.push({ id: 'etat', t: 'Variables et équations d\'état', h: `
+COURSE.push({id:'etat',t:'Variables et équations d\'état',h:`
 <h3>Définitions</h3>
 <dl class="gloss">
-<dt>Variable d'état</dt><dd>Grandeur interne d'un système telle que la connaissance de ses valeurs en <i>t</i>₀ (avec l'entrée pour <i>t</i> ≥ <i>t</i>₀) détermine complètement le comportement futur.</dd>
-<dt>Vecteur d'état</dt><dd>Le vecteur <b>x</b> formé des variables d'état <i>x</i>₁, …, <i>x<sub>n</sub></i>.</dd>
+<dt>Variable d'état</dt><dd>Grandeur interne d'un système telle que la connaissance de ses valeurs en <i>t</i>₀ détermine complètement le comportement futur.</dd>
+<dt>Vecteur d'état</dt><dd>Le vecteur <b>x</b> = (<i>x</i>₁, …, <i>x<sub>n</sub></i>).</dd>
 <dt>Espace d'état</dt><dd>L'espace à <i>n</i> dimensions dont les axes sont les variables d'état. La solution <b>x</b>(<i>t</i>) y décrit une <b>trajectoire</b>.</dd>
-<dt>Équation d'état</dt><dd>Le système de <i>n</i> équations différentielles du premier ordre <b>ẋ</b> = <b>f</b>(<b>x</b>, <b>u</b>, <i>t</i>).</dd>
-<dt>Équation de sortie</dt><dd>L'équation <i>algébrique</i> <b>y</b> = <b>g</b>(<b>x</b>, <b>u</b>, <i>t</i>) qui exprime les sorties en fonction de l'état et de l'entrée.</dd>
+<dt>Équation d'état</dt><dd><b>ẋ</b> = <b>f</b>(<b>x</b>, <b>u</b>, <i>t</i>) : <i>n</i> équations différentielles du premier ordre.</dd>
+<dt>Équation de sortie</dt><dd><b>y</b> = <b>g</b>(<b>x</b>, <b>u</b>, <i>t</i>) : équation <i>algébrique</i>.</dd>
 </dl>
 <h3>Méthode en cinq étapes (exemple du RLC série)</h3>
 <ol>
 <li>Choisir un sous-ensemble de variables : les <b>variables d'état</b>.</li>
-<li>Écrire <i>n</i> équations différentielles du premier ordre simultanées en ces variables : les <b>équations d'état</b>.</li>
-<li>Résoudre ces équations connaissant <b>x</b>(<i>t</i>₀) et l'entrée pour <i>t</i> ≥ <i>t</i>₀.</li>
-<li>Exprimer algébriquement toutes les autres grandeurs à partir de l'état et de l'entrée : l'<b>équation de sortie</b>.</li>
-<li>Le couple (équations d'état, équation de sortie) constitue la <b>représentation d'état</b>.</li>
+<li>Écrire <i>n</i> équations différentielles du premier ordre simultanées : les <b>équations d'état</b>.</li>
+<li>Résoudre ces équations connaissant <b>x</b>(<i>t</i>₀) et l'entrée.</li>
+<li>Exprimer algébriquement toutes les autres grandeurs : l'<b>équation de sortie</b>.</li>
+<li>Le couple (équations d'état, équation de sortie) est la <b>représentation d'état</b>.</li>
 </ol>
-<p>Pour le circuit RLC série de la figure, avec <i>x</i>₁ = <i>q</i> (charge) et <i>x</i>₂ = <i>i</i> (courant) :</p>
+<p>Pour le RLC série, avec <i>x</i>₁ = <i>q</i> et <i>x</i>₂ = <i>i</i> :</p>
 ${EQ('<i>dq</i>/<i>dt</i> = <i>i</i>')}
 ${EQ('<i>di</i>/<i>dt</i> = − (1/<i>LC</i>) <i>q</i> − (<i>R</i>/<i>L</i>) <i>i</i> + (1/<i>L</i>) <i>v</i>(<i>t</i>)')}
-<p>et la tension aux bornes de la bobine, qui est une sortie :</p>
+<p>et la tension aux bornes de la bobine, sortie du système :</p>
 ${EQ('<i>v<sub>L</sub></i>(<i>t</i>) = − (1/<i>C</i>) <i>q</i> − <i>R i</i> + <i>v</i>(<i>t</i>)')}
-<div class="retain"><b>À retenir.</b> Un système d'ordre <i>n</i> se décrit par <i>n</i> équations d'état du premier ordre, plus une équation de sortie algébrique.</div>` });
+<div class="retain"><b>À retenir.</b> Un système d'ordre <i>n</i> se décrit par <i>n</i> équations d'état du premier ordre, plus une équation de sortie algébrique.</div>`});
 
-COURSE.push({ id: 'matrices', t: 'La forme matricielle', h: `
-<p>Pour un système <b>linéaire invariant</b>, les équations d'état et de sortie s'écrivent sous forme matricielle :</p>
+COURSE.push({id:'matrices',t:'La forme matricielle',h:`
+<p>Pour un système <b>linéaire invariant</b>, les équations s'écrivent :</p>
 ${EQ('<b>ẋ</b> = <b>A x</b> + <b>B u</b>')}
 ${EQ('<b>y</b> = <b>C x</b> + <b>D u</b>')}
 <table class="ctable"><thead><tr><th>Objet</th><th>Nom</th><th>Dimension</th></tr></thead><tbody>
 <tr><td><b>x</b></td><td>vecteur d'état</td><td><i>n</i> × 1</td></tr>
-<tr><td><b>u</b></td><td>vecteur des entrées (commandes)</td><td><i>m</i> × 1</td></tr>
-<tr><td><b>y</b></td><td>vecteur des sorties</td><td><i>p</i> × 1</td></tr>
-<tr><td><b>A</b></td><td>matrice du système (dynamique)</td><td><i>n</i> × <i>n</i></td></tr>
+<tr><td><b>u</b></td><td>entrées</td><td><i>m</i> × 1</td></tr>
+<tr><td><b>y</b></td><td>sorties</td><td><i>p</i> × 1</td></tr>
+<tr><td><b>A</b></td><td>matrice du système</td><td><i>n</i> × <i>n</i></td></tr>
 <tr><td><b>B</b></td><td>matrice d'entrée</td><td><i>n</i> × <i>m</i></td></tr>
-<tr><td><b>C</b></td><td>matrice de sortie (observation)</td><td><i>p</i> × <i>n</i></td></tr>
+<tr><td><b>C</b></td><td>matrice de sortie</td><td><i>p</i> × <i>n</i></td></tr>
 <tr><td><b>D</b></td><td>matrice d'action directe</td><td><i>p</i> × <i>m</i></td></tr>
 </tbody></table>
-<p>Souvent <b>D</b> = <b>0</b> : l'entrée n'agit pas instantanément sur la sortie (le système est dit <i>strictement propre</i>).</p>
+<p>Souvent <b>D</b> = <b>0</b> : l'entrée n'agit pas instantanément sur la sortie.</p>
 <h3>Lien avec la fonction de transfert</h3>
-<p>En transformant les équations avec des conditions initiales nulles : <i>s</i><b>X</b>(<i>s</i>) = <b>A X</b>(<i>s</i>) + <b>B U</b>(<i>s</i>), d'où <b>X</b> = (<i>s</i><b>I</b> − <b>A</b>)⁻¹<b>B U</b> et :</p>
+<p>En transformant avec conditions initiales nulles : <i>s</i><b>X</b> = <b>A X</b> + <b>B U</b>, d'où :</p>
 ${EQ('<i>G</i>(<i>s</i>) = <b>C</b>(<i>s</i><b>I</b> − <b>A</b>)⁻¹<b>B</b> + <b>D</b>')}
-<p>Les pôles de <i>G</i> sont les valeurs propres de <b>A</b>, c'est-à-dire les racines de det(<i>s</i><b>I</b> − <b>A</b>) = 0 : c'est le <b>polynôme caractéristique</b>.</p>
-<div class="retain"><b>À retenir.</b> Les valeurs propres de <b>A</b> sont les pôles du système : elles gouvernent stabilité et dynamique, quel que soit le choix des variables d'état.</div>` });
+<p>Les pôles de <i>G</i> sont les valeurs propres de <b>A</b>, racines de det(<i>s</i><b>I</b> − <b>A</b>) = 0 : c'est le <b>polynôme caractéristique</b>.</p>
+<div class="retain"><b>À retenir.</b> Les valeurs propres de <b>A</b> sont les pôles du système : elles gouvernent stabilité et dynamique, quel que soit le choix des variables d'état.</div>`});
 
-COURSE.push({ id: 'choix', t: 'Comment choisir les variables d\'état ?', h: `
+COURSE.push({id:'choix',t:'Comment choisir les variables d\'état ?',h:`
 <h3>Deux règles</h3>
 <ol>
 <li><b>Nombre minimal.</b> Il est égal à l'ordre du système, c'est-à-dire au degré du dénominateur de la fonction de transfert (après simplifications), ou encore au nombre d'<b>éléments indépendants stockant de l'énergie</b> : inductances, capacités, masses, ressorts, inerties…</li>
@@ -822,12 +917,12 @@ COURSE.push({ id: 'choix', t: 'Comment choisir les variables d\'état ?', h: `
 </ol>
 <h3>Exemples de dépendance à repérer</h3>
 <ul>
-<li>Circuits : <i>v<sub>R</sub></i> = <i>R i</i> (résistance) et <i>v<sub>C</sub></i> = <i>q</i>/<i>C</i> (condensateur) sont liées au courant et à la charge. On ne peut donc pas prendre à la fois <i>i</i> et <i>v<sub>R</sub></i>.</li>
-<li>Mécanique : la position et la vitesse sont <b>indépendantes</b> (la vitesse est la dérivée de la position, ce n'est pas une combinaison linéaire).</li>
+<li>Circuits : <i>v<sub>R</sub></i> = <i>R i</i> et <i>v<sub>C</sub></i> = <i>q</i>/<i>C</i> : on ne peut donc pas prendre à la fois <i>i</i> et <i>v<sub>R</sub></i>, ni <i>q</i> et <i>v<sub>C</sub></i>.</li>
+<li>Mécanique : position et vitesse sont <b>indépendantes</b> (la vitesse est la dérivée de la position, ce n'est pas une combinaison linéaire).</li>
 <li>Une variable et sa dérivée sont toujours linéairement indépendantes.</li>
 </ul>
 <h3>Non-unicité</h3>
-<p>Le choix n'est pas unique : pour le RLC, (<i>q</i>, <i>i</i>), (<i>v<sub>C</sub></i>, <i>i</i>) ou (<i>v<sub>C</sub></i>, <i>v<sub>R</sub></i>) conviennent. On obtient des matrices <b>A</b>, <b>B</b>, <b>C</b> différentes, mais les <b>valeurs propres sont identiques</b> : il s'agit du même système physique vu dans une autre base.</p>
+<p>Le choix n'est pas unique : pour le RLC, (<i>q</i>, <i>i</i>), (<i>v<sub>C</sub></i>, <i>i</i>), (<i>v<sub>R</sub></i>, <i>v<sub>C</sub></i>)… conviennent. On obtient des matrices différentes, mais les <b>valeurs propres sont identiques</b> : c'est le même système physique vu dans une autre base.</p>
 <h3>Méthode pratique</h3>
 <ol>
 <li>Écrire l'équation différentielle de chaque élément stockant de l'énergie.</li>
@@ -836,216 +931,160 @@ COURSE.push({ id: 'choix', t: 'Comment choisir les variables d\'état ?', h: `
 <li>Remplacer toutes les autres grandeurs par leur expression en fonction des états et de l'entrée.</li>
 <li>Écrire les sorties comme combinaisons linéaires des états et des entrées.</li>
 </ol>
-<div class="retain"><b>À retenir.</b> Autant de variables d'état que d'éléments indépendants stockant de l'énergie, et des variables linéairement indépendantes.</div>` });
+<div class="retain"><b>À retenir.</b> Autant de variables d'état que d'éléments indépendants stockant de l'énergie, et des variables linéairement indépendantes.</div>`});
 
-COURSE.push({ id: 'exemples', t: 'Exemples classiques', h: `
-<h3>Système mécanique masse-ressort-amortisseur</h3>
-<p><i>m ẍ</i> + <i>b ẋ</i> + <i>k x</i> = <i>F</i>(<i>t</i>). Avec <i>x</i>₁ = <i>x</i> et <i>x</i>₂ = <i>ẋ</i> :</p>
-${EQ('<b>A</b> = ' + M([['0', '1'], ['−k/m', '−b/m']]) + ' , <b>B</b> = ' + M([['0'], ['1/m']]) + ' , <b>C</b> = ' + M([['1', '0']]) + ' , <b>D</b> = 0')}
-<p>Polynôme caractéristique : <i>s</i>² + (<i>b</i>/<i>m</i>)<i>s</i> + <i>k</i>/<i>m</i>.</p>
-<h3>Circuit RLC série</h3>
-<p>Avec <i>x</i>₁ = <i>q</i> et <i>x</i>₂ = <i>i</i> :</p>
-${EQ('<b>A</b> = ' + M([['0', '1'], ['−1/(LC)', '−R/L']]) + ' , <b>B</b> = ' + M([['0'], ['1/L']]))}
-<h3>Système d\'ordre n quelconque</h3>
-<p>À partir de <i>y</i><sup>(<i>n</i>)</sup> + <i>a</i><sub><i>n</i>−1</sub><i>y</i><sup>(<i>n</i>−1)</sup> + … + <i>a</i>₀<i>y</i> = <i>u</i>, on pose <i>x</i>₁ = <i>y</i>, <i>x</i>₂ = <i>ẏ</i>, …, <i>x<sub>n</sub></i> = <i>y</i><sup>(<i>n</i>−1)</sup>. On obtient la <b>forme compagne</b> :</p>
-${EQ('<b>A</b> = ' + M([['0', '1', '0', '…'], ['0', '0', '1', '…'], ['⋮', '', '', '⋮'], ['−a₀', '−a₁', '…', '−a<sub>n−1</sub>']]))}
-<div class="retain"><b>À retenir.</b> Les formes canoniques (compagne, observable, commandable) permettent d'écrire directement les matrices à partir de la fonction de transfert.</div>` });
-
-COURSE.push({ id: 'lineaire', t: 'Linéarisation', h: `
-<p>Un système réel est presque toujours non linéaire (frottements, sin θ, caractéristiques de composants). La représentation d'état linéaire reste utilisable <b>au voisinage d'un point de fonctionnement</b>.</p>
+COURSE.push({id:'lineaire',t:'Linéarisation',h:`
+<p>Un système réel est presque toujours non linéaire. La représentation d'état linéaire reste utilisable <b>au voisinage d'un point de fonctionnement</b>.</p>
 <h3>Point d'équilibre</h3>
 <p>Un point <b>x</b>₀ (avec entrée <b>u</b>₀ constante) est un <b>point d'équilibre</b> si <b>f</b>(<b>x</b>₀, <b>u</b>₀) = <b>0</b> : le système y reste indéfiniment si on l'y place sans perturbation.</p>
 <h3>Développement de Taylor au premier ordre</h3>
 <p>On pose <b>x</b> = <b>x</b>₀ + Δ<b>x</b> et <b>u</b> = <b>u</b>₀ + Δ<b>u</b>. Alors :</p>
-${EQ('Δ<b>ẋ</b> ≈ <b>A</b> Δ<b>x</b> + <b>B</b> Δ<b>u</b> &nbsp; avec &nbsp; <b>A</b> = ∂<b>f</b>/∂<b>x</b> |<sub>(<b>x</b>₀,<b>u</b>₀)</sub> &nbsp; et &nbsp; <b>B</b> = ∂<b>f</b>/∂<b>u</b> |<sub>(<b>x</b>₀,<b>u</b>₀)</sub>')}
-<p>La matrice <b>A</b> est la <b>matrice jacobienne</b> de <b>f</b> : le coefficient ligne <i>i</i>, colonne <i>j</i> vaut ∂<i>f<sub>i</sub></i>/∂<i>x<sub>j</sub></i>.</p>
+${EQ('Δ<b>ẋ</b> ≈ <b>A</b> Δ<b>x</b> + <b>B</b> Δ<b>u</b>, avec <b>A</b> = ∂<b>f</b>/∂<b>x</b>|<sub>(<b>x</b>₀,<b>u</b>₀)</sub> et <b>B</b> = ∂<b>f</b>/∂<b>u</b>|<sub>(<b>x</b>₀,<b>u</b>₀)</sub>')}
+<p>La matrice <b>A</b> est la <b>matrice jacobienne</b> de <b>f</b> : coefficient ligne <i>i</i>, colonne <i>j</i> = ∂<i>f<sub>i</sub></i>/∂<i>x<sub>j</sub></i>.</p>
 <h3>Exemple du pendule</h3>
 <p><i>θ̈</i> = −(<i>g</i>/ℓ) sin <i>θ</i> − (<i>b</i>/<i>m</i>ℓ²) <i>θ̇</i>. Avec <i>x</i>₁ = <i>θ</i>, <i>x</i>₂ = <i>θ̇</i> :</p>
-${EQ('<b>A</b> = ' + M([['0', '1'], ['−(g/ℓ)cos θ₀', '−b/(mℓ²)']]))}
+${EQ('<b>A</b> = '+MAT([['0','1'],['−(g/ℓ)cos θ₀','−b/(mℓ²)']]))}
 <ul>
-<li>Équilibre <b>θ₀ = 0</b> (pendule en bas) : cos θ₀ = 1, <b>A</b> = ' + M([['0', '1'], ['−g/ℓ', '−b/(mℓ²)']]) + ' → <b>stable</b> si <i>b</i> &gt; 0.</li>
-<li>Équilibre <b>θ₀ = π</b> (pendule en haut) : cos θ₀ = −1, le déterminant de <b>A</b> vaut +<i>g</i>/ℓ &gt; 0… mais la trace est −<i>b</i>/(<i>m</i>ℓ²) : selon l'amortissement, on conclut à une <b>selle</b> (instable) ou à un foyer instable. En pratique, sans frottement, c'est une selle.</li>
+<li><b>θ₀ = 0</b> (pendule en bas) : cos θ₀ = 1, <b>A</b> = '+MAT([['0','1'],['−g/ℓ','−b/(mℓ²)']])+' → <b>stable</b> si <i>b</i> &gt; 0.</li>
+<li><b>θ₀ = π</b> (pendule en haut) : cos θ₀ = −1, <b>A</b> = '+MAT([['0','1'],['g/ℓ','−b/(mℓ²)']])+' : sans frottement, selle <b>instable</b>.</li>
 </ul>
 <h3>Validité</h3>
-<p>L'approximation n'est valable que <b>localement</b> : plus on s'éloigne de <b>x</b>₀, plus les termes d'ordre 2 et plus deviennent importants. L'atelier 3 permet de visualiser cet écart entre réponse réelle et réponse linéarisée.</p>
-<div class="retain"><b>À retenir.</b> Linéariser = calculer la jacobienne de <b>f</b> au point d'équilibre ; le modèle obtenu ne vaut qu'au voisinage de ce point.</div>` });
+<p>L'approximation n'est valable que <b>localement</b> : plus on s'éloigne de <b>x</b>₀, plus les termes d'ordre supérieur deviennent importants.</p>
+<div class="retain"><b>À retenir.</b> Linéariser = calculer la jacobienne de <b>f</b> au point d'équilibre ; le modèle obtenu ne vaut qu'au voisinage de ce point.</div>`});
 
-COURSE.push({ id: 'bilan', t: 'Bilan et vocabulaire', h: `
+COURSE.push({id:'bilan',t:'Bilan et vocabulaire',h:`
 <table class="ctable"><thead><tr><th>Notion</th><th>Formule / règle</th></tr></thead><tbody>
 <tr><td>Équation d'état</td><td><b>ẋ</b> = <b>A x</b> + <b>B u</b></td></tr>
 <tr><td>Équation de sortie</td><td><b>y</b> = <b>C x</b> + <b>D u</b></td></tr>
 <tr><td>Fonction de transfert</td><td><i>G</i>(<i>s</i>) = <b>C</b>(<i>s</i><b>I</b> − <b>A</b>)⁻¹<b>B</b> + <b>D</b></td></tr>
-<tr><td>Pôles</td><td>racines de det(<i>s</i><b>I</b> − <b>A</b>) = 0, c'est-à-dire valeurs propres de <b>A</b></td></tr>
+<tr><td>Pôles</td><td>racines de det(<i>s</i><b>I</b> − <b>A</b>) = 0 = valeurs propres de <b>A</b></td></tr>
 <tr><td>Ordre</td><td>nombre minimal de variables d'état = nombre d'éléments indépendants stockant de l'énergie</td></tr>
 <tr><td>Stabilité</td><td>toutes les valeurs propres de <b>A</b> à partie réelle strictement négative</td></tr>
-<tr><td>Linéarisation</td><td><b>A</b> = ∂<b>f</b>/∂<b>x</b> évaluée au point d'équilibre</td></tr>
+<tr><td>Linéarisation</td><td><b>A</b> = ∂<b>f</b>/∂<b>x</b> au point d'équilibre</td></tr>
 </tbody></table>
 <h3>Vocabulaire</h3>
 <dl class="gloss">
 <dt>État</dt><dd>Information minimale nécessaire pour prédire l'évolution future.</dd>
 <dt>Variable d'état</dt><dd>Composante du vecteur d'état.</dd>
 <dt>Espace d'état</dt><dd>Espace vectoriel engendré par les variables d'état.</dd>
-<dt>Trajectoire</dt><dd>Courbe décrite par <b>x</b>(<i>t</i>) dans l'espace d'état.</dd>
-<dt>Matrice jacobienne</dt><dd>Matrice des dérivées partielles de <b>f</b>, utilisée pour linéariser.</dd>
+<dt>Trajectoire</dt><dd>Courbe décrite par <b>x</b>(<i>t</i>).</dd>
+<dt>Matrice jacobienne</dt><dd>Matrice des dérivées partielles de <b>f</b>.</dd>
 <dt>Point d'équilibre</dt><dd>Point où <b>f</b>(<b>x</b>₀, <b>u</b>₀) = <b>0</b>.</dd>
 <dt>Forme compagne</dt><dd>Écriture canonique des matrices à partir des coefficients de l'équation différentielle.</dd>
 <dt>Système strictement propre</dt><dd>Système pour lequel <b>D</b> = <b>0</b>.</dd>
 </dl>
-<div class="retain"><b>À retenir.</b> Représentation d'état = <b>ẋ</b> = <b>A x</b> + <b>B u</b>, <b>y</b> = <b>C x</b> + <b>D u</b> ; les valeurs propres de <b>A</b> contiennent toute l'information sur la dynamique et la stabilité.</div>` });
+<div class="retain"><b>À retenir.</b> Représentation d'état = <b>ẋ</b> = <b>A x</b> + <b>B u</b>, <b>y</b> = <b>C x</b> + <b>D u</b> ; les valeurs propres de <b>A</b> contiennent toute l'information sur la dynamique et la stabilité.</div>`});
 
-/* ============================ interface ============================ */
-const UI = { cur: 's1' };
-const AS = { key: 's1', tab: 'steps', open: false, st: lsGet(KEYS.act, {}) };
-const CS = { open: false, id: 'intro' };
-function actSave() { lsSet(KEYS.act, AS.st); }
-function actState() { return AS.st[AS.key] || (AS.st[AS.key] = { a: {}, checked: false }); }
-function actScore(a) { const s = actState(); return a.qcm.filter((q, i) => s.a[i] === q.a).length; }
-function wsById(id) { return WORKSHOPS.find(w => w.id === id) || WORKSHOPS[0]; }
-
-function renderSeg() {
-  const seg = $('#wsSeg'); seg.innerHTML = '';
-  WORKSHOPS.forEach((w, i) => seg.append(h('button', {
-    type: 'button', role: 'tab', 'aria-pressed': w.id === UI.cur ? 'true' : 'false',
-    'aria-selected': w.id === UI.cur ? 'true' : 'false', onclick: () => gotoWs(w.id)
-  }, (i + 1) + '. ' + w.title)));
-}
-function mountWs() {
-  const w = wsById(UI.cur), root = $('#ws');
-  $('#hint').textContent = w.hint; root.innerHTML = '';
-  w.mount(root);
-  const sc = $('#scroller'); if (sc) sc.scrollTop = 0;
-}
-function gotoWs(id) {
-  UI.cur = id; AS.key = id; AS.tab = 'steps';
-  if (CS.open) { CS.open = false; renderCourse(); }
-  renderSeg(); mountWs(); renderAct();
-}
-function renderAct() {
-  const box = $('#act'), btn = $('#bAct');
-  btn.setAttribute('aria-pressed', AS.open ? 'true' : 'false'); btn.classList.toggle('pri', AS.open);
-  box.hidden = !AS.open;
-  if (!AS.open) { box.innerHTML = ''; return; }
-  const oldB = box.querySelector('.pbody'), tag = AS.key + '|' + AS.tab, keep = oldB && box.dataset.k === tag ? oldB.scrollTop : 0;
-  box.dataset.k = tag;
-  box.innerHTML = '';
-  const a = ACT[AS.key];
-  const close = h('button', { class: 'btn sm', type: 'button', onclick: () => { AS.open = false; renderAct(); } }, 'Fermer');
-  box.append(h('div', { class: 'phead' }, h('b', null, 'Activité'), h('span', { class: 'sub' }, a.title), close));
-  const nq = a.qcm.length;
-  box.append(h('div', { class: 'tabs', role: 'tablist' },
-    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'steps' ? 'true' : 'false', onclick: () => { AS.tab = 'steps'; renderAct(); } }, 'Consignes'),
-    h('button', { type: 'button', role: 'tab', 'aria-selected': AS.tab === 'qcm' ? 'true' : 'false', onclick: () => { AS.tab = 'qcm'; renderAct(); } }, 'Questions (' + nq + ')')));
-  const body = h('div', { class: 'pbody' });
-  if (AS.tab === 'steps') {
-    body.append(h('p', { class: 'small' }, a.level + ' · environ ' + a.time));
-    body.append(h('div', { class: 'goal', html: '<b>Objectif. </b>' + a.goal }));
-    body.append(h('ol', { class: 'steps', html: a.steps.map(s => '<li>' + s + '</li>').join('') }));
-    body.append(h('details', { class: 'defi' },
-      h('summary', null, 'Défi'),
-      h('p', { html: '<b>' + a.defi.q + '</b>' }),
-      h('p', { html: a.defi.a })));
+/* ===================== interface ===================== */
+const UI={cur:'s1'};
+const AS={key:'s1',tab:'steps',open:false,st:lsGet(KEYS.act,{})};
+const CS={open:false,id:'intro'};
+function actSave(){lsSet(KEYS.act,AS.st);}
+function actState(){return AS.st[AS.key]||(AS.st[AS.key]={a:{},checked:false});}
+function actScore(a){const s=actState();return a.qcm.filter((q,i)=>s.a[i]===q.a).length;}
+function wsById(id){return WORKSHOPS.find(w=>w.id===id)||WORKSHOPS[0];}
+function renderSeg(){const seg=$('#wsSeg');seg.innerHTML='';WORKSHOPS.forEach((w,i)=>seg.append(h('button',{type:'button',role:'tab','aria-pressed':w.id===UI.cur?'true':'false','aria-selected':w.id===UI.cur?'true':'false',onclick:()=>gotoWs(w.id)},(i+1)+'. '+w.title)));}
+function mountWs(){const w=wsById(UI.cur),root=$('#ws');$('#hint').textContent=w.hint;root.innerHTML='';w.mount(root);const sc=$('#scroller');if(sc)sc.scrollTop=0;}
+function gotoWs(id){const old=wsById(UI.cur);if(old.leave)old.leave();stopAnim();if(CS.open){CS.open=false;renderCourse();}UI.cur=id;AS.key=id;AS.tab='steps';renderSeg();mountWs();renderAct();}
+function renderAct(){
+  const box=$('#act'),btn=$('#bAct');
+  btn.setAttribute('aria-pressed',AS.open?'true':'false');btn.classList.toggle('pri',AS.open);
+  box.hidden=!AS.open;
+  if(!AS.open){box.innerHTML='';return;}
+  const oldB=box.querySelector('.pbody'),tag=AS.key+'|'+AS.tab,keep=oldB&&box.dataset.k===tag?oldB.scrollTop:0;
+  box.dataset.k=tag;box.innerHTML='';
+  const a=ACT[AS.key];
+  const close=h('button',{class:'btn sm',type:'button',onclick:()=>{AS.open=false;renderAct();}},'Fermer');
+  box.append(h('div',{class:'phead'},h('b',null,'Activité'),h('span',{class:'sub'},a.title),close));
+  const nq=a.qcm.length;
+  box.append(h('div',{class:'tabs',role:'tablist'},
+    h('button',{type:'button',role:'tab','aria-selected':AS.tab==='steps'?'true':'false',onclick:()=>{AS.tab='steps';renderAct();}},'Consignes'),
+    h('button',{type:'button',role:'tab','aria-selected':AS.tab==='qcm'?'true':'false',onclick:()=>{AS.tab='qcm';renderAct();}},'Questions ('+nq+')')));
+  const body=h('div',{class:'pbody'});
+  if(AS.tab==='steps'){
+    body.append(h('p',{class:'small'},a.level+' · environ '+a.time));
+    body.append(h('div',{class:'goal',html:'<b>Objectif. </b>'+a.goal}));
+    body.append(h('ol',{class:'steps',html:a.steps.map(s=>'<li>'+s+'</li>').join('')}));
+    body.append(h('details',{class:'defi'},h('summary',null,'Défi'),h('p',{html:'<b>'+a.defi.q+'</b>'}),h('p',{html:a.defi.a})));
   } else {
-    const s = actState();
-    const score = actScore(a);
-    body.append(h('div', { class: 'score' }, 'Score : ' + score + ' / ' + nq + (s.checked ? ' ✔' : '')));
-    a.qcm.forEach((q, i) => {
-      const fs = h('fieldset', { class: 'q' });
-      fs.append(h('legend', { html: 'Q' + (i + 1) + '. ' + q.q }));
-      q.o.forEach((opt, j) => {
-        const id = 'q' + AS.key + '_' + i + '_' + j;
-        const lab = h('label', { class: 'opt', for: id });
-        const inp = h('input', { type: 'radio', name: 'q' + AS.key + '_' + i, id: id });
-        inp.checked = s.a[i] === j;
-        inp.disabled = s.checked;
-        inp.addEventListener('change', () => { s.a[i] = j; actSave(); renderAct(); });
-        if (s.checked) { if (j === q.a) lab.classList.add('good'); else if (s.a[i] === j) lab.classList.add('bad'); }
-        lab.append(inp, h('span', { html: opt }));
+    const s=actState();
+    const score=actScore(a);
+    body.append(h('div',{class:'score'},'Score : '+score+' / '+nq+(s.checked?' ✔':'')));
+    a.qcm.forEach((q,i)=>{
+      const fs=h('fieldset',{class:'q'});
+      fs.append(h('legend',{html:'Q'+(i+1)+'. '+q.q}));
+      q.o.forEach((opt,j)=>{
+        const id='q'+AS.key+'_'+i+'_'+j;
+        const lab=h('label',{class:'opt',for:id});
+        const inp=h('input',{type:'radio',name:'q'+AS.key+'_'+i,id:id});
+        inp.checked=s.a[i]===j;inp.disabled=s.checked;
+        inp.addEventListener('change',()=>{s.a[i]=j;actSave();renderAct();});
+        if(s.checked){if(j===q.a)lab.classList.add('good');else if(s.a[i]===j)lab.classList.add('bad');}
+        lab.append(inp,h('span',{html:opt}));
         fs.append(lab);
       });
-      if (s.checked) fs.append(h('p', { class: 'why', html: '<b>Explication :</b> ' + q.w }));
+      if(s.checked)fs.append(h('p',{class:'why',html:'<b>Explication :</b> '+q.w}));
       body.append(fs);
     });
-    const s2 = actState();
-    if (!s2.checked) {
-      body.append(h('button', { class: 'btn pri', type: 'button', onclick: () => { s2.checked = true; actSave(); renderAct(); } }, 'Valider mes réponses'));
-    } else {
-      body.append(h('button', { class: 'btn', type: 'button', onclick: () => { s2.checked = false; s2.a = {}; actSave(); renderAct(); } }, 'Recommencer'));
-    }
+    const s2=actState();
+    if(!s2.checked)body.append(h('button',{class:'btn pri',type:'button',onclick:()=>{s2.checked=true;actSave();renderAct();}},'Valider mes réponses'));
+    else body.append(h('button',{class:'btn',type:'button',onclick:()=>{s2.checked=false;s2.a={};actSave();renderAct();}},'Recommencer'));
   }
   box.append(body);
-  if (keep) { const nb = box.querySelector('.pbody'); if (nb) nb.scrollTop = keep; }
+  if(keep){const nb=box.querySelector('.pbody');if(nb)nb.scrollTop=keep;}
 }
-
-function renderCourse() {
-  const sec = $('#course');
-  if (!CS.open) { sec.hidden = true; $('#work').hidden = false; $('#modes').hidden = false; return; }
-  $('#work').hidden = true; $('#modes').hidden = true;
-  sec.hidden = false;
-  sec.innerHTML = '';
-  const top = h('div', { class: 'ctop' },
-    h('div', { class: 'brand', style: 'font-size:15px' }, 'Cours · Représentation d\'état'),
-    h('button', { class: 'btn', type: 'button', onclick: () => { CS.open = false; renderCourse(); $('#bCourse').classList.remove('pri'); } }, 'Fermer'));
-  const sel = h('select', { class: 'ctoc-sel', onchange: e => { CS.id = e.target.value; renderCourse(); } });
-  COURSE.forEach(c => sel.append(h('option', { value: c.id, selected: c.id === CS.id }, c.t)));
-  sec.append(top, sel);
-  const wrap = h('div', { class: 'cwrap' });
-  const toc = h('nav', { class: 'ctoc', 'aria-label': 'Sommaire' });
-  COURSE.forEach(c => toc.append(h('button', { type: 'button', class: c.id === CS.id ? 'on' : '', onclick: () => { CS.id = c.id; renderCourse(); } }, c.t)));
-  const cur = COURSE.find(c => c.id === CS.id) || COURSE[0];
-  const idx = COURSE.indexOf(cur);
-  const cbody = h('div', { class: 'cbody' });
-  cbody.append(h('p', { class: 'ckick' }, 'Cours · chapitre 3 — modélisation dans le domaine temporel'));
-  cbody.append(h('h2', null, cur.t));
-  cbody.append(h('div', { html: cur.h }));
-  const pn = h('div', { class: 'cpn' });
-  if (idx > 0) pn.append(h('button', { class: 'btn', type: 'button', onclick: () => { CS.id = COURSE[idx - 1].id; renderCourse(); } }, '◀ ' + COURSE[idx - 1].t));
+function renderCourse(){
+  const sec=$('#course');
+  if(!CS.open){sec.hidden=true;$('#work').hidden=false;$('#modes').hidden=false;return;}
+  $('#work').hidden=true;$('#modes').hidden=true;
+  sec.hidden=false;sec.innerHTML='';
+  const top=h('div',{class:'ctop'},
+    h('div',{class:'brand',style:'font-size:15px'},'Cours · Représentation d\'état'),
+    h('button',{class:'btn',type:'button',onclick:()=>{CS.open=false;renderCourse();$('#bCourse').classList.remove('pri');}},'Fermer'));
+  const sel=h('select',{class:'ctoc-sel',onchange:e=>{CS.id=e.target.value;renderCourse();}});
+  COURSE.forEach(c=>sel.append(h('option',{value:c.id,selected:c.id===CS.id},c.t)));
+  sec.append(top,sel);
+  const wrap=h('div',{class:'cwrap'});
+  const toc=h('nav',{class:'ctoc','aria-label':'Sommaire'});
+  COURSE.forEach(c=>toc.append(h('button',{type:'button',class:c.id===CS.id?'on':'',onclick:()=>{CS.id=c.id;renderCourse();}},c.t)));
+  const cur=COURSE.find(c=>c.id===CS.id)||COURSE[0];
+  const idx=COURSE.indexOf(cur);
+  const cbody=h('div',{class:'cbody'});
+  cbody.append(h('p',{class:'ckick'},'Cours · modélisation dans le domaine temporel'));
+  cbody.append(h('h2',null,cur.t));
+  cbody.append(h('div',{html:cur.h}));
+  const pn=h('div',{class:'cpn'});
+  if(idx>0)pn.append(h('button',{class:'btn',type:'button',onclick:()=>{CS.id=COURSE[idx-1].id;renderCourse();}},'◀ '+COURSE[idx-1].t));
   else pn.append(h('span'));
-  if (idx < COURSE.length - 1) pn.append(h('button', { class: 'btn pri', type: 'button', onclick: () => { CS.id = COURSE[idx + 1].id; renderCourse(); } }, COURSE[idx + 1].t + ' ▶'));
+  if(idx<COURSE.length-1)pn.append(h('button',{class:'btn pri',type:'button',onclick:()=>{CS.id=COURSE[idx+1].id;renderCourse();}},COURSE[idx+1].t+' ▶'));
   cbody.append(pn);
-  wrap.append(toc, cbody);
+  wrap.append(toc,cbody);
   sec.append(wrap);
-  cbody.scrollTop = 0;
+  cbody.scrollTop=0;
 }
-
-/* aide */
-function openHelp() {
-  const d = $('#dlg');
-  d.hidden = false;
-  d.innerHTML = '';
-  const box = h('div', { class: 'dlgbox' });
-  box.append(h('header', null, h('b', null, 'Aide'), h('button', { class: 'btn sm', type: 'button', onclick: () => { d.hidden = true; } }, 'Fermer')));
-  const b = h('div', { class: 'dbody' });
-  b.innerHTML =
-    '<p>Cette page accompagne le chapitre <b>Modélisation dans le domaine temporel</b> : représentation d\'état et linéarisation.</p>' +
-    '<h3>Les quatre ateliers</h3>' +
-    '<ul>' +
-    '<li><b>Variables d\'état</b> : choisir deux variables indépendantes pour un circuit RLC et lire les matrices.</li>' +
-    '<li><b>Des équations aux matrices</b> : passer de <i>m ẍ + b ẋ + k x = F</i> à <b>ẋ</b> = <b>A x</b> + <b>B u</b>.</li>' +
-    '<li><b>Linéarisation</b> : tangente à la courbe non linéaire, matrice jacobienne, comparaison des réponses.</li>' +
-    '<li><b>Espace d\'état</b> : trajectoires, valeurs propres et stabilité.</li>' +
-    '</ul>' +
-    '<h3>Boutons</h3>' +
-    '<p><b>Activité</b> ouvre le panneau de consignes et de QCM (progression mémorisée dans le navigateur). <b>Cours</b> affiche le cours complet avec sommaire.</p>' +
-    '<h3>Conseils</h3>' +
-    '<p>Manipulez toujours les curseurs avant de lire les formules : c\'est en faisant varier les paramètres qu\'on comprend le rôle de chaque coefficient.</p>';
-  box.append(b);
-  d.append(box);
+function openHelp(){
+  const d=$('#dlg');d.hidden=false;d.innerHTML='';
+  const box=h('div',{class:'dlgbox'});
+  box.append(h('header',null,h('b',null,'Aide'),h('button',{class:'btn sm',type:'button',onclick:()=>{d.hidden=true;}},'Fermer')));
+  const b=h('div',{class:'dbody'});
+  b.innerHTML=
+    '<p>Cette page accompagne le cours de SII sur la <b>représentation d\'état et la linéarisation</b>.</p>'+
+    '<h3>Les quatre ateliers</h3>'+
+    '<ul>'+
+    '<li><b>Variables d\'état</b> : choisir deux variables indépendantes pour un circuit RLC ; le modèle d\'état s\'affiche selon le couple sélectionné et la réponse temporelle est tracée.</li>'+
+    '<li><b>Écrire les matrices</b> : passer de m ẍ + b ẋ + k x = 0 à ẋ = Ax + Bu, et observer la position x(t) du chariot.</li>'+
+    '<li><b>Linéarisation</b> : tangente à la courbe, jacobienne et comparaison des réponses (pendule réel vs linéarisé).</li>'+
+    '<li><b>Espace d\'état</b> : trajectoires, point mobile sur la trajectoire et animation du pendule pour visualiser l\'état courant.</li>'+
+    '</ul>'+
+    '<h3>Boutons</h3>'+
+    '<p><b>Activité</b> ouvre les consignes et le QCM (progression mémorisée). <b>Cours</b> affiche le cours complet avec sommaire.</p>';
+  box.append(b);d.append(box);
 }
-
-/* démarrage */
-renderSeg();
-mountWs();
-renderAct();
-renderCourse();
-$('#bAct').addEventListener('click', () => { AS.open = !AS.open; renderAct(); });
-$('#bCourse').addEventListener('click', () => {
-  CS.open = !CS.open;
-  $('#bCourse').setAttribute('aria-pressed', CS.open ? 'true' : 'false');
-  $('#bCourse').classList.toggle('pri', CS.open);
-  renderCourse();
-});
-$('#bHelp').addEventListener('click', openHelp);
-$('#dlg').addEventListener('click', e => { if (e.target.id === 'dlg') $('#dlg').hidden = true; });
+renderSeg();mountWs();renderAct();renderCourse();
+$('#bAct').addEventListener('click',()=>{AS.open=!AS.open;renderAct();});
+$('#bCourse').addEventListener('click',()=>{CS.open=!CS.open;$('#bCourse').setAttribute('aria-pressed',CS.open?'true':'false');$('#bCourse').classList.toggle('pri',CS.open);renderCourse();});
+$('#bHelp').addEventListener('click',openHelp);
+$('#dlg').addEventListener('click',e=>{if(e.target.id==='dlg')$('#dlg').hidden=true;});
 </script>
 </body>
 </html>
